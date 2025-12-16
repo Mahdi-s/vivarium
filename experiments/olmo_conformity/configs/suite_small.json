@@ -1,0 +1,30 @@
+{
+  "suite_name": "olmo_conformity_small",
+  "datasets": [
+    {
+      "name": "immutable_facts_sample",
+      "version": "v0",
+      "path": "experiments/olmo_conformity/datasets/immutable_facts/sample_items.jsonl"
+    },
+    {
+      "name": "social_conventions_sample",
+      "version": "v0",
+      "path": "experiments/olmo_conformity/datasets/social_conventions/sample_items.jsonl"
+    }
+  ],
+  "conditions": [
+    { "name": "control", "params": { "type": "control" } },
+    { "name": "asch_history_5", "params": { "type": "synthetic_asch_history", "confederates": 5, "confidence": "high" } },
+    { "name": "authoritative_bias", "params": { "type": "authoritative_bias", "user_claim_strength": "high" } }
+  ],
+  "models": [
+    { "variant": "instruct", "model_id": "mock" }
+  ],
+  "run": {
+    "seed": 42,
+    "temperature": 0.0,
+    "max_items_per_dataset": 50
+  }
+}
+
+

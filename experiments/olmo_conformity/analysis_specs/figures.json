@@ -1,0 +1,40 @@
+{
+  "figures": [
+    {
+      "name": "conformity_rate_by_variant",
+      "type": "bar",
+      "source": { "table": "conformity_outputs", "join_trials": true },
+      "group_by": ["variant", "condition_name"],
+      "metric": "mean_is_correct"
+    },
+    {
+      "name": "accuracy_vs_pressure_strength",
+      "type": "line",
+      "source": { "table": "conformity_outputs", "join_trials": true },
+      "x": "confederates",
+      "y": "mean_is_correct",
+      "facet": ["variant"]
+    },
+    {
+      "name": "layerwise_truth_vs_social",
+      "type": "line_over_layers",
+      "source": { "table": "conformity_probe_projections" },
+      "group_by": ["probe_kind", "condition_name", "variant"],
+      "x": "layer_index",
+      "y": "value_float_mean"
+    },
+    {
+      "name": "turn_layer_heatmap",
+      "type": "heatmap",
+      "source": { "table": "conformity_probe_projections" },
+      "value": "social_minus_truth"
+    },
+    {
+      "name": "intervention_effect_size",
+      "type": "paired",
+      "source": { "table": "conformity_intervention_results" }
+    }
+  ]
+}
+
+

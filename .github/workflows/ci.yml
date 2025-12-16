@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+      
+      - name: Install dependencies
+        run: uv sync
+      
+      - name: Check syntax
+        run: |
+          python -m py_compile src/aam/*.py
+      
+      - name: Type check (if mypy available)
+        run: |
+          uv pip install mypy || true
+          mypy src/aam/ --ignore-missing-imports || true
+
+  test-phase1:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+      
+      - name: Install dependencies
+        run: uv sync
+      
+      - name: Run Phase 1 smoke test
+        run: |
+          export PYTHONPATH=src
+          python -m aam.run phase1 --steps 3 --agents 2 --seed 42 --db test_ci.db --no-validate
+          python -c "import sqlite3; conn = sqlite3.connect('test_ci.db'); print(f'Trace rows: {conn.execute(\"SELECT COUNT(*) FROM trace\").fetchone()[0]}')"
+

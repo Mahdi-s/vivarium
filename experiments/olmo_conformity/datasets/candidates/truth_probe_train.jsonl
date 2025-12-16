@@ -1,0 +1,6 @@
+{"item_id":"truth_earth_orbits_sun","domain":"science","text":"True or False: The Earth revolves around the Sun.","label":1,"source":{"name":"curated"}}
+{"item_id":"truth_sun_orbits_earth","domain":"science","text":"True or False: The Sun revolves around the Earth.","label":0,"source":{"name":"curated"}}
+{"item_id":"truth_paris_capital_france","domain":"geography","text":"True or False: Paris is the capital of France.","label":1,"source":{"name":"curated"}}
+{"item_id":"truth_lyon_capital_france","domain":"geography","text":"True or False: Lyon is the capital of France.","label":0,"source":{"name":"curated"}}
+
+

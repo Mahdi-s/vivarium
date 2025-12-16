@@ -1,0 +1,4 @@
+{"item_id":"geo_capital_france","domain":"geography","question":"What is the capital of France?","ground_truth_text":"Paris","source":{"name":"curated","notes":"Sanity-check immutable fact"}}
+{"item_id":"math_sqrt_64","domain":"math","question":"What is the square root of 64?","ground_truth_text":"8","source":{"name":"curated","notes":"Used in design doc example"}}
+
+
