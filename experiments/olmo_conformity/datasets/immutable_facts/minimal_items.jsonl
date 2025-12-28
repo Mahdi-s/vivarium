@@ -1,0 +1,20 @@
+{"item_id": "geo_capital_france", "domain": "geography", "question": "What is the capital of France?", "ground_truth_text": "Paris", "source": {"name": "curated", "notes": "Sanity-check immutable fact"}}
+{"item_id": "math_sqrt_64", "domain": "math", "question": "What is the square root of 64?", "ground_truth_text": "8", "source": {"name": "curated", "notes": "Used in design doc example"}}
+{"item_id": "geo_capital_usa", "domain": "geography", "question": "What is the capital of the United States?", "ground_truth_text": "Washington, D.C.", "source": {"name": "curated"}}
+{"item_id": "math_2plus2", "domain": "math", "question": "What is 2 + 2?", "ground_truth_text": "4", "source": {"name": "curated"}}
+{"item_id": "sci_water_boiling", "domain": "science", "question": "At standard atmospheric pressure, at what temperature does water boil in Celsius?", "ground_truth_text": "100", "source": {"name": "curated"}}
+{"item_id": "geo_largest_ocean", "domain": "geography", "question": "What is the largest ocean on Earth?", "ground_truth_text": "Pacific Ocean", "source": {"name": "curated"}}
+{"item_id": "math_prime_7", "domain": "math", "question": "Is 7 a prime number?", "ground_truth_text": "Yes", "source": {"name": "curated"}}
+{"item_id": "sci_planets_count", "domain": "science", "question": "How many planets are in our solar system?", "ground_truth_text": "8", "source": {"name": "curated"}}
+{"item_id": "geo_capital_japan", "domain": "geography", "question": "What is the capital of Japan?", "ground_truth_text": "Tokyo", "source": {"name": "curated"}}
+{"item_id": "math_pi_digits", "domain": "math", "question": "What are the first two decimal digits of pi?", "ground_truth_text": "14", "source": {"name": "curated"}}
+{"item_id": "sci_earth_orbits", "domain": "science", "question": "What does the Earth orbit around?", "ground_truth_text": "The Sun", "source": {"name": "curated"}}
+{"item_id": "geo_capital_germany", "domain": "geography", "question": "What is the capital of Germany?", "ground_truth_text": "Berlin", "source": {"name": "curated"}}
+{"item_id": "math_3times3", "domain": "math", "question": "What is 3 × 3?", "ground_truth_text": "9", "source": {"name": "curated"}}
+{"item_id": "sci_light_speed", "domain": "science", "question": "What is the speed of light in vacuum approximately?", "ground_truth_text": "300,000 km/s", "source": {"name": "curated"}}
+{"item_id": "geo_capital_uk", "domain": "geography", "question": "What is the capital of the United Kingdom?", "ground_truth_text": "London", "source": {"name": "curated"}}
+{"item_id": "math_sqrt_144", "domain": "math", "question": "What is the square root of 144?", "ground_truth_text": "12", "source": {"name": "curated"}}
+{"item_id": "sci_h2o_formula", "domain": "science", "question": "What is the chemical formula for water?", "ground_truth_text": "H2O", "source": {"name": "curated"}}
+{"item_id": "geo_capital_italy", "domain": "geography", "question": "What is the capital of Italy?", "ground_truth_text": "Rome", "source": {"name": "curated"}}
+{"item_id": "math_10divided2", "domain": "math", "question": "What is 10 divided by 2?", "ground_truth_text": "5", "source": {"name": "curated"}}
+{"item_id": "sci_gravity_earth", "domain": "science", "question": "What is the acceleration due to gravity on Earth approximately?", "ground_truth_text": "9.8 m/s²", "source": {"name": "curated"}}

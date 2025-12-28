@@ -120,6 +120,25 @@ class TraceDb:
             "CREATE INDEX IF NOT EXISTS idx_activation_layer ON activation_metadata(run_id, layer_index, component);"
         )
 
+        # Cryptographic provenance log (Merkle accumulator snapshots)
+        self.conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS merkle_log (
+              merkle_id TEXT PRIMARY KEY,
+              run_id TEXT NOT NULL,
+              time_step INTEGER NOT NULL,
+              agent_id TEXT NOT NULL,
+              prompt_hash TEXT NOT NULL,
+              activation_hash TEXT NOT NULL,
+              leaf_hash TEXT NOT NULL,
+              merkle_root TEXT NOT NULL,
+              created_at REAL NOT NULL,
+              FOREIGN KEY(run_id) REFERENCES runs(run_id)
+            );
+            """
+        )
+        self.conn.execute("CREATE INDEX IF NOT EXISTS idx_merkle_run_step_agent ON merkle_log(run_id, time_step, agent_id);")
+
         # -----------------------------
         # Olmo Conformity Experiments
         # -----------------------------
@@ -529,6 +548,44 @@ class TraceDb:
                     _json_dumps_deterministic({"shape": list(record.shape)}),
                     record.dtype,
                     time.time(),
+                ),
+            )
+
+    def insert_merkle_log(
+        self,
+        *,
+        run_id: str,
+        time_step: int,
+        agent_id: str,
+        prompt_hash: str,
+        activation_hash: str,
+        leaf_hash: str,
+        merkle_root: str,
+        created_at: Optional[float] = None,
+    ) -> None:
+        """Insert a Merkle log record for provenance verification."""
+        import uuid
+
+        ts = float(time.time() if created_at is None else created_at)
+        with self.conn:
+            self.conn.execute(
+                """
+                INSERT INTO merkle_log(
+                  merkle_id, run_id, time_step, agent_id,
+                  prompt_hash, activation_hash, leaf_hash, merkle_root, created_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+                """,
+                (
+                    str(uuid.uuid4()),
+                    str(run_id),
+                    int(time_step),
+                    str(agent_id),
+                    str(prompt_hash),
+                    str(activation_hash),
+                    str(leaf_hash),
+                    str(merkle_root),
+                    ts,
                 ),
             )
 

@@ -98,3 +98,5 @@ uv.lock
 *.gguf
 
 *.cpp
+
+huggingface_cache/

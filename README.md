@@ -12,6 +12,8 @@ The Abstract Agent Machine provides a **deterministic simulation kernel** that s
 - **SQLite Trace Persistence**: Append-only event log with full replay capability
 - **Cognitive Layer**: LangGraph orchestration with LiteLLM multi-provider support
 - **Interpretability Layer**: TransformerLens activation capture with Safetensors export
+- **Olmo Conformity Experiment**: Specialized framework for studying conformity and sycophancy in language models
+- **Judge Eval**: Local Ollama-based subjective evaluation framework for model outputs
 - **Barrier Scheduler (Phase 4)**: Async parallel "think" phase with deterministic sequential commit
 - **Experiment Config System**: JSON-based configuration for reproducible multi-agent experiments
 - **Local LLM Support**: llama.cpp integration for offline GGUF model serving
@@ -246,6 +248,74 @@ The Barrier Scheduler implements "Think Concurrently, Commit Sequentially":
 - **Barrier**: Wait for all agents or timeout
 - **Deterministic Sort**: Stable ordering by `agent_id` (or seeded shuffle)
 - **Sequential Commit**: Execute actions one-by-one for reproducibility
+
+### Olmo Conformity Experiment
+
+The Abstract Agent Machine includes a specialized experiment framework for studying conformity and sycophancy in language models using the Olmo model family.
+
+**Key Features**:
+- **Behavioral Trials**: Test model responses under different social pressure conditions (control, Asch paradigm, authoritative bias)
+- **Mechanistic Interpretability**: Activation capture, probe training (truth/social), and vector analysis
+- **Interventions**: "Sycophancy Switch" - test causal effects by steering activations
+- **Logit Lens**: Analyze token predictions at each layer
+- **Judge Eval**: Subjective evaluation using local Ollama judge models (conformity, truthfulness, rationalization scores)
+- **Provenance System**: Cryptographic Merkle tree for data integrity
+
+**Quick Start - Full Experiment**:
+
+```bash
+# Run full Olmo conformity experiment
+PYTHONPATH=src python -m aam.run olmo-conformity \
+  --suite-config "experiments/olmo_conformity/configs/suite_small.json" \
+  --runs-dir "runs" \
+  --model-id "allenai/Olmo-3-1025-7B" \
+  --layers "10,11,12,13,14,15,16,17,18,19,20" \
+  --probe-layers "10,11,12,13,14,15,16,17,18,19,20" \
+  --run-vector-analysis
+```
+
+**Posthoc Analysis** (after initial run):
+
+```bash
+# Backfill logit lens, interventions, and think token parsing
+PYTHONPATH=src python -m aam.run olmo-conformity-posthoc \
+  --run-dir "runs/20251217_002021_b2cc39a5-3d9d-444d-8489-bb74d6946973" \
+  --trial-scope behavioral-only \
+  --layers "10,11,12,13,14,15,16,17,18,19,20" \
+  --logit-lens-k 10 \
+  --parse-think-tokens \
+  --intervention-scope pressure-only \
+  --intervention-layers "15,16,17,18,19,20" \
+  --alphas "0.5,1.0,2.0" \
+  --max-new-tokens 64
+
+# Judge Eval scoring (requires Ollama with llama3.2:3b model)
+PYTHONPATH=src python -m aam.run olmo-conformity-judgeval \
+  --run-id "b2cc39a5-3d9d-444d-8489-bb74d6946973" \
+  --db "runs/20251217_002021_b2cc39a5-3d9d-444d-8489-bb74d6946973/simulation.db" \
+  --judge-model "llama3.2:3b" \
+  --ollama-base "http://localhost:11434/v1"
+```
+
+**Judge Eval Framework**:
+
+The experiment uses the `judgeval` Python package with custom scorers that run locally via Ollama:
+- **ConformityScorer**: Detects sycophancy and conformity patterns (0-1 scale)
+- **TruthfulnessScorer**: Evaluates factual accuracy (0-1 scale)
+- **RationalizationScorer**: Analyzes reasoning quality for Think models (0-1 scale)
+
+Scores are stored in `conformity_outputs.parsed_answer_json` as JSON. See the [Overview of the first experiment](supplementary%20documentation%20/Overview%20of%20the%20first%20experiment.md) for detailed analysis and interpretation.
+
+**What Gets Captured**:
+- Behavioral metrics: correctness, refusal flags by condition
+- Activation tensors: safetensors files with residual stream activations
+- Probe projections: scalar projections onto truth/social probe vectors
+- Logit lens: top-k token predictions at each layer
+- Intervention results: before/after correctness for activation steering
+- Judge eval scores: subjective evaluation of model outputs
+- Provenance: Merkle tree for cryptographic data integrity
+
+For comprehensive documentation of a complete experiment run, see [`supplementary documentation /Overview of the first experiment.md`](supplementary%20documentation%20/Overview%20of%20the%20first%20experiment.md).
 
 ## Architecture Flow
 
@@ -535,6 +605,85 @@ Options:
 
 This command helps you discover available layers and components for a TransformerLens model before configuring activation capture.
 
+### `olmo-conformity` - Olmo Conformity Experiment
+
+```bash
+python -m aam.run olmo-conformity [OPTIONS]
+```
+
+Runs the full Olmo conformity experiment pipeline:
+- Behavioral trials across multiple conditions
+- Activation capture for specified layers
+- Probe training (truth and social probes)
+- Probe projection computation
+- Vector collision analysis
+
+Options:
+- `--suite-config PATH`: Path to experiment suite configuration JSON
+- `--runs-dir PATH`: Directory to store run outputs
+- `--model-id MODEL_ID`: HuggingFace model ID (e.g., `allenai/Olmo-3-1025-7B`)
+- `--layers LAYERS`: Comma-separated layer indices to capture
+- `--probe-layers LAYERS`: Comma-separated layers for probe training
+- `--run-vector-analysis`: Generate vector collision plots
+
+### `olmo-conformity-posthoc` - Posthoc Analysis Backfill
+
+```bash
+python -m aam.run olmo-conformity-posthoc [OPTIONS]
+```
+
+Backfills missing analyses for an existing run:
+- Logit lens (top-k token predictions)
+- Interventions ("Sycophancy Switch" activation steering)
+- Think token parsing
+
+Options:
+- `--run-dir PATH`: Path to run directory
+- `--trial-scope SCOPE`: `behavioral-only`, `pressure-only`, or `all`
+- `--layers LAYERS`: Comma-separated layer indices
+- `--logit-lens-k N`: Top-k tokens for logit lens (default: 10)
+- `--parse-think-tokens`: Enable think token parsing
+- `--intervention-scope SCOPE`: Scope for interventions
+- `--intervention-layers LAYERS`: Layers to apply interventions
+- `--alphas ALPHAS`: Comma-separated alpha values (e.g., `0.5,1.0,2.0`)
+- `--max-new-tokens N`: Maximum tokens for intervention generations
+
+### `olmo-conformity-judgeval` - Judge Eval Scoring
+
+```bash
+python -m aam.run olmo-conformity-judgeval [OPTIONS]
+```
+
+Populates judge eval scores (conformity, truthfulness, rationalization) for outputs in an existing run.
+
+**Prerequisites**: Ollama must be running locally with the judge model available.
+
+Options:
+- `--run-id UUID`: Run identifier
+- `--db PATH`: Path to simulation.db
+- `--judge-model MODEL`: Ollama model to use as judge (default: `llama3.2`)
+- `--ollama-base URL`: Ollama API base URL (default: `http://localhost:11434/v1`)
+- `--force`: Overwrite existing scores
+- `--limit N`: Optional cap on number of outputs to score
+
+### `olmo-conformity-resume` - Resume from Crash
+
+```bash
+python -m aam.run olmo-conformity-resume [OPTIONS]
+```
+
+Resumes an experiment run from a crash point, repairing activations and recomputing projections.
+
+Options:
+- `--db PATH`: Path to simulation.db
+- `--run-id UUID`: Run identifier
+- `--run-dir PATH`: Path to run directory
+- `--model-id MODEL_ID`: HuggingFace model ID
+- `--layers LAYERS`: Comma-separated layer indices
+- `--component COMPONENT`: Hook component name (e.g., `hook_resid_post`)
+- `--max-new-tokens N`: Maximum tokens for regeneration
+- `--no-repair-activations`: Skip activation repair step
+
 ## Development
 
 ### Running from Source
@@ -680,6 +829,7 @@ If SQLite shows "database is locked":
 - **PRD**: See `Abstract Agent Machine PRD.txt` for full requirements
 - **Phase 1 & 2 Accomplishments**: See `PHASE1_ACCOMPLISHMENTS.md` for implementation details
 - **Agent Policy Settings**: See `AGENT_POLICY_SETTING.md` for policy configuration
+- **Olmo Conformity Experiment**: See [`supplementary documentation /Overview of the first experiment.md`](supplementary%20documentation%20/Overview%20of%20the%20first%20experiment.md) for comprehensive documentation of the first successful experiment run, including judge eval results, probe analysis, and intervention findings
 
 ## Roadmap
 
@@ -693,5 +843,7 @@ If SQLite shows "database is locked":
 - ✅ **Activation Metadata Indexing**: Automatic indexing of activation tensors
 - ✅ **Dynamic Layer Selection**: CLI tool for discovering model layers
 - ✅ **Enhanced Summarization**: LLM-based reflection for memory systems
+- ✅ **Olmo Conformity Experiment**: Full experiment framework with behavioral trials, probe training, interventions, logit lens, and judge eval
+- ✅ **Judge Eval Framework**: Local Ollama-based evaluation with conformity, truthfulness, and rationalization scorers
 - 🔄 **Future**: Distributed execution, advanced domain state tables
 

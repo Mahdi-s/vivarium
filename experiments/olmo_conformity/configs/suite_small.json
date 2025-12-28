@@ -2,14 +2,14 @@
   "suite_name": "olmo_conformity_small",
   "datasets": [
     {
-      "name": "immutable_facts_sample",
-      "version": "v0",
-      "path": "experiments/olmo_conformity/datasets/immutable_facts/sample_items.jsonl"
+      "name": "immutable_facts_minimal",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/immutable_facts/minimal_items.jsonl"
     },
     {
-      "name": "social_conventions_sample",
-      "version": "v0",
-      "path": "experiments/olmo_conformity/datasets/social_conventions/sample_items.jsonl"
+      "name": "social_conventions_minimal",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/social_conventions/minimal_items.jsonl"
     }
   ],
   "conditions": [
@@ -18,12 +18,12 @@
     { "name": "authoritative_bias", "params": { "type": "authoritative_bias", "user_claim_strength": "high" } }
   ],
   "models": [
-    { "variant": "instruct", "model_id": "mock" }
+    { "variant": "base", "model_id": "allenai/Olmo-3-1025-7B" }
   ],
   "run": {
     "seed": 42,
     "temperature": 0.0,
-    "max_items_per_dataset": 50
+    "max_items_per_dataset": 10
   }
 }
 
