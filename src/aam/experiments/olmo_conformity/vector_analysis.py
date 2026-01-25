@@ -31,6 +31,7 @@ def run_truth_social_vector_analysis(
     trace_db: TraceDb,
     run_id: str,
     model_id: str,
+    variant: Optional[str] = None,
     truth_probe_dataset_path: str,
     social_probe_dataset_path: Optional[str],
     layers: List[int],
@@ -38,9 +39,18 @@ def run_truth_social_vector_analysis(
     token_position: int = -1,
     dtype: str = "float16",
     artifacts_dir: str,
+    temperature: float = 0.0,
 ) -> Dict[str, Any]:
     """
     Run the complete Truth Vector vs Social Vector analysis workflow.
+    
+    SCIENTIFIC RIGOR: If variant is specified, probes are trained and projections
+    computed ONLY for trials of that variant. This prevents cross-model probe leakage,
+    which would be scientifically invalid (different models have different representation spaces).
+    
+    Args:
+        variant: If specified, restrict probe training and projections to this model variant.
+                 This is REQUIRED for multi-variant experiments to ensure scientific validity.
     
     Returns dict with:
     - truth_probe_id: ID of trained truth probe
@@ -48,14 +58,22 @@ def run_truth_social_vector_analysis(
     - projection_stats: Statistics about projections
     - turn_layers: Detected "Turn" layers where collision occurs
     - analysis_artifacts: Paths to generated analysis files
+    - variant: The variant this probe was trained for (for documentation)
     """
+    variant_suffix = f"_{variant}" if variant else ""
+    
     results: Dict[str, Any] = {
         "truth_probe_id": None,
         "social_probe_id": None,
         "projection_stats": {},
         "turn_layers": [],
         "analysis_artifacts": {},
+        "variant": variant,  # Track which variant this analysis is for
     }
+    
+    if variant:
+        print(f"[Vector Analysis] Restricting to variant: {variant}")
+        print(f"  (This prevents cross-model probe leakage for scientific rigor)")
     
     # Step 1: Capture activations for truth probe training
     print("Step 1: Capturing activations for truth probe training...")
@@ -63,7 +81,7 @@ def run_truth_social_vector_analysis(
     truth_dataset_id = capture_probe_dataset_to_db(
         trace_db=trace_db,
         run_id=run_id,
-        dataset_name="truth_probe_train",
+        dataset_name=f"truth_probe_train{variant_suffix}",
         dataset_version="v1",
         dataset_path=truth_probe_dataset_path,
         capture=ProbeCaptureSpec(
@@ -74,13 +92,16 @@ def run_truth_social_vector_analysis(
             dtype=dtype,
         ),
         system_prompt=truth_system_prompt,
-        condition_name="truth_probe_capture",
+        condition_name=f"truth_probe_capture{variant_suffix}",
+        temperature=temperature,
+        variant=variant,
     )
     print(f"  Captured truth probe dataset: {truth_dataset_id}")
     
     # Step 2: Train Truth Vector probe
     print("\nStep 2: Training Truth Vector probe...")
-    truth_probe_artifact = os.path.join(artifacts_dir, "truth_probe.safetensors")
+    # Include variant in artifact filename to prevent overwrite
+    truth_probe_artifact = os.path.join(artifacts_dir, f"truth_probe{variant_suffix}.safetensors")
     os.makedirs(os.path.dirname(truth_probe_artifact), exist_ok=True)
     
     truth_probe_id = train_probe_from_captured_activations(
@@ -88,7 +109,7 @@ def run_truth_social_vector_analysis(
         run_id=run_id,
         train_dataset_id=truth_dataset_id,
         model_id=model_id,
-        probe_kind="truth",
+        probe_kind=f"truth{variant_suffix}",
         layers=layers,
         component=component,
         token_position=token_position,
@@ -99,6 +120,7 @@ def run_truth_social_vector_analysis(
     
     # Step 3: Train Social Vector probe (if dataset provided)
     social_probe_id = None
+    social_probe_artifact = None
     if social_probe_dataset_path:
         print("\nStep 3: Capturing activations for social probe training...")
         social_system_prompt = "You are in a social context. Consider group consensus."
@@ -106,7 +128,7 @@ def run_truth_social_vector_analysis(
             social_dataset_id = capture_probe_dataset_to_db(
                 trace_db=trace_db,
                 run_id=run_id,
-                dataset_name="social_probe_train",
+                dataset_name=f"social_probe_train{variant_suffix}",
                 dataset_version="v1",
                 dataset_path=social_probe_dataset_path,
                 capture=ProbeCaptureSpec(
@@ -117,18 +139,20 @@ def run_truth_social_vector_analysis(
                     dtype=dtype,
                 ),
                 system_prompt=social_system_prompt,
-                condition_name="social_probe_capture",
+                condition_name=f"social_probe_capture{variant_suffix}",
+                temperature=temperature,
+                variant=variant,
             )
             print(f"  Captured social probe dataset: {social_dataset_id}")
             
             print("\nStep 4: Training Social Vector probe...")
-            social_probe_artifact = os.path.join(artifacts_dir, "social_probe.safetensors")
+            social_probe_artifact = os.path.join(artifacts_dir, f"social_probe{variant_suffix}.safetensors")
             social_probe_id = train_probe_from_captured_activations(
                 trace_db=trace_db,
                 run_id=run_id,
                 train_dataset_id=social_dataset_id,
                 model_id=model_id,
-                probe_kind="social",
+                probe_kind=f"social{variant_suffix}",
                 layers=layers,
                 component=component,
                 token_position=token_position,
@@ -147,8 +171,10 @@ def run_truth_social_vector_analysis(
     else:
         print("\nStep 3: Skipping social probe (no dataset provided)")
     
-    # Step 4: Compute projections for all trials
-    print("\nStep 5: Computing probe projections for all trials...")
+    # Step 4: Compute projections for trials OF THIS VARIANT ONLY
+    print("\nStep 5: Computing probe projections for trials...")
+    if variant:
+        print(f"  (Restricting to variant '{variant}' to prevent cross-model probe leakage)")
     truth_projections = compute_and_store_probe_projections_for_trials(
         trace_db=trace_db,
         run_id=run_id,
@@ -157,10 +183,11 @@ def run_truth_social_vector_analysis(
         model_id=model_id,
         component=component,
         layers=layers,
+        variant=variant,  # CRITICAL: Only compute for matching variant
     )
     print(f"  Computed {truth_projections} truth projections")
     
-    if social_probe_id:
+    if social_probe_id and social_probe_artifact:
         social_projections = compute_and_store_probe_projections_for_trials(
             trace_db=trace_db,
             run_id=run_id,
@@ -169,6 +196,7 @@ def run_truth_social_vector_analysis(
             model_id=model_id,
             component=component,
             layers=layers,
+            variant=variant,  # CRITICAL: Only compute for matching variant
         )
         print(f"  Computed {social_projections} social projections")
         results["projection_stats"] = {
@@ -189,6 +217,7 @@ def run_truth_social_vector_analysis(
         truth_probe_id=truth_probe_id,
         social_probe_id=social_probe_id,
         layers=layers,
+        variant=variant,  # CRITICAL: Only analyze matching variant
     )
     results["turn_layers"] = turn_layers
     print(f"  Detected {len(turn_layers)} turn layer(s): {turn_layers}")
@@ -202,6 +231,7 @@ def run_truth_social_vector_analysis(
         social_probe_id=social_probe_id,
         layers=layers,
         output_dir=artifacts_dir,
+        variant=variant,  # CRITICAL: Only visualize matching variant
     )
     results["analysis_artifacts"] = viz_paths
     print(f"  Generated visualizations: {list(viz_paths.keys())}")
@@ -216,6 +246,7 @@ def detect_turn_layers(
     truth_probe_id: str,
     social_probe_id: Optional[str],
     layers: List[int],
+    variant: Optional[str] = None,
 ) -> List[int]:
     """
     Detect "Turn" layers where Social Vector suppresses Truth Vector.
@@ -224,13 +255,17 @@ def detect_turn_layers(
     - Truth projection decreases significantly from previous layer
     - Social projection increases significantly
     - This indicates the model is "turning" from truth to social alignment
+    
+    Args:
+        variant: If specified, only analyze trials of this variant (prevents cross-model comparison)
     """
     if not social_probe_id:
         # Without social probe, we can only detect where truth drops
         # This is a simplified version
         return []
     
-    # Query projections for all trials and layers
+    # Query projections for trials and layers, optionally filtered by variant
+    variant_filter = "AND t.variant = ?" if variant else ""
     query = """
         SELECT 
             t.variant,
@@ -240,12 +275,15 @@ def detect_turn_layers(
             AVG(CASE WHEN p.probe_id = ? THEN p.value_float ELSE NULL END) as avg_social
         FROM conformity_probe_projections p
         JOIN conformity_trials t ON t.trial_id = p.trial_id
-        WHERE t.run_id = ? AND p.layer_index IN ({})
+        WHERE t.run_id = ? {variant_filter} AND p.layer_index IN ({layers})
         GROUP BY t.variant, t.condition_id, p.layer_index
         ORDER BY p.layer_index ASC;
-    """.format(",".join("?" * len(layers)))
+    """.format(variant_filter=variant_filter, layers=",".join("?" * len(layers)))
     
-    params = [truth_probe_id, social_probe_id, run_id] + layers
+    params = [truth_probe_id, social_probe_id, run_id]
+    if variant:
+        params.append(variant)
+    params.extend(layers)
     rows = trace_db.conn.execute(query, params).fetchall()
     
     # Group by layer
@@ -293,9 +331,13 @@ def generate_vector_collision_plots(
     social_probe_id: Optional[str],
     layers: List[int],
     output_dir: str,
+    variant: Optional[str] = None,
 ) -> Dict[str, str]:
     """
     Generate visualization plots for vector collision analysis.
+    
+    Args:
+        variant: If specified, only visualize trials of this variant (prevents cross-model comparison)
     
     Returns dict mapping plot name to file path.
     """
@@ -307,9 +349,11 @@ def generate_vector_collision_plots(
         return {}
     
     os.makedirs(output_dir, exist_ok=True)
+    variant_suffix = f"_{variant}" if variant else ""
     plots: Dict[str, str] = {}
     
-    # Query projection data
+    # Query projection data, optionally filtered by variant
+    variant_filter = "AND t.variant = ?" if variant else ""
     if social_probe_id:
         query = """
             SELECT 
@@ -318,11 +362,14 @@ def generate_vector_collision_plots(
                 AVG(CASE WHEN p.probe_id = ? THEN p.value_float ELSE NULL END) as avg_social
             FROM conformity_probe_projections p
             JOIN conformity_trials t ON t.trial_id = p.trial_id
-            WHERE t.run_id = ? AND p.layer_index IN ({})
+            WHERE t.run_id = ? {variant_filter} AND p.layer_index IN ({layers})
             GROUP BY p.layer_index
             ORDER BY p.layer_index ASC;
-        """.format(",".join("?" * len(layers)))
-        params = [truth_probe_id, social_probe_id, run_id] + layers
+        """.format(variant_filter=variant_filter, layers=",".join("?" * len(layers)))
+        params = [truth_probe_id, social_probe_id, run_id]
+        if variant:
+            params.append(variant)
+        params.extend(layers)
     else:
         query = """
             SELECT 
@@ -330,11 +377,14 @@ def generate_vector_collision_plots(
                 AVG(p.value_float) as avg_truth
             FROM conformity_probe_projections p
             JOIN conformity_trials t ON t.trial_id = p.trial_id
-            WHERE t.run_id = ? AND p.probe_id = ? AND p.layer_index IN ({})
+            WHERE t.run_id = ? AND p.probe_id = ? {variant_filter} AND p.layer_index IN ({layers})
             GROUP BY p.layer_index
             ORDER BY p.layer_index ASC;
-        """.format(",".join("?" * len(layers)))
-        params = [run_id, truth_probe_id] + layers
+        """.format(variant_filter=variant_filter, layers=",".join("?" * len(layers)))
+        params = [run_id, truth_probe_id]
+        if variant:
+            params.append(variant)
+        params.extend(layers)
     
     rows = trace_db.conn.execute(query, params).fetchall()
     
@@ -351,15 +401,16 @@ def generate_vector_collision_plots(
         ax.plot(df["layer_index"], df["avg_social"], marker="s", label="Social Vector", linewidth=2)
     ax.set_xlabel("Layer Index")
     ax.set_ylabel("Average Projection Score")
-    ax.set_title("Truth vs Social Vector Projections by Layer")
+    title_suffix = f" ({variant})" if variant else ""
+    ax.set_title(f"Truth vs Social Vector Projections by Layer{title_suffix}")
     ax.legend()
     ax.grid(True, alpha=0.3)
     plt.tight_layout()
     
-    plot_path = os.path.join(output_dir, "vector_collision_by_layer.png")
+    plot_path = os.path.join(output_dir, f"vector_collision_by_layer{variant_suffix}.png")
     plt.savefig(plot_path, dpi=150)
     plt.close()
-    plots["vector_collision_by_layer"] = plot_path
+    plots[f"vector_collision_by_layer{variant_suffix}"] = plot_path
     
     # Plot 2: Difference (Social - Truth)
     if social_probe_id and "avg_social" in df.columns:
@@ -369,13 +420,13 @@ def generate_vector_collision_plots(
         ax.axhline(y=0, color="black", linestyle="--", alpha=0.5)
         ax.set_xlabel("Layer Index")
         ax.set_ylabel("Social - Truth Projection")
-        ax.set_title("Vector Collision: Social Dominance by Layer")
+        ax.set_title(f"Vector Collision: Social Dominance by Layer{title_suffix}")
         ax.grid(True, alpha=0.3)
         plt.tight_layout()
         
-        plot_path = os.path.join(output_dir, "vector_difference_by_layer.png")
+        plot_path = os.path.join(output_dir, f"vector_difference_by_layer{variant_suffix}.png")
         plt.savefig(plot_path, dpi=150)
         plt.close()
-        plots["vector_difference_by_layer"] = plot_path
+        plots[f"vector_difference_by_layer{variant_suffix}"] = plot_path
     
     return plots

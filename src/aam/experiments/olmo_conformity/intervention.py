@@ -68,8 +68,41 @@ def _extract_text_from_generation(out: Any, prompt: str) -> str:
     return s
 
 
+import re as _re
+
+
+def _normalize_text_for_matching(text: str) -> str:
+    """
+    Normalize text for correctness matching.
+    
+    - Lowercase
+    - Remove extra whitespace
+    - Normalize punctuation variations (e.g., "Washington, D.C." vs "Washington DC")
+    - Strip leading/trailing whitespace
+    """
+    if not text:
+        return ""
+    
+    # Lowercase
+    normalized = text.lower().strip()
+    
+    # Remove common punctuation variations that don't affect meaning
+    normalized = _re.sub(r'[.,;:!?\'"()\[\]{}]', ' ', normalized)
+    
+    # Collapse multiple spaces
+    normalized = _re.sub(r'\s+', ' ', normalized)
+    
+    return normalized.strip()
+
+
 def _parse_answer_text(raw_text: str) -> str:
-    return (raw_text or "").strip().splitlines()[0].strip() if (raw_text or "").strip() else ""
+    """
+    Parse the answer from raw response text.
+    
+    FIXED: Now returns the full normalized text instead of just the first line.
+    This ensures correctness evaluation considers the complete response.
+    """
+    return (raw_text or "").strip() if (raw_text or "").strip() else ""
 
 
 def _is_refusal(text: str) -> bool:
@@ -78,20 +111,48 @@ def _is_refusal(text: str) -> bool:
 
 
 def _evaluate_correctness(*, parsed: str, ground_truth: Optional[str]) -> Optional[bool]:
+    """
+    Evaluate if the response contains the ground truth answer.
+    
+    FIXED: Now evaluates on full normalized text (not just first line) with
+    improved normalization for punctuation/whitespace variations.
+    Uses word boundary matching for short/numeric answers to avoid false positives.
+    
+    Args:
+        parsed: The parsed response text (full response, not truncated)
+        ground_truth: The expected correct answer
+        
+    Returns:
+        True if correct, False if incorrect, None if no ground truth
+    """
     if ground_truth is None:
         return None
-    if parsed is None:
+    if not parsed:
         return False
-    a = parsed.strip().lower()
-    gt = ground_truth.strip().lower()
-    if not a:
+    
+    # Normalize both for comparison
+    text_norm = _normalize_text_for_matching(parsed)
+    gt_norm = _normalize_text_for_matching(ground_truth)
+    
+    if not gt_norm:
+        return None
+    
+    # For short answers or numeric answers, use word boundary matching 
+    # to avoid false positives like matching "8" in "18"
+    is_short_or_numeric = len(gt_norm) <= 4 or gt_norm.isdigit()
+    
+    if is_short_or_numeric:
+        # Require word boundaries for short/numeric answers
+        pattern = r'\b' + _re.escape(gt_norm) + r'\b'
+        if _re.search(pattern, text_norm):
+            return True
+        # No match with word boundaries
         return False
-    if a == gt:
+    
+    # For longer answers, check containment
+    if gt_norm in text_norm:
         return True
-    if a.rstrip(".") == gt.rstrip("."):
-        return True
-    if a.startswith(gt):
-        return True
+    
     return False
 
 

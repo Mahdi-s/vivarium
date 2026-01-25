@@ -94,6 +94,8 @@ def capture_probe_dataset_to_db(
     capture: ProbeCaptureSpec,
     system_prompt: str,
     condition_name: str = "probe_capture",
+    temperature: float = 0.0,
+    variant: Optional[str] = None,
 ) -> str:
     """
     Runs a TL model over labeled statements, captures activations, and registers:
@@ -133,7 +135,8 @@ def capture_probe_dataset_to_db(
     cap_ctx = CaptureContext(output_dir=activations_dir, config=cap_cfg, dtype=str(capture.dtype), trace_db=trace_db)
     model_id_str = str(capture.model_id)
     gateway = select_local_gateway(model_id_or_path=model_id_str, capture_context=cap_ctx)
-    variant = "huggingface" if "olmo" in model_id_str.lower() else "transformerlens"
+    if variant is None:
+        variant = "huggingface" if "olmo" in model_id_str.lower() else "transformerlens"
 
     # IMPORTANT:
     # Do NOT reuse trial time_step indices; the main behavioral runner already populated
@@ -153,7 +156,9 @@ def capture_probe_dataset_to_db(
     # Deterministic (within this capture): time_step = base offset + item index
     for i, it in enumerate(items):
         time_step = int(base_ts + i)
-        item_id = str(it.get("item_id") or f"{dataset_name}_{i:06d}")
+        # Prefix item_id with dataset_id to ensure uniqueness across probe/behavioral datasets
+        base_item_id = str(it.get("item_id") or f"{dataset_name}_{i:06d}")
+        item_id = f"probe_{dataset_id[:8]}_{base_item_id}"
         label = it.get("label")
         
         # Labels are required for probe training, but we allow capturing activations
@@ -185,7 +190,7 @@ def capture_probe_dataset_to_db(
             item_id=item_id,
             condition_id=condition_id,
             seed=0,
-            temperature=0.0,
+            temperature=temperature,
         )
         trace_db.upsert_conformity_trial_step(trial_id=trial_id, time_step=time_step, agent_id=str(capture.agent_id))
 
@@ -205,7 +210,7 @@ def capture_probe_dataset_to_db(
         msgs = build_messages(system=system_prompt, user=user_prompt, history=history)
         cap_ctx.begin_inference()
         t0 = time.time()
-        resp = gateway.chat(model=str(capture.model_id), messages=msgs, tools=None, tool_choice=None, temperature=0.0)
+        resp = gateway.chat(model=str(capture.model_id), messages=msgs, tools=None, tool_choice=None, temperature=temperature)
         latency_ms = (time.time() - t0) * 1000.0
 
         # Commit activations and flush to shard file aligned to time_step
@@ -388,10 +393,20 @@ def compute_and_store_probe_projections_for_trials(
     model_id: str,
     component: str,
     layers: List[int],
+    variant: Optional[str] = None,
 ) -> int:
     """
     Computes scalar projections for each (trial, layer) based on the probe weights.
     Requires activation_metadata aligned via conformity_trial_steps.
+    
+    SCIENTIFIC RIGOR: If variant is specified, only compute projections for trials
+    of that variant. This prevents cross-model probe leakage (applying a probe trained
+    on one model's representation space to another model's activations).
+    
+    Args:
+        variant: If specified, only compute projections for trials of this variant.
+                 This is critical for multi-variant experiments.
+    
     Returns number of projection rows inserted.
     """
     torch, _ = _require_torch_and_safetensors()
@@ -399,16 +414,17 @@ def compute_and_store_probe_projections_for_trials(
 
     weights = load_file(probe_artifact_path)
 
-    trials = trace_db.conn.execute(
-        """
-        SELECT t.trial_id, s.time_step, s.agent_id
+    # Build query with optional variant filter
+    variant_filter = "AND t.variant = ?" if variant else ""
+    query = f"""
+        SELECT t.trial_id, t.variant, s.time_step, s.agent_id
         FROM conformity_trials t
         JOIN conformity_trial_steps s ON s.trial_id = t.trial_id
-        WHERE t.run_id = ?
+        WHERE t.run_id = ? {variant_filter}
         ORDER BY s.time_step ASC;
-        """,
-        (run_id,),
-    ).fetchall()
+    """
+    params = (run_id, variant) if variant else (run_id,)
+    trials = trace_db.conn.execute(query, params).fetchall()
     if not trials:
         return 0
 

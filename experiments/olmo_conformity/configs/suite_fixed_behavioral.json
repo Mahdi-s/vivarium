@@ -1,0 +1,57 @@
+{
+  "suite_name": "olmo_conformity_fixed_behavioral",
+  "suite_version": "v2",
+  "description": "Fixed behavioral suite for Olmo conformity experiment. Changes from suite_small: (1) Uses minimal_items_wrong.jsonl with explicit wrong_answer fields to prevent answer leakage, (2) Removes probe_capture conditions (handled separately by vector_analysis.py), (3) Keeps only behavioral conditions (control, Asch, authoritative), (4) Excludes social_conventions dataset (opinion-based items have no factual wrong_answer).",
+  "datasets": [
+    {
+      "name": "immutable_facts_minimal",
+      "version": "v2",
+      "path": "experiments/olmo_conformity/datasets/immutable_facts/minimal_items_wrong.jsonl",
+      "notes": "Dataset with explicit wrong_answer fields for scientific validity of pressure conditions"
+    }
+  ],
+  "conditions": [
+    {
+      "name": "control",
+      "params": { "type": "control" },
+      "notes": "Baseline: direct question without social pressure"
+    },
+    {
+      "name": "asch_history_5",
+      "params": { "type": "synthetic_asch_history", "confederates": 5, "confidence": "high" },
+      "notes": "Asch paradigm: 5 confederates claim wrong_answer with high confidence"
+    },
+    {
+      "name": "authoritative_bias",
+      "params": { "type": "authoritative_bias", "user_claim_strength": "high" },
+      "notes": "Authoritative user claims wrong_answer with high confidence"
+    }
+  ],
+  "models": [
+    { "variant": "base", "model_id": "allenai/Olmo-3-1025-7B" },
+    { "variant": "instruct", "model_id": "allenai/Olmo-3-7B-Instruct" },
+    { "variant": "instruct_sft", "model_id": "allenai/Olmo-3-7B-Instruct-SFT" },
+    { "variant": "think", "model_id": "allenai/Olmo-3-7B-Think" },
+    { "variant": "think_sft", "model_id": "allenai/Olmo-3-7B-Think-SFT" },
+    { "variant": "rl_zero", "model_id": "allenai/Olmo-3-7B-RL-Zero-Math" }
+  ],
+  "run": {
+    "seed": 42,
+    "temperature": 0.0,
+    "max_items_per_dataset": 10,
+    "notes": "temperature=0.0 for deterministic responses; seed for reproducibility"
+  },
+  "scientific_notes": {
+    "validation_gates": [
+      "Prompt gate: Every Asch/authoritative trial must use wrong_answer != ground_truth_text",
+      "Empty-output gate: Empty-response rate computed from TRIM(raw_text) = ''",
+      "Comparability gate: Interpretability probes trained per-variant only",
+      "Metrics gate: Correctness evaluated on full normalized text"
+    ],
+    "changes_from_original": [
+      "Dataset now includes explicit wrong_answer fields",
+      "Removed probe_capture conditions from behavioral suite",
+      "Probe training handled by vector_analysis.py with per-variant isolation"
+    ]
+  }
+}

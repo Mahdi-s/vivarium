@@ -189,6 +189,7 @@ def main(argv: list[str] | None = None) -> int:
     pp.add_argument("--component", type=str, default="hook_resid_post", help="TransformerLens hook component under blocks.<L>., e.g. hook_resid_post")
     pp.add_argument("--token-position", type=int, default=-1)
     pp.add_argument("--dtype", type=str, default="float16", choices=["float16", "float32"])
+    pp.add_argument("--temperature", type=float, default=0.0, help="Temperature for activation capture")
 
     pr = sub.add_parser("olmo-conformity-report", help="Generate figures/tables from conformity_* tables for a run")
     pr.add_argument("--run-id", type=str, required=True)
@@ -258,12 +259,8 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="Path to run directory (defaults to dirname(--db))",
     )
-    prr.add_argument(
-        "--layers",
-        type=str,
-        default="10,11,12,13,14,15,16,17,18,19,20",
-        help="Comma-separated layer indices",
-    )
+    default_layers_32 = ",".join(str(i) for i in range(32))
+    prr.add_argument("--layers", type=str, default=default_layers_32, help="Comma-separated layer indices")
     prr.add_argument("--component", type=str, default="hook_resid_post")
     prr.add_argument("--max-new-tokens", type=int, default=128)
     prr.add_argument("--no-repair-activations", action="store_true", help="Skip trial activation repair step")
@@ -276,7 +273,7 @@ def main(argv: list[str] | None = None) -> int:
     pph.add_argument("--db", type=str, default=None, help="Path to simulation.db (defaults to <run-dir>/simulation.db)")
     pph.add_argument("--run-id", type=str, default=None, help="Run UUID (defaults to derived from run-dir name)")
     pph.add_argument("--model-id", type=str, default=None, help="Model id (defaults to first trial's model_id)")
-    pph.add_argument("--layers", type=str, default="10,11,12,13,14,15,16,17,18,19,20", help="Comma-separated layer indices")
+    pph.add_argument("--layers", type=str, default=default_layers_32, help="Comma-separated layer indices")
     pph.add_argument("--logit-lens-k", type=int, default=10)
     pph.add_argument("--trial-scope", type=str, default="behavioral-only", choices=["all", "behavioral-only"])
     pph.add_argument("--parse-think-tokens", action="store_true", help="Parse <think>...</think> blocks into conformity_think_tokens")
@@ -307,7 +304,7 @@ def main(argv: list[str] | None = None) -> int:
     pe.add_argument("--capture-layers", type=str, default=None)
     pe.add_argument("--truth-probe-dataset", type=str, default=None)
     pe.add_argument("--social-probe-dataset", type=str, default=None)
-    pe.add_argument("--probe-layers", type=str, default="10,11,12,13,14,15,16,17,18,19,20")
+    pe.add_argument("--probe-layers", type=str, default=default_layers_32)
     pe.add_argument("--run-interventions", action="store_true")
     pe.add_argument("--intervention-layers", type=str, default="15,16,17,18,19,20")
     pe.add_argument("--intervention-alphas", type=str, default="0.5,1.0,2.0")
@@ -661,6 +658,7 @@ def main(argv: list[str] | None = None) -> int:
             dataset_path=str(args.dataset_path),
             capture=cap,
             system_prompt="You are a truthful assistant. Answer True/False accurately.",
+            temperature=float(args.temperature),
         )
 
         # 2) Train probe and save weights near the DB (run dir)
@@ -1156,6 +1154,7 @@ def main(argv: list[str] | None = None) -> int:
             social_probe_id=str(args.social_probe_id) if args.social_probe_id else None,
             generate_reports=(not bool(args.no_reports)),
             run_vector_analysis=bool(args.run_vector_analysis),
+            temperature=float(load_experiment_config(str(args.suite_config)).run.temperature or 0.0),
         )
         
         results = run_full_experiment(config)

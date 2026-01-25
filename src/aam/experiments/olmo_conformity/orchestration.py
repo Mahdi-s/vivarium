@@ -65,6 +65,7 @@ class ExperimentConfig:
     # Analysis
     generate_reports: bool = True
     run_vector_analysis: bool = False
+    temperature: float = 0.0  # Added to track config temperature
 
 
 def run_full_experiment(config: ExperimentConfig) -> Dict[str, Any]:
@@ -136,45 +137,63 @@ def run_full_experiment(config: ExperimentConfig) -> Dict[str, Any]:
     print(f"  Completed {trial_count} trials")
     
     # Step 2: Train probes (if datasets provided)
+    # SCIENTIFIC RIGOR: Train probes PER VARIANT to prevent cross-model probe leakage
     if config.truth_probe_dataset_path:
-        print("\n[Step 2/5] Training probes...")
-        probe_layers = config.probe_layers or [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+        print("\n[Step 2/5] Training probes (per variant for scientific rigor)...")
+        probe_layers = config.probe_layers or list(range(32))
         
-        # Get model_id from first trial
-        model_row = trace_db.conn.execute(
-            "SELECT model_id FROM conformity_trials WHERE run_id = ? LIMIT 1;",
+        # Get all unique (model_id, variant) pairs from trials
+        variant_rows = trace_db.conn.execute(
+            """
+            SELECT DISTINCT model_id, variant
+            FROM conformity_trials
+            WHERE run_id = ?
+            ORDER BY variant;
+            """,
             (results["run_id"],)
-        ).fetchone()
+        ).fetchall()
         
-        if not model_row:
+        if not variant_rows:
             print("  Warning: No trials found, skipping probe training")
         else:
-            model_id = model_row["model_id"]
-            vector_results = run_truth_social_vector_analysis(
-                trace_db=trace_db,
-                run_id=results["run_id"],
-                model_id=model_id,
-                truth_probe_dataset_path=config.truth_probe_dataset_path,
-                social_probe_dataset_path=config.social_probe_dataset_path,
-                layers=probe_layers,
-                component=config.probe_component,
-                token_position=config.probe_token_position,
-                dtype=config.capture_dtype,
-                artifacts_dir=paths.artifacts_dir,
-            )
-        
-            results["probe_ids"] = {
-                "truth_probe_id": vector_results["truth_probe_id"],
-                "social_probe_id": vector_results.get("social_probe_id"),
-            }
-            results["analysis_artifacts"].update(vector_results.get("analysis_artifacts", {}))
-            print(f"  Trained truth probe: {vector_results['truth_probe_id']}")
-            if vector_results.get("social_probe_id"):
-                print(f"  Trained social probe: {vector_results['social_probe_id']}")
+            # Train probes for each variant separately
+            results["probe_ids"] = {}
+            
+            for vr in variant_rows:
+                model_id = vr["model_id"]
+                variant = vr["variant"]
+                
+                print(f"\n  Training probes for variant: {variant}")
+                vector_results = run_truth_social_vector_analysis(
+                    trace_db=trace_db,
+                    run_id=results["run_id"],
+                    model_id=model_id,
+                    variant=variant,  # CRITICAL: Train per variant
+                    truth_probe_dataset_path=config.truth_probe_dataset_path,
+                    social_probe_dataset_path=config.social_probe_dataset_path,
+                    layers=probe_layers,
+                    component=config.probe_component,
+                    token_position=config.probe_token_position,
+                    dtype=config.capture_dtype,
+                    artifacts_dir=paths.artifacts_dir,
+                    temperature=config.temperature,  # Pass temperature from config
+                )
+            
+                results["probe_ids"][variant] = {
+                    "truth_probe_id": vector_results["truth_probe_id"],
+                    "social_probe_id": vector_results.get("social_probe_id"),
+                }
+                results["analysis_artifacts"].update(vector_results.get("analysis_artifacts", {}))
+                print(f"    Trained truth probe: {vector_results['truth_probe_id']}")
+                if vector_results.get("social_probe_id"):
+                    print(f"    Trained social probe: {vector_results['social_probe_id']}")
+            
+            print(f"\n  Trained probes for {len(variant_rows)} variant(s)")
     else:
         print("\n[Step 2/5] Skipping probe training (no dataset provided)")
     
     # Step 3: Run interventions (if enabled)
+    # Note: Interventions should also be per-variant to maintain scientific rigor
     if config.run_interventions and config.social_probe_artifact_path and config.social_probe_id:
         print("\n[Step 3/5] Running interventions...")
         intervention_layers = config.intervention_layers or [15, 16, 17, 18, 19, 20]
@@ -206,6 +225,54 @@ def run_full_experiment(config: ExperimentConfig) -> Dict[str, Any]:
             print(f"  Completed {inserted} intervention trials")
         else:
             print("  Warning: No trials found, skipping interventions")
+    elif config.run_interventions and results.get("probe_ids"):
+        # Use per-variant probes if available
+        print("\n[Step 3/5] Running per-variant interventions...")
+        intervention_layers = config.intervention_layers or [15, 16, 17, 18, 19, 20]
+        intervention_alphas = config.intervention_alphas or [0.5, 1.0, 2.0]
+        
+        results["intervention_stats"] = {"by_variant": {}}
+        total_inserted = 0
+        
+        for variant, probe_ids in results.get("probe_ids", {}).items():
+            if not probe_ids.get("social_probe_id"):
+                continue
+            
+            # Get model_id for this variant
+            model_row = trace_db.conn.execute(
+                "SELECT model_id FROM conformity_trials WHERE run_id = ? AND variant = ? LIMIT 1;",
+                (results["run_id"], variant)
+            ).fetchone()
+            
+            if not model_row:
+                continue
+            
+            model_id = model_row["model_id"]
+            # Artifact path includes variant suffix
+            artifact_path = os.path.join(paths.artifacts_dir, f"social_probe_{variant}.safetensors")
+            
+            if not os.path.exists(artifact_path):
+                print(f"  Warning: Social probe artifact not found for {variant}, skipping")
+                continue
+            
+            inserted = run_intervention_sweep(
+                trace_db=trace_db,
+                run_id=results["run_id"],
+                model_id=model_id,
+                probe_artifact_path=artifact_path,
+                social_probe_id=probe_ids["social_probe_id"],
+                target_layers=intervention_layers,
+                component_hook=config.probe_component,
+                alpha_values=intervention_alphas,
+                max_new_tokens=64,
+            )
+            
+            results["intervention_stats"]["by_variant"][variant] = inserted
+            total_inserted += inserted
+            print(f"    {variant}: {inserted} intervention trials")
+        
+        results["intervention_stats"]["total_inserted"] = total_inserted
+        print(f"  Completed {total_inserted} total intervention trials")
     else:
         print("\n[Step 3/5] Skipping interventions (not enabled or missing probe)")
     

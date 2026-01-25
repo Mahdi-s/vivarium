@@ -4,9 +4,30 @@ import asyncio
 import json
 import os
 import random
+import sys
 import time
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Protocol, TYPE_CHECKING
+from typing import Any, Dict, List, Optional, Protocol, Tuple, TYPE_CHECKING
+
+# Mock torch.library.register_fake if missing (to fix torchvision/torch mismatch)
+try:
+    import torch
+    if hasattr(torch, "library") and not hasattr(torch.library, "register_fake"):
+        def _register_fake(name):
+            def decorator(fn): return fn
+            return decorator
+        torch.library.register_fake = _register_fake
+except ImportError:
+    pass
+
+# Mock warn_once in torch._dynamo.utils if missing (to fix torchao/torch mismatch)
+try:
+    import torch._dynamo.utils as _du
+    if not hasattr(_du, "warn_once"):
+        def _warn_once(msg): pass
+        _du.warn_once = _warn_once
+except (ImportError, AttributeError):
+    pass
 
 from aam.tools import ToolSpec
 
@@ -792,7 +813,7 @@ class HuggingFaceHookedGateway:
             torch_dtype = torch.float16 if dev in ("cuda", "mps") else torch.float32
 
         # Load config and sanitize rope_scaling types (Olmo3 uses ints here; transformers warns).
-        cfg = AutoConfig.from_pretrained(self.model_id_or_path)
+        cfg = AutoConfig.from_pretrained(self.model_id_or_path, trust_remote_code=True)
         try:
             rs = getattr(cfg, "rope_scaling", None)
             if isinstance(rs, dict):
@@ -803,13 +824,14 @@ class HuggingFaceHookedGateway:
         except Exception:
             pass
 
-        self._tokenizer = AutoTokenizer.from_pretrained(self.model_id_or_path)
+        self._tokenizer = AutoTokenizer.from_pretrained(self.model_id_or_path, trust_remote_code=True)
         print(f"  [HF Gateway] Loading model weights...")
         self._model = AutoModelForCausalLM.from_pretrained(
             self.model_id_or_path,
             config=cfg,
             dtype=torch_dtype,
             low_cpu_mem_usage=True,
+            trust_remote_code=True,
         )
         print(f"  [HF Gateway] Model weights loaded")
 
@@ -995,7 +1017,8 @@ class HuggingFaceHookedGateway:
             print(f"  [HF Gateway] All {num_layers} hooks registered")
         print(f"  [HF Gateway] Initialization complete")
 
-    def _messages_to_prompt(self, messages: List[JsonDict]) -> str:
+    def _messages_to_prompt_legacy(self, messages: List[JsonDict]) -> str:
+        """Legacy prompt formatting - used as fallback when no chat template available."""
         lines: List[str] = []
         for m in messages:
             role = str(m.get("role") or "user")
@@ -1003,6 +1026,31 @@ class HuggingFaceHookedGateway:
             lines.append(f"{role.upper()}:\n{content}\n")
         lines.append("ASSISTANT:\n")
         return "\n".join(lines)
+
+    def _messages_to_prompt(self, messages: List[JsonDict]) -> Tuple[str, bool]:
+        """
+        Convert messages to a prompt string, preferring chat templates.
+        
+        Returns:
+            Tuple of (prompt_string, used_chat_template)
+            - used_chat_template: True if tokenizer.apply_chat_template was used
+        """
+        # Try to use the tokenizer's chat template (preferred for instruct models)
+        try:
+            if hasattr(self._tokenizer, "apply_chat_template"):
+                # Check if chat template is actually configured
+                if getattr(self._tokenizer, "chat_template", None) is not None:
+                    prompt = self._tokenizer.apply_chat_template(
+                        messages,
+                        tokenize=False,
+                        add_generation_prompt=True,
+                    )
+                    return prompt, True
+        except Exception as e:
+            print(f"      [HF Gateway] Warning: apply_chat_template failed ({e}), using legacy format")
+        
+        # Fallback to legacy formatting
+        return self._messages_to_prompt_legacy(messages), False
 
     def chat(
         self,
@@ -1014,13 +1062,14 @@ class HuggingFaceHookedGateway:
         temperature: float = 0.0,
     ) -> JsonDict:
         _ = (model, tools, tool_choice)
-        prompt = self._messages_to_prompt(messages)
+        prompt, used_chat_template = self._messages_to_prompt(messages)
 
         if self.capture_context is not None:
             self.capture_context.begin_inference()
 
-        print(f"      [HF Gateway] Tokenizing prompt...")
+        print(f"      [HF Gateway] Tokenizing prompt (chat_template={used_chat_template})...")
         inputs = self._tokenizer(prompt, return_tensors="pt")
+        input_length = inputs["input_ids"].shape[1]
         try:
             dev = getattr(self._model, "device", None) or self.device or "cpu"
             inputs = {k: v.to(dev) for k, v in inputs.items()}
@@ -1045,9 +1094,26 @@ class HuggingFaceHookedGateway:
         print(f"      [HF Gateway] Generation complete, output shape: {out.shape}")
 
         print(f"      [HF Gateway] Decoding tokens...")
-        text = self._tokenizer.decode(out[0], skip_special_tokens=True)
-        if text.startswith(prompt):
-            text = text[len(prompt) :].strip()
+        # Extract only the generated tokens (more robust than string prefix matching)
+        generated_ids = out[0][input_length:]
+        text = self._tokenizer.decode(generated_ids, skip_special_tokens=True).strip()
+        
+        # Fallback: if generated_ids decoding fails or is empty, try full decode with prefix stripping
+        if not text:
+            full_text = self._tokenizer.decode(out[0], skip_special_tokens=True)
+            # Try multiple stripping approaches
+            if full_text.startswith(prompt):
+                text = full_text[len(prompt):].strip()
+            else:
+                # Try stripping by whitespace-normalized comparison
+                prompt_normalized = " ".join(prompt.split())
+                full_normalized = " ".join(full_text.split())
+                if full_normalized.startswith(prompt_normalized):
+                    # Find where the response actually starts
+                    text = full_text[len(prompt):].strip() if len(full_text) > len(prompt) else ""
+                else:
+                    text = full_text.strip()
+        
         print(f"      [HF Gateway] Decoding complete, response length: {len(text)} chars")
         return {"choices": [{"message": {"role": "assistant", "content": text}}]}
 
