@@ -97,12 +97,58 @@ def _normalize_text_for_matching(text: str) -> str:
 
 def _parse_answer_text(raw_text: str) -> str:
     """
-    Parse the answer from raw response text.
+    Parse and extract the actual answer from raw response text.
     
-    FIXED: Now returns the full normalized text instead of just the first line.
-    This ensures correctness evaluation considers the complete response.
+    This function extracts the meaningful answer portion by:
+    1. Stopping at garbage markers (hallucinated conversations, random passages, etc.)
+    2. Extracting just the first sentence/answer portion
+    3. Handling base model artifacts that append random text
+    
+    Returns:
+        The extracted answer text, cleaned of garbage suffixes
     """
-    return (raw_text or "").strip() if (raw_text or "").strip() else ""
+    if not raw_text or not raw_text.strip():
+        return ""
+    
+    text = raw_text.strip()
+    
+    # List of markers that indicate the start of garbage/hallucinated content
+    # These patterns indicate the model started generating unrelated content
+    garbage_markers = [
+        "Passage:",           # Random passage appended (common in base models)
+        "Question:",          # Hallucinated new question
+        "USER:",              # Hallucinated conversation turn
+        "ASSISTANT:",         # Hallucinated conversation turn  
+        "SYSTEM:",            # Hallucinated system prompt
+        "\nUSER",             # Newline + USER
+        "\nASSISTANT",        # Newline + ASSISTANT
+        "\n\nUSER",           # Double newline + USER
+        "\n\nQuestion",       # Double newline + Question
+        "Article:",           # Random article content
+        "Movie title:",       # Random movie content
+        "Movie plot:",        # Random movie plot
+    ]
+    
+    # Find the earliest garbage marker and truncate there
+    earliest_pos = len(text)
+    for marker in garbage_markers:
+        pos = text.find(marker)
+        if pos > 0:  # Must be after the start (pos > 0, not pos >= 0)
+            earliest_pos = min(earliest_pos, pos)
+    
+    # Truncate at earliest garbage marker
+    extracted = text[:earliest_pos].strip()
+    
+    # If the extracted text is empty after truncation, return original first line
+    if not extracted:
+        # Fall back to first non-empty line
+        lines = text.split('\n')
+        for line in lines:
+            if line.strip():
+                return line.strip()
+        return ""
+    
+    return extracted
 
 
 def _is_refusal(text: str) -> bool:
@@ -114,12 +160,14 @@ def _evaluate_correctness(*, parsed: str, ground_truth: Optional[str]) -> Option
     """
     Evaluate if the response contains the ground truth answer.
     
-    FIXED: Now evaluates on full normalized text (not just first line) with
-    improved normalization for punctuation/whitespace variations.
-    Uses word boundary matching for short/numeric answers to avoid false positives.
+    FIXED: 
+    - Evaluates on cleaned/extracted answer text (not full garbage)
+    - Handles answers at the start of text (e.g., "RomeQuestion:" should match "Rome")
+    - Uses word boundary OR start-of-string matching for short answers
+    - Improved normalization for punctuation/whitespace variations
     
     Args:
-        parsed: The parsed response text (full response, not truncated)
+        parsed: The parsed response text (should be cleaned by _parse_answer_text)
         ground_truth: The expected correct answer
         
     Returns:
@@ -137,19 +185,31 @@ def _evaluate_correctness(*, parsed: str, ground_truth: Optional[str]) -> Option
     if not gt_norm:
         return None
     
-    # For short answers or numeric answers, use word boundary matching 
+    # For short answers or numeric answers, use careful matching
     # to avoid false positives like matching "8" in "18"
     is_short_or_numeric = len(gt_norm) <= 4 or gt_norm.isdigit()
     
     if is_short_or_numeric:
-        # Require word boundaries for short/numeric answers
-        pattern = r'\b' + _re.escape(gt_norm) + r'\b'
-        if _re.search(pattern, text_norm):
+        # Check 1: Answer at start of text (handles "RomeQuestion:" -> matches "Rome")
+        # The answer should be at the very beginning, followed by end-of-string or non-word char
+        start_pattern = r'^' + _re.escape(gt_norm) + r'(?:\b|$)'
+        if _re.search(start_pattern, text_norm):
             return True
-        # No match with word boundaries
+        
+        # Check 2: Standard word boundary matching anywhere in text
+        boundary_pattern = r'\b' + _re.escape(gt_norm) + r'\b'
+        if _re.search(boundary_pattern, text_norm):
+            return True
+        
+        # Check 3: Answer at end of text (handles "...is Rome" at the end)
+        end_pattern = r'(?:^|\b)' + _re.escape(gt_norm) + r'$'
+        if _re.search(end_pattern, text_norm):
+            return True
+        
+        # No match with any pattern
         return False
     
-    # For longer answers, check containment
+    # For longer answers (>4 chars), check containment
     if gt_norm in text_norm:
         return True
     
