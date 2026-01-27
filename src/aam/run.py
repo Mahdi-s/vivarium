@@ -1117,6 +1117,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if mode == "olmo-conformity-full":
         from aam.experiments.olmo_conformity.orchestration import ExperimentConfig, run_full_experiment
+        from aam.experiments.olmo_conformity.io import load_suite_config
         
         # Parse layers and alphas
         capture_layers = None
@@ -1134,6 +1135,10 @@ def main(argv: list[str] | None = None) -> int:
         intervention_alphas = None
         if args.intervention_alphas:
             intervention_alphas = [float(x) for x in str(args.intervention_alphas).split(",") if str(x).strip() != ""]
+        
+        # Extract temperature from suite config (not experiment config)
+        suite_cfg = load_suite_config(str(args.suite_config))
+        temperature = float(suite_cfg.get("run", {}).get("temperature", 0.0))
         
         config = ExperimentConfig(
             suite_config_path=str(args.suite_config),
@@ -1154,7 +1159,7 @@ def main(argv: list[str] | None = None) -> int:
             social_probe_id=str(args.social_probe_id) if args.social_probe_id else None,
             generate_reports=(not bool(args.no_reports)),
             run_vector_analysis=bool(args.run_vector_analysis),
-            temperature=float(load_experiment_config(str(args.suite_config)).run.temperature or 0.0),
+            temperature=temperature,
         )
         
         results = run_full_experiment(config)

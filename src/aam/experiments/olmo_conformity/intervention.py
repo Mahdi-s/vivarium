@@ -194,6 +194,7 @@ def run_intervention_sweep(
     max_new_tokens: int = 64,
     normalize_vector: bool = True,
     trial_filter_sql: Optional[str] = None,
+    temperature: float = 0.0,
 ) -> int:
     """
     Executes activation steering by subtracting alpha * v_social at specified layers.
@@ -258,7 +259,7 @@ def run_intervention_sweep(
 
             # Baseline generation (no hooks)
             t0 = time.time()
-            resp_before = gateway.chat(model=model_id, messages=messages, tools=None, tool_choice=None, temperature=0.0)
+            resp_before = gateway.chat(model=model_id, messages=messages, tools=None, tool_choice=None, temperature=temperature)
             latency_before = (time.time() - t0) * 1000.0
             text_before = ""
             try:
@@ -306,7 +307,7 @@ def run_intervention_sweep(
 
             t1 = time.time()
             try:
-                resp_after = gateway.chat(model=model_id, messages=messages, tools=None, tool_choice=None, temperature=0.0)
+                resp_after = gateway.chat(model=model_id, messages=messages, tools=None, tool_choice=None, temperature=temperature)
             finally:
                 for h in intervention_handles:
                     try:

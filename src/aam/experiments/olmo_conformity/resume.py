@@ -76,7 +76,7 @@ def repair_trial_activations(
 
     trials = trace_db.conn.execute(
         """
-        SELECT t.trial_id, t.model_id, s.time_step, s.agent_id
+        SELECT t.trial_id, t.model_id, t.temperature, s.time_step, s.agent_id
         FROM conformity_trials t
         JOIN conformity_trial_steps s ON s.trial_id = t.trial_id
         WHERE t.run_id = ? AND s.agent_id LIKE 'trial_%'
@@ -92,6 +92,7 @@ def repair_trial_activations(
         trial_id = str(tr["trial_id"])
         time_step = int(tr["time_step"])
         agent_id = str(tr["agent_id"])
+        temperature = float(tr["temperature"])  # Use original temperature from database
 
         prow = trace_db.conn.execute(
             """
@@ -119,7 +120,7 @@ def repair_trial_activations(
         msgs = build_messages(system=system_prompt, user=user_prompt, history=history)
 
         cap_ctx.begin_inference()
-        _ = gateway.chat(model=str(model_id), messages=msgs, tools=None, tool_choice=None, temperature=0.0)
+        _ = gateway.chat(model=str(model_id), messages=msgs, tools=None, tool_choice=None, temperature=temperature)
         cap_ctx.on_action_decided(
             run_id=str(run_id),
             time_step=int(time_step),

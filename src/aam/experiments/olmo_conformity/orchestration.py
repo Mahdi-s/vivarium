@@ -217,6 +217,7 @@ def run_full_experiment(config: ExperimentConfig) -> Dict[str, Any]:
                 component_hook=config.probe_component,
                 alpha_values=intervention_alphas,
                 max_new_tokens=64,
+                temperature=config.temperature,
             )
             
             results["intervention_stats"] = {
@@ -265,6 +266,7 @@ def run_full_experiment(config: ExperimentConfig) -> Dict[str, Any]:
                 component_hook=config.probe_component,
                 alpha_values=intervention_alphas,
                 max_new_tokens=64,
+                temperature=config.temperature,
             )
             
             results["intervention_stats"]["by_variant"][variant] = inserted
