@@ -12,7 +12,7 @@ from aam.llm_gateway import HuggingFaceHookedGateway, LiteLLMGateway, MockLLMGat
 from aam.persistence import TraceDb, TraceDbConfig
 from aam.types import RunMetadata
 
-from .io import clamp_items, deterministic_prompt_hash, load_suite_config, read_jsonl, sha256_file
+from .io import clamp_items, deterministic_prompt_hash, load_paths_config, load_suite_config, read_jsonl, sha256_file
 try:
     from .judgeval_scorers import ConformityExample, ConformityScorer, RationalizationScorer, TruthfulnessScorer
     JUDGEVAL_AVAILABLE = True
@@ -316,9 +316,20 @@ def run_suite(
     judgeval_ollama_base: str = "http://localhost:11434/v1",
 ) -> RunPaths:
     cfg = load_suite_config(suite_config_path)
+    
+    # Load paths config (models_dir, runs_dir) from shared config file
+    paths_cfg = load_paths_config(suite_config_path, cfg)
+    models_dir_from_config = paths_cfg.get("models_dir")
+    config_runs_dir = paths_cfg.get("runs_dir")
+    
+    # Use config runs_dir as default if CLI didn't specify a custom path
+    effective_runs_dir = runs_dir
+    if runs_dir == "./runs" and config_runs_dir:
+        effective_runs_dir = config_runs_dir
+    
     run_id_final = str(run_id or str(uuid.uuid4()))
     ts = time.strftime("%Y%m%d_%H%M%S", time.localtime())
-    run_dir = os.path.join(runs_dir, f"{ts}_{run_id_final}")
+    run_dir = os.path.join(effective_runs_dir, f"{ts}_{run_id_final}")
     paths = _ensure_dirs(run_dir)
 
     trace_db = TraceDb(TraceDbConfig(db_path=paths.db_path))
@@ -475,9 +486,16 @@ def run_suite(
                 # Local run: use HF-hooked gateway for OLMo3 (TL weight conversion isn't available yet),
                 # but keep TL-style hook names so CaptureContext + downstream probes/interventions work.
                 try:
+                    # Use configured models_dir if available, else default
+                    models_dir_for_download = None
+                    if models_dir_from_config:
+                        # ensure_olmo_model_downloaded expects the parent dir (it will add huggingface_cache)
+                        # But paths.json already points to the full cache path, so use parent
+                        models_dir_for_download = str(Path(models_dir_from_config).parent)
+                    
                     _, _was_downloaded = ensure_olmo_model_downloaded(
                         model_id=model_id,
-                        models_dir=None,  # Use default models/ directory
+                        models_dir=models_dir_for_download,
                         import_to_ollama=False,  # Don't try to import to Ollama (requires GGUF conversion)
                     )
                 except Exception as e:
@@ -496,10 +514,15 @@ def run_suite(
 
                 max_tokens = model_config.get("max_new_tokens", 128)
                 # Prefer CUDA on HPC, MPS on Apple Silicon, else CPU. Override via AAM_DEVICE if needed.
+                
+                # Resolve model path: use configured models_dir if available, else default
+                if models_dir_from_config:
+                    model_cache_path = os.path.join(models_dir_from_config, model_id.replace("/", "_"))
+                else:
+                    model_cache_path = os.path.join(repo_root, "models", "huggingface_cache", model_id.replace("/", "_"))
+                
                 gateway = HuggingFaceHookedGateway(
-                    model_id_or_path=os.path.join(repo_root, "models", "huggingface_cache", model_id.replace("/", "_"))
-                    if os.path.isdir(os.path.join(repo_root, "models", "huggingface_cache", model_id.replace("/", "_")))
-                    else model_id,
+                    model_id_or_path=model_cache_path if os.path.isdir(model_cache_path) else model_id,
                     device=os.environ.get("AAM_DEVICE"),
                     capture_context=cap_ctx if capture_activations else None,
                     max_new_tokens=max_tokens,

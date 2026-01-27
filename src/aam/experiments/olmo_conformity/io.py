@@ -63,6 +63,27 @@ def load_suite_config(path: str) -> JsonDict:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
+def load_paths_config(suite_config_path: str, suite_config: JsonDict) -> JsonDict:
+    """
+    Load paths config referenced by suite config, or return defaults.
+    
+    Args:
+        suite_config_path: Path to the suite config file (used to resolve relative paths)
+        suite_config: The loaded suite config dict
+        
+    Returns:
+        Dict with 'models_dir' and 'runs_dir' keys (values may be None if not configured)
+    """
+    paths_ref = suite_config.get("paths_config")
+    if paths_ref:
+        config_dir = Path(suite_config_path).parent
+        paths_path = config_dir / paths_ref
+        if paths_path.exists():
+            return json.loads(paths_path.read_text(encoding="utf-8"))
+    # Return defaults if no paths config
+    return {"models_dir": None, "runs_dir": None}
+
+
 def clamp_items(items: List[JsonDict], limit: Optional[int]) -> List[JsonDict]:
     if limit is None:
         return items

@@ -1,0 +1,4 @@
+{
+  "models_dir": "/data/models/huggingface_cache",
+  "runs_dir": "/data/runs"
+}
