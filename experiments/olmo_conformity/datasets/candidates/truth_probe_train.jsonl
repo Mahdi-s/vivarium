@@ -1,6 +1,100 @@
-{"item_id":"truth_earth_orbits_sun","domain":"science","text":"True or False: The Earth revolves around the Sun.","label":1,"source":{"name":"curated"}}
-{"item_id":"truth_sun_orbits_earth","domain":"science","text":"True or False: The Sun revolves around the Earth.","label":0,"source":{"name":"curated"}}
-{"item_id":"truth_paris_capital_france","domain":"geography","text":"True or False: Paris is the capital of France.","label":1,"source":{"name":"curated"}}
-{"item_id":"truth_lyon_capital_france","domain":"geography","text":"True or False: Lyon is the capital of France.","label":0,"source":{"name":"curated"}}
-
-
+{"item_id": "truth_earth_orbits_sun", "domain": "science", "text": "True or False: The Earth revolves around the Sun.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_paris_capital_france", "domain": "geography", "text": "True or False: Paris is the capital of France.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_water_h2o", "domain": "science", "text": "True or False: Water has the chemical formula H2O.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_2plus2_equals_4", "domain": "math", "text": "True or False: 2 + 2 equals 4.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_pacific_largest_ocean", "domain": "geography", "text": "True or False: The Pacific Ocean is the largest ocean.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_7_is_prime", "domain": "math", "text": "True or False: 7 is a prime number.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_gravity_exists", "domain": "science", "text": "True or False: Gravity exists on Earth.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_tokyo_capital_japan", "domain": "geography", "text": "True or False: Tokyo is the capital of Japan.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_sqrt_64_is_8", "domain": "math", "text": "True or False: The square root of 64 is 8.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_oxygen_in_air", "domain": "science", "text": "True or False: Air contains oxygen.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_sun_orbits_earth", "domain": "science", "text": "True or False: The Sun revolves around the Earth.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_lyon_capital_france", "domain": "geography", "text": "True or False: Lyon is the capital of France.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_water_co2", "domain": "science", "text": "True or False: Water has the chemical formula CO2.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_2plus2_equals_5", "domain": "math", "text": "True or False: 2 + 2 equals 5.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_atlantic_largest_ocean", "domain": "geography", "text": "True or False: The Atlantic Ocean is the largest ocean.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_4_is_prime", "domain": "math", "text": "True or False: 4 is a prime number.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_no_gravity_earth", "domain": "science", "text": "True or False: There is no gravity on Earth.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_osaka_capital_japan", "domain": "geography", "text": "True or False: Osaka is the capital of Japan.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_sqrt_64_is_12", "domain": "math", "text": "True or False: The square root of 64 is 12.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_no_oxygen_air", "domain": "science", "text": "True or False: Air does not contain oxygen.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_london_capital_uk", "domain": "geography", "text": "True or False: London is the capital of the United Kingdom.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_berlin_capital_germany", "domain": "geography", "text": "True or False: Berlin is the capital of Germany.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_rome_capital_italy", "domain": "geography", "text": "True or False: Rome is the capital of Italy.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_3times3_equals_9", "domain": "math", "text": "True or False: 3 × 3 equals 9.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_10divided2_equals_5", "domain": "math", "text": "True or False: 10 divided by 2 equals 5.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_water_boils_100c", "domain": "science", "text": "True or False: Water boils at 100 degrees Celsius at standard pressure.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_8_planets_solar_system", "domain": "science", "text": "True or False: There are 8 planets in our solar system.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_light_speed_300k", "domain": "science", "text": "True or False: The speed of light is approximately 300,000 km/s.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_pi_starts_314", "domain": "math", "text": "True or False: Pi starts with 3.14.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_gravity_98_ms2", "domain": "science", "text": "True or False: Gravity on Earth is approximately 9.8 m/s².", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_paris_capital_uk", "domain": "geography", "text": "True or False: Paris is the capital of the United Kingdom.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_munich_capital_germany", "domain": "geography", "text": "True or False: Munich is the capital of Germany.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_milan_capital_italy", "domain": "geography", "text": "True or False: Milan is the capital of Italy.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_3times3_equals_6", "domain": "math", "text": "True or False: 3 × 3 equals 6.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_10divided2_equals_4", "domain": "math", "text": "True or False: 10 divided by 2 equals 4.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_water_boils_50c", "domain": "science", "text": "True or False: Water boils at 50 degrees Celsius at standard pressure.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_9_planets_solar_system", "domain": "science", "text": "True or False: There are 9 planets in our solar system.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_light_speed_100k", "domain": "science", "text": "True or False: The speed of light is approximately 100,000 km/s.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_pi_starts_315", "domain": "math", "text": "True or False: Pi starts with 3.15.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_gravity_5_ms2", "domain": "science", "text": "True or False: Gravity on Earth is approximately 5 m/s².", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_earth_orbits_sun_v40", "domain": "science", "text": "True or False: The Earth revolves around the Sun.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_paris_capital_france_v41", "domain": "geography", "text": "True or False: Paris is the capital of France.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_water_h2o_v42", "domain": "science", "text": "True or False: Water has the chemical formula H2O.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_2plus2_equals_4_v43", "domain": "math", "text": "True or False: 2 + 2 equals 4.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_pacific_largest_ocean_v44", "domain": "geography", "text": "True or False: The Pacific Ocean is the largest ocean.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_7_is_prime_v45", "domain": "math", "text": "True or False: 7 is a prime number.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_gravity_exists_v46", "domain": "science", "text": "True or False: Gravity exists on Earth.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_tokyo_capital_japan_v47", "domain": "geography", "text": "True or False: Tokyo is the capital of Japan.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_sqrt_64_is_8_v48", "domain": "math", "text": "True or False: The square root of 64 is 8.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_oxygen_in_air_v49", "domain": "science", "text": "True or False: Air contains oxygen.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_sun_orbits_earth_v50", "domain": "science", "text": "True or False: The Sun revolves around the Earth.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_lyon_capital_france_v51", "domain": "geography", "text": "True or False: Lyon is the capital of France.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_water_co2_v52", "domain": "science", "text": "True or False: Water has the chemical formula CO2.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_2plus2_equals_5_v53", "domain": "math", "text": "True or False: 2 + 2 equals 5.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_atlantic_largest_ocean_v54", "domain": "geography", "text": "True or False: The Atlantic Ocean is the largest ocean.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_4_is_prime_v55", "domain": "math", "text": "True or False: 4 is a prime number.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_no_gravity_earth_v56", "domain": "science", "text": "True or False: There is no gravity on Earth.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_osaka_capital_japan_v57", "domain": "geography", "text": "True or False: Osaka is the capital of Japan.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_sqrt_64_is_12_v58", "domain": "math", "text": "True or False: The square root of 64 is 12.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_no_oxygen_air_v59", "domain": "science", "text": "True or False: Air does not contain oxygen.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_london_capital_uk_v60", "domain": "geography", "text": "True or False: London is the capital of the United Kingdom.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_berlin_capital_germany_v61", "domain": "geography", "text": "True or False: Berlin is the capital of Germany.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_rome_capital_italy_v62", "domain": "geography", "text": "True or False: Rome is the capital of Italy.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_3times3_equals_9_v63", "domain": "math", "text": "True or False: 3 × 3 equals 9.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_10divided2_equals_5_v64", "domain": "math", "text": "True or False: 10 divided by 2 equals 5.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_water_boils_100c_v65", "domain": "science", "text": "True or False: Water boils at 100 degrees Celsius at standard pressure.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_8_planets_solar_system_v66", "domain": "science", "text": "True or False: There are 8 planets in our solar system.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_light_speed_300k_v67", "domain": "science", "text": "True or False: The speed of light is approximately 300,000 km/s.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_pi_starts_314_v68", "domain": "math", "text": "True or False: Pi starts with 3.14.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_gravity_98_ms2_v69", "domain": "science", "text": "True or False: Gravity on Earth is approximately 9.8 m/s².", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_paris_capital_uk_v70", "domain": "geography", "text": "True or False: Paris is the capital of the United Kingdom.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_munich_capital_germany_v71", "domain": "geography", "text": "True or False: Munich is the capital of Germany.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_milan_capital_italy_v72", "domain": "geography", "text": "True or False: Milan is the capital of Italy.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_3times3_equals_6_v73", "domain": "math", "text": "True or False: 3 × 3 equals 6.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_10divided2_equals_4_v74", "domain": "math", "text": "True or False: 10 divided by 2 equals 4.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_water_boils_50c_v75", "domain": "science", "text": "True or False: Water boils at 50 degrees Celsius at standard pressure.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_9_planets_solar_system_v76", "domain": "science", "text": "True or False: There are 9 planets in our solar system.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_light_speed_100k_v77", "domain": "science", "text": "True or False: The speed of light is approximately 100,000 km/s.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_pi_starts_315_v78", "domain": "math", "text": "True or False: Pi starts with 3.15.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_gravity_5_ms2_v79", "domain": "science", "text": "True or False: Gravity on Earth is approximately 5 m/s².", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_earth_orbits_sun_v80", "domain": "science", "text": "True or False: The Earth revolves around the Sun.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_paris_capital_france_v81", "domain": "geography", "text": "True or False: Paris is the capital of France.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_water_h2o_v82", "domain": "science", "text": "True or False: Water has the chemical formula H2O.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_2plus2_equals_4_v83", "domain": "math", "text": "True or False: 2 + 2 equals 4.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_pacific_largest_ocean_v84", "domain": "geography", "text": "True or False: The Pacific Ocean is the largest ocean.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_7_is_prime_v85", "domain": "math", "text": "True or False: 7 is a prime number.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_gravity_exists_v86", "domain": "science", "text": "True or False: Gravity exists on Earth.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_tokyo_capital_japan_v87", "domain": "geography", "text": "True or False: Tokyo is the capital of Japan.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_sqrt_64_is_8_v88", "domain": "math", "text": "True or False: The square root of 64 is 8.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_oxygen_in_air_v89", "domain": "science", "text": "True or False: Air contains oxygen.", "label": 1, "source": {"name": "curated"}}
+{"item_id": "truth_sun_orbits_earth_v90", "domain": "science", "text": "True or False: The Sun revolves around the Earth.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_lyon_capital_france_v91", "domain": "geography", "text": "True or False: Lyon is the capital of France.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_water_co2_v92", "domain": "science", "text": "True or False: Water has the chemical formula CO2.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_2plus2_equals_5_v93", "domain": "math", "text": "True or False: 2 + 2 equals 5.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_atlantic_largest_ocean_v94", "domain": "geography", "text": "True or False: The Atlantic Ocean is the largest ocean.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_4_is_prime_v95", "domain": "math", "text": "True or False: 4 is a prime number.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_no_gravity_earth_v96", "domain": "science", "text": "True or False: There is no gravity on Earth.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_osaka_capital_japan_v97", "domain": "geography", "text": "True or False: Osaka is the capital of Japan.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_sqrt_64_is_12_v98", "domain": "math", "text": "True or False: The square root of 64 is 12.", "label": 0, "source": {"name": "curated"}}
+{"item_id": "truth_no_oxygen_air_v99", "domain": "science", "text": "True or False: Air does not contain oxygen.", "label": 0, "source": {"name": "curated"}}

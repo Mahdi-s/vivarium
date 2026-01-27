@@ -1,3 +1,4 @@
+import aam.env_patch
 from aam.run import main
 
 if __name__ == "__main__":

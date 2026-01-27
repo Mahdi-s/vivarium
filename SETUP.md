@@ -160,6 +160,44 @@ No environment variables needed. The server runs on `http://127.0.0.1:8081/v1` b
 
 **macOS Apple Silicon:** The server automatically uses Metal GPU acceleration by default (all layers on GPU). This provides significant performance improvements. You can verify Metal is working by checking server logs for "ggml_metal_device_init: GPU name: Apple M*".
 
+#### AAM Path Configuration
+
+The AAM framework uses centralized settings (`src/aam/settings.py`) that can be customized via environment variables:
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `AAM_MODEL_DIR` | Directory for model weights (GGUF, Safetensors) | `<PROJECT_ROOT>/models` |
+| `AAM_LLAMA_CPP_ROOT` | Path to llama.cpp installation | `<PROJECT_ROOT>/third_party/llama.cpp` |
+| `AAM_ARTIFACTS_DIR` | Root directory for simulation outputs | `<PROJECT_ROOT>/runs` |
+| `AAM_HF_CACHE` | HuggingFace cache directory | `<AAM_MODEL_DIR>/huggingface_cache` |
+
+**Example `.env` file:**
+
+Create a `.env` file in the repository root to set these variables. Install `python-dotenv` (included in `[dev]` extras) to auto-load them:
+
+```bash
+# .env
+AAM_MODEL_DIR=/path/to/large/storage/models
+AAM_LLAMA_CPP_ROOT=/usr/local/llama.cpp
+AAM_ARTIFACTS_DIR=/data/aam/runs
+AAM_HF_CACHE=/path/to/hf/cache
+```
+
+**Usage in Python:**
+
+```python
+from aam.settings import settings
+
+print(settings.MODEL_DIR)       # Path to model directory
+print(settings.LLAMA_CPP_ROOT)  # Path to llama.cpp
+print(settings.ARTIFACTS_DIR)   # Path to run outputs
+print(settings.HF_CACHE)        # HuggingFace cache path
+
+# Validate paths exist
+status = settings.validate_paths()
+print(status)  # {'MODEL_DIR': True, 'LLAMA_CPP_ROOT': False, ...}
+```
+
 ### CUDA Setup (Optional, for Phase 3 GPU acceleration)
 
 If you have an NVIDIA GPU:

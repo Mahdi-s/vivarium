@@ -1,0 +1,289 @@
+﻿Technical Specification: Autonomous Code Modification for Olmo 3 Conformity Experiments
+Part I: Strategic Overview and Theoretical Mandate
+1. Introduction: The Imperative of Mechanistic Audit
+The rapid integration of Large Language Models (LLMs) into critical decision-making infrastructures—ranging from automated software engineering to clinical diagnostic support—has precipitated an urgent crisis of trust. As these systems scale, they exhibit emergent social behaviors that complicate their reliability. Chief among these is sycophancy, a phenomenon where a model prioritizes alignment with a user's stated beliefs or a perceived social consensus over objective truth.1 This behavior, while seemingly benign in conversational contexts, represents a catastrophic failure mode in high-stakes environments where factual integrity is paramount. The "Architecture of Acquiescence" research initiative aims to dissect this phenomenon not merely through behavioral observation, but through rigorous mechanistic interpretability.
+This technical specification outlines the mandate for a specialized LLaMA-based coding agent. The agent's objective is to autonomously re-engineer the Abstract Agent Machine (AAM) simulation framework to support the "Synthetic Asch Paradigm"—a computational adaptation of Solomon Asch’s classic conformity experiments. The target subject is the Olmo 7B model family (specifically Olmo 3 variants: Base, Thinking, SFT, RL-Zero, and Instruct). The choice of Olmo is strategic; unlike proprietary "black box" models, Olmo’s "glass box" architecture—providing full access to weights, training data, and intermediate checkpoints—allows for an unprecedented depth of neurological inspection.1
+However, a critical technical gap exists. The standard tooling for mechanistic interpretability, specifically the TransformerLens library, does not currently support the Olmo 3 architecture natively.1 Consequently, the LLaMA agent cannot simply import existing libraries. It must construct a bespoke "Translation Layer"—a sophisticated software adapter that bridges the raw PyTorch implementation of Olmo with the standardized hook points required for analysis. Furthermore, to ensure the scientific validity of the results, the agent must implement a cryptographically verifiable provenance system that links every captured neural activation to the specific simulation step and social stimuli that produced it.3 This document serves as the comprehensive blueprint for this engineering task, detailing the architectural targets, neural circuit definitions, extraction logic, and cryptographic protocols required to execute the Synthetic Asch Paradigm.
+2. Theoretical Grounding: The Physics of Conformity
+To program the LLaMA agent effectively, one must first understand the theoretical physics of the phenomenon it is probing. The "Architecture of Acquiescence" posits that conformity in LLMs is not a random hallucination but a structured resolution of conflict between two internal signals: the Truth Vector and the Social Vector.
+2.1 The Vector Collision Model
+In a transformer model, information flows through the residual stream, a high-dimensional vector space that accumulates data layer by layer.
+* The Truth Vector ($v_{truth}$): This direction in the residual stream encodes factual knowledge retrieved from the model's parametric memory (the Multi-Layer Perceptrons or MLPs). For a query like "What is the capital of France?", the Truth Vector aligns with the token "Paris".1
+* The Social Vector ($v_{social}$): This vector encodes the contextually implied consensus. If the prompt contains a "confederate" (a simulated user) asserting that "The capital of France is Lyon," the attention mechanism attends to this "Social Token," injecting a vector that aligns with "Lyon."
+The "Synthetic Asch Paradigm" creates a collision between these two vectors. The hypothesis is that in non-conformist models (like Olmo-3-RL-Zero), the Truth Vector maintains its magnitude through the layers. In conformist models (like Olmo-3-Instruct), the Social Vector suppresses and overwrites the Truth Vector. This suppression is expected to occur in a specific region of the network termed "The Turn", typically located in the middle-to-late layers.1
+2.2 The Turn: A Critical Region of Interest
+Research suggests that early layers (1-10) are primarily responsible for syntax and shallow semantic association, while the final layers (25-32) focus on predicting the next token based on the accumulated state. The critical conflict—the decision to conform or resist—happens in the intermediate layers. For the 32-layer Olmo 7B architecture, the LLaMA agent must prioritize the extraction of activations from Layers 15 through 24. This is the "zone of conflict" where the model integrates context (the social lie) with memory (the truth).
+
+
+  
+
+
+
+The visualization above delineates the hypothesized interaction. The LLaMA agent's coding task is to install "sensors" (PyTorch hooks) that can empirically validate this curve. If the Olmo-3-Think model is robust, the "Truth" line should stay above the "Social" line even in the shaded region. If it is sycophantic, we expect to see the crossover point within layers 15-24.
+________________
+Part II: System Architecture and The Translation Layer
+3. The Architecture of the Solution
+The core engineering challenge is the incompatibility between the specific implementation of Olmo 3 in the Hugging Face transformers library and the analysis tools in transformer_lens. The latter expects a standardized naming convention (e.g., blocks.0.attn.hook_z) which allows researchers to write model-agnostic analysis code. Olmo 3, being a newer architecture with specific optimizations like non-parametric LayerNorm and potentially fused QKV projections 5, does not expose these interfaces by default.
+Therefore, the LLaMA agent must construct a "Translation Layer". This is not merely a data pipe; it is an active interpretation layer that intercepts the raw computation graph of the Olmo model and "translates" it into the lingua franca of mechanistic interpretability.
+
+
+  
+
+
+
+The diagram illustrates the critical role of this layer. The LLaMA agent must automate the creation of this bridge. It must inspect the modeling_olmo.py file to identify the precise module paths (e.g., model.layers.X.self_attn.q_proj) and map them to the abstract nodes required by the experiment (e.g., "Query Head").
+4. Olmo 3 7B Model Specifications and Constraints
+To modify the codebase effectively, the LLaMA agent requires a precise specification of the target model's topology. The Olmo 3 7B family shares a common architectural backbone, but variants (Base vs. Instruct) may have subtle differences in tokenizer configuration or special tokens.
+4.1 Architectural Constants
+The agent must verify and utilize the following constants when generating the extraction code. These values determine the shape of the tensors to be captured and the bounds of the loops for hook registration.
+
+
+Parameter
+	Value
+	Implications for Code Generation
+	Model Family
+	Olmo 3 (7B)
+	Architecture defined in modeling_olmo.py. Hooks must target OlmoForCausalLM.
+	Hidden Size ($d_{model}$)
+	4096
+	Residual stream probes must expect tensors of shape (Batch, Seq, 4096).
+	Layers ($L$)
+	32
+	Hook iteration logic must range from layers.0 to layers.31.
+	Attention Heads ($H$)
+	32
+	Head extraction requires reshaping (B, S, 4096) $\rightarrow$ (B, S, 32, 128).
+	Biases
+	None (Mostly)
+	Olmo architecture removes biases in many linear layers to improve stability.5 Extraction code must not attempt to access .bias attributes.
+	Positional Embeddings
+	RoPE
+	Rotary Positional Embeddings are applied before the attention score calculation. If the experiment requires pre-attention state, the agent must decide whether to capture before or after rotation.
+	Activation
+	SwiGLU
+	The MLP block uses SwiGLU. Probes on the MLP must capture the output after the activation function/gating mechanism.
+	4.2 Handling Fused Projections
+A critical implementation detail for Olmo 3 is the use of fused QKV (Query, Key, Value) projections in optimized inference paths.6 While standard transformers often keep q_proj, k_proj, and v_proj as separate nn.Linear modules, optimized versions fuse them into a single qkv_proj to reduce kernel launch overhead.
+Requirement: The LLaMA agent must implement defensive coding to handle both scenarios.
+* Scenario A (Separate): If layer.self_attn has attributes q_proj, k_proj, v_proj, register hooks on each individually.
+* Scenario B (Fused): If layer.self_attn has qkv_proj, register a single hook. The hook function must then perform tensor slicing on the output. The output tensor will have shape (B, S, 3 * 4096). The hook must split this along the last dimension into three chunks of (B, S, 4096) corresponding to Q, K, and V respectively.
+________________
+Part III: The Mechanistic Extraction Engine
+This section details the precise code logic the LLaMA agent must generate to extract the "mind" of the model.
+5. Implementation of the OlmoInterpreter
+The agent must generate a Python class, OlmoInterpreter, which wraps the loaded Hugging Face model. This class is responsible for the lifecycle of the hooks: registration, data capture, and cleanup.
+5.1 The Hook Factory
+The core of the extraction engine is a "Hook Factory"—a higher-order function that generates specific hook callbacks for different parts of the model. A major technical nuance with Hugging Face models is that their forward() methods often return Tuples (containing hidden states, past key/values, attentions) rather than single Tensors. A naive hook that assumes a Tensor output will crash the simulation.
+The agent must generate code similar to the following specification:
+
+
+Python
+
+
+
+
+def make_activation_hook(standardized_name, store_dict, slice_idx=None):
+   """
+   Creates a PyTorch forward hook to capture activations.
+   
+   Args:
+       standardized_name (str): The key (e.g., 'blocks.15.hook_resid_pre') for storage.
+       store_dict (dict): The dictionary to store the captured tensor.
+       slice_idx (int, optional): If the output is a fused QKV tensor, 
+                                  this index determines which chunk (Q, K, or V) to save.
+   """
+   def hook(module, input, output):
+       # 1. Handle HF Tuple Output: Extract the primary hidden state
+       if isinstance(output, tuple):
+           activation = output
+       else:
+           activation = output
+       
+       # 2. Handle Fused QKV Slicing (if applicable)
+       if slice_idx is not None:
+           # Assuming output shape is
+           chunk_size = activation.shape[-1] // 3
+           start = slice_idx * chunk_size
+           end = start + chunk_size
+           activation = activation[..., start:end]
+
+       # 3. Offload to CPU immediately to prevent GPU OOM
+       # Clone is essential because the tensor might be modified in-place later
+       store_dict[standardized_name] = activation.detach().cpu().clone()
+       
+   return hook
+
+This logic ensures that the "Translation Layer" is robust against the variable return types of the transformer library and manages GPU memory efficiently by offloading activations to system RAM immediately.
+5.2 Specific Matrices and Registry Targets
+The agent must program the OlmoInterpreter to iterate through model.named_modules() and apply the make_activation_hook to the specific targets listed below. The "Standardized Name" is the key that must be written to the provenance logs.
+Module Type
+	Olmo Module Regex
+	Standardized Name (TL Format)
+	Extraction Tensor Shape
+	Residual (Pre)
+	model.layers.(\d+)$
+	blocks.{L}.hook_resid_pre
+	(B, S, 4096)
+	Attention Query
+	model.layers.(\d+).self_attn.q_proj
+	blocks.{L}.attn.hook_q
+	(B, S, 32, 128)
+	Attention Key
+	model.layers.(\d+).self_attn.k_proj
+	blocks.{L}.attn.hook_k
+	(B, S, 32, 128)
+	Attention Value
+	model.layers.(\d+).self_attn.v_proj
+	blocks.{L}.attn.hook_v
+	(B, S, 32, 128)
+	Attention Output
+	model.layers.(\d+).self_attn.o_proj
+	blocks.{L}.attn.hook_result
+	(B, S, 32, 128)
+	MLP Output
+	model.layers.(\d+).mlp$
+	blocks.{L}.hook_mlp_out
+	(B, S, 4096)
+	Residual (Post)
+	model.layers.(\d+)$
+	blocks.{L}.hook_resid_post
+	(B, S, 4096)
+	Note on Reshaping: The output of q_proj is typically (B, S, 4096). To analyze specific attention heads, the agent's code must verify if the analysis pipeline expects the flattened tensor or the head-separated tensor. For the "Synthetic Asch Paradigm," head-separated data (B, S, Heads, Head_Dim) is crucial for identifying "Social Heads." The agent should verify the config.num_attention_heads (32) and reshape the tensor before storage if the analysis tools require it, or store it flat and provide a metadata flag indicating the need for reshaping.
+6. Dynamic Head Selection Strategy
+A full capture of all attention matrices for all 32 layers and 32 heads across a long context window is computationally prohibitive and storage-intensive (approx. 8GB per token generated). To make the "Synthetic Asch Paradigm" feasible, the LLaMA agent must implement a Dynamic Head Selector.
+This logic filters which heads to save based on their relevance to the social conformity task.
+1. Probe Phase: During a preliminary forward pass, the agent captures the hook_pattern (Attention Scores) for all heads in the critical region (Layers 15-24).
+2. Detection Logic: The agent checks if specific heads are attending strongly (score > 0.5) to the "Social Tokens."
+   * Social Tokens definition: The indices in the context window corresponding to the "Confederate's" incorrect answer.
+3. Selection: If a head in Layer L Head H exhibits this "Social Attention" pattern, it is flagged as a "Sycophancy Head."
+4. Selective Persistence: For the main experiment, the OlmoInterpreter is configured to save the full hook_v and hook_pattern only for these flagged heads, discarding the rest to save space.
+7. The "Sycophancy Switch" (Intervention Mechanism)
+The experiment is not just observational; it is interventional. We wish to prove that by modifying the "Social Vector," we can toggle the model's conformity. The agent must implement a Steering Hook.
+Unlike the extraction hook (which is read-only), the steering hook modifies the data stream.
+* Logic: $x_{new} = x_{old} - \alpha \cdot v_{social}$
+* Implementation: The agent must generate a hook that accepts a steering_vector (a pre-computed tensor representing the social consensus direction) and a coefficient $\alpha$ (steering strength).
+* Placement: This hook is registered on the residual stream at the start of "The Turn" (e.g., Layer 15 or 20).
+* Operation: Inside the hook, the code performs the subtraction in-place on the output tensor. This modified tensor is then passed to the subsequent layers of the network, effectively "lobotomizing" the model's ability to perceive the social pressure while retaining its factual knowledge.
+8. Handling Olmo-Think and Reasoning Traces
+The Olmo-3-Think and RL-Zero variants introduce a new complexity: Chain-of-Thought (CoT). These models generate <think> and </think> tokens that encase their internal reasoning process.
+Requirement: The extraction mechanism must distinguish between activations generated during "thinking" (private reasoning) and those generated during "answering" (public behavior).
+* Parser Implementation: The LLaMA agent must implement a stream parser that tracks the state of the generation. It should maintain a boolean flag is_thinking.
+* Masked Storage: When capturing activations, the agent must associate them with this flag. This allows downstream analysis to test the "Waluigi Effect"—i.e., does the model know the truth in its private <think> block but decide to lie in its public output? The provenance metadata (discussed below) must include a token_type field (think vs response) for every captured step.
+________________
+Part IV: Provenance and The "Trace as Truth" Infrastructure
+9. Cryptographic Provenance
+In the era of AI safety, the integrity of the experimental pipeline is as important as the model itself. To prevent "data poisoning" or accidental manipulation of results, the "Architecture of Acquiescence" mandates a "Trace as Truth" philosophy. The LLaMA agent must integrate a cryptographic ledger into the simulation.
+9.1 The Merkle Log
+The agent must implement a Merkle Tree Logger. A Merkle tree is a binary hash tree where every leaf node is the hash of a data block, and every non-leaf node is the hash of its children. This structure allows for efficient and secure verification of the entire experiment's history.
+
+
+  
+
+
+
+Implementation Logic:
+1. Leaf Generation: For every simulation step $t$, the agent calculates a hash $H_t$:
+$$H_t = \text{SHA256}(\text{StepID} |
+| \text{AgentID} |
+| \text{Hash}(\text{Prompt}) |
+| \text{Hash}(\text{Activations}))$$
+2. Tree Construction: At the end of the experiment (or incrementally), these leaf hashes are paired and hashed upwards to form a single Root Hash.
+3. Verification: This Root Hash serves as the unique, immutable ID for the experiment run. Any alteration to a prompt or a saved activation file would change its hash, invalidating the path to the root and alerting the researcher to the discrepancy.
+9.2 Safetensors Metadata Schema
+The agent must utilize the safetensors format for storing activations. Unlike pickle (which is insecure) or hdf5 (which is complex), safetensors is a safe, zero-copy format that supports a rich metadata header.
+The agent must modify the persistence.py module to write the following schema into the header of every activation file:
+
+
+JSON
+
+
+
+
+{
+ "__metadata__": {
+   "format": "pt",
+   "model_family": "olmo_3_7b",
+   "variant": "instruct",
+   "run_id": "UUID-v4",
+   "step_id": "42",
+   "provenance_hash": "<SHA256 of the tensor data>",
+   "merkle_root_at_step": "<Current Merkle Accumulator>",
+   "intervention_active": "false",
+   "steering_coefficient": "0.0"
+ }
+}
+
+This metadata creates a self-contained audit trail. Even if the file is moved, it contains the cryptographic proof of its origin and the state of the simulation (e.g., was intervention active?) at the moment of capture.
+9.3 Sigstore Integration
+To ensure the integrity of the model weights themselves (the "Subject" of the experiment), the agent must integrate Sigstore.
+   * Action: Before the simulation begins, the agent script must calculate the SHA-256 hash of the Olmo model checkpoint files.
+   * Signing: It should then use the model_signing Python library (or CLI wrapper) to sign this hash, creating a "predicate" file.
+   * Verification: On subsequent runs, the agent verifies this signature. This guarantees that the "Olmo 7B" being tested is bit-for-bit identical to the one released by the Allen Institute, ruling out "model poisoning" or corruption as variables in the conformity analysis.
+________________
+Part V: Integration with the Abstract Agent Machine
+10. Simulation Loop Modifications
+The Abstract Agent Machine (AAM) operates on a deterministic loop: Observation -> Decision -> Execution. The LLaMA agent must inject the extraction logic at precise points within src/aam/world_engine.py without disrupting this determinism.
+10.1 Pre-Decision: The Setup
+   * Location: WorldEngine.build_observation
+   * Logic: This is where the "Social Pressure" is applied. The agent code must inject the "Confederate's" text into the message history.
+   * Provenance: Immediately after constructing the prompt, the agent calculates Hash(Prompt) and pushes it to the Merkle Logger.
+10.2 Decision: The Forward Pass
+   * Location: AgentPolicy.decide $\rightarrow$ llm_gateway.generate
+   * Logic:
+   1. Register Hooks: The OlmoInterpreter attaches the extraction (or steering) hooks to the model.
+   2. Execute: The model runs the forward pass. The hooks intercept the data.
+   3. Flush: Crucially, the hooks must move data from GPU to CPU immediately.
+   4. Hash: The agent calculates Hash(Activations) from the CPU tensors and pushes it to the Merkle Logger.
+10.3 Post-Execution: The Commit
+   * Location: WorldEngine.commit_requests
+   * Logic:
+   1. Persist: The CPU tensors are written to disk as .safetensors. The file header is populated with the metadata defined in Section 9.2.
+   2. Update: The Merkle Tree is updated with the new leaf node (Step Hash).
+   3. Cleanup: GPU caches are cleared to prepare for the next step.
+11. Code Modification Targets
+The LLaMA agent is directed to perform AST (Abstract Syntax Tree) modifications on specific files:
+   * src/aam/llm_gateway.py:
+   * New Class: Implement OlmoInterpreter.
+   * Method: Add register_hooks and steering_hook.
+   * Logic: Implement the "Translation Layer" mapping logic.
+   * src/aam/world_engine.py:
+   * Import: Import the MerkleLogger.
+   * Instance: Initialize self.merkle_log in __init__.
+   * Loop: Insert calls to gateway.capture() inside the step loop.
+   * src/aam/persistence.py:
+   * Schema: Add the SQL schema for the merkle_log table (to store the hashes).
+   * Writer: Implement the save_activations_safetensors function with the metadata injection logic.
+________________
+Part VI: Execution Plan and Risk Assessment
+12. Execution Plan for the LLaMA Agent
+This section constitutes the "System Prompt" or "Task List" for the autonomous agent.
+Phase 1: Reconnaissance & Patching
+   1. Inspect: Use the Python inspect module to dynamically analyze modeling_olmo.py in the environment. Confirm layer naming (model.layers vs blocks) and the presence of qkv_proj (fused) vs q_proj (separate).
+   2. Patch: Subclass HuggingFaceHookedGateway to create OlmoHookedGateway. Implement the hook factory logic that handles Tuple outputs and tensor slicing.
+Phase 2: Instrumentation
+   1. Define: Write the make_activation_hook function.
+   2. Register: Iterate through the model. Use regex layers\.(\d+)\.self_attn\.o_proj to identify and register the "Attention Output" hook.
+   3. Safety: Wrap the hook execution in try/except blocks. If an OOM (Out Of Memory) error occurs, implement a fallback strategy: reduce the number of saved layers (e.g., save only stride 2: layers 0, 2, 4...) and log a warning.
+Phase 3: Provenance Implementation
+   1. Tree: Create src/aam/provenance.py. Implement the MerkleTree class using hashlib.sha256.
+   2. Metadata: Modify the persistence layer to accept the metadata dictionary and pass it to the safetensors.torch.save_file function.
+Phase 4: Integration & Verification
+   1. Inject: Insert gateway.register_hooks() immediately before the model.generate() call in the CognitiveAgentPolicy.
+   2. Verify: Run a 10-step dry-run simulation. Re-compute the Merkle Root from the saved files and verify it matches the root stored in the database.
+13. Risk Assessment
+   * Memory Overhead: Caching full attention matrices is expensive.
+   * Mitigation: The specification mandates saving only the o_proj output (projection) rather than the full $N \times N$ attention score matrix. This reduces storage complexity from Quadratic ($O(S^2)$) to Linear ($O(S \cdot d)$) with respect to sequence length.
+   * Latency: Synchronous disk writes will slow the simulation.
+   * Mitigation: The persistence.py module should utilize a ThreadPoolExecutor to handle file I/O asynchronously, allowing the GPU to proceed with the next step while the CPU writes the previous step's data.
+   * Version Drift: Olmo 3 is an active project.
+   * Mitigation: The agent's code relies on dynamic introspection (inspect module) rather than hardcoded assumptions about the architecture, allowing it to adapt to minor version changes in the model definition.
+14. Conclusion
+This technical specification provides the complete engineering directive for the "Architecture of Acquiescence" experiment. By building a custom "Translation Layer," the LLaMA agent enables the use of advanced mechanistic interpretability tools on the unsupported Olmo 3 architecture. By implementing the "Sycophancy Switch" and the "Trace as Truth" provenance system, it ensures that the resulting data is not only insightful but scientifically rigorous and reproducible. This infrastructure will allow researchers to move beyond observing that the model conforms, to understanding precisely where and why it chooses to surrender truth for social approval.
+Works cited
+   1. Olmo Model Conformity Experiment Design.txt
+   2. Olmo-3 flash-attention-2 support · Issue #42680 · huggingface/transformers - GitHub, accessed December 16, 2025, https://github.com/huggingface/transformers/issues/42680
+   3. Leveraging Machine Learning for Logs Reasoning - UPCommons, accessed December 16, 2025, https://upcommons.upc.edu/bitstreams/5435c935-f4a0-4fd5-a354-9e5f641c98cc/download
+   4. holyaustin/Merkletree-python: A Python Implementation of Merkle tree. - GitHub, accessed December 16, 2025, https://github.com/holyaustin/Merkletree-python
+   5. OLMo 7B 0724 Hf · Models - Dataloop, accessed December 16, 2025, https://dataloop.ai/library/model/allenai_olmo-7b-0724-hf/
+   6. allenai/Olmo-3-7B-RL-Zero-Code - Hugging Face, accessed December 16, 2025, https://huggingface.co/allenai/Olmo-3-7B-RL-Zero-Code
+   7. Getting Started — Transformer Engine 2.9.0 documentation, accessed December 16, 2025, https://docs.nvidia.com/deeplearning/transformer-engine/user-guide/examples/quickstart.html

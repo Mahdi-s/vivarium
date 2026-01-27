@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
 from aam.interpretability import CaptureConfig, CaptureContext
-from aam.llm_gateway import TransformerLensGateway
+from aam.llm_gateway import select_local_gateway
 from aam.persistence import TraceDb
 
 from .io import deterministic_prompt_hash, read_jsonl, sha256_file
@@ -94,6 +94,8 @@ def capture_probe_dataset_to_db(
     capture: ProbeCaptureSpec,
     system_prompt: str,
     condition_name: str = "probe_capture",
+    temperature: float = 0.0,
+    variant: Optional[str] = None,
 ) -> str:
     """
     Runs a TL model over labeled statements, captures activations, and registers:
@@ -131,14 +133,43 @@ def capture_probe_dataset_to_db(
         token_position=int(capture.token_position),
     )
     cap_ctx = CaptureContext(output_dir=activations_dir, config=cap_cfg, dtype=str(capture.dtype), trace_db=trace_db)
-    gateway = TransformerLensGateway(model_id=str(capture.model_id), capture_context=cap_ctx)
+    model_id_str = str(capture.model_id)
+    gateway = select_local_gateway(model_id_or_path=model_id_str, capture_context=cap_ctx)
+    if variant is None:
+        variant = "huggingface" if "olmo" in model_id_str.lower() else "transformerlens"
 
-    # Deterministic: time_step = item index
+    # IMPORTANT:
+    # Do NOT reuse trial time_step indices; the main behavioral runner already populated
+    # steps for this run. If we reuse low indices here, we will overwrite activation shards
+    # (same filename) and corrupt downstream projection / logit-lens computations.
+    base_ts_row = trace_db.conn.execute(
+        """
+        SELECT COALESCE(MAX(s.time_step), -1) AS max_ts
+        FROM conformity_trial_steps s
+        JOIN conformity_trials t ON t.trial_id = s.trial_id
+        WHERE t.run_id = ?;
+        """,
+        (run_id,),
+    ).fetchone()
+    base_ts = int(base_ts_row["max_ts"]) + 1 if base_ts_row is not None else 0
+
+    # Deterministic (within this capture): time_step = base offset + item index
     for i, it in enumerate(items):
-        item_id = str(it.get("item_id") or f"{dataset_name}_{i:06d}")
+        time_step = int(base_ts + i)
+        # Prefix item_id with dataset_id to ensure uniqueness across probe/behavioral datasets
+        base_item_id = str(it.get("item_id") or f"{dataset_name}_{i:06d}")
+        item_id = f"probe_{dataset_id[:8]}_{base_item_id}"
         label = it.get("label")
+        
+        # Labels are required for probe training, but we allow capturing activations
+        # even if labels are missing (items without labels will be skipped during training)
         if label not in (0, 1, True, False):
-            raise ValueError(f"Probe dataset item missing label 0/1: item_id={item_id}")
+            # For social probes, items might not have labels yet - allow capture but warn
+            if "social" in dataset_name.lower():
+                print(f"  Warning: Item {item_id} missing label - will be skipped during probe training")
+                label = None
+            else:
+                raise ValueError(f"Probe dataset item missing label 0/1: item_id={item_id}")
 
         trace_db.insert_conformity_item(
             item_id=item_id,
@@ -146,7 +177,7 @@ def capture_probe_dataset_to_db(
             domain=str(it.get("domain") or "probe"),
             question=str(it.get("text") or it.get("question") or ""),
             ground_truth_text=None,
-            ground_truth_json={"label": int(bool(label))},
+            ground_truth_json={"label": int(bool(label))} if label is not None else None,
             source_json=(it.get("source") if isinstance(it.get("source"), dict) else None),
         )
 
@@ -155,13 +186,13 @@ def capture_probe_dataset_to_db(
             trial_id=trial_id,
             run_id=run_id,
             model_id=str(capture.model_id),
-            variant="transformerlens",
+            variant=variant,
             item_id=item_id,
             condition_id=condition_id,
             seed=0,
-            temperature=0.0,
+            temperature=temperature,
         )
-        trace_db.upsert_conformity_trial_step(trial_id=trial_id, time_step=int(i), agent_id=str(capture.agent_id))
+        trace_db.upsert_conformity_trial_step(trial_id=trial_id, time_step=time_step, agent_id=str(capture.agent_id))
 
         user_prompt = str(it.get("text") or it.get("question") or "")
         history: List[JsonDict] = []
@@ -179,14 +210,18 @@ def capture_probe_dataset_to_db(
         msgs = build_messages(system=system_prompt, user=user_prompt, history=history)
         cap_ctx.begin_inference()
         t0 = time.time()
-        resp = gateway.chat(model=str(capture.model_id), messages=msgs, tools=None, tool_choice=None, temperature=0.0)
+        resp = gateway.chat(model=str(capture.model_id), messages=msgs, tools=None, tool_choice=None, temperature=temperature)
         latency_ms = (time.time() - t0) * 1000.0
 
         # Commit activations and flush to shard file aligned to time_step
         cap_ctx.on_action_decided(
-            run_id=run_id, time_step=int(i), agent_id=str(capture.agent_id), model_id=str(capture.model_id), action_name="probe_capture"
+            run_id=run_id,
+            time_step=time_step,
+            agent_id=str(capture.agent_id),
+            model_id=str(capture.model_id),
+            action_name="probe_capture",
         )
-        cap_ctx.flush_step(time_step=int(i))
+        cap_ctx.flush_step(time_step=time_step)
 
         raw_text = ""
         try:
@@ -250,10 +285,20 @@ def train_probe_from_captured_activations(
         if not gj:
             continue
         try:
-            lab = int(_json.loads(gj).get("label"))
+            parsed = _json.loads(gj)
+            lab = parsed.get("label")
+            if lab is None:
+                continue
+            labels_by_item[str(r["item_id"])] = 1 if int(lab) else 0
         except Exception:
             continue
-        labels_by_item[str(r["item_id"])] = 1 if lab else 0
+    
+    if not labels_by_item:
+        raise ValueError(
+            f"No labeled items found in dataset {train_dataset_id}. "
+            f"Probe training requires items with 'label' field (0 or 1) in ground_truth_json. "
+            f"Found {len(items)} items, but none had valid labels."
+        )
 
     # Link trials to time_step/agent_id for activation alignment
     trial_rows = trace_db.conn.execute(
@@ -292,7 +337,7 @@ def train_probe_from_captured_activations(
                 SELECT shard_file_path, tensor_key
                 FROM activation_metadata
                 WHERE run_id = ? AND time_step = ? AND agent_id = ? AND model_id = ? AND layer_index = ? AND component = ?
-                ORDER BY created_at ASC
+                ORDER BY created_at DESC
                 LIMIT 1;
                 """,
                 (run_id, ts, agent_id, model_id, int(layer), str(component)),
@@ -348,10 +393,20 @@ def compute_and_store_probe_projections_for_trials(
     model_id: str,
     component: str,
     layers: List[int],
+    variant: Optional[str] = None,
 ) -> int:
     """
     Computes scalar projections for each (trial, layer) based on the probe weights.
     Requires activation_metadata aligned via conformity_trial_steps.
+    
+    SCIENTIFIC RIGOR: If variant is specified, only compute projections for trials
+    of that variant. This prevents cross-model probe leakage (applying a probe trained
+    on one model's representation space to another model's activations).
+    
+    Args:
+        variant: If specified, only compute projections for trials of this variant.
+                 This is critical for multi-variant experiments.
+    
     Returns number of projection rows inserted.
     """
     torch, _ = _require_torch_and_safetensors()
@@ -359,16 +414,17 @@ def compute_and_store_probe_projections_for_trials(
 
     weights = load_file(probe_artifact_path)
 
-    trials = trace_db.conn.execute(
-        """
-        SELECT t.trial_id, s.time_step, s.agent_id
+    # Build query with optional variant filter
+    variant_filter = "AND t.variant = ?" if variant else ""
+    query = f"""
+        SELECT t.trial_id, t.variant, s.time_step, s.agent_id
         FROM conformity_trials t
         JOIN conformity_trial_steps s ON s.trial_id = t.trial_id
-        WHERE t.run_id = ?
+        WHERE t.run_id = ? {variant_filter}
         ORDER BY s.time_step ASC;
-        """,
-        (run_id,),
-    ).fetchall()
+    """
+    params = (run_id, variant) if variant else (run_id,)
+    trials = trace_db.conn.execute(query, params).fetchall()
     if not trials:
         return 0
 
@@ -390,7 +446,7 @@ def compute_and_store_probe_projections_for_trials(
                 SELECT shard_file_path, tensor_key
                 FROM activation_metadata
                 WHERE run_id = ? AND time_step = ? AND agent_id = ? AND model_id = ? AND layer_index = ? AND component = ?
-                ORDER BY created_at ASC
+                ORDER BY created_at DESC
                 LIMIT 1;
                 """,
                 (run_id, ts, agent_id, model_id, int(layer), str(component)),

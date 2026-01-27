@@ -1,0 +1,175 @@
+﻿The Glass Box Architecture: Engineering Verifiable Internal State Extraction in Large-Scale Models
+Executive Summary
+The paradigm of machine learning deployment is currently undergoing a fundamental architectural transformation. For the past decade, the dominant operational model has been "Black Box Inference," where inputs are submitted to an opaque model and outputs are returned without granular insight into the intermediate computations or the provenance of the result. This model, while sufficient for simple consumer applications, is proving critically inadequate for the next generation of AI infrastructure, particularly in regulated industries, high-stakes financial environments, and advanced scientific research. The emerging standard is "Glass Box Analysis," a developer-centric methodology that demands rigorous, developer-supported mechanisms for accessing internal activations, ensuring deterministic reproducibility, and generating cryptographic proofs of computation.
+This report provides an exhaustive technical analysis of the mechanisms available to engineers for achieving this transparency. It dissects the software primitives required to extract internal states from massive, distributed models—specifically focusing on the PyTorch ecosystem and Fully Sharded Data Parallel (FSDP) architectures—and evaluates the cryptographic and hardware-based frameworks for proving the integrity of those states (ZK-ML, opML, and Trusted Execution Environments). The analysis is grounded in the reality of modern, parameter-dense Large Language Models (LLMs) where memory constraints, distributed computing environments, and quantization make "simple" introspection non-trivial. By synthesizing high-quality engineering references, this report establishes a reference architecture for verifiable, auditable AI that satisfies the dual requirements of deep internal observability and external provability.
+
+
+  
+
+
+
+Part I: Mechanisms of Internal State Extraction
+The foundation of glass box analysis is the ability to intercept, inspect, and modify the intermediate tensors—activations, gradients, and residuals—flowing through a computational graph. While high-level APIs often abstract these details to streamline development, deep inspection requires interacting directly with the model's autograd engine and module lifecycle.
+1.1 The PyTorch Hooking Mechanism: Primitives and Nuances
+In the PyTorch ecosystem, which serves as the de facto standard for large-scale model development, the primary interface for internal inspection is the "Hook." Hooks are functions registered to nn.Module or torch.Tensor objects that trigger automatically during the forward or backward passes. They act effectively as "man-in-the-middle" listeners within the computational graph.1 While conceptually simple, their correct implementation in complex, multi-layer architectures requires a nuanced understanding of PyTorch's internal dispatch mechanisms.
+1.1.1 Forward Hooks vs. Forward Pre-Hooks
+The distinction between register_forward_hook and register_forward_pre_hook is critical for accurate state capture and is often the source of debugging errors in introspection pipelines.
+* Forward Pre-Hooks (register_forward_pre_hook): These execute before the module's forward method is invoked. They are the only mechanism capable of inspecting or modifying the input to a layer before the computation occurs. This capability is essential for specific classes of analysis, such as identifying "poisoned" inputs or analyzing the geometry of embedding spaces before they are transformed by non-linearities.2 A pre-hook receives the module and the input arguments as a tuple. Critically, if the hook modifies the input, it must return the modified input; otherwise, the original input is passed to the layer. This allows for powerful "interventional" analysis where internal states are perturbed to test causal hypotheses.1
+* Forward Hooks (register_forward_hook): These execute after the forward method completes but before the output is passed to the next layer or returned to the caller. They receive the module, its input, and its computed output. This is the standard extraction point for "activations"—the post-non-linearity values that define the model's latent representation of the data.1 For example, in a Transformer block, a forward hook on the Multi-Head Attention module allows the extraction of attention scores or the context vectors post-projection.
+A critical nuance often overlooked in production engineering is the handling of nn.Sequential containers. Attaching a hook to a Sequential container only captures the final output of the entire sequence, effectively treating the container as a single black box. To capture intermediate states (e.g., the output of layer2 inside a 5-layer ResNet or a specific decoder layer in a Llama 3 model), one must iterate through the named children of the module and register hooks individually.1 This recursive registration pattern is mandatory for any granular glass box analysis. Code that fails to traverse the module hierarchy will miss the rich internal dynamics required for mechanistic interpretability.
+1.1.2 Tensor Hooks and the Backward Pass
+While module hooks are sufficient for inspecting activations (forward pass), verifying the training process or performing attribution often requires inspecting gradients. register_hook on a torch.Tensor is the mechanism for this. Unlike module hooks, tensor hooks operate on the grad_fn—the node in the autograd graph responsible for computing the gradient during backpropagation.1
+This capability is vital for interpretability methods like Integrated Gradients or Saliency Maps, which rely on gradient flow to attribute output importance to input features. By hooking into the backward pass, an engineer can diagnose "vanishing gradients" by observing magnitudes shrink across layers, or identify "dead neurons" (zero gradients) that indicate capacity waste.1 Furthermore, backward hooks allow for the modification of gradients in flight, enabling techniques like gradient clipping or noise injection for privacy (Differential Privacy) directly within the training loop without altering the optimizer logic.1
+1.2 The Challenge of Distributed Extraction: FSDP and Sharding
+The extraction patterns described above function seamlessly on single-device models where the entire model state resides in continuous GPU memory. However, modern Foundation Models (FMs) and Large Language Models (LLMs) rarely fit on a single GPU. They utilize Fully Sharded Data Parallel (FSDP) strategies, which partition parameters, optimizer states, and gradients across multiple devices (ranks) to reduce memory footprint.5
+This sharding architecture introduces a profound complexity to glass box analysis: The full activation tensor or parameter matrix does not exist on any single device at the time of inspection. A naive hook attached to an FSDP-wrapped module will often fail to capture meaningful data, or worse, crash the training run due to memory access violations.
+1.2.1 The "Scatter-Gather" Lifecycle and Hook Timing
+In an FSDP regime, a module's parameters are stored as FlatParameter shards. These shards are meaningless slices of the original weight matrices. During the forward pass, an AllGather collective communication primitive is invoked to reconstruct the full parameters on each device just in time for the computation. Crucially, immediately after the computation, these parameters are often freed (or "resharded") to save memory.5
+If a standard forward hook is attached to an FSDP-wrapped module, it executes after the forward computation. Depending on the specific FSDP configuration (specifically reshard_after_forward), the hook might inspect the output tensor after the parameters have been freed.7 This creates a race condition in inspection:
+1. Input: Available (gathered) before computation.
+2. Computation: Uses gathered parameters.
+3. Reshard: Parameters are freed to allow the next layer to use the memory.
+4. Hook Execution: Tries to access module.weight to correlate activations with weight magnitudes.
+5. Failure: The hook finds a sharded, size-0 tensor or a pointer to freed memory.8
+This ephemeral nature of the model state in FSDP requires a fundamental shift in how developers approach introspection. You are no longer inspecting a static object; you are inspecting a transient stream of data that exists only for milliseconds.
+1.2.2 Optimal Strategies for FSDP Activation Extraction
+To successfully extract verifiable states from an FSDP model, engineers must employ specific, developer-supported configurations that respect the sharding lifecycle:
+1. reshard_after_forward=False (Memory-Intensive Strategy): By setting the reshard_after_forward flag to False (either globally or for specific sub-modules), the unsharded parameters are kept in GPU memory after the forward pass completes. This effectively disables the memory-saving feature of FSDP for the forward pass, but it allows hooks to inspect full parameter tensors safely without triggering expensive re-gathering operations.7 This strategy is viable only if the GPU has sufficient VRAM to hold the unsharded parameters of the specific layers being analyzed. It is often used for "surgical" analysis where only one or two layers are instrumented at a time.
+2. FullStateDictConfig with CPU Offloading: For comprehensive auditing where the goal is to capture the state of the entire model (e.g., to prove that the weights match a specific checkpoint), accessing sharded weights is insufficient. The FullStateDictConfig must be used with offload_to_cpu=True and rank0_only=True. This configuration streams the gathered parameters from all GPUs to the CPU RAM of the master rank (Rank 0).5 This allows for the reconstruction of the full model structure in system RAM, enabling analysis that would otherwise result in Out-Of-Memory (OOM) errors on the GPU.10 This is the standard pattern for checkpointing but can be repurposed for "snapshot" analysis.
+3. The summon_full_params Context Manager: For transient, on-demand analysis, PyTorch FSDP provides the summon_full_params() context manager. When a code block is entered under this context, FSDP forces an immediate AllGather of all parameters for the wrapped modules. This is the explicit, "developer-supported" mechanism for performing a glass box inspection on a sharded model without permanently altering its sharding strategy.11 It essentially "unshards" the model for the duration of the context block.
+Deep Insight: The use of summon_full_params is a blocking collective operation that synchronizes all GPUs. In a latency-sensitive production environment, this introduces significant "stop-the-world" pauses. Therefore, glass box analysis on FSDP models should ideally be decoupled from the hot path of serving (inference) or performed on a dedicated "auditing replica" that is not serving live user traffic. Attempting to use summon_full_params on a live production node will almost certainly violate latency Service Level Agreements (SLAs).
+
+
+  
+
+
+
+1.3 Alternative Frameworks: JAX and TensorFlow
+While PyTorch dominates the research landscape, other frameworks offer distinct paradigms for introspection that are increasingly relevant for high-performance deployment.
+* JAX / Flax: Flax adopts a functional programming approach which fundamentally alters state management. In Flax, the model is not a stateful object but a stateless function that accepts parameters as input. The flax.linen.tabulate function allows for a static inspection of the model structure and parameter counts without execution, which is useful for architectural verification.12 For runtime inspection, JAX has traditionally required complex "intermediate" collections. However, the new NNX API introduces Python reference semantics to JAX, bridging the gap between functional purity and debuggability. This allows users to inspect internal state variables directly, akin to PyTorch, while retaining JAX's compilation benefits (XLA).13
+* TensorFlow / Keras: The Keras Functional API offers a unique, graph-based method for extraction. Instead of attaching runtime hooks, developers create a new model instance where the outputs are explicitly defined as the activations of intermediate layers.14 For example, Model(inputs=original.input, outputs=[layer.output for layer in original.layers]). This creates a static computation graph optimized for extraction.15 This approach is often more performant than Python-level hooks because the extraction logic is compiled into the graph execution plan (e.g., via XLA or TensorFlow Serving). However, it is less flexible for dynamic debugging or conditional extraction compared to PyTorch's imperative hooks.16
+Part II: From Extraction to Insight – Attribution and Provenance
+Extracting a tensor is only the first step. To achieve "Glass Box" status, one must attribute those activations to specific input data or high-level concepts. This is where provenance tools connect the raw internal state back to the training corpus and the semantic meaning of the input.
+2.1 Attribution Mechanisms and Mechanistic Interpretability
+Standard attribution tools like Captum provide a suite of algorithms (Integrated Gradients, DeepLIFT, Saliency) to interpret activations. Captum is designed to support DataParallel and DistributedDataParallel, allowing it to function in multi-GPU environments.17 However, these gradient-based methods generally require the model to be fully differentiable. They may struggle with the discrete, non-differentiable components of some modern architectures (e.g., retrieval-based components or hard attention mechanisms). Furthermore, applying Integrated Gradients to a large LLM is computationally expensive, as it requires multiple forward and backward passes per token generated.19
+TransformerLens represents the cutting edge of "Mechanistic Interpretability," treating the model as a compilation of programmable circuits (induction heads, MLPs) rather than a monolithic function. It allows researchers to "patch" activations in real-time—swapping the activation of a specific head with a different value—to test causal hypotheses about how the model performs tasks like indirect object identification.20 Currently, TransformerLens support for multi-GPU setups (FSDP) is limited, making it excellent for analyzing smaller models (e.g., GPT-2, Llama-7B) on a single node but less viable for analyzing a 70B+ parameter model in a distributed production environment without significant custom engineering.20
+2.2 Case Study in Data Provenance: OLMoTrace
+A pioneering example of linking internal behavior not just to input features, but to data provenance, is OLMoTrace, developed by the Allen Institute for AI (AI2). Unlike standard attribution which points to features in the prompt, OLMoTrace links model outputs back to the training data.21
+This system addresses a critical "Glass Box" requirement: "Why did the model generate this specific fact?" OLMoTrace works by tokenizing the model output and querying an "infini-gram" index of the pre-training corpus (Dolma) to find verbatim matches. It identifies "long and unique" spans—sequences of tokens that are statistically unlikely to appear by chance—and retrieves the exact documents from the training set where those sequences occur.21
+For a developer, replicating this level of transparency requires two components:
+1. Full Access to Training Data: The dataset must be indexed and searchable (e.g., using suffix arrays or inverted indices).
+2. Verifiable Links: The ability to prove that this specific checkpoint was trained on that specific data snapshot.
+OLMoTrace closes the loop between the model's behavior and its curriculum, providing a powerful tool for diagnosing hallucinations (e.g., seeing that the model conflated two biographies in the training data) or verifying memorization.23 This represents a shift from analyzing "how" the model thinks (activations) to "what" the model knows (provenance).
+Part III: The Architecture of Verification – "Proving It Later"
+The second half of the requirement—"prove the results later"—shifts the domain from software engineering to cryptography and security. In a Glass Box architecture, it is insufficient to simply say "the model activation was X" or "the output was Y." One must provide a tamper-evident proof that the computation occurred exactly as claimed, using the specific model and input.
+Three primary approaches exist for this verification, forming a "Triangle of Verifiability" with distinct trade-offs in Cost, Latency, and Decentralization.
+
+
+  
+
+
+
+3.1 Zero-Knowledge Machine Learning (ZK-ML): The Cryptographic Gold Standard
+Mechanism: ZK-ML involves compiling the machine learning model (or a specific inference trace) into an arithmetic circuit. A prover then generates a cryptographic proof (zk-SNARK or zk-STARK) attesting that:
+1. The output $Y$ is the result of applying model $M$ to input $X$.
+2. Model $M$ corresponds to a specific committed hash (provenance).
+3. (Optional) Input $X$ satisfies certain properties (e.g., "is a valid credit score") without revealing $X$ itself.24
+State of the Art:
+Two leading frameworks dominate this space: EZKL and Modulus Labs.
+* EZKL: A library that converts ONNX models into Halo2 circuits. It utilizes advanced optimizations like look-up tables for non-linearities to speed up proof generation.25 Despite optimizations, the proving time remains significant. Benchmarks show that proving even small models (like a distilled GPT-2 or a few layers of ResNet) can take orders of magnitude longer than the inference itself.26 For instance, proving a linear regression is fast, but an SVM or Decision Tree can take seconds to minutes depending on complexity.25
+* Modulus Labs: Focuses on specialized provers designed specifically for AI operations, attempting to reduce the overhead. They have demonstrated the ability to prove small language models on-chain, but full LLM verification (e.g., 70B parameters) remains computationally prohibitive for real-time applications.26
+Constraints:
+* Quantization: ZK circuits operate over finite fields, not floating-point numbers. Models must be quantized (often to int4, int8, or fixed-point), which can degrade accuracy and requires careful calibration.25
+* Memory & Speed: The "proving overhead" is often $1000x - 1,000,000x$ compared to native inference.28 This makes ZK-ML suitable only for small models or offline verification.
+Verdict: Optimal for high-stakes, low-throughput verifications where "trustless" execution is non-negotiable (e.g., a smart contract releasing funds based on a model's prediction). It is not yet viable for "chat" latency.
+3.2 Optimistic Machine Learning (opML): The Scalability Bridge
+Mechanism: Inspired by Optimistic Rollups in blockchain scaling, opML assumes the inference result is correct by default. It publishes the result to a ledger. A "challenge period" follows where any observer can dispute the result. If a dispute occurs, an interactive verification game (bisection protocol) runs on-chain (or in a constrained verifier) to identify the single instruction where the execution diverged, effectively proving fraud.29
+Advantages:
+* Near-Native Speed: Because proofs are only generated if there is a dispute, the happy-path execution runs at near-native speeds on standard GPUs/CPUs. There is no overhead for circuit generation during normal operation.31
+* Large Model Support: opML can support 70B+ parameter models (like Llama 3) that are currently impossible to prove in ZK-ML due to circuit size limits. It allows for the execution of models like LLaMA-2-7B on standard hardware while maintaining a trust-minimized guarantee via the fraud proof mechanism.30
+Verdict: The most viable "pure software" path for verifying LLM outputs today on decentralized networks. It trades immediate finality (you have to wait for the challenge period to expire) for scalability and cost-efficiency.
+3.3 Trusted Execution Environments (TEEs): The Hardware Solution
+Mechanism: TEEs, or "Confidential Computing," utilize hardware isolation to run computation in an enclave that is encrypted in memory and opaque to the host operating system. The hardware (e.g., CPU or GPU) generates a "Quote"—a digital signature derived from a hardware-fused key—attesting that a specific binary is running on genuine hardware.33
+The GPU Breakthrough:
+Until recently, TEEs were primarily CPU-only (Intel SGX), which severely limited their use for deep learning inference due to the lack of hardware acceleration.35 The introduction of NVIDIA H100 with Confidential Computing and Intel TDX (Trust Domain Extensions) has revolutionized this landscape. Now, the entire GPU memory is encrypted, and the H100 can generate attestation reports proving that a specific model checkpoint is loaded and processing data securely.37
+Attestation Protocol:
+The verification process follows a strict protocol (Figure 4):
+1. Nonce Generation: The verifier sends a random nonce to the enclave to prevent replay attacks.
+2. Quote Generation: The enclave (running the model) computes the result and asks the hardware security processor to sign a hash of the memory state and the result (the Report) using its fused key.34
+3. Verification: This "Quote" is sent to an Attestation Service (like NVIDIA NRAS or Intel Trust Authority) which verifies the signature against the manufacturer's root of trust.40
+4. Token Issuance: A verification token is returned, which can be logged or sent to the client as proof.
+Performance:
+Research indicates that running large LLMs (like Llama 2 70B) inside a TEE (using Intel TDX or H100) incurs a performance penalty of only 10-20%, vastly superior to the 1000x penalty of ZK-ML.38 This makes it the only viable option for "interactive" verifiable AI.
+Verdict: The practical choice for enterprise and production verification. It relies on trusting the hardware vendor (Intel/NVIDIA) rather than pure math, but offers the performance required for real-time applications.
+
+
+  
+
+
+
+Part IV: Provenance and The Audit Trail
+The final layer of the architecture is Provenance. Even with extraction and verification, there must be a standardized format for recording these events. Without a standardized schema, the extracted states and proofs are isolated data points.
+4.1 C2PA and Digital Content Provenance
+The Coalition for Content Provenance and Authenticity (C2PA) provides an open technical standard for binding provenance data to media assets. While originally designed for images and video to combat deepfakes, its schema is extensible to generic model outputs.41
+* Implementation: A "Manifest" is created containing assertions about the model (training data hash, architecture version), the inference event (timestamp, TEE Quote ID), and the entity responsible (Signer).
+* Binding: This manifest is cryptographically bound to the output (e.g., embedded in the EXIF metadata of a generated image or signed alongside a text response).43 This ensures that the "proof" travels with the content. If the content is edited, the signature breaks, or a new provenance entry is added (creating a history chain).
+4.2 Logging Standards: MLflow and OpenTelemetry
+For internal enterprise auditing, MLflow and OpenTelemetry are the industry standards.
+* MLflow: Supports "Model Lineage," tracking exactly which run, dataset, and hyperparameters produced a specific model version. This answers the question: "Which code created this model?".44
+* OpenTelemetry GenAI Semantic Conventions: A new set of standards for tracing LLM requests. It defines attributes like gen_ai.model.name, gen_ai.prompt, and gen_ai.completion to ensure consistent logging across distributed systems.45
+Integration Strategy: A robust Glass Box system should emit OpenTelemetry spans for every inference. Crucially, these spans should be populated with the verification proof (e.g., the TEE Quote ID or the ZK Proof Hash) in the gen_ai.system attributes. This links the "operational" log (OpenTelemetry) with the "security" proof (TEE), creating a unified audit trail.47
+4.3 Conclusion and Strategic Recommendations
+The transition to Glass Box Analysis is not merely a debugging convenience; it is a structural necessity for the next generation of reliable AI. By combining PyTorch FSDP hooks for precise state extraction, TEEs (Confidential Computing) for scalable and performant verification, and C2PA/OpenTelemetry for standardized provenance, developers can construct systems where internal states are not just visible, but verifiable and trusted.
+For developers aiming to implement this today, the optimal path is a Hybrid Hardware-Software Stack:
+1. Extraction: Use PyTorch with reshard_after_forward=False or summon_full_params on dedicated audit nodes to extract internal states without disrupting production latency.
+2. Verification: Deploy production inference within NVIDIA H100 Confidential Containers to generate hardware-rooted proofs of execution (Quotes) with minimal performance penalty.
+3. Provenance: Log all inference events using OpenTelemetry, embedding the TEE Quote ID into the trace attributes, and optionally wrap public-facing outputs in C2PA manifests.
+This architecture balances the exhaustiveness of software introspection with the performance and security of hardware enforcement, providing a robust foundation for the future of accountable AI.
+Works cited
+1. PyTorch 101: Understanding Hooks - DigitalOcean, accessed December 16, 2025, https://www.digitalocean.com/community/tutorials/pytorch-hooks-gradient-clipping-debugging
+2. torch.nn.modules.module.register_module_forward_hook — PyTorch 2.9 documentation, accessed December 16, 2025, https://docs.pytorch.org/docs/stable/generated/torch.nn.modules.module.register_module_forward_hook.html
+3. Intermediate Activations — the forward hook | Nandita Bhaskhar, accessed December 16, 2025, https://web.stanford.edu/~nanbhas/blog/forward-hooks-pytorch/
+4. << extracting stats from activated layers - training >> - PyTorch Forums, accessed December 16, 2025, https://discuss.pytorch.org/t/extracting-stats-from-activated-layers-training/45880
+5. Advanced Model Training with Fully Sharded Data Parallel (FSDP) - PyTorch, accessed December 16, 2025, https://docs.pytorch.org/tutorials/intermediate/FSDP_advanced_tutorial.html
+6. Getting Started with Fully Sharded Data Parallel (FSDP2) - PyTorch, accessed December 16, 2025, https://docs.pytorch.org/tutorials/intermediate/FSDP_tutorial.html
+7. torch.distributed.fsdp.fully_shard — PyTorch 2.9 documentation, accessed December 16, 2025, https://docs.pytorch.org/docs/stable/distributed.fsdp.fully_shard.html
+8. reshard_after_forward does not work as expected in FSDP2 · Issue #149029 - GitHub, accessed December 16, 2025, https://github.com/pytorch/pytorch/issues/149029
+9. Fully Sharded Data Parallel (FSDP) | Karthick Panner Selvam, accessed December 16, 2025, https://karthick.ai/blog/2024/Fully-Sharded-Data-Parallel-(FSDP)/
+10. FSDP OOM during initialization · Issue #152263 - GitHub, accessed December 16, 2025, https://github.com/pytorch/pytorch/issues/152263
+11. FullyShardedDataParallel — PyTorch 2.9 documentation, accessed December 16, 2025, https://docs.pytorch.org/docs/stable/fsdp.html
+12. Inspection - Flax - Read the Docs, accessed December 16, 2025, https://flax.readthedocs.io/en/v0.8.3/api_reference/flax.linen/inspection.html
+13. The Flax NNX Module system - Read the Docs, accessed December 16, 2025, https://flax.readthedocs.io/en/latest/nnx_basics.html
+14. Accessing Intermediate Layer Outputs in Keras - GeeksforGeeks, accessed December 16, 2025, https://www.geeksforgeeks.org/deep-learning/accessing-intermediate-layer-outputs-in-keras/
+15. The Functional API | TensorFlow Core, accessed December 16, 2025, https://www.tensorflow.org/guide/keras/functional_api
+16. How can I obtain the output of an intermediate layer (feature extraction)? - Stack Overflow, accessed December 16, 2025, https://stackoverflow.com/questions/63297838/how-can-i-obtain-the-output-of-an-intermediate-layer-feature-extraction
+17. FAQ - Captum, accessed December 16, 2025, https://captum.ai/docs/faq
+18. Distributed Computation of Attributions using Captum, accessed December 16, 2025, https://captum.ai/tutorials/Distributed_Attribution
+19. Algorithm Descriptions - Captum, accessed December 16, 2025, https://captum.ai/docs/attribution_algorithms
+20. Transformer Lens Main Demo Notebook - TransformerLens Documentation - GitHub Pages, accessed December 16, 2025, https://transformerlensorg.github.io/TransformerLens/generated/demos/Main_Demo.html
+21. Going beyond open data – increasing transparency and trust in language models with OLMoTrace | Ai2, accessed December 16, 2025, https://allenai.org/blog/olmotrace
+22. OLMoTrace: Tracing Language Model Outputs Back to Trillions of Training Tokens - arXiv, accessed December 16, 2025, https://arxiv.org/html/2504.07096v1
+23. OLMoTrace | Connecting a language model's response back to its training data - YouTube, accessed December 16, 2025, https://www.youtube.com/watch?v=wyLRWza_v9M
+24. Verifiable evaluations of machine learning models using zkSNARKs - arXiv, accessed December 16, 2025, https://arxiv.org/html/2402.02675v2
+25. Benchmarking ZKML Frameworks - EZKL Blog, accessed December 16, 2025, https://blog.ezkl.xyz/post/benchmarks/
+26. A Survey of Zero-Knowledge Proof Based Verifiable Machine Learning - arXiv, accessed December 16, 2025, https://arxiv.org/html/2502.18535v1
+27. Chapter 14: The World's 1st On-Chain LLM | by Accountable Magic (Acquired) | Medium, accessed December 16, 2025, https://medium.com/@CountableMagic/chapter-14-the-worlds-1st-on-chain-llm-7e389189f85e
+28. The Definitive Guide to ZKML (2025). - ICME, accessed December 16, 2025, https://blog.icme.io/the-definitive-guide-to-zkml-2025/
+29. [2401.17555] opML: Optimistic Machine Learning on Blockchain - arXiv, accessed December 16, 2025, https://arxiv.org/abs/2401.17555
+30. OPML: Optimistic Machine Learning on Blockchain - Layer 2 - Ethereum Research, accessed December 16, 2025, https://ethresear.ch/t/opml-optimistic-machine-learning-on-blockchain/16234
+31. opML: Optimistic Machine Learning on Blockchain - arXiv, accessed December 16, 2025, https://arxiv.org/html/2401.17555v1
+32. opML - ORA, accessed December 16, 2025, https://docs.ora.io/doc/onchain-ai-oracle-oao/fraud-proof-virtual-machine-fpvm-and-frameworks/opml
+33. Confidential Computing on NVIDIA H100 GPUs for Secure and Trustworthy AI, accessed December 16, 2025, https://developer.nvidia.com/blog/confidential-computing-on-h100-gpus-for-secure-and-trustworthy-ai/
+34. Infrastructure Setup - Intel® TDX Enabling Guide, accessed December 16, 2025, https://cc-enabling.trustedservices.intel.com/intel-tdx-enabling-guide/02/infrastructure_setup/
+35. Accelerate Innovation and Enhance Data Protection with Intel Security Engines, accessed December 16, 2025, https://www.intel.com/content/dam/www/central-libraries/us/en/documents/2022-11/xeon-accelerated-security-product-brief-v3-q123.pdf
+36. Evaluating the Performance of the DeepSeek Model in Confidential Computing Environment, accessed December 16, 2025, https://arxiv.org/html/2502.11347v1
+37. AI Security with Confidential Computing - NVIDIA, accessed December 16, 2025, https://www.nvidia.com/en-us/data-center/solutions/confidential-computing/
+38. Confidential LLM Inference Achieves Practicality With CPU And GPU TEEs, Delivering 8% To 20% Performance - Quantum Zeitgeist, accessed December 16, 2025, https://quantumzeitgeist.com/8-percent-20-percent-cpu-gpu-performance-confidential-llm-inference-achieves-practicality-tees-delivering/
+39. Intel® Trust Authority sample workload for Intel® TDX, accessed December 16, 2025, https://docs.trustauthority.intel.com/main/articles/articles/ita/tutorial-tdx-workload.html
+40. NVIDIA Attestation, accessed December 16, 2025, https://docs.nvidia.com/attestation/index.html
+41. A Framework for Cryptographic Verifiability of End-to-End AI Pipelines - arXiv, accessed December 16, 2025, https://arxiv.org/html/2503.22573v1
+42. C2PA | Verifying Media Content Sources, accessed December 16, 2025, https://c2pa.org/
+43. C2PA Explainer :: C2PA Specifications, accessed December 16, 2025, https://spec.c2pa.org/specifications/specifications/1.4/explainer/Explainer.html
+44. MLflow Model Registry, accessed December 16, 2025, https://mlflow.org/docs/latest/ml/model-registry/
+45. Semantic Conventions - OpenTelemetry, accessed December 16, 2025, https://opentelemetry.io/docs/concepts/semantic-conventions/
+46. Semantic conventions for generative AI systems - OpenTelemetry, accessed December 16, 2025, https://opentelemetry.io/docs/specs/semconv/gen-ai/
+47. Semantic conventions for generative client AI spans - OpenTelemetry, accessed December 16, 2025, https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-spans/

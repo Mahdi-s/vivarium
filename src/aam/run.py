@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import json
 import os
 import random
 import sqlite3
@@ -67,6 +68,15 @@ def _validate_db(*, db_path: str, run_id: str, steps: int, num_agents: int) -> N
 
 
 def main(argv: list[str] | None = None) -> int:
+    # Load .env file if python-dotenv is available
+    # This allows users to configure environment variables (AAM_MODEL_DIR, etc.)
+    # without modifying their shell profile.
+    try:
+        from dotenv import load_dotenv
+        load_dotenv()
+    except ImportError:
+        pass  # python-dotenv not installed, skip
+    
     p = argparse.ArgumentParser(prog="aam", description="Abstract Agent Machine")
     sub = p.add_subparsers(dest="mode")
 
@@ -158,6 +168,13 @@ def main(argv: list[str] | None = None) -> int:
     pc.add_argument("--rate-limit-tpm", type=int, default=None, help="Rate limit: tokens per minute")
     pc.add_argument("--rate-limit-max-concurrent", type=int, default=10, help="Rate limit: max concurrent requests")
     pc.add_argument("--no-rate-limit", action="store_true", help="Disable rate limiting")
+    pc.add_argument("--capture-activations", action="store_true", help="Capture activations during trials (requires TransformerLens models)")
+    pc.add_argument("--capture-layers", type=str, default=None, help="Comma-separated layer indices for activation capture (e.g. '10,11,12')")
+    pc.add_argument("--capture-components", type=str, default=None, help="Comma-separated component names (e.g. 'resid_post')")
+    pc.add_argument("--capture-dtype", type=str, default="float16", choices=["float16", "float32"], help="Dtype for activation tensors")
+    pc.add_argument("--use-judgeval", action="store_true", help="Enable Judge Eval evaluation during trials")
+    pc.add_argument("--judgeval-judge-model", type=str, default="llama3.2", help="Ollama model to use as judge")
+    pc.add_argument("--judgeval-ollama-base", type=str, default="http://localhost:11434/v1", help="Ollama API base URL")
 
     # Olmo Conformity probe utilities (TransformerLens capture + probe training)
     pp = sub.add_parser("olmo-conformity-probe", help="Capture activations for probe dataset, train probe, and compute projections")
@@ -172,11 +189,23 @@ def main(argv: list[str] | None = None) -> int:
     pp.add_argument("--component", type=str, default="hook_resid_post", help="TransformerLens hook component under blocks.<L>., e.g. hook_resid_post")
     pp.add_argument("--token-position", type=int, default=-1)
     pp.add_argument("--dtype", type=str, default="float16", choices=["float16", "float32"])
+    pp.add_argument("--temperature", type=float, default=0.0, help="Temperature for activation capture")
 
     pr = sub.add_parser("olmo-conformity-report", help="Generate figures/tables from conformity_* tables for a run")
     pr.add_argument("--run-id", type=str, required=True)
     pr.add_argument("--db", type=str, required=True, help="Path to simulation.db for the run")
     pr.add_argument("--run-dir", type=str, required=True, help="Path to run directory (writes artifacts/)")
+
+    pj = sub.add_parser(
+        "olmo-conformity-judgeval",
+        help="Backfill Judge Eval scores into conformity_outputs.parsed_answer_json for an existing run",
+    )
+    pj.add_argument("--run-id", type=str, required=True)
+    pj.add_argument("--db", type=str, required=True, help="Path to simulation.db for the run")
+    pj.add_argument("--judge-model", type=str, default="llama3.2", help="Ollama model to use as judge")
+    pj.add_argument("--ollama-base", type=str, default="http://localhost:11434/v1", help="Ollama API base URL")
+    pj.add_argument("--force", action="store_true", help="Overwrite existing parsed_answer_json if present")
+    pj.add_argument("--limit", type=int, default=None, help="Optional cap on number of trials to score")
 
     pl = sub.add_parser("olmo-conformity-logit-lens", help="Compute logit-lens top-k across layers for each trial")
     pl.add_argument("--run-id", type=str, required=True)
@@ -185,6 +214,14 @@ def main(argv: list[str] | None = None) -> int:
     pl.add_argument("--layers", type=str, default="0", help="Comma-separated layer indices")
     pl.add_argument("--topk", type=int, default=10)
     pl.add_argument("--parse-think", action="store_true", help="Also parse <think>...</think> into conformity_think_tokens")
+    pl.add_argument("--analyze-think", action="store_true", help="Also compute logit lens for intermediate <think> tokens")
+    pl.add_argument(
+        "--trial-scope",
+        type=str,
+        default="all",
+        choices=["all", "behavioral-only"],
+        help="Which trials to process (default: all trials in run).",
+    )
 
     pi = sub.add_parser("olmo-conformity-intervene", help="Run social-vector subtraction intervention sweep (TransformerLens)")
     pi.add_argument("--run-id", type=str, required=True)
@@ -196,6 +233,85 @@ def main(argv: list[str] | None = None) -> int:
     pi.add_argument("--alpha", type=str, default="1.0", help="Comma-separated alpha values, e.g. '0.5,1.0,2.0'")
     pi.add_argument("--component-hook", type=str, default="hook_resid_post")
     pi.add_argument("--max-new-tokens", type=int, default=64)
+
+    pv = sub.add_parser("olmo-conformity-vector-analysis", help="Run Truth vs Social Vector analysis workflow")
+    pv.add_argument("--run-id", type=str, required=True)
+    pv.add_argument("--db", type=str, required=True)
+    pv.add_argument("--model-id", type=str, required=True)
+    pv.add_argument("--truth-probe-dataset", type=str, required=True, help="Path to truth probe training dataset JSONL")
+    pv.add_argument("--social-probe-dataset", type=str, default=None, help="Path to social probe training dataset JSONL (optional)")
+    pv.add_argument("--layers", type=str, default="10,11,12,13,14,15,16,17,18,19,20", help="Comma-separated layer indices")
+    pv.add_argument("--component", type=str, default="hook_resid_post")
+    pv.add_argument("--token-position", type=int, default=-1)
+    pv.add_argument("--dtype", type=str, default="float16", choices=["float16", "float32"])
+    pv.add_argument("--artifacts-dir", type=str, required=True, help="Directory for probe artifacts and plots")
+
+    prr = sub.add_parser(
+        "olmo-conformity-resume",
+        help="Resume an existing run from the projection step (optionally repairing overwritten trial activations)",
+    )
+    prr.add_argument("--run-id", type=str, required=True)
+    prr.add_argument("--db", type=str, required=True, help="Path to simulation.db for the run")
+    prr.add_argument("--model-id", type=str, required=True)
+    prr.add_argument(
+        "--run-dir",
+        type=str,
+        default=None,
+        help="Path to run directory (defaults to dirname(--db))",
+    )
+    default_layers_32 = ",".join(str(i) for i in range(32))
+    prr.add_argument("--layers", type=str, default=default_layers_32, help="Comma-separated layer indices")
+    prr.add_argument("--component", type=str, default="hook_resid_post")
+    prr.add_argument("--max-new-tokens", type=int, default=128)
+    prr.add_argument("--no-repair-activations", action="store_true", help="Skip trial activation repair step")
+
+    pph = sub.add_parser(
+        "olmo-conformity-posthoc",
+        help="Backfill missing analyses for an existing run (logit lens + think parsing + interventions + report refresh)",
+    )
+    pph.add_argument("--run-dir", type=str, required=True, help="Path to run directory: runs/<timestamp>_<run_id>/")
+    pph.add_argument("--db", type=str, default=None, help="Path to simulation.db (defaults to <run-dir>/simulation.db)")
+    pph.add_argument("--run-id", type=str, default=None, help="Run UUID (defaults to derived from run-dir name)")
+    pph.add_argument("--model-id", type=str, default=None, help="Model id (defaults to first trial's model_id)")
+    pph.add_argument("--layers", type=str, default=default_layers_32, help="Comma-separated layer indices")
+    pph.add_argument("--logit-lens-k", type=int, default=10)
+    pph.add_argument("--trial-scope", type=str, default="behavioral-only", choices=["all", "behavioral-only"])
+    pph.add_argument("--parse-think-tokens", action="store_true", help="Parse <think>...</think> blocks into conformity_think_tokens")
+    pph.add_argument("--no-logit-lens", action="store_true", help="Skip logit lens computation")
+    pph.add_argument("--no-interventions", action="store_true", help="Skip interventions")
+    pph.add_argument("--no-report", action="store_true", help="Skip report regeneration (figures/tables)")
+    pph.add_argument(
+        "--intervention-scope",
+        type=str,
+        default="pressure-only",
+        choices=["pressure-only", "all-immutable"],
+        help="Which trials to run interventions on.",
+    )
+    pph.add_argument("--intervention-layers", type=str, default="15,16,17,18,19,20")
+    pph.add_argument("--alphas", type=str, default="0.5,1.0,2.0")
+    pph.add_argument("--component-hook", type=str, default="hook_resid_post")
+    pph.add_argument("--max-new-tokens", type=int, default=64)
+    pph.add_argument("--clear-existing", action="store_true", help="Delete existing posthoc rows for this run and recompute")
+
+    pe = sub.add_parser("olmo-conformity-full", help="Run complete experiment workflow (trials → probes → interventions → analysis)")
+    pe.add_argument("--suite-config", type=str, required=True, help="Path to suite config JSON")
+    pe.add_argument("--runs-dir", type=str, default="./runs", help="Base directory for outputs")
+    pe.add_argument("--run-id", type=str, default=None)
+    pe.add_argument("--api-base", type=str, default=None)
+    pe.add_argument("--api-key", type=str, default=None)
+    pe.add_argument("--no-rate-limit", action="store_true")
+    pe.add_argument("--capture-activations", action="store_true")
+    pe.add_argument("--capture-layers", type=str, default=None)
+    pe.add_argument("--truth-probe-dataset", type=str, default=None)
+    pe.add_argument("--social-probe-dataset", type=str, default=None)
+    pe.add_argument("--probe-layers", type=str, default=default_layers_32)
+    pe.add_argument("--run-interventions", action="store_true")
+    pe.add_argument("--intervention-layers", type=str, default="15,16,17,18,19,20")
+    pe.add_argument("--intervention-alphas", type=str, default="0.5,1.0,2.0")
+    pe.add_argument("--social-probe-path", type=str, default=None)
+    pe.add_argument("--social-probe-id", type=str, default=None)
+    pe.add_argument("--no-reports", action="store_true")
+    pe.add_argument("--run-vector-analysis", action="store_true")
 
     # llama: Model management commands
     llama_parser = sub.add_parser("llama", help="llama.cpp model management")
@@ -238,8 +354,6 @@ def main(argv: list[str] | None = None) -> int:
             layer_info = CaptureContext.get_model_layers(model)
 
             if args.format == "json":
-                import json
-
                 print(json.dumps(layer_info, indent=2))
             else:
                 print(f"Model: {args.model_id}")
@@ -491,6 +605,14 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if mode == "olmo-conformity":
+        capture_layers = None
+        capture_components = None
+        if args.capture_activations:
+            if args.capture_layers:
+                capture_layers = [int(x) for x in str(args.capture_layers).split(",") if str(x).strip() != ""]
+            if args.capture_components:
+                capture_components = [x.strip() for x in str(args.capture_components).split(",") if x.strip() != ""]
+        
         paths = run_olmo_conformity_suite(
             suite_config_path=str(args.suite_config),
             runs_dir=str(args.runs_dir),
@@ -501,6 +623,13 @@ def main(argv: list[str] | None = None) -> int:
             rate_limit_rpm=args.rate_limit_rpm,
             rate_limit_tpm=args.rate_limit_tpm,
             rate_limit_max_concurrent=int(args.rate_limit_max_concurrent),
+            capture_activations=bool(args.capture_activations),
+            capture_layers=capture_layers,
+            capture_components=capture_components,
+            capture_dtype=str(args.capture_dtype),
+            use_judgeval=bool(args.use_judgeval),
+            judgeval_judge_model=str(args.judgeval_judge_model),
+            judgeval_ollama_base=str(args.judgeval_ollama_base),
         )
         print(f"run_dir={paths.run_dir}")
         print(f"db={paths.db_path}")
@@ -529,6 +658,7 @@ def main(argv: list[str] | None = None) -> int:
             dataset_path=str(args.dataset_path),
             capture=cap,
             system_prompt="You are a truthful assistant. Answer True/False accurately.",
+            temperature=float(args.temperature),
         )
 
         # 2) Train probe and save weights near the DB (run dir)
@@ -575,30 +705,334 @@ def main(argv: list[str] | None = None) -> int:
             print(f"{k}={v}")
         return 0
 
+    if mode == "olmo-conformity-judgeval":
+        # Post-hoc JudgeEval: populate conformity_outputs.parsed_answer_json for the latest output per trial.
+        from aam.experiments.olmo_conformity.judgeval_scorers import (
+            ConformityExample,
+            ConformityScorer,
+            RationalizationScorer,
+            TruthfulnessScorer,
+            JUDGEVAL_AVAILABLE,
+        )
+
+        if not JUDGEVAL_AVAILABLE:
+            print("Error: judgeval is not installed. Install it and retry (and ensure httpx is available).")
+            return 1
+
+        trace_db = TraceDb(TraceDbConfig(db_path=str(args.db)))
+        trace_db.connect()
+        trace_db.init_schema()
+
+        # Latest output per trial
+        where = "t.run_id = ?"
+        params: list[object] = [str(args.run_id)]
+        if not bool(args.force):
+            where += " AND o.parsed_answer_json IS NULL"
+        if args.limit is not None:
+            limit_sql = " LIMIT ?"
+            params.append(int(args.limit))
+        else:
+            limit_sql = ""
+
+        rows = trace_db.conn.execute(
+            f"""
+            WITH latest_outputs AS (
+              SELECT trial_id, MAX(created_at) AS max_created_at
+              FROM conformity_outputs
+              GROUP BY trial_id
+            )
+            SELECT
+              t.trial_id,
+              t.variant,
+              c.name AS condition_name,
+              i.question AS question,
+              i.ground_truth_text AS ground_truth_text,
+              o.output_id,
+              o.raw_text AS raw_text
+            FROM conformity_trials t
+            JOIN conformity_conditions c ON c.condition_id = t.condition_id
+            JOIN conformity_items i ON i.item_id = t.item_id
+            JOIN latest_outputs lo ON lo.trial_id = t.trial_id
+            JOIN conformity_outputs o ON o.trial_id = t.trial_id AND o.created_at = lo.max_created_at
+            WHERE {where}
+            ORDER BY t.created_at ASC
+            {limit_sql};
+            """,
+            tuple(params),
+        ).fetchall()
+
+        if not rows:
+            print("No trials to score (either none exist, or all already have parsed_answer_json).")
+            trace_db.close()
+            return 0
+
+        async def _score_one(example: ConformityExample) -> dict[str, float]:
+            scores: dict[str, float] = {}
+            conformity = ConformityScorer(judge_model=str(args.judge_model), ollama_base=str(args.ollama_base))
+            truthfulness = TruthfulnessScorer(judge_model=str(args.judge_model), ollama_base=str(args.ollama_base))
+            rationalization = RationalizationScorer(judge_model=str(args.judge_model), ollama_base=str(args.ollama_base))
+            scores["conformity"] = float(await conformity.a_score_example(example))
+            scores["truthfulness"] = float(await truthfulness.a_score_example(example))
+            scores["rationalization"] = float(await rationalization.a_score_example(example))
+            return scores
+
+        updated = 0
+        failed = 0
+        for idx, r in enumerate(rows, start=1):
+            output_id = str(r["output_id"])
+            example = ConformityExample(  # type: ignore[call-arg]
+                question=str(r["question"] or ""),
+                answer=str(r["raw_text"] or ""),
+                ground_truth=(str(r["ground_truth_text"]) if r["ground_truth_text"] is not None else None),
+                condition=str(r["condition_name"] or "unknown"),
+            )
+            try:
+                scores = asyncio.run(_score_one(example))
+            except Exception as e:
+                failed += 1
+                print(f"Warning: JudgeEval scoring failed for output_id={output_id[:8]}: {e}")
+                continue
+
+            try:
+                trace_db.conn.execute(
+                    "UPDATE conformity_outputs SET parsed_answer_json = ? WHERE output_id = ?;",
+                    (json.dumps(scores, ensure_ascii=False), output_id),
+                )
+                updated += 1
+                if idx % 10 == 0 or idx == len(rows):
+                    print(f"Scored {idx}/{len(rows)} (updated={updated}, failed={failed})")
+            except Exception as e:
+                failed += 1
+                print(f"Warning: JudgeEval DB update failed for output_id={output_id[:8]}: {e}")
+
+        trace_db.conn.commit()
+        trace_db.close()
+        print(f"judgeval_scored={updated}")
+        if failed:
+            print(f"judgeval_failed={failed}")
+        return 0
+
     if mode == "olmo-conformity-logit-lens":
         trace_db = TraceDb(TraceDbConfig(db_path=str(args.db)))
         trace_db.connect()
         trace_db.init_schema()
         layers = [int(x) for x in str(args.layers).split(",") if str(x).strip() != ""]
-        trials = trace_db.conn.execute(
-            "SELECT trial_id FROM conformity_trials WHERE run_id = ? ORDER BY created_at ASC;", (str(args.run_id),)
-        ).fetchall()
+        if str(args.trial_scope) == "behavioral-only":
+            trials = trace_db.conn.execute(
+                """
+                SELECT t.trial_id
+                FROM conformity_trials t
+                JOIN conformity_conditions c ON c.condition_id = t.condition_id
+                WHERE t.run_id = ? AND c.name IN ('control', 'asch_history_5', 'authoritative_bias')
+                ORDER BY t.created_at ASC;
+                """,
+                (str(args.run_id),),
+            ).fetchall()
+        else:
+            trials = trace_db.conn.execute(
+                "SELECT trial_id FROM conformity_trials WHERE run_id = ? ORDER BY created_at ASC;",
+                (str(args.run_id),),
+            ).fetchall()
+        from aam.experiments.olmo_conformity.logit_lens import (
+            analyze_think_rationalization,
+            compute_logit_lens_for_think_tokens,
+            compute_logit_lens_topk_for_trials,
+            parse_and_store_think_tokens,
+        )
+        
         total = 0
         think_total = 0
+        think_analysis_total = 0
+        # Reuse a single HF model load across all trials.
+        trial_ids = [str(tr["trial_id"]) for tr in trials]
+        total += compute_logit_lens_topk_for_trials(
+            trace_db=trace_db,
+            trial_ids=trial_ids,
+            model_id=str(args.model_id),
+            layers=layers,
+            k=int(args.topk),
+            skip_existing=True,
+        )
+
         for tr in trials:
-            total += compute_logit_lens_topk_for_trial(
-                trace_db=trace_db,
-                trial_id=str(tr["trial_id"]),
-                model_id=str(args.model_id),
-                layers=layers,
-                k=int(args.topk),
-            )
             if bool(args.parse_think):
                 think_total += parse_and_store_think_tokens(trace_db=trace_db, trial_id=str(tr["trial_id"]))
+            if bool(args.analyze_think):
+                think_analysis_total += compute_logit_lens_for_think_tokens(
+                    trace_db=trace_db,
+                    trial_id=str(tr["trial_id"]),
+                    model_id=str(args.model_id),
+                    layers=layers,
+                    k=int(args.topk),
+                )
+                # Also analyze rationalization
+                analysis = analyze_think_rationalization(trace_db=trace_db, trial_id=str(tr["trial_id"]))
+                if analysis["rationalization_score"] > 0:
+                    print(f"Trial {tr['trial_id'][:8]}: rationalization_score={analysis['rationalization_score']:.2f}, has_conflict={analysis['has_conflict']}")
         trace_db.close()
+        print(f"logit_lens_rows={total}")
+        if think_total > 0:
+            print(f"think_tokens_parsed={think_total}")
+        if think_analysis_total > 0:
+            print(f"think_logit_lens_rows={think_analysis_total}")
         print(f"logit_rows_inserted={total}")
         if bool(args.parse_think):
             print(f"think_tokens_inserted={think_total}")
+        return 0
+
+    if mode == "olmo-conformity-posthoc":
+        # Resolve run_id + db path.
+        run_dir = str(args.run_dir)
+        run_base = os.path.basename(run_dir.rstrip("/"))
+        run_id = str(args.run_id) if args.run_id else (run_base.split("_")[-1] if "_" in run_base else run_base)
+        db_path = str(args.db) if args.db else os.path.join(run_dir, "simulation.db")
+
+        trace_db = TraceDb(TraceDbConfig(db_path=str(db_path)))
+        trace_db.connect()
+        trace_db.init_schema()
+
+        # Resolve model_id if not provided.
+        model_id = str(args.model_id) if args.model_id else None
+        if not model_id:
+            row = trace_db.conn.execute(
+                "SELECT model_id FROM conformity_trials WHERE run_id = ? ORDER BY created_at ASC LIMIT 1;",
+                (run_id,),
+            ).fetchone()
+            if row is None:
+                trace_db.close()
+                raise RuntimeError(f"No trials found for run_id={run_id}")
+            model_id = str(row["model_id"])
+
+        layers = [int(x) for x in str(args.layers).split(",") if str(x).strip() != ""]
+        k = int(args.logit_lens_k)
+
+        # Trial selection for logit-lens / think parsing.
+        if str(args.trial_scope) == "behavioral-only":
+            trials = trace_db.conn.execute(
+                """
+                SELECT t.trial_id
+                FROM conformity_trials t
+                JOIN conformity_conditions c ON c.condition_id = t.condition_id
+                WHERE t.run_id = ? AND c.name IN ('control', 'asch_history_5', 'authoritative_bias')
+                ORDER BY t.created_at ASC;
+                """,
+                (run_id,),
+            ).fetchall()
+        else:
+            trials = trace_db.conn.execute(
+                "SELECT trial_id FROM conformity_trials WHERE run_id = ? ORDER BY created_at ASC;",
+                (run_id,),
+            ).fetchall()
+        trial_ids = [str(r["trial_id"]) for r in trials]
+
+        # Optionally clear existing derived rows.
+        if bool(args.clear_existing) and trial_ids:
+            trace_db.conn.execute(
+                f"DELETE FROM conformity_logit_lens WHERE trial_id IN ({','.join(['?']*len(trial_ids))});",
+                trial_ids,
+            )
+            trace_db.conn.execute(
+                f"DELETE FROM conformity_think_tokens WHERE trial_id IN ({','.join(['?']*len(trial_ids))});",
+                trial_ids,
+            )
+            # Remove prior intervention rows for this run (results first).
+            trace_db.conn.execute(
+                """
+                DELETE FROM conformity_intervention_results
+                WHERE intervention_id IN (SELECT intervention_id FROM conformity_interventions WHERE run_id = ?);
+                """,
+                (run_id,),
+            )
+            trace_db.conn.execute("DELETE FROM conformity_interventions WHERE run_id = ?;", (run_id,))
+            trace_db.conn.commit()
+
+        # Think tokens
+        from aam.experiments.olmo_conformity.logit_lens import (
+            compute_logit_lens_topk_for_trials,
+            parse_and_store_think_tokens,
+        )
+
+        think_inserted = 0
+        if bool(args.parse_think_tokens):
+            for tid in trial_ids:
+                think_inserted += parse_and_store_think_tokens(trace_db=trace_db, trial_id=str(tid))
+
+        # Logit lens (skip if requested)
+        logit_inserted = 0
+        if not bool(args.no_logit_lens):
+            logit_inserted = compute_logit_lens_topk_for_trials(
+                trace_db=trace_db,
+                trial_ids=trial_ids,
+                model_id=str(model_id),
+                layers=layers,
+                k=k,
+                skip_existing=(not bool(args.clear_existing)),
+            )
+
+        # Interventions
+        intervention_inserted = 0
+        if not bool(args.no_interventions):
+            # Find latest social probe for this run.
+            sp = trace_db.conn.execute(
+                """
+                SELECT probe_id, artifact_path
+                FROM conformity_probes
+                WHERE run_id = ? AND probe_kind = 'social'
+                ORDER BY created_at DESC
+                LIMIT 1;
+                """,
+                (run_id,),
+            ).fetchone()
+            if sp is None:
+                print("Warning: No social probe found for run; skipping interventions")
+            else:
+                social_probe_id = str(sp["probe_id"])
+                probe_path = str(sp["artifact_path"])
+
+                intervention_layers = [int(x) for x in str(args.intervention_layers).split(",") if str(x).strip() != ""]
+                alphas = [float(x) for x in str(args.alphas).split(",") if str(x).strip() != ""]
+
+                if str(args.intervention_scope) == "pressure-only":
+                    trial_filter_sql = (
+                        "i.ground_truth_text IS NOT NULL "
+                        "AND t.condition_id IN (SELECT condition_id FROM conformity_conditions WHERE name IN ('asch_history_5','authoritative_bias'))"
+                    )
+                else:
+                    trial_filter_sql = "i.ground_truth_text IS NOT NULL"
+
+                intervention_inserted = run_intervention_sweep(
+                    trace_db=trace_db,
+                    run_id=run_id,
+                    model_id=str(model_id),
+                    probe_artifact_path=probe_path,
+                    social_probe_id=social_probe_id,
+                    target_layers=intervention_layers,
+                    component_hook=str(args.component_hook),
+                    alpha_values=alphas,
+                    max_new_tokens=int(args.max_new_tokens),
+                    trial_filter_sql=trial_filter_sql,
+                )
+
+        # Reporting refresh
+        if not bool(args.no_report):
+            try:
+                _ = generate_core_figures(trace_db=trace_db, run_id=run_id, run_dir=run_dir)
+            except Exception as e:
+                print(f"Warning: report generation failed: {e}", file=sys.stderr)
+
+        trace_db.close()
+
+        print("=" * 60)
+        print("Posthoc backfill complete")
+        print("=" * 60)
+        print(f"run_id={run_id}")
+        print(f"db={db_path}")
+        print(f"model_id={model_id}")
+        print(f"trial_scope={args.trial_scope} (n_trials={len(trial_ids)})")
+        print(f"logit_lens_rows_inserted={logit_inserted}")
+        if bool(args.parse_think_tokens):
+            print(f"think_tokens_inserted={think_inserted}")
+        print(f"intervention_results_inserted={intervention_inserted}")
         return 0
 
     if mode == "olmo-conformity-intervene":
@@ -620,6 +1054,116 @@ def main(argv: list[str] | None = None) -> int:
         )
         trace_db.close()
         print(f"intervention_results_inserted={inserted}")
+        return 0
+
+    if mode == "olmo-conformity-vector-analysis":
+        from aam.experiments.olmo_conformity.vector_analysis import run_truth_social_vector_analysis
+        
+        trace_db = TraceDb(TraceDbConfig(db_path=str(args.db)))
+        trace_db.connect()
+        trace_db.init_schema()
+        
+        layers = [int(x) for x in str(args.layers).split(",") if str(x).strip() != ""]
+        
+        results = run_truth_social_vector_analysis(
+            trace_db=trace_db,
+            run_id=str(args.run_id),
+            model_id=str(args.model_id),
+            truth_probe_dataset_path=str(args.truth_probe_dataset),
+            social_probe_dataset_path=str(args.social_probe_dataset) if args.social_probe_dataset else None,
+            layers=layers,
+            component=str(args.component),
+            token_position=int(args.token_position),
+            dtype=str(args.dtype),
+            artifacts_dir=str(args.artifacts_dir),
+        )
+        
+        trace_db.close()
+        
+        print("\n" + "="*60)
+        print("Vector Analysis Results")
+        print("="*60)
+        print(f"Truth Probe ID: {results['truth_probe_id']}")
+        if results['social_probe_id']:
+            print(f"Social Probe ID: {results['social_probe_id']}")
+        print(f"Projection Stats: {results['projection_stats']}")
+        print(f"Turn Layers: {results['turn_layers']}")
+        print(f"Analysis Artifacts: {results['analysis_artifacts']}")
+        return 0
+
+    if mode == "olmo-conformity-resume":
+        from aam.experiments.olmo_conformity.resume import resume_from_projections
+
+        trace_db = TraceDb(TraceDbConfig(db_path=str(args.db)))
+        trace_db.connect()
+        trace_db.init_schema()
+
+        run_dir = str(args.run_dir) if args.run_dir else os.path.dirname(str(args.db))
+        layers = [int(x) for x in str(args.layers).split(",") if str(x).strip() != ""]
+
+        results = resume_from_projections(
+            trace_db=trace_db,
+            run_id=str(args.run_id),
+            model_id=str(args.model_id),
+            run_dir=run_dir,
+            layers=layers,
+            component=str(args.component),
+            repair_activations_first=(not bool(args.no_repair_activations)),
+            max_new_tokens=int(args.max_new_tokens),
+        )
+        trace_db.close()
+        print(f"\nResume results: {results}")
+        return 0
+
+    if mode == "olmo-conformity-full":
+        from aam.experiments.olmo_conformity.orchestration import ExperimentConfig, run_full_experiment
+        from aam.experiments.olmo_conformity.io import load_suite_config
+        
+        # Parse layers and alphas
+        capture_layers = None
+        if args.capture_layers:
+            capture_layers = [int(x) for x in str(args.capture_layers).split(",") if str(x).strip() != ""]
+        
+        probe_layers = None
+        if args.probe_layers:
+            probe_layers = [int(x) for x in str(args.probe_layers).split(",") if str(x).strip() != ""]
+        
+        intervention_layers = None
+        if args.intervention_layers:
+            intervention_layers = [int(x) for x in str(args.intervention_layers).split(",") if str(x).strip() != ""]
+        
+        intervention_alphas = None
+        if args.intervention_alphas:
+            intervention_alphas = [float(x) for x in str(args.intervention_alphas).split(",") if str(x).strip() != ""]
+        
+        # Extract temperature from suite config (not experiment config)
+        suite_cfg = load_suite_config(str(args.suite_config))
+        temperature = float(suite_cfg.get("run", {}).get("temperature", 0.0))
+        
+        config = ExperimentConfig(
+            suite_config_path=str(args.suite_config),
+            runs_dir=str(args.runs_dir),
+            run_id=str(args.run_id) if args.run_id else None,
+            api_base=args.api_base,
+            api_key=args.api_key,
+            rate_limit_enabled=(not bool(args.no_rate_limit)),
+            capture_activations=bool(args.capture_activations),
+            capture_layers=capture_layers,
+            truth_probe_dataset_path=str(args.truth_probe_dataset) if args.truth_probe_dataset else None,
+            social_probe_dataset_path=str(args.social_probe_dataset) if args.social_probe_dataset else None,
+            probe_layers=probe_layers,
+            run_interventions=bool(args.run_interventions),
+            intervention_layers=intervention_layers,
+            intervention_alphas=intervention_alphas,
+            social_probe_artifact_path=str(args.social_probe_path) if args.social_probe_path else None,
+            social_probe_id=str(args.social_probe_id) if args.social_probe_id else None,
+            generate_reports=(not bool(args.no_reports)),
+            run_vector_analysis=bool(args.run_vector_analysis),
+            temperature=temperature,
+        )
+        
+        results = run_full_experiment(config)
+        print(f"\nFull experiment results: {results}")
         return 0
 
     run_id = args.run_id or str(uuid.uuid4())

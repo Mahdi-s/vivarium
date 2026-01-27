@@ -4,11 +4,38 @@ import asyncio
 import json
 import os
 import random
+import sys
 import time
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Protocol, TYPE_CHECKING
+from typing import Any, Dict, List, Optional, Protocol, Tuple, TYPE_CHECKING
+
+# Mock torch.library.register_fake if missing (to fix torchvision/torch mismatch)
+try:
+    import torch
+    if hasattr(torch, "library") and not hasattr(torch.library, "register_fake"):
+        def _register_fake(name):
+            def decorator(fn): return fn
+            return decorator
+        torch.library.register_fake = _register_fake
+except ImportError:
+    pass
+
+# Mock warn_once in torch._dynamo.utils if missing (to fix torchao/torch mismatch)
+try:
+    import torch._dynamo.utils as _du
+    if not hasattr(_du, "warn_once"):
+        def _warn_once(msg): pass
+        _du.warn_once = _warn_once
+except (ImportError, AttributeError):
+    pass
 
 from aam.tools import ToolSpec
+
+# For HuggingFaceTransformersGateway
+try:
+    import torch  # noqa: F401
+except ImportError:
+    pass  # Will raise error when gateway is used
 
 
 JsonDict = Dict[str, Any]
@@ -51,6 +78,81 @@ class RateLimitConfig:
             enable_context_degradation=True,
             context_degradation_threshold=8000,
         )
+
+
+def select_local_gateway(
+    *,
+    model_id_or_path: str,
+    capture_context: Optional["CaptureContext"] = None,
+    device: Optional[str] = None,
+    max_new_tokens: int = 128,
+    prefer_transformerlens: bool = True,
+    scientific_mode: bool = False,
+) -> Any:
+    """
+    Choose the best local gateway for a model.
+
+    Rationale:
+    - OLMo-3 is not reliably supported by TransformerLens; prefer HuggingFaceHookedGateway.
+    - For other models, prefer TransformerLens when available for richer tooling.
+    
+    Args:
+        model_id_or_path: HuggingFace model ID or local path (or GGUF path)
+        capture_context: Optional CaptureContext for activation capture
+        device: Target device (cuda, mps, cpu) 
+        max_new_tokens: Maximum tokens to generate
+        prefer_transformerlens: If True, try TransformerLens first
+        scientific_mode: If True, enforce that activation capture uses the same model
+                         as inference. GGUF models will be rejected if capture_context
+                         is set, as they cannot be probed. This prevents the "dual-stack"
+                         validity threat where simulation uses GGUF but analysis uses PyTorch.
+                         
+    Raises:
+        ValueError: If scientific_mode=True and a GGUF model is specified with capture_context
+    """
+    mid = str(model_id_or_path)
+    
+    # Enforce scientific mode: reject GGUF models when activation capture is enabled
+    if scientific_mode and capture_context is not None:
+        if mid.lower().endswith(".gguf"):
+            raise ValueError(
+                "Scientific mode requires PyTorch model for activation capture. "
+                "GGUF models cannot be probed - the quantized weights differ from "
+                "the full-precision PyTorch weights, invalidating interpretability findings. "
+                "Use a HuggingFace model ID instead (e.g., 'allenai/Olmo-3-7B-Instruct')."
+            )
+    
+    if "olmo" in mid.lower():
+        return HuggingFaceHookedGateway(
+            model_id_or_path=mid,
+            device=device,
+            capture_context=capture_context,
+            max_new_tokens=int(max_new_tokens),
+        )
+
+    if prefer_transformerlens:
+        try:
+            return TransformerLensGateway(
+                model_id=mid,
+                device=device,
+                capture_context=capture_context,
+                max_new_tokens=int(max_new_tokens),
+            )
+        except Exception:
+            # Fall back to HF if TL isn't installed / model unsupported.
+            return HuggingFaceHookedGateway(
+                model_id_or_path=mid,
+                device=device,
+                capture_context=capture_context,
+                max_new_tokens=int(max_new_tokens),
+            )
+
+    return HuggingFaceHookedGateway(
+        model_id_or_path=mid,
+        device=device,
+        capture_context=capture_context,
+        max_new_tokens=int(max_new_tokens),
+    )
 
 
 class RateLimiter:
@@ -457,12 +559,123 @@ class TransformerLensGateway:
                 "TransformerLens is not installed. Install extras: `pip install -e .[interpretability]`"
             ) from e
 
+        # Choose best available device if not explicitly provided.
+        # Priority: CUDA (HPC) -> MPS (Apple Silicon) -> CPU.
+        if not self.device:
+            try:
+                import torch  # type: ignore
+
+                if getattr(torch.cuda, "is_available", lambda: False)():
+                    self.device = "cuda"
+                elif getattr(getattr(torch.backends, "mps", None), "is_available", lambda: False)():
+                    self.device = "mps"
+                else:
+                    self.device = "cpu"
+            except Exception:
+                self.device = "cpu"
+
         # Lazy-load local model at init so subsequent calls are fast.
         # Note: downloading weights happens on the user's machine when they run phase3.
         kwargs: Dict[str, Any] = {}
         if self.device:
             kwargs["device"] = self.device
-        self._model = HookedTransformer.from_pretrained(self.model_id, **kwargs)
+        
+        # Try official model list first, then fall back to from_pretrained_no_processing
+        # for custom models like Olmo that aren't in the official list
+        try:
+            self._model = HookedTransformer.from_pretrained(self.model_id, **kwargs)
+        except (ValueError, KeyError) as e:
+            # If model not found in official list, try loading directly from HuggingFace
+            error_str = str(e).lower()
+            if "not found" in error_str or "valid official model names" in error_str or "official model name" in error_str:
+                print(f"Model {self.model_id} not in official TransformerLens list.")
+                print("Attempting HuggingFace->TransformerLens bridge via `hf_model=`...")
+                try:
+                    from pathlib import Path
+
+                    from transformers import AutoModelForCausalLM, AutoTokenizer  # type: ignore
+
+                    # Prefer repo-local cache if present (avoids re-downloads).
+                    cache_dir = None
+                    local_model_dir: Optional[str] = None
+                    try:
+                        current = Path(__file__).resolve()
+                        repo_root = None
+                        for parent in current.parents:
+                            if (parent / "pyproject.toml").exists() or (parent / ".git").exists():
+                                repo_root = parent
+                                break
+                        if repo_root is not None:
+                            candidate = repo_root / "models" / "huggingface_cache"
+                            if candidate.exists():
+                                cache_dir = str(candidate)
+                                # Our repo stores models as plain folders like:
+                                #   models/huggingface_cache/allenai_Olmo-3-1025-7B/
+                                # This is not the default HF cache layout, so prefer loading directly
+                                # from that folder when it exists to avoid any network fetch.
+                                folder_name = self.model_id.replace("/", "_")
+                                direct_path = candidate / folder_name
+                                if direct_path.exists():
+                                    local_model_dir = str(direct_path)
+                    except Exception:
+                        cache_dir = None
+
+                    model_src = local_model_dir or self.model_id
+                    local_only = bool(local_model_dir)
+                    if local_only:
+                        print(f"  Using local model folder: {model_src}")
+                    else:
+                        print("  Local model folder not found; may download from HuggingFace.")
+
+                    tokenizer = AutoTokenizer.from_pretrained(
+                        model_src,
+                        cache_dir=cache_dir,
+                        local_files_only=local_only,
+                    )
+                    import torch  # type: ignore
+
+                    # Pick a reasonable dtype per backend.
+                    # - CUDA: fp16 typically fastest
+                    # - MPS: fp16 usually supported
+                    # - CPU: fp32 safest
+                    dev = self.device or "cpu"
+                    if dev == "cuda":
+                        dtype = torch.float16
+                    elif dev == "mps":
+                        dtype = torch.float16
+                    else:
+                        dtype = torch.float32
+
+                    hf_model = AutoModelForCausalLM.from_pretrained(
+                        model_src,
+                        cache_dir=cache_dir,
+                        dtype=dtype,
+                        low_cpu_mem_usage=True,
+                        local_files_only=local_only,
+                    )
+                    try:
+                        if dev in ("cuda", "mps", "cpu"):
+                            hf_model = hf_model.to(dev)
+                    except Exception:
+                        pass
+
+                    # TransformerLens insists on an "official" model_name string; use a known one
+                    # and pass the real HF model+tokenizer through.
+                    self._model = HookedTransformer.from_pretrained_no_processing(
+                        "gpt2",
+                        hf_model=hf_model,
+                        tokenizer=tokenizer,
+                        **kwargs,
+                    )
+                    print(f"✓ Successfully loaded {self.model_id} via hf_model bridge")
+                except Exception as e2:
+                    raise RuntimeError(
+                        f"Failed to load model {self.model_id} for TransformerLens.\n"
+                        f"- Original error: {e}\n"
+                        f"- Bridge error: {e2}"
+                    ) from e2
+            else:
+                raise
 
     def _messages_to_prompt(self, messages: List[JsonDict]) -> str:
         # Minimal deterministic formatting; keep it simple for TL + JSON-output prompting.
@@ -545,5 +758,580 @@ class TransformerLensGateway:
         except TypeError:
             out = self._model.generate(prompt, max_new_tokens=self.max_new_tokens)
         return out if isinstance(out, str) else str(out)
+
+
+@dataclass
+class HuggingFaceHookedGateway:
+    """
+    Local HF (transformers) gateway with activation capture support.
+
+    This exists primarily for architectures not yet supported by TransformerLens
+    weight-conversion (e.g. OLMo3), while still enabling the same style of
+    hook names used throughout the AAM interpretability pipeline:
+      - blocks.{L}.hook_resid_post
+
+    Device priority (if not specified): CUDA -> MPS -> CPU.
+    """
+
+    model_id_or_path: str
+    device: Optional[str] = None
+    capture_context: Optional["CaptureContext"] = None
+    max_new_tokens: int = 128
+    dtype: Optional[str] = None  # "float16"|"bfloat16"|"float32"|None
+
+    supports_tool_calls: bool = False
+
+    def __post_init__(self) -> None:
+        try:
+            import torch  # type: ignore
+            from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer  # type: ignore
+        except Exception as e:  # pragma: no cover
+            raise RuntimeError(
+                "HF gateway requires `transformers` + `torch` installed."
+            ) from e
+
+        # Choose best device if not explicitly provided.
+        if not self.device:
+            if getattr(torch.cuda, "is_available", lambda: False)():
+                self.device = "cuda"
+            elif getattr(getattr(torch.backends, "mps", None), "is_available", lambda: False)():
+                self.device = "mps"
+            else:
+                self.device = "cpu"
+
+        dev = self.device or "cpu"
+
+        # Pick dtype
+        if self.dtype == "bfloat16":
+            torch_dtype = torch.bfloat16
+        elif self.dtype == "float32":
+            torch_dtype = torch.float32
+        elif self.dtype == "float16":
+            torch_dtype = torch.float16
+        else:
+            # Default: cuda/mps -> fp16, cpu -> fp32
+            torch_dtype = torch.float16 if dev in ("cuda", "mps") else torch.float32
+
+        # Load config and sanitize rope_scaling types (Olmo3 uses ints here; transformers warns).
+        cfg = AutoConfig.from_pretrained(self.model_id_or_path, trust_remote_code=True)
+        try:
+            rs = getattr(cfg, "rope_scaling", None)
+            if isinstance(rs, dict):
+                if "beta_fast" in rs and isinstance(rs["beta_fast"], int):
+                    rs["beta_fast"] = float(rs["beta_fast"])
+                if "beta_slow" in rs and isinstance(rs["beta_slow"], int):
+                    rs["beta_slow"] = float(rs["beta_slow"])
+        except Exception:
+            pass
+
+        self._tokenizer = AutoTokenizer.from_pretrained(self.model_id_or_path, trust_remote_code=True)
+        print(f"  [HF Gateway] Loading model weights...")
+        self._model = AutoModelForCausalLM.from_pretrained(
+            self.model_id_or_path,
+            config=cfg,
+            dtype=torch_dtype,
+            low_cpu_mem_usage=True,
+            trust_remote_code=True,
+        )
+        print(f"  [HF Gateway] Model weights loaded")
+
+        print(f"  [HF Gateway] Moving model to device: {dev} (this may take 30-60s for 7B models on MPS)...")
+        try:
+            self._model = self._model.to(dev)
+            print(f"  [HF Gateway] Model moved to {dev}")
+        except Exception as e:
+            # Some backends rely on device_map; best-effort.
+            print(f"  [HF Gateway] Warning: device transfer failed ({e}), continuing anyway")
+            pass
+
+        print(f"  [HF Gateway] Setting model to eval mode...")
+        self._model.eval()
+        print(f"  [HF Gateway] Model in eval mode")
+
+        # Register hooks for requested TL-style hook names.
+        self._hooks: List[Any] = []
+        if self.capture_context is not None:
+            print(f"  [HF Gateway] Registering activation hooks...")
+            base = getattr(self._model, "model", None)
+            layers = getattr(base, "layers", None) if base is not None else None
+            if layers is None:
+                raise RuntimeError("HF gateway could not find decoder layers at model.model.layers")
+
+            # Determine which standardized hook names are requested from the CaptureContext config.
+            try:
+                requested_hook_names = [name for (name, _fn) in self.capture_context.build_fwd_hooks()]
+            except Exception:
+                requested_hook_names = []
+            requested = set(str(h) for h in requested_hook_names)
+
+            def _record(name: str, tensor_like: Any) -> None:
+                try:
+                    self.capture_context.record_activation(hook_name=name, activations=tensor_like)
+                except Exception:
+                    return
+
+            num_layers = len(layers)
+            for i, layer in enumerate(layers):
+                # Residual pre/post captures
+                resid_post_name = f"blocks.{i}.hook_resid_post"
+                resid_pre_name = f"blocks.{i}.hook_resid_pre"
+
+                if resid_post_name in requested:
+                    def _make_resid_post_hook(name: str = resid_post_name):
+                        def _hook(_module, _inp, out):
+                            hs = out[0] if isinstance(out, (tuple, list)) else out
+                            _record(name, hs)
+                            return out
+                        return _hook
+                    self._hooks.append(layer.register_forward_hook(_make_resid_post_hook()))
+
+                if resid_pre_name in requested:
+                    def _make_resid_pre_hook(name: str = resid_pre_name):
+                        def _pre_hook(_module, inp):
+                            try:
+                                hs_in = inp[0] if isinstance(inp, (tuple, list)) and inp else inp
+                                _record(name, hs_in)
+                            except Exception:
+                                pass
+                            return None
+                        return _pre_hook
+                    self._hooks.append(layer.register_forward_pre_hook(_make_resid_pre_hook()))
+
+                # MLP output capture (best-effort)
+                mlp_name = f"blocks.{i}.hook_mlp_out"
+                mlp = getattr(layer, "mlp", None)
+                if mlp_name in requested and mlp is not None:
+                    def _make_mlp_hook(name: str = mlp_name):
+                        def _hook(_module, _inp, out):
+                            hs = out[0] if isinstance(out, (tuple, list)) else out
+                            _record(name, hs)
+                            return out
+                        return _hook
+                    self._hooks.append(mlp.register_forward_hook(_make_mlp_hook()))
+
+                # Attention projection captures (best-effort; supports fused or separate q/k/v)
+                attn = getattr(layer, "self_attn", None) or getattr(layer, "attn", None)
+                if attn is not None:
+                    q_name = f"blocks.{i}.attn.hook_q"
+                    k_name = f"blocks.{i}.attn.hook_k"
+                    v_name = f"blocks.{i}.attn.hook_v"
+                    result_name = f"blocks.{i}.attn.hook_result"
+                    pattern_name = f"blocks.{i}.attn.hook_pattern"
+
+                    want_q = q_name in requested
+                    want_k = k_name in requested
+                    want_v = v_name in requested
+                    want_result = result_name in requested
+                    want_pattern = pattern_name in requested
+
+                    qkv_proj = getattr(attn, "qkv_proj", None)
+                    if qkv_proj is not None and (want_q or want_k or want_v):
+                        def _make_qkv_hook(
+                            qn: str = q_name,
+                            kn: str = k_name,
+                            vn: str = v_name,
+                        ):
+                            def _hook(_module, _inp, out):
+                                x = out[0] if isinstance(out, (tuple, list)) else out
+                                try:
+                                    # Expect last dim = 3 * hidden
+                                    chunk = int(x.shape[-1] // 3)
+                                    if want_q:
+                                        _record(qn, x[..., 0 * chunk : 1 * chunk])
+                                    if want_k:
+                                        _record(kn, x[..., 1 * chunk : 2 * chunk])
+                                    if want_v:
+                                        _record(vn, x[..., 2 * chunk : 3 * chunk])
+                                except Exception:
+                                    pass
+                                return out
+                            return _hook
+                        self._hooks.append(qkv_proj.register_forward_hook(_make_qkv_hook()))
+                    else:
+                        # Separate projections
+                        if want_q and hasattr(attn, "q_proj"):
+                            def _make_proj_hook(name: str = q_name):
+                                def _hook(_module, _inp, out):
+                                    x = out[0] if isinstance(out, (tuple, list)) else out
+                                    _record(name, x)
+                                    return out
+                                return _hook
+                            self._hooks.append(getattr(attn, "q_proj").register_forward_hook(_make_proj_hook()))
+                        if want_k and hasattr(attn, "k_proj"):
+                            def _make_proj_hook(name: str = k_name):
+                                def _hook(_module, _inp, out):
+                                    x = out[0] if isinstance(out, (tuple, list)) else out
+                                    _record(name, x)
+                                    return out
+                                return _hook
+                            self._hooks.append(getattr(attn, "k_proj").register_forward_hook(_make_proj_hook()))
+                        if want_v and hasattr(attn, "v_proj"):
+                            def _make_proj_hook(name: str = v_name):
+                                def _hook(_module, _inp, out):
+                                    x = out[0] if isinstance(out, (tuple, list)) else out
+                                    _record(name, x)
+                                    return out
+                                return _hook
+                            self._hooks.append(getattr(attn, "v_proj").register_forward_hook(_make_proj_hook()))
+
+                    # Attention result (o_proj) capture
+                    o_proj = getattr(attn, "o_proj", None)
+                    if want_result and o_proj is not None:
+                        def _make_o_hook(name: str = result_name):
+                            def _hook(_module, _inp, out):
+                                x = out[0] if isinstance(out, (tuple, list)) else out
+                                _record(name, x)
+                                return out
+                            return _hook
+                        self._hooks.append(o_proj.register_forward_hook(_make_o_hook()))
+                    elif want_result:
+                        # Fallback: hook the attention module output (may be (attn_out, attn_weights, ...))
+                        def _make_attn_out_hook(name: str = result_name):
+                            def _hook(_module, _inp, out):
+                                try:
+                                    x = out[0] if isinstance(out, (tuple, list)) else out
+                                    _record(name, x)
+                                except Exception:
+                                    pass
+                                return out
+                            return _hook
+                        self._hooks.append(attn.register_forward_hook(_make_attn_out_hook()))
+
+                    # Attention pattern capture (best-effort)
+                    if want_pattern:
+                        def _make_attn_pattern_hook(name: str = pattern_name):
+                            def _hook(_module, _inp, out):
+                                # Attempt to locate attention weights within the output.
+                                try:
+                                    if isinstance(out, (tuple, list)) and len(out) >= 2:
+                                        attn_w = out[1]
+                                        _record(name, attn_w)
+                                except Exception:
+                                    pass
+                                return out
+                            return _hook
+                        self._hooks.append(attn.register_forward_hook(_make_attn_pattern_hook()))
+
+                if (i + 1) % 8 == 0 or (i + 1) == num_layers:
+                    print(f"  [HF Gateway] Registered hooks for {i + 1}/{num_layers} layers")
+            print(f"  [HF Gateway] All {num_layers} hooks registered")
+        print(f"  [HF Gateway] Initialization complete")
+
+    def _messages_to_prompt_legacy(self, messages: List[JsonDict]) -> str:
+        """Legacy prompt formatting - used as fallback when no chat template available."""
+        lines: List[str] = []
+        for m in messages:
+            role = str(m.get("role") or "user")
+            content = str(m.get("content") or "")
+            lines.append(f"{role.upper()}:\n{content}\n")
+        lines.append("ASSISTANT:\n")
+        return "\n".join(lines)
+
+    def _messages_to_prompt(self, messages: List[JsonDict]) -> Tuple[str, bool]:
+        """
+        Convert messages to a prompt string, preferring chat templates.
+        
+        Returns:
+            Tuple of (prompt_string, used_chat_template)
+            - used_chat_template: True if tokenizer.apply_chat_template was used
+        """
+        # Try to use the tokenizer's chat template (preferred for instruct models)
+        try:
+            if hasattr(self._tokenizer, "apply_chat_template"):
+                # Check if chat template is actually configured
+                if getattr(self._tokenizer, "chat_template", None) is not None:
+                    prompt = self._tokenizer.apply_chat_template(
+                        messages,
+                        tokenize=False,
+                        add_generation_prompt=True,
+                    )
+                    return prompt, True
+        except Exception as e:
+            print(f"      [HF Gateway] Warning: apply_chat_template failed ({e}), using legacy format")
+        
+        # Fallback to legacy formatting
+        return self._messages_to_prompt_legacy(messages), False
+
+    def chat(
+        self,
+        *,
+        model: str,
+        messages: List[JsonDict],
+        tools: Optional[List[ToolSpec]] = None,
+        tool_choice: Optional[str] = None,
+        temperature: float = 0.0,
+    ) -> JsonDict:
+        _ = (model, tools, tool_choice)
+        prompt, used_chat_template = self._messages_to_prompt(messages)
+
+        if self.capture_context is not None:
+            self.capture_context.begin_inference()
+
+        print(f"      [HF Gateway] Tokenizing prompt (chat_template={used_chat_template})...")
+        inputs = self._tokenizer(prompt, return_tensors="pt")
+        input_length = inputs["input_ids"].shape[1]
+        try:
+            dev = getattr(self._model, "device", None) or self.device or "cpu"
+            inputs = {k: v.to(dev) for k, v in inputs.items()}
+        except Exception:
+            pass
+        print(f"      [HF Gateway] Tokenization complete, input shape: {inputs['input_ids'].shape}")
+
+        do_sample = float(temperature) > 0.0
+        gen_kwargs: Dict[str, Any] = {
+            "max_new_tokens": int(self.max_new_tokens),
+            "do_sample": do_sample,
+            "pad_token_id": getattr(self._tokenizer, "eos_token_id", None),
+        }
+        if do_sample:
+            gen_kwargs["temperature"] = float(temperature)
+
+        import torch  # type: ignore
+
+        print(f"      [HF Gateway] Starting generation (max_new_tokens={self.max_new_tokens})...")
+        with torch.no_grad():
+            out = self._model.generate(**inputs, **gen_kwargs)
+        print(f"      [HF Gateway] Generation complete, output shape: {out.shape}")
+
+        print(f"      [HF Gateway] Decoding tokens...")
+        # Extract only the generated tokens (more robust than string prefix matching)
+        generated_ids = out[0][input_length:]
+        text = self._tokenizer.decode(generated_ids, skip_special_tokens=True).strip()
+        
+        # Fallback: if generated_ids decoding fails or is empty, try full decode with prefix stripping
+        if not text:
+            full_text = self._tokenizer.decode(out[0], skip_special_tokens=True)
+            # Try multiple stripping approaches
+            if full_text.startswith(prompt):
+                text = full_text[len(prompt):].strip()
+            else:
+                # Try stripping by whitespace-normalized comparison
+                prompt_normalized = " ".join(prompt.split())
+                full_normalized = " ".join(full_text.split())
+                if full_normalized.startswith(prompt_normalized):
+                    # Find where the response actually starts
+                    text = full_text[len(prompt):].strip() if len(full_text) > len(prompt) else ""
+                else:
+                    text = full_text.strip()
+        
+        print(f"      [HF Gateway] Decoding complete, response length: {len(text)} chars")
+        return {"choices": [{"message": {"role": "assistant", "content": text}}]}
+
+    def on_action_decided(self, *, run_id: str, time_step: int, agent_id: str, action_name: str) -> None:
+        """
+        Mirror TransformerLensGateway hook sampling behavior when CaptureContext is used.
+        """
+        if self.capture_context is None:
+            return
+        self.capture_context.on_action_decided(
+            run_id=run_id,
+            time_step=time_step,
+            agent_id=agent_id,
+            model_id=str(self.model_id_or_path),
+            action_name=action_name,
+        )
+
+    def get_unembedding_matrix(self) -> Any:
+        """
+        Best-effort access to the unembedding (lm_head) weight matrix.
+        Returns a torch.Tensor (typically [vocab, d_model]).
+        """
+        try:
+            head = getattr(self._model, "get_output_embeddings", None)
+            if callable(head):
+                emb = head()
+                w = getattr(emb, "weight", None)
+                if w is not None:
+                    return w
+        except Exception:
+            pass
+        try:
+            lm_head = getattr(self._model, "lm_head", None)
+            w = getattr(lm_head, "weight", None) if lm_head is not None else None
+            if w is not None:
+                return w
+        except Exception:
+            pass
+        raise RuntimeError("Could not locate unembedding matrix (lm_head.weight / output embeddings).")
+
+    def get_model_hash(self) -> str:
+        """
+        Return a hash of model weights for dual-stack verification.
+        
+        This allows comparing model identity between inference and probing
+        to detect the "dual-stack" validity threat where different model
+        weights are used for generation vs. analysis.
+        
+        Returns:
+            16-character hex string (truncated SHA256)
+        """
+        import hashlib
+        h = hashlib.sha256()
+        # Sample weights from key layers for efficiency
+        for name, param in self._model.named_parameters():
+            # Sample first 1KB of each parameter to keep hashing fast
+            try:
+                data = param.data.cpu().numpy().tobytes()[:1000]
+                h.update(name.encode("utf-8"))
+                h.update(data)
+            except Exception:
+                continue
+        return h.hexdigest()[:16]
+
+    def register_intervention_hook(self, *, layer_idx: int, hook_fn: Any) -> Any:
+        """
+        Register a forward hook on decoder layer `layer_idx` and return the handle.
+        Caller is responsible for removing the hook via handle.remove().
+        """
+        base = getattr(self._model, "model", None)
+        layers = getattr(base, "layers", None) if base is not None else None
+        if layers is None:
+            raise RuntimeError("HF gateway could not find decoder layers at model.model.layers")
+        layer = layers[int(layer_idx)]
+        return layer.register_forward_hook(hook_fn)
+
+
+
+@dataclass
+class HuggingFaceTransformersGateway:
+    """
+    Local HuggingFace Transformers-backed gateway for local models.
+    
+    - Uses transformers library directly to load and run models
+    - Supports local cached models
+    - Does NOT support tool calling
+    """
+    
+    model_id: str
+    device: Optional[str] = None
+    max_new_tokens: int = 128
+    cache_dir: Optional[str] = None
+    
+    # Capability hint
+    supports_tool_calls: bool = False
+    
+    def __post_init__(self) -> None:
+        try:
+            from transformers import AutoModelForCausalLM, AutoTokenizer
+        except ImportError as e:
+            raise RuntimeError(
+                "transformers library not installed. Install with: pip install transformers torch"
+            ) from e
+        
+        # Lazy load model on first use
+        self._model = None
+        self._tokenizer = None
+        self._model_class = AutoModelForCausalLM
+        self._tokenizer_class = AutoTokenizer
+    
+    def _load_model(self) -> None:
+        """Lazy load the model and tokenizer."""
+        if self._model is not None:
+            return
+        
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+        import torch
+        
+        print(f"Loading model {self.model_id} from cache...")
+        device = self.device or ("cuda" if torch.cuda.is_available() else "cpu")
+        
+        # Load tokenizer
+        self._tokenizer = AutoTokenizer.from_pretrained(
+            self.model_id,
+            cache_dir=self.cache_dir,
+        )
+        
+        # Load model
+        self._model = AutoModelForCausalLM.from_pretrained(
+            self.model_id,
+            cache_dir=self.cache_dir,
+            torch_dtype=torch.float16 if device == "cuda" else torch.float32,
+            device_map="auto" if device == "cuda" else None,
+        )
+        
+        if device == "cpu":
+            self._model = self._model.to(device)
+        
+        print(f"✓ Model loaded on {device}")
+    
+    def _messages_to_prompt(self, messages: List[JsonDict]) -> str:
+        """Convert messages to a prompt string."""
+        # Simple formatting - can be improved with chat templates
+        prompt_parts = []
+        for msg in messages:
+            role = msg.get("role", "user")
+            content = msg.get("content", "")
+            if role == "system":
+                prompt_parts.append(f"System: {content}\n")
+            elif role == "user":
+                prompt_parts.append(f"User: {content}\n")
+            elif role == "assistant":
+                prompt_parts.append(f"Assistant: {content}\n")
+        prompt_parts.append("Assistant: ")
+        return "".join(prompt_parts)
+    
+    def chat(
+        self,
+        *,
+        model: str,
+        messages: List[JsonDict],
+        tools: Optional[List[ToolSpec]] = None,
+        tool_choice: Optional[str] = None,
+        temperature: float = 0.0,
+    ) -> JsonDict:
+        """Generate a response using the local model."""
+        _ = (model, tools, tool_choice)  # Ignored for local models
+        
+        self._load_model()
+        
+        prompt = self._messages_to_prompt(messages)
+        
+        import torch
+        
+        # Tokenize
+        inputs = self._tokenizer(prompt, return_tensors="pt")
+        if self.device or hasattr(self._model, "device"):
+            device = getattr(self._model, "device", None) or (self.device or "cpu")
+            inputs = {k: v.to(device) for k, v in inputs.items()}
+        
+        # Generate
+        with torch.no_grad():
+            outputs = self._model.generate(
+                **inputs,
+                max_new_tokens=self.max_new_tokens,
+                temperature=temperature if temperature > 0 else None,
+                do_sample=temperature > 0,
+                pad_token_id=self._tokenizer.eos_token_id,
+            )
+        
+        # Decode
+        generated_text = self._tokenizer.decode(outputs[0], skip_special_tokens=True)
+        
+        # Extract only the new text (after the prompt)
+        if generated_text.startswith(prompt):
+            response_text = generated_text[len(prompt):].strip()
+        else:
+            response_text = generated_text.strip()
+        
+        return {"choices": [{"message": {"role": "assistant", "content": response_text}}]}
+    
+    async def achat(
+        self,
+        *,
+        model: str,
+        messages: List[JsonDict],
+        tools: Optional[List[ToolSpec]] = None,
+        tool_choice: Optional[str] = None,
+        temperature: float = 0.0,
+    ) -> JsonDict:
+        """Async version - runs in thread pool."""
+        return await asyncio.to_thread(
+            self.chat,
+            model=model,
+            messages=messages,
+            tools=tools,
+            tool_choice=tool_choice,
+            temperature=temperature,
+        )
 
 

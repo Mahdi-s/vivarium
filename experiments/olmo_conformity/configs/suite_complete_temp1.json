@@ -1,0 +1,67 @@
+{
+  "suite_name": "olmo_conformity_complete_temp1",
+  "suite_version": "v3",
+  "description": "Complete suite of experiments including both factual and social datasets, all conditions, and temperature set to 1.0 to explore non-deterministic behavior. Uses the fixed dataset for factual items.",
+  "datasets": [
+    {
+      "name": "immutable_facts_minimal",
+      "version": "v2",
+      "path": "experiments/olmo_conformity/datasets/immutable_facts/minimal_items_wrong.jsonl",
+      "notes": "Fixed dataset with explicit wrong_answer fields"
+    },
+    {
+      "name": "social_conventions_minimal",
+      "version": "v2",
+      "path": "experiments/olmo_conformity/datasets/social_conventions/minimal_items_wrong.jsonl",
+      "notes": "Fixed dataset with explicit wrong_answer fields for opinion items"
+    }
+  ],
+  "conditions": [
+    {
+      "name": "control",
+      "params": { "type": "control" },
+      "notes": "Baseline: direct question without social pressure"
+    },
+    {
+      "name": "asch_history_5",
+      "params": { "type": "synthetic_asch_history", "confederates": 5, "confidence": "high" },
+      "notes": "Asch paradigm: 5 confederates claim wrong_answer with high confidence"
+    },
+    {
+      "name": "authoritative_bias",
+      "params": { "type": "authoritative_bias", "user_claim_strength": "high" },
+      "notes": "Authoritative user claims wrong_answer with high confidence"
+    },
+    {
+      "name": "truth_probe_capture",
+      "params": { "type": "probe_capture", "dataset": "truth_probe_train" },
+      "notes": "Neutral prompts for probe training activation capture"
+    },
+    {
+      "name": "social_probe_capture",
+      "params": { "type": "probe_capture", "dataset": "social_probe_train" },
+      "notes": "Consensus-framed prompts for probe training"
+    }
+  ],
+  "models": [
+    { "variant": "base", "model_id": "allenai/Olmo-3-1025-7B" },
+    { "variant": "instruct", "model_id": "allenai/Olmo-3-7B-Instruct" },
+    { "variant": "instruct_sft", "model_id": "allenai/Olmo-3-7B-Instruct-SFT" },
+    { "variant": "think", "model_id": "allenai/Olmo-3-7B-Think" },
+    { "variant": "think_sft", "model_id": "allenai/Olmo-3-7B-Think-SFT" },
+    { "variant": "rl_zero", "model_id": "allenai/Olmo-3-7B-RL-Zero-Math" }
+  ],
+  "run": {
+    "seed": 42,
+    "temperature": 1.0,
+    "max_items_per_dataset": 20,
+    "notes": "temperature=1.0 for non-deterministic exploration; seed for reproducibility"
+  },
+  "scientific_notes": {
+    "validation_gates": [
+      "Prompt gate: Every Asch/authoritative trial must use wrong_answer != ground_truth_text for factual items",
+      "Temperature 1.0: Allows for variance in responses to test robustness of conformity vs. noise",
+      "Max items: Increased to 20 to match the original study scope"
+    ]
+  }
+}

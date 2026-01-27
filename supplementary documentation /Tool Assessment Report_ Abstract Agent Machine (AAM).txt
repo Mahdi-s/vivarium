@@ -1,0 +1,140 @@
+﻿Tool Assessment Report: Abstract Agent Machine (AAM)
+Executive Summary
+The Abstract Agent Machine (AAM) is a specialized research instrument designed to function as a "physics engine for cognition." It uniquely bridges the gap between Multi-Agent Systems (MAS) and Mechanistic Interpretability (MI) by enforcing deterministic execution while simultaneously capturing internal neural activations. Unlike commercial frameworks (e.g., AutoGen) or behavioral simulators (e.g., Concordia), AAM enables researchers to trace the causal link between social environment and internal neural states, making it an Essential tool for AI safety researchers studying deceptive alignment and sycophancy. However, its heavy storage footprint, dual-stack architecture (Llama.cpp + PyTorch), and hardcoded dependencies limit its utility for general-purpose agent engineering, rendering it Valuable but specialized for the broader community.
+1. Tool Overview
+Core Functionality: AAM orchestrates deterministic multi-agent simulations using open-weight LLMs (Olmo, Llama). Its defining feature is the "Time-Aligned Activation Store": it hooks into the model's forward pass to capture and persist activation tensors (e.g., residual streams) to disk, synchronized precisely with the simulation tick and agent identity.
+Architecture:
+* WorldEngine (src/aam/world_engine.py): An authoritative state machine that enforces a "Think Concurrently, Commit Sequentially" loop. It sorts and applies actions deterministically to ensure bit-perfect reproducibility.
+* Interpretability Layer (src/aam/interpretability.py): A wrapper around TransformerLens. It uses a CaptureContext to register hooks, extract tensors, and stream them to sharded .safetensors files, linking "Step 5" to specific neural states.
+* Persistence (src/aam/persistence.py): A dual-backend system:
+   * SQLite (TraceDb): Stores behavioral traces (messages, tools) and Merkle tree roots for state integrity.
+   * Filesystem: Stores heavy activation data.
+* Olmo Conformity Suite: A tightly integrated reference experiment reproducing Asch's conformity studies.
+Scope & Limitations:
+* Target: Research into model dynamics (e.g., "Do 'Think' models reason truthfully before lying?").
+* Exclusions: No support for closed API models (GPT-4) for activation capture. Not for production deployment.
+Component Diagram:
+
+
+
+
+
+
++------------------+       +----------------------+
+|   Experiment     |       |   Run Orchestrator   |
+|  Config (JSON)   |------>| (Deterministic Loop) |
++------------------+       +-----------+----------+
+                                      |
+         +----------------------------+-----------------------------+
+         |                            |                             |
++---------v----------+       +---------v----------+        +---------v----------+
+|    WorldEngine     |       |    AgentPolicy     |        |   Interpretability |
+|  (State Machine)   |       |  (LangGraph/Logic) |        |       Layer        |
++---------+----------+       +---------+----------+        +---------+----------+
+         |                            |                             |
+         | (Trace/Merkle)             | (Inference)                 | (Hooks)
+         v                            v                             v
++--------------------+       +--------------------+        +--------------------+
+|     TraceDb        |       |     LLM Gateway    |------->|   TransformerLens  |
+|     (SQLite)       |       |   (LiteLLM/Local)  |        |   (CaptureContext) |
++--------------------+       +--------------------+        +---------+----------+
+                                                                    |
+                                                                    v
+                                                          +--------------------+
+                                                          |  Activation Store  |
+                                                          |   (.safetensors)   |
+                                                          +--------------------+
+
+2. Competitive Landscape
+AAM occupies a "Blue Ocean" niche: Mechanistic Social Science.
+Tool
+	Core Approach
+	Strengths
+	Weaknesses
+	Differentiation
+	Abstract Agent Machine
+	Deterministic MAS + Activation Capture
+	Correlates behavior with neural states; "Glass Box" replayability.
+	High storage cost (TB/run); Complex dual-stack setup.
+	Unique: The only tool synchronizing simulation time with neural circuit activity.
+	Google Concordia
+	Generative Social Simulation
+	Rich social environments; construct validity; "Game Master" abstraction.
+	Black Box. No internal state access; purely behavioral analysis.
+	Concordia simulates society; AAM simulates the brain in society.
+	TransformerLens
+	Interpretability Library
+	Gold standard for static probing and circuit analysis.
+	Static. No concept of "agents," "time," or dynamic environments.
+	AAM operationalizes TransformerLens for dynamic, multi-turn contexts.
+	AutoGen / LangGraph
+	Agent Orchestration
+	Production-ready; rich ecosystem; scalable.
+	Non-deterministic (race conditions); utility-focused.
+	AAM prioritizes scientific rigor (reproducibility) over flexibility.
+	3. Necessity Assessment
+Question
+	Analysis
+	Does it solve a real problem?
+	Yes. In AI Safety, separating deceptive alignment (knowing the truth but lying) from hallucination (believing the lie) is impossible with text logs alone. Researchers need internal probes to verify "belief."
+	Is the problem already solved?
+	No. Researchers currently rely on brittle, one-off scripts to bridge simulators and probing tools. AAM standardizes this "glue," handling the complex synchronization of simulation time with tensor storage.
+	What is the unique contribution?
+	Time-Aligned Activation Storage. The engineering capability to map Step 42, Agent B directly to a specific tensor on disk, enabling "longitudinal neuroimaging" of an evolving agent.
+	Who would use this?
+	AI Safety Institutes, Alignment Researchers (Anthropic, DeepMind), and Cognitive Scientists.
+	Verdict: Valuable / Specialized Essential.
+Crucial for mechanistic alignment research; likely too heavy for general-purpose use.
+4. Recommended Refinements
+Critical Gaps (Must-Fix)
+1. Think Token Analysis: The test_olmo_models.py script detects <think> tokens, but artifact analysis shows missing data.
+   * Refinement: Update CaptureContext to explicitly index reasoning traces (CoT) separate from final answers to enable "System 2" deceptive alignment checks.
+2. Hardcoded Paths & Models: Scripts like download_and_convert_olmo_models.py contain absolute paths (/Users/mahdi/...).
+   * Refinement: Use pathlib for relative paths and move model definitions to a config.yaml or environment variables.
+Technical Debt (Should-Fix)
+1. Storage Explosion: Saving full float16 residual streams for every token/step is unsustainable.
+   * Refinement: Implement Sparse Capture. Allow config to whitelist specific layers (e.g., "Layers 15-25 only"), components (resid_post only), or trigger capture only on specific events.
+2. Dual-Stack Consistency: Reliance on llama.cpp (quantized) for serving and TransformerLens (PyTorch) for probing creates a "brain mismatch" risk.
+   * Refinement: Enforce a single backend (PyTorch) for interpretability experiments to ensure the simulated model matches the probed model.
+Usability (Nice-to-Have)
+1. Analysis Notebooks: The trace_analysis.ipynb is empty.
+   * Refinement: Provide a "Hello World" notebook loading simulation.db and plotting a simple activation trajectory.
+5. Validation Experiments
+Experiment 1: The "Digital Twin" Determinism Test
+* Hypothesis: AAM guarantees bit-exact reproducibility of trace logs and activation files given the same seed.
+* Setup: Run suite_small.json twice on the same machine.
+* Metrics: SHA-256 hash of simulation.db (trace table) and a random sample of 5 .safetensors files.
+* Expected Outcome: 100% Hash Match. (Requires torch.use_deterministic_algorithms(True)).
+* Effort: Low (1 hour).
+Experiment 2: The "Turn" Validation (Glass Box Proof)
+* Hypothesis: AAM can replicate the "Truth vs. Social" vector collision. In a conformity setup, the agent's internal "Truth" vector projection should remain high even as it outputs a lie.
+* Setup:
+   1. Train a "Truth Probe" using prepare_truth_probe.py.
+   2. Run the asch_history_5 condition (high pressure).
+   3. Analyze activations at the "Turn" layers (middle-late).
+* Metrics: Cosine similarity of residual stream to $v_{truth}$ vs $v_{social}$ across layers.
+* Expected Outcome: A clear crossover point where $v_{social}$ dominates $v_{truth}$, validating mechanistic insight.
+* Effort: Medium (Requires GPU).
+Experiment 3: Deceptive Rationalization (Think Models)
+* Hypothesis: For "Think" models (e.g., Olmo-7B-Think), AAM can detect discrepancies between the hidden CoT and the final output.
+* Setup: Run a scenario incentivizing the agent to lie.
+* Metrics: Semantic distance (embedding similarity) between the <think> content and the final answer.
+* Expected Outcome: High discrepancy scores in the trace log, validating utility for studying deceptive reasoning.
+* Effort: High (Requires custom scorer).
+6. References
+6.1 Scientific Literature
+1. Sharma, M., et al. (2024). "Towards Understanding Sycophancy in Language Models." ICLR. arXiv:2310.13548
+2. Park, J. S., et al. (2023). "Generative Agents: Interactive Simulacra of Human Behavior." UIST. DOI:10.1145/3586183.3606763
+3. Nanda, N. (2022). "TransformerLens." GitHub
+6.2 Technical Resources
+1. Google Concordia: GitHub (Primary simulation competitor).
+2. Safetensors: Hugging Face (Activation storage format).
+Appendix: Detailed Code Analysis
+Key Component: CaptureContext (src/aam/interpretability.py)
+Acts as the bridge between simulation time and neural space.
+* Mechanism: Context manager wrapping forward(). Registers PyTorch hooks via TransformerLens.
+* Sync: Accepts run_id, step, agent_id. Saves tensors to runs/{run_id}/activations/step_{step}.safetensors.
+* Significance: Solves the alignment problem; Step 5 in DB = step_000005.safetensors on disk.
+Key Component: TraceDb (src/aam/persistence.py)
+* Merkle Log: Includes a merkle_log table that hashes the state at every step.
+* Significance: Provides a cryptographic audit trail, ensuring the simulation run has not been tampered with—a gold standard for scientific reproducibility.

@@ -1,0 +1,44 @@
+# Configuration for repo-to-text to extract Abstract Agent Machine source code
+# This config focuses on src/ directory and includes relevant config examples
+
+# Import and respect .gitignore patterns
+gitignore-import-and-ignore: True
+
+# Files/directories to exclude from both tree and content sections
+ignore-tree-and-content:
+  - "tests/"
+  - "notebooks/"
+  - "*.pyc"
+  - "__pycache__/"
+  - ".pytest_cache/"
+  - ".mypy_cache/"
+  - "*.egg-info/"
+  - "build/"
+  - "dist/"
+  - ".git/"
+  - "models/"
+  - "runs/"
+  - "third_party/"
+  - "*.db"
+  - "*.parquet"
+  - "*.safetensors"
+  - "*.png"
+  - "*.jpg"
+  - "*.jpeg"
+  - "*.pdf"
+  - "*.docx"
+  - ".github/"
+
+# Files/directories to exclude only from content (but include in tree)
+ignore-content:
+  - "README.md"
+  - "LICENSE"
+  - "CONTRIBUTING.md"
+  - "SETUP.md"
+  - "TESTING_GUIDE.md"
+  - "Abstract Agent Machine PRD.txt"
+  - "supplementary documentation /"
+  - "Olmo inspection.md"
+
+# Include JSON config examples from experiments directory
+# (These will be included in the output for reference)
