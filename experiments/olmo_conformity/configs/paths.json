@@ -1,4 +1,4 @@
 {
-  "models_dir": "/data/models/huggingface_cache",
-  "runs_dir": "/data/runs"
+  "models_dir": "/scratch1/mahdisae/olmo_models/huggingface_cache",
+  "runs_dir": "/scratch1/mahdisae/olmo_models/runs"
 }

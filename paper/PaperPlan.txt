@@ -73,11 +73,6 @@ D) New Paper Outline
    * Probe validity (correlation vs causation).
    * Dual-use (inducing conformity).
 8. Conclusion
-E) Deletion List
-* Delete: "OASIS Framework" references. Reason: Replaced by AAM/TraceDb.
-* Delete: "Reddit-like environment" details (karma, ranking algorithms). Reason: Removing confounding variables to focus on internal state.
-* Delete: Llama 3.1 / DeepSeek specific behavioral phenotypes. Reason: Not reproducible with current Olmo-based experiment artifacts.
-* Delete: "Saturation at Score=1000" as a psychological finding. Reason: Likely an attention mechanism artifact; requires different analysis.
 F) Draft Text
 Abstract
 Large Language Models (LLMs) trained with Reinforcement Learning from Human Feedback (RLHF) often exhibit sycophancy, prioritizing perceived social consensus over factual accuracy. While behavioral studies have documented this "social conformity," its mechanistic origins remain opaque. We investigate the internal geometry of conformity using the Abstract Agent Machine (AAM) framework and the Olmo-3 model family. By training linear probes on "Truth" and "Social Consensus" axes, we reveal that conformity arises from a dynamic competition in the model's residual stream. We identify a critical "Turn Layer" (typically layers 20–24 in 7B models) where activation dominance shifts from factual representations to social compliance signals. Furthermore, we demonstrate that Causal Activation Steering—subtracting the "Social Vector" at these specific layers—significantly reduces conformity rates (by ~$X\%$), outperforming standard prompt-based mitigation. These findings suggest that social conformity is a structural feature of current alignment tuning, localized to mid-to-late transformer layers, and amenable to surgical intervention.
