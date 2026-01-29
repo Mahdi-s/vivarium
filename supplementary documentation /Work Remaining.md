@@ -1,6 +1,6 @@
 # Work Remaining
 
-**Document Purpose**: This document outlines the remaining work to be completed for the Abstract Agent Machine, with a focus on making the system fully adaptable to the Olmo model family and completing the interpretability pipeline. Work is organized into coherent chunks that can be split across 4-5 developers working in separate branches.
+**Document Purpose**: This document outlines the remaining work to be completed for the Vivarium, with a focus on making the system fully adaptable to the Olmo model family and completing the interpretability pipeline. Work is organized into coherent chunks that can be split across 4-5 developers working in separate branches.
 
 **Last Updated**: December 2024
 

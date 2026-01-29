@@ -71,7 +71,7 @@ All recommendations from the PRD analysis have been implemented.
 
 ### 1. Basic Test (No Model Required)
 ```bash
-PYTHONPATH=src python -m aam.run phase2 \
+PYTHONPATH=src vvm phase2 \
   --steps 5 --agents 2 --seed 42 \
   --mock-llm \
   --db test_basic.db
@@ -87,12 +87,12 @@ PYTHONPATH=src python -m aam.run phase2 \
 
 **Terminal 1:**
 ```bash
-PYTHONPATH=src python -m aam.run llama serve models/ollama__library_smollm2_135m.gguf
+PYTHONPATH=src vvm llama serve models/ollama__library_smollm2_135m.gguf
 ```
 
 **Terminal 2:**
 ```bash
-PYTHONPATH=src python -m aam.run phase2 \
+PYTHONPATH=src vvm phase2 \
   --steps 3 --agents 2 --seed 42 \
   --api-base http://127.0.0.1:8081/v1 \
   --api-key local \

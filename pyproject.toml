@@ -1,12 +1,12 @@
 [project]
-name = "abstract-agent-machine"
+name = "vivarium"
 version = "0.1.0"
-description = "A deterministic, traceable multi-agent simulation platform with deep mechanistic interpretability support"
+description = "Vivarium: a deterministic, traceable multi-agent simulation platform with deep mechanistic interpretability support"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
 authors = [
-    {name = "Abstract Agent Machine Contributors"}
+    {name = "Vivarium Contributors"}
 ]
 keywords = ["multi-agent", "simulation", "llm", "interpretability", "transformer-lens", "deterministic"]
 classifiers = [
@@ -65,6 +65,7 @@ dev = [
 
 [project.scripts]
 aam = "aam.run:main"
+vvm = "aam.run:main"
 
 [build-system]
 requires = ["hatchling>=1.21"]

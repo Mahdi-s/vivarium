@@ -53,4 +53,7 @@ jobs:
           export PYTHONPATH=src
           python -m aam.run phase1 --steps 3 --agents 2 --seed 42 --db test_ci.db --no-validate
           python -c "import sqlite3; conn = sqlite3.connect('test_ci.db'); print(f'Trace rows: {conn.execute(\"SELECT COUNT(*) FROM trace\").fetchone()[0]}')"
+      
+      - name: Verify vvm CLI entry point
+        run: vvm phase1 --steps 2 --agents 1 --seed 42 --db test_vvm.db --no-validate
 

@@ -1,5 +1,5 @@
 """
-Scientific Report Generator for Abstract Agent Machine.
+Scientific Report Generator for Vivarium.
 
 This module generates a "Run Certificate" to validate scientific rigor
 before human interpretation. It computes key metrics and flags potential

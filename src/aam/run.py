@@ -77,7 +77,7 @@ def main(argv: list[str] | None = None) -> int:
     except ImportError:
         pass  # python-dotenv not installed, skip
     
-    p = argparse.ArgumentParser(prog="aam", description="Abstract Agent Machine")
+    p = argparse.ArgumentParser(prog="vvm", description="Vivarium")
     sub = p.add_subparsers(dest="mode")
 
     # Phase 1 (backwards compatible): random agents producing trace rows

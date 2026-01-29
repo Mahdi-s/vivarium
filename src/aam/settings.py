@@ -1,5 +1,5 @@
 """
-Centralized settings module for Abstract Agent Machine.
+Centralized settings module for Vivarium.
 
 This module provides a singleton Settings instance that resolves paths from
 environment variables with fallbacks to sensible defaults.
@@ -39,13 +39,13 @@ def _find_project_root() -> Path:
 @dataclass
 class AAMSettings:
     """
-    Centralized settings for Abstract Agent Machine.
+    Centralized settings for Vivarium.
     
     Resolves paths from environment variables with fallbacks to default locations
     relative to the project root.
     
     Attributes:
-        PROJECT_ROOT: Root directory of the AAM project
+        PROJECT_ROOT: Root directory of the Vivarium project
         MODEL_DIR: Directory for model weights (GGUF, safetensors)
         LLAMA_CPP_ROOT: Path to llama.cpp installation
         ARTIFACTS_DIR: Root directory for run artifacts

@@ -1,4 +1,4 @@
-# Experiment Setup Guide for the Abstract Agent Machine
+# Experiment Setup Guide for Vivarium
 
 ---
 
@@ -20,7 +20,7 @@
 
 ## Understanding the Framework Architecture
 
-The Abstract Agent Machine is built around three core principles:
+Vivarium is built around three core principles:
 
 ### 1. Separation of Concerns
 
@@ -143,7 +143,7 @@ export OPENAI_API_KEY="your-key"
 ### Step 2: Run with Mock LLM (No API needed)
 
 ```bash
-PYTHONPATH=src python -m aam.run phase2 \
+PYTHONPATH=src vvm phase2 \
   --steps 10 \
   --agents 3 \
   --seed 42 \
@@ -169,7 +169,7 @@ jupyter notebook trace_analysis.ipynb
 ### Step 4: Run with a Real LLM
 
 ```bash
-PYTHONPATH=src python -m aam.run phase2 \
+PYTHONPATH=src vvm phase2 \
   --steps 5 \
   --agents 3 \
   --seed 42 \
@@ -780,7 +780,7 @@ Please provide your answer.
 Since this follows the same pattern as `olmo_conformity`, you can use the existing runner:
 
 ```bash
-PYTHONPATH=src python -m aam.run olmo-conformity \
+PYTHONPATH=src vvm olmo-conformity \
   --suite-config experiments/conformity_study/configs/suite.json \
   --runs-dir ./runs \
   --api-base http://localhost:11434/v1 \
@@ -1249,7 +1249,7 @@ If you want to study the internal representations of models:
 pip install -e .[interpretability]
 
 # Run with activation capture
-PYTHONPATH=src python -m aam.run phase3 \
+PYTHONPATH=src vvm phase3 \
   --model-id meta-llama/Llama-2-7b-hf \
   --steps 5 \
   --agents 2 \
@@ -1265,7 +1265,7 @@ This saves activation tensors as SafeTensors files for later analysis.
 Train linear probes to detect concepts in activations:
 
 ```bash
-PYTHONPATH=src python -m aam.run olmo-conformity-probe \
+PYTHONPATH=src vvm olmo-conformity-probe \
   --run-id <your-run-id> \
   --db runs/<run>/simulation.db \
   --model-id allenai/Olmo-3-1025-7B \
@@ -1279,7 +1279,7 @@ PYTHONPATH=src python -m aam.run olmo-conformity-probe \
 Modify model behavior by adding/subtracting activation vectors:
 
 ```bash
-PYTHONPATH=src python -m aam.run olmo-conformity-intervene \
+PYTHONPATH=src vvm olmo-conformity-intervene \
   --run-id <your-run-id> \
   --db runs/<run>/simulation.db \
   --model-id allenai/Olmo-3-1025-7B \
@@ -1298,7 +1298,7 @@ For offline/reproducible experiments:
 ollama pull llama3.2
 
 # Run experiment with local model
-PYTHONPATH=src python -m aam.run olmo-conformity \
+PYTHONPATH=src vvm olmo-conformity \
   --suite-config experiments/my_exp/configs/suite.json \
   --api-base http://localhost:11434/v1 \
   --api-key local
@@ -1335,18 +1335,18 @@ domain_state.register_handler("my_game", MyGameHandler())
 ```bash
 # Option 1: Set PYTHONPATH
 export PYTHONPATH=/path/to/abstractAgentMachine/src
-python -m aam.run ...
+vvm ...
 
 # Option 2: Install in dev mode
 pip install -e .
-python -m aam.run ...
+vvm ...
 ```
 
 ### Rate Limiting / API Errors
 
 ```bash
 # Add rate limiting flags
-PYTHONPATH=src python -m aam.run phase2 \
+PYTHONPATH=src vvm phase2 \
   --rate-limit-rpm 60 \
   --rate-limit-tpm 10000 \
   ...

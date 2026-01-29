@@ -1,10 +1,12 @@
-# Abstract Agent Machine
+# Vivarium
 
 A deterministic, traceable multi-agent simulation platform with deep mechanistic interpretability support. Designed for rigorous research into agent dynamics, emergent behaviors, and cognitive introspection.
 
 ## Overview
 
-The Abstract Agent Machine provides a **deterministic simulation kernel** that separates agent policy from platform execution, ensuring reproducible experiments. It integrates **TransformerLens** for activation capture, enabling researchers to correlate high-level social outcomes with low-level neural activations.
+Vivarium provides a **deterministic simulation kernel** that separates agent policy from platform execution, ensuring reproducible experiments. It integrates **TransformerLens** for activation capture, enabling researchers to correlate high-level social outcomes with low-level neural activations.
+
+The core engine that implements this logic is called **Abstract Agent Machine** (AAM); the Python package and imports use the short name `aam`, so you will see `aam` in the codebase and in `from aam.*` imports.
 
 ### Key Features
 
@@ -45,7 +47,7 @@ See [`PHASE1_ACCOMPLISHMENTS.md`](PHASE1_ACCOMPLISHMENTS.md) for detailed implem
 1. **Clone the repository:**
    ```bash
    git clone <repository-url>
-   cd abstractAgentMachine
+   cd Vivarium
    ```
 
 2. **Install dependencies:**
@@ -93,13 +95,13 @@ See [`PHASE1_ACCOMPLISHMENTS.md`](PHASE1_ACCOMPLISHMENTS.md) for detailed implem
 Run a deterministic simulation with random agents:
 
 ```bash
-PYTHONPATH=src python -m aam.run phase1 --steps 100 --agents 5 --seed 42 --db simulation.db
+vvm phase1 --steps 100 --agents 5 --seed 42 --db simulation.db
 ```
 
 This produces a SQLite database with trace events. Validate the run:
 
 ```bash
-PYTHONPATH=src python -m aam.run phase1 --steps 100 --agents 5 --seed 42 --db simulation.db
+vvm phase1 --steps 100 --agents 5 --seed 42 --db simulation.db
 # Output: run_id=... db=simulation.db
 ```
 
@@ -107,7 +109,7 @@ PYTHONPATH=src python -m aam.run phase1 --steps 100 --agents 5 --seed 42 --db si
 
 **With Mock LLM (offline, deterministic):**
 ```bash
-PYTHONPATH=src python -m aam.run phase2 \
+vvm phase2 \
   --steps 10 --agents 2 --seed 42 \
   --mock-llm \
   --db simulation_phase2_mock.db
@@ -115,7 +117,7 @@ PYTHONPATH=src python -m aam.run phase2 \
 
 **With OpenAI API:**
 ```bash
-PYTHONPATH=src python -m aam.run phase2 \
+vvm phase2 \
   --steps 10 --agents 2 \
   --model gpt-3.5-turbo \
   --db simulation_phase2.db
@@ -125,14 +127,14 @@ PYTHONPATH=src python -m aam.run phase2 \
 
 Terminal 1 (start server):
 ```bash
-PYTHONPATH=src python -m aam.run llama serve models/ollama__library_llama3.2_1b.gguf
+vvm llama serve models/ollama__library_llama3.2_1b.gguf
 ```
 
 **Note:** On macOS with Apple Silicon, the server automatically uses Metal GPU acceleration (all layers on GPU by default). On other platforms, it defaults to CPU-only. You can override with `--n-gpu-layers` (use `-1` for all layers, `0` for CPU-only).
 
 Terminal 2 (run simulation):
 ```bash
-PYTHONPATH=src python -m aam.run phase2 \
+vvm phase2 \
   --steps 5 --agents 2 \
   --api-base http://127.0.0.1:8081/v1 \
   --api-key local \
@@ -142,7 +144,7 @@ PYTHONPATH=src python -m aam.run phase2 \
 
 **With Rate Limiting:**
 ```bash
-PYTHONPATH=src python -m aam.run phase2 \
+vvm phase2 \
   --steps 5 --agents 2 --seed 42 \
   --model gpt-3.5-turbo \
   --rate-limit-rpm 60 \
@@ -153,7 +155,7 @@ PYTHONPATH=src python -m aam.run phase2 \
 
 **With Parquet Export:**
 ```bash
-PYTHONPATH=src python -m aam.run phase2 \
+vvm phase2 \
   --steps 10 --agents 2 --seed 42 \
   --mock-llm \
   --export-parquet \
@@ -164,14 +166,14 @@ PYTHONPATH=src python -m aam.run phase2 \
 
 **List available hooks for a model:**
 ```bash
-PYTHONPATH=src python -m aam.run phase3 \
+vvm phase3 \
   --model-id meta-llama/Llama-2-7b-hf \
   --list-hooks
 ```
 
 **Run with activation capture:**
 ```bash
-PYTHONPATH=src python -m aam.run phase3 \
+vvm phase3 \
   --model-id meta-llama/Llama-2-7b-hf \
   --steps 5 --agents 2 --seed 42 \
   --layers 10,11 \
@@ -186,7 +188,7 @@ This creates:
 
 **List Available Layers for a Model:**
 ```bash
-PYTHONPATH=src python -m aam.run list-layers \
+vvm list-layers \
   --model-id meta-llama/Llama-2-7b-hf \
   --format text
 ```
@@ -223,7 +225,7 @@ PYTHONPATH=src python -m aam.run list-layers \
 **Run the experiment:**
 
 ```bash
-PYTHONPATH=src python -m aam.run experiment --config experiment.json
+vvm experiment --config experiment.json
 ```
 
 This creates a run directory `runs/<timestamp>_<run_id>/` containing:
@@ -251,7 +253,7 @@ The Barrier Scheduler implements "Think Concurrently, Commit Sequentially":
 
 ### Olmo Conformity Experiment
 
-The Abstract Agent Machine includes a specialized experiment framework for studying conformity and sycophancy in language models using the Olmo model family.
+Vivarium includes a specialized experiment framework for studying conformity and sycophancy in language models using the Olmo model family.
 
 **Key Features**:
 - **Behavioral Trials**: Test model responses under different social pressure conditions (control, Asch paradigm, authoritative bias)
@@ -265,7 +267,7 @@ The Abstract Agent Machine includes a specialized experiment framework for study
 
 ```bash
 # Run full Olmo conformity experiment
-PYTHONPATH=src python -m aam.run olmo-conformity \
+vvm olmo-conformity \
   --suite-config "experiments/olmo_conformity/configs/suite_small.json" \
   --runs-dir "runs" \
   --model-id "allenai/Olmo-3-1025-7B" \
@@ -278,7 +280,7 @@ PYTHONPATH=src python -m aam.run olmo-conformity \
 
 ```bash
 # Backfill logit lens, interventions, and think token parsing
-PYTHONPATH=src python -m aam.run olmo-conformity-posthoc \
+vvm olmo-conformity-posthoc \
   --run-dir "runs/20251217_002021_b2cc39a5-3d9d-444d-8489-bb74d6946973" \
   --trial-scope behavioral-only \
   --layers "10,11,12,13,14,15,16,17,18,19,20" \
@@ -290,7 +292,7 @@ PYTHONPATH=src python -m aam.run olmo-conformity-posthoc \
   --max-new-tokens 64
 
 # Judge Eval scoring (requires Ollama with llama3.2:3b model)
-PYTHONPATH=src python -m aam.run olmo-conformity-judgeval \
+vvm olmo-conformity-judgeval \
   --run-id "b2cc39a5-3d9d-444d-8489-bb74d6946973" \
   --db "runs/20251217_002021_b2cc39a5-3d9d-444d-8489-bb74d6946973/simulation.db" \
   --judge-model "llama3.2:3b" \
@@ -379,7 +381,11 @@ The project uses Python 3.11+ with optional extras for different phases:
 
 ### Model Storage
 
-- **GGUF Models**: Place or symlink models in `models/` directory. Use `aam.run llama list` to discover models from Ollama/LM Studio.
+- **GGUF Models**: Place or symlink models in `models/` directory. Use `vvm llama list` to discover models from Ollama/LM Studio.
+
+### Device override (interpretability)
+
+- **VVM_DEVICE**: Override compute device for activation capture (e.g. `cuda`, `mps`, `cpu`). Set when running Phase 3 or Olmo conformity with local HuggingFace models.
 - **HuggingFace Models**: Automatically cached by `transformers` library. Specify model ID (e.g., `meta-llama/Llama-2-7b-hf`) when running Phase 3.
 
 ### Database Files
@@ -398,10 +404,10 @@ The following commands test the system with actual models available in the `mode
 **1. Basic Simulation Test (using llama.cpp model):**
 ```bash
 # Terminal 1: Start llama.cpp server
-PYTHONPATH=src python -m aam.run llama serve models/ollama__library_llama3.2_1b.gguf
+vvm llama serve models/ollama__library_llama3.2_1b.gguf
 
 # Terminal 2: Run simulation
-PYTHONPATH=src python -m aam.run phase2 \
+vvm phase2 \
   --steps 5 --agents 2 --seed 42 \
   --api-base http://127.0.0.1:8081/v1 \
   --api-key local \
@@ -417,7 +423,7 @@ PYTHONPATH=src python -m aam.run phase2 \
 
 **2. With Rate Limiting:**
 ```bash
-PYTHONPATH=src python -m aam.run phase2 \
+vvm phase2 \
   --steps 5 --agents 2 --seed 42 \
   --api-base http://127.0.0.1:8081/v1 \
   --api-key local \
@@ -435,7 +441,7 @@ PYTHONPATH=src python -m aam.run phase2 \
 **3. With Vector Memory (ChromaDB):**
 ```bash
 # Install memory extras first: pip install -e .[memory]
-PYTHONPATH=src python -m aam.run phase2 \
+vvm phase2 \
   --steps 10 --agents 2 --seed 42 \
   --api-base http://127.0.0.1:8081/v1 \
   --api-key local \
@@ -452,7 +458,7 @@ PYTHONPATH=src python -m aam.run phase2 \
 **4. With Activation Capture:**
 ```bash
 # Install interpretability extras first: pip install -e .[interpretability]
-PYTHONPATH=src python -m aam.run phase3 \
+vvm phase3 \
   --model-id meta-llama/Llama-2-7b-hf \
   --steps 5 --agents 2 --seed 42 \
   --layers 0,1,2 \
@@ -469,7 +475,7 @@ PYTHONPATH=src python -m aam.run phase3 \
 **5. With Parquet Export:**
 ```bash
 # Install analysis extras first: pip install -e .[analysis]
-PYTHONPATH=src python -m aam.run phase2 \
+vvm phase2 \
   --steps 10 --agents 2 --seed 42 \
   --mock-llm \
   --export-parquet \
@@ -486,7 +492,7 @@ PYTHONPATH=src python -m aam.run phase2 \
 The CLI automatically validates database integrity unless `--no-validate` is passed:
 
 ```bash
-PYTHONPATH=src python -m aam.run phase1 --steps 100 --agents 5 --seed 42 --db test.db
+vvm phase1 --steps 100 --agents 5 --seed 42 --db test.db
 # Validates: runs table, trace row counts, time_step ranges
 ```
 
@@ -495,8 +501,8 @@ PYTHONPATH=src python -m aam.run phase1 --steps 100 --agents 5 --seed 42 --db te
 Run the same simulation twice with identical parameters:
 
 ```bash
-PYTHONPATH=src python -m aam.run phase1 --steps 10 --agents 2 --seed 42 --db test1.db
-PYTHONPATH=src python -m aam.run phase1 --steps 10 --agents 2 --seed 42 --db test2.db
+vvm phase1 --steps 10 --agents 2 --seed 42 --db test1.db
+vvm phase1 --steps 10 --agents 2 --seed 42 --db test2.db
 ```
 
 The trace databases should be identical (same row counts, same action sequences).
@@ -515,7 +521,7 @@ Open `trace_analysis.ipynb` to:
 ### `phase1` - Core Simulation
 
 ```bash
-python -m aam.run phase1 [OPTIONS]
+vvm phase1 [OPTIONS]
 ```
 
 Options:
@@ -530,7 +536,7 @@ Options:
 ### `phase2` - Cognitive Simulation
 
 ```bash
-python -m aam.run phase2 [OPTIONS]
+vvm phase2 [OPTIONS]
 ```
 
 All Phase 1 options plus:
@@ -548,7 +554,7 @@ All Phase 1 options plus:
 ### `phase3` - Interpretability Layer
 
 ```bash
-python -m aam.run phase3 [OPTIONS]
+vvm phase3 [OPTIONS]
 ```
 
 All Phase 2 options plus:
@@ -563,7 +569,7 @@ All Phase 2 options plus:
 ### `experiment` - Phase 4 Experiment Runner
 
 ```bash
-python -m aam.run experiment --config PATH [OPTIONS]
+vvm experiment --config PATH [OPTIONS]
 ```
 
 Options:
@@ -580,9 +586,9 @@ The experiment runner:
 ### `llama` - Model Management
 
 ```bash
-python -m aam.run llama list          # List discovered GGUF models
-python -m aam.run llama export        # Export models to models/
-python -m aam.run llama serve MODEL   # Serve a GGUF model
+vvm llama list          # List discovered GGUF models
+vvm llama export        # Export models to models/
+vvm llama serve MODEL   # Serve a GGUF model
 ```
 
 **llama serve options:**
@@ -596,7 +602,7 @@ python -m aam.run llama serve MODEL   # Serve a GGUF model
 ### `list-layers` - Dynamic Layer Selection
 
 ```bash
-python -m aam.run list-layers --model-id MODEL_ID [OPTIONS]
+vvm list-layers --model-id MODEL_ID [OPTIONS]
 ```
 
 Options:
@@ -608,7 +614,7 @@ This command helps you discover available layers and components for a Transforme
 ### `olmo-conformity` - Olmo Conformity Experiment
 
 ```bash
-python -m aam.run olmo-conformity [OPTIONS]
+vvm olmo-conformity [OPTIONS]
 ```
 
 Runs the full Olmo conformity experiment pipeline:
@@ -629,7 +635,7 @@ Options:
 ### `olmo-conformity-posthoc` - Posthoc Analysis Backfill
 
 ```bash
-python -m aam.run olmo-conformity-posthoc [OPTIONS]
+vvm olmo-conformity-posthoc [OPTIONS]
 ```
 
 Backfills missing analyses for an existing run:
@@ -651,7 +657,7 @@ Options:
 ### `olmo-conformity-judgeval` - Judge Eval Scoring
 
 ```bash
-python -m aam.run olmo-conformity-judgeval [OPTIONS]
+vvm olmo-conformity-judgeval [OPTIONS]
 ```
 
 Populates judge eval scores (conformity, truthfulness, rationalization) for outputs in an existing run.
@@ -669,7 +675,7 @@ Options:
 ### `olmo-conformity-resume` - Resume from Crash
 
 ```bash
-python -m aam.run olmo-conformity-resume [OPTIONS]
+vvm olmo-conformity-resume [OPTIONS]
 ```
 
 Resumes an experiment run from a crash point, repairing activations and recomputing projections.
@@ -688,19 +694,19 @@ Options:
 
 ### Running from Source
 
-Since the project uses a `src/` layout, set `PYTHONPATH`:
+Since the project uses a `src/` layout, set `PYTHONPATH` when not installed:
 
 ```bash
 export PYTHONPATH=/path/to/abstractAgentMachine/src
-python -m aam.run phase1 --steps 10
+vvm phase1 --steps 10
 ```
 
-Or install in development mode:
+Or install in development mode (recommended; then `vvm` is on PATH):
 
 ```bash
 uv sync
 # or: pip install -e .
-python -m aam.run phase1 --steps 10
+vvm phase1 --steps 10
 ```
 
 ### Code Quality
@@ -711,7 +717,7 @@ python -m aam.run phase1 --steps 10
 
 ### Creating Custom Agent Policies
 
-The Abstract Agent Machine supports custom agent policies through two protocols:
+Vivarium supports custom agent policies through two protocols:
 
 #### 1. Synchronous Policy (Phase 1-3 compatible)
 
@@ -780,7 +786,7 @@ For Phase 4 experiments, you can extend the experiment runner to load custom pol
 - `"cognitive"` - CognitiveAgentPolicy with LangGraph (async)
 - `"transformerlens"` - TransformerLensGateway-based policy (async)
 
-To add a custom policy, modify `aam.run` to instantiate your policy class based on config flags.
+To add a custom policy, modify the experiment runner in `aam.run` to instantiate your policy class based on config flags.
 
 #### 4. Policy Best Practices
 
@@ -794,8 +800,8 @@ To add a custom policy, modify `aam.run` to instantiate your policy class based 
 ### Module Not Found
 
 If you see `ModuleNotFoundError: No module named 'aam'`:
-- Set `PYTHONPATH=src` when running commands
-- Or install the package: `uv sync` or `pip install -e .`
+- Set `PYTHONPATH=src` when running commands, or install the package: `uv sync` or `pip install -e .`
+- Then you can run `vvm` (or `python -m aam.run` with `PYTHONPATH=src`).
 
 ### TransformerLens Import Errors
 
@@ -826,7 +832,7 @@ If SQLite shows "database is locked":
 
 ## References
 
-- **PRD**: See `Abstract Agent Machine PRD.txt` for full requirements
+- **PRD**: See `Abstract Agent Machine PRD.txt` for full requirements (Vivarium project)
 - **Phase 1 & 2 Accomplishments**: See `PHASE1_ACCOMPLISHMENTS.md` for implementation details
 - **Agent Policy Settings**: See `AGENT_POLICY_SETTING.md` for policy configuration
 - **Olmo Conformity Experiment**: See [`supplementary documentation /Overview of the first experiment.md`](supplementary%20documentation%20/Overview%20of%20the%20first%20experiment.md) for comprehensive documentation of the first successful experiment run, including judge eval results, probe analysis, and intervention findings

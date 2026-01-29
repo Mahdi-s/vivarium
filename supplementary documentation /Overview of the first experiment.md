@@ -1697,7 +1697,7 @@ Collision handling prevents data loss:
 ### A.1 Initial Experiment Run
 
 ```bash
-PYTHONPATH=src python -m aam.run olmo-conformity-full \
+PYTHONPATH=src vvm olmo-conformity-full \
   --suite-config experiments/olmo_conformity/configs/suite_small.json \
   --runs-dir runs/ \
   --capture-activations \
@@ -1713,7 +1713,7 @@ PYTHONPATH=src python -m aam.run olmo-conformity-full \
 After the initial run, execute this to backfill missing analyses:
 
 ```bash
-PYTHONPATH=src python -m aam.run olmo-conformity-posthoc \
+PYTHONPATH=src vvm olmo-conformity-posthoc \
   --run-dir "runs/20251217_002021_b2cc39a5-3d9d-444d-8489-bb74d6946973" \
   --trial-scope behavioral-only \
   --layers "10,11,12,13,14,15,16,17,18,19,20" \
@@ -1783,7 +1783,7 @@ judgeval_failed=0
 To resume from a crash (e.g., if projections need recomputation):
 
 ```bash
-PYTHONPATH=src python -m aam.run olmo-conformity-resume \
+PYTHONPATH=src vvm olmo-conformity-resume \
   --db "runs/20251217_002021_b2cc39a5-3d9d-444d-8489-bb74d6946973/simulation.db" \
   --run-id "b2cc39a5-3d9d-444d-8489-bb74d6946973" \
   --run-dir "runs/20251217_002021_b2cc39a5-3d9d-444d-8489-bb74d6946973" \
@@ -1831,4 +1831,4 @@ PYTHONPATH=src python -m aam.run olmo-conformity-resume \
 
 **Document Version**: 1.1  
 **Last Updated**: December 17, 2024 (updated after posthoc backfill completion)  
-**Author**: Abstract Agent Machine Development Team
+**Author**: Vivarium Development Team

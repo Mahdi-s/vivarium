@@ -1,8 +1,8 @@
-# Phase 1 Accomplishments: The Abstract Agent Machine - Designed for Olmo
+# Phase 1 Accomplishments: The Vivarium - Designed for Olmo
 
 ## Introduction: Design Intuition Centered on Olmo
 
-The Abstract Agent Machine is a deterministic simulation framework designed specifically to leverage the **unique open-source transparency of the Olmo model family** for mechanistic interpretability research. Unlike proprietary models where researchers are limited to behavioral observation, Olmo's "glass box" architecture enables us to observe and intervene at the level of individual neurons.
+The Vivarium is a deterministic simulation framework designed specifically to leverage the **unique open-source transparency of the Olmo model family** for mechanistic interpretability research. Unlike proprietary models where researchers are limited to behavioral observation, Olmo's "glass box" architecture enables us to observe and intervene at the level of individual neurons.
 
 ### Why Olmo is Central
 
@@ -18,7 +18,7 @@ The entire system architecture is built around Olmo's distinctive characteristic
 
 ### System Design Philosophy
 
-Every component of the Abstract Agent Machine is optimized to enable mechanistic interpretability research on Olmo:
+Every component of the Vivarium is optimized to enable mechanistic interpretability research on Olmo:
 
 - **Deterministic Simulation**: Reproducible Olmo experiments with identical seeds producing identical traces, enabling rigorous scientific investigation.
 
@@ -46,7 +46,7 @@ This experiment would be impossible with closed models—it requires the full tr
 
 ### Intuition
 
-The `WorldEngine` is the central orchestrator of the Abstract Agent Machine, designed specifically to enable Olmo mechanistic interpretability research. It functions as a deterministic state machine that:
+The `WorldEngine` is the central orchestrator of the Vivarium, designed specifically to enable Olmo mechanistic interpretability research. It functions as a deterministic state machine that:
 
 - Ensures reproducible Olmo experiments through deterministic step execution
 - Enables activation capture synchronized with trace events
@@ -192,7 +192,7 @@ engine.run(steps=100)
 
 ## Core Components (Olmo-Enabled)
 
-Each component of the Abstract Agent Machine is designed to enable Olmo mechanistic interpretability research. This section explains how each component supports Olmo's transparency and enables the conformity experiment.
+Each component of the Vivarium is designed to enable Olmo mechanistic interpretability research. This section explains how each component supports Olmo's transparency and enables the conformity experiment.
 
 ### 1. Persistence: SQLite Trace Database
 
@@ -476,7 +476,7 @@ gateway = LiteLLMGateway(
 
 **CLI Usage**:
 ```bash
-python -m aam.run olmo-conformity \
+vvm olmo-conformity \
   --suite-config experiments/olmo_conformity/configs/suite_small.json \
   --api-base http://localhost:11434/v1 \
   --model olmo-3-7b-instruct
@@ -508,10 +508,10 @@ python experiments/olmo_conformity/download_and_convert_olmo_models.py
 **Serving**:
 ```bash
 # Terminal 1: Start llama-server
-python -m aam.run llama serve models/olmo-3-7b-instruct.gguf
+vvm llama serve models/olmo-3-7b-instruct.gguf
 
 # Terminal 2: Run experiment
-python -m aam.run olmo-conformity \
+vvm olmo-conformity \
   --suite-config experiments/olmo_conformity/configs/suite_small.json \
   --api-base http://127.0.0.1:8081/v1 \
   --api-key local \
@@ -555,10 +555,10 @@ Discovers GGUF models from:
 **Export to Local Directory**:
 ```bash
 # List discovered models
-python -m aam.run llama list
+vvm llama list
 
 # Export to models/ directory (symlinks by default)
-python -m aam.run llama export
+vvm llama export
 
 # Models exported as: models/ollama__library_smollm2_135m.gguf, etc.
 ```
@@ -566,7 +566,7 @@ python -m aam.run llama export
 **Serving**:
 ```bash
 # Serve any discovered model
-python -m aam.run llama serve models/ollama__library_smollm2_135m.gguf
+vvm llama serve models/ollama__library_smollm2_135m.gguf
 ```
 
 **Platform-Specific GPU Acceleration**:
@@ -592,7 +592,7 @@ python -m aam.run llama serve models/ollama__library_smollm2_135m.gguf
 - Check platform-specific build requirements (Metal on macOS, CUDA on Linux)
 
 **GPU Acceleration Configuration**:
-- **Apple Silicon**: Metal acceleration is automatic; check with `python -m aam.run llama serve --help`
+- **Apple Silicon**: Metal acceleration is automatic; check with `vvm llama serve --help`
 - **Linux CUDA**: Ensure CUDA toolkit is installed and llama.cpp is built with CUDA support
 - **CPU-only**: Set `n_gpu_layers=0` in `LlamaServerConfig`
 
@@ -763,7 +763,7 @@ run_intervention_sweep(
 
 ### Intuition
 
-The Olmo Conformity Experiment is the primary use case that drives the Abstract Agent Machine's architecture. It implements the "Synthetic Asch Paradigm"—a computational adaptation of Solomon Asch's classic social psychology experiments, designed for silicon cognition.
+The Olmo Conformity Experiment is the primary use case that drives the Vivarium's architecture. It implements the "Synthetic Asch Paradigm"—a computational adaptation of Solomon Asch's classic social psychology experiments, designed for silicon cognition.
 
 The experiment tests how different Olmo variants (Base, Instruct, Think, RL-Zero) respond to social pressure when presented with incorrect information. By leveraging Olmo's transparency, we can:
 
@@ -834,7 +834,7 @@ This experiment would be impossible with closed models—it requires the full tr
 
 **Running Trials**:
 ```bash
-python -m aam.run olmo-conformity \
+vvm olmo-conformity \
   --suite-config experiments/olmo_conformity/configs/suite_small.json \
   --runs-dir runs/ \
   --capture-activations \
@@ -859,7 +859,7 @@ python -m aam.run olmo-conformity \
 
 **Running Probe Training**:
 ```bash
-python -m aam.run olmo-conformity \
+vvm olmo-conformity \
   --suite-config experiments/olmo_conformity/configs/suite_small.json \
   --runs-dir runs/ \
   --run-id <previous_run_id> \
@@ -889,7 +889,7 @@ python -m aam.run olmo-conformity \
 
 **Running Interventions**:
 ```bash
-python -m aam.run olmo-conformity \
+vvm olmo-conformity \
   --suite-config experiments/olmo_conformity/configs/suite_small.json \
   --runs-dir runs/ \
   --run-id <previous_run_id> \
@@ -918,7 +918,7 @@ python -m aam.run olmo-conformity \
 
 **Running Analysis**:
 ```bash
-python -m aam.run olmo-conformity \
+vvm olmo-conformity \
   --suite-config experiments/olmo_conformity/configs/suite_small.json \
   --runs-dir runs/ \
   --run-id <run_id> \
@@ -998,7 +998,7 @@ runs/
 
 **Command**:
 ```bash
-python -m aam.run phase1 --steps 100 --agents 5 --seed 42 --db simulation.db
+vvm phase1 --steps 100 --agents 5 --seed 42 --db simulation.db
 ```
 
 **Use Case**: Testing core engine functionality, not used in Olmo experiments.
@@ -1013,7 +1013,7 @@ python -m aam.run phase1 --steps 100 --agents 5 --seed 42 --db simulation.db
 ollama pull olmo-3-7b-instruct
 
 # Run simulation
-python -m aam.run phase2 \
+vvm phase2 \
   --steps 10 \
   --agents 2 \
   --seed 42 \
@@ -1038,7 +1038,7 @@ ensure_olmo_model_downloaded('allenai/Olmo-3-7B-Instruct')
 "
 
 # Run with activation capture
-python -m aam.run phase3 \
+vvm phase3 \
   --steps 10 \
   --agents 2 \
   --model-id allenai/Olmo-3-7B-Instruct \
@@ -1056,7 +1056,7 @@ python -m aam.run phase3 \
 
 **Command**:
 ```bash
-python -m aam.run experiment --config experiments/config.json
+vvm experiment --config experiments/config.json
 ```
 
 **Use Case**: Large-scale experiments with multiple models, rate limiting.
@@ -1069,14 +1069,14 @@ python -m aam.run experiment --config experiments/config.json
 
 ```bash
 # Step 1: Run behavioral trials with activation capture
-python -m aam.run olmo-conformity \
+vvm olmo-conformity \
   --suite-config experiments/olmo_conformity/configs/suite_small.json \
   --runs-dir runs/ \
   --capture-activations \
   --capture-layers 10,11,12,13,14,15,16,17,18,19,20
 
 # Step 2: Train probes (uses captured activations)
-python -m aam.run olmo-conformity \
+vvm olmo-conformity \
   --suite-config experiments/olmo_conformity/configs/suite_small.json \
   --runs-dir runs/ \
   --run-id <run_id_from_step_1> \
@@ -1085,7 +1085,7 @@ python -m aam.run olmo-conformity \
   --social-probe-dataset experiments/olmo_conformity/datasets/social_conventions/minimal_items.jsonl
 
 # Step 3: Run interventions
-python -m aam.run olmo-conformity \
+vvm olmo-conformity \
   --suite-config experiments/olmo_conformity/configs/suite_small.json \
   --runs-dir runs/ \
   --run-id <run_id_from_step_1> \
@@ -1094,7 +1094,7 @@ python -m aam.run olmo-conformity \
   --social-probe-id <probe_id_from_step_2>
 
 # Step 4: Generate analysis
-python -m aam.run olmo-conformity \
+vvm olmo-conformity \
   --suite-config experiments/olmo_conformity/configs/suite_small.json \
   --runs-dir runs/ \
   --run-id <run_id_from_step_1> \
@@ -1108,7 +1108,7 @@ python -m aam.run olmo-conformity \
 ollama pull olmo-3-7b-instruct
 
 # Run trials (no activation capture)
-python -m aam.run olmo-conformity \
+vvm olmo-conformity \
   --suite-config experiments/olmo_conformity/configs/suite_small.json \
   --runs-dir runs/ \
   --api-base http://localhost:11434/v1 \
@@ -1120,10 +1120,10 @@ python -m aam.run olmo-conformity \
 ```bash
 # Terminal 1: Convert and serve model
 python experiments/olmo_conformity/download_and_convert_olmo_models.py
-python -m aam.run llama serve models/olmo-3-7b-instruct.gguf
+vvm llama serve models/olmo-3-7b-instruct.gguf
 
 # Terminal 2: Run trials
-python -m aam.run olmo-conformity \
+vvm olmo-conformity \
   --suite-config experiments/olmo_conformity/configs/suite_small.json \
   --runs-dir runs/ \
   --api-base http://127.0.0.1:8081/v1 \
@@ -1219,7 +1219,7 @@ projections = db.conn.execute("""
 
 **Parquet Exports** (if enabled):
 ```bash
-python -m aam.run olmo-conformity \
+vvm olmo-conformity \
   --suite-config experiments/olmo_conformity/configs/suite_small.json \
   --runs-dir runs/ \
   --run-id <run_id> \
@@ -1234,7 +1234,7 @@ Exports to `runs/<run_id>/exports/`:
 
 ## Conclusion
 
-The Abstract Agent Machine provides a complete framework for mechanistic interpretability research on the Olmo model family. By leveraging Olmo's unique open-source transparency, researchers can:
+The Vivarium provides a complete framework for mechanistic interpretability research on the Olmo model family. By leveraging Olmo's unique open-source transparency, researchers can:
 
 - **Observe**: Capture internal activations aligned to behavioral outputs
 - **Understand**: Train probes to identify conceptual directions in activation space
@@ -1243,4 +1243,4 @@ The Abstract Agent Machine provides a complete framework for mechanistic interpr
 
 The system's architecture—from the deterministic engine to the model serving infrastructure—is designed specifically to enable this research. The Olmo Conformity Experiment demonstrates the full power of this approach, showing how transparency enables scientific investigation that is impossible with closed models.
 
-As Olmo continues to evolve and new variants are released, the Abstract Agent Machine provides a foundation for understanding how different training methodologies affect model behavior—questions that are critical for the safe and responsible development of AI systems.
+As Olmo continues to evolve and new variants are released, the Vivarium provides a foundation for understanding how different training methodologies affect model behavior—questions that are critical for the safe and responsible development of AI systems.

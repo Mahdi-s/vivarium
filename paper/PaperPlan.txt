@@ -10,7 +10,7 @@ A) Paper Map (Revised)
    * Exp 2 (The "Turn" Mapping): Layer-wise dual-projection analysis during Asch trials to locate the crossover point ($P_{social} > P_{truth}$).
    * Exp 3 (Causal Steering): Intervention to suppress $V_{social}$ and recover factual accuracy.
 * Datasets/Models/Tools:
-   * Framework: Abstract Agent Machine (AAM) with TraceDb for artifact management.
+   * Framework: Vivarium (VVM) with TraceDb for artifact management.
    * Models: allenai/Olmo-3-7B-Instruct (High compliance), allenai/Olmo-3-7B-Think (CoT reasoning).
    * Datasets: immutable_facts_minimal (Ground Truth), social_probe_train (Consensus markers).
 B) New Experimental Designs
@@ -56,7 +56,7 @@ D) New Paper Outline
    * LLM Social Behavior (Park 2023, Chuang 2024).
    * Mechanistic Interpretability: Geometry of Truth (Marks & Tegmark 2023), Sycophancy Steering (Rimsky 2023).
    * Differentiation: We apply this to dynamic social pressure (Asch paradigm), not static QA.
-3. Methodology: The Abstract Agent Machine
+3. Methodology: Vivarium
    * Simulation engine (TraceDb, Olmo).
    * Probe construction (Dual-axis: Truth vs Social).
    * The "Turn Layer" definition.
@@ -75,12 +75,12 @@ D) New Paper Outline
 8. Conclusion
 F) Draft Text
 Abstract
-Large Language Models (LLMs) trained with Reinforcement Learning from Human Feedback (RLHF) often exhibit sycophancy, prioritizing perceived social consensus over factual accuracy. While behavioral studies have documented this "social conformity," its mechanistic origins remain opaque. We investigate the internal geometry of conformity using the Abstract Agent Machine (AAM) framework and the Olmo-3 model family. By training linear probes on "Truth" and "Social Consensus" axes, we reveal that conformity arises from a dynamic competition in the model's residual stream. We identify a critical "Turn Layer" (typically layers 20–24 in 7B models) where activation dominance shifts from factual representations to social compliance signals. Furthermore, we demonstrate that Causal Activation Steering—subtracting the "Social Vector" at these specific layers—significantly reduces conformity rates (by ~$X\%$), outperforming standard prompt-based mitigation. These findings suggest that social conformity is a structural feature of current alignment tuning, localized to mid-to-late transformer layers, and amenable to surgical intervention.
+Large Language Models (LLMs) trained with Reinforcement Learning from Human Feedback (RLHF) often exhibit sycophancy, prioritizing perceived social consensus over factual accuracy. While behavioral studies have documented this "social conformity," its mechanistic origins remain opaque. We investigate the internal geometry of conformity using the Vivarium (VVM) framework and the Olmo-3 model family. By training linear probes on "Truth" and "Social Consensus" axes, we reveal that conformity arises from a dynamic competition in the model's residual stream. We identify a critical "Turn Layer" (typically layers 20–24 in 7B models) where activation dominance shifts from factual representations to social compliance signals. Furthermore, we demonstrate that Causal Activation Steering—subtracting the "Social Vector" at these specific layers—significantly reduces conformity rates (by ~$X\%$), outperforming standard prompt-based mitigation. These findings suggest that social conformity is a structural feature of current alignment tuning, localized to mid-to-late transformer layers, and amenable to surgical intervention.
 1. Introduction
 As LLMs are integrated into social webs and collaborative agents, their ability to navigate the tension between honesty (factual correctness) and helpfulness (social alignment) becomes critical. Previous work [Chuang et al., 2024] suggested LLMs have a "Rational Accuracy Bias," yet empirically, models frequently succumb to sycophancy when presented with user errors or majority opinion [Panickssery et al., 2024].
 This paper moves beyond behavioral observation to identifying the mechanistic drivers of this behavior. Is conformity a failure of knowledge retrieval, or an active suppression of known truth? Using the Olmo-3 open-weights family, we employ linear probing and activation steering to map the "Geometry of Compliance." We find that models often "know" the truth (high Truth Vector activation in early layers) but "decide" to conform (Social Vector dominance in late layers), effectively overwriting their own knowledge.
 2. Methodology
-We utilized the Abstract Agent Machine (AAM) to conduct reproducible "Synthetic Asch Experiments."
+We utilized Vivarium (VVM) to conduct reproducible "Synthetic Asch Experiments."
 * Stimuli: The immutable_facts_minimal dataset (e.g., "The capital of France is Paris") coupled with social_conventions for training contrastive social probes.
 * Probes: We trained two linear probes ($W_{truth}$, $W_{social}$) on the residual stream activations of allenai/Olmo-3-7B-Instruct layers 0–31. $W_{social}$ was trained on diverse consensus templates (e.g., "Everyone agrees...", "The majority says...") to ensure construct validity beyond simple n-gram detection.
 * Metric: We define the Turn Layer ($L_{turn}$) as the first layer where the normalized projection of the Social Vector exceeds the Truth Vector: $\frac{v \cdot W_{soc}}{\|W_{soc}\|} > \frac{v \cdot W_{truth}}{\|W_{truth}\|}$.
@@ -98,7 +98,7 @@ G) Verification Log
 * Unverified: "Rational Correction" behavior in Olmo-Think needs empirical confirmation from the asch_history_5 condition results.
 H) Actionable TODO List
 1. Refactor Probes (Human): Update experiments/olmo_conformity/datasets/prepare_social_probe.py to include at least 10 diverse templates for "consensus" to ensure validity.
-2. Run Experiment (Agent): Execute aam run --suite experiments/olmo_conformity/configs/suite_small.json to generate real activation data.
+2. Run Experiment (Agent): Execute vvm olmo-conformity --suite-config experiments/olmo_conformity/configs/suite_small.json to generate real activation data.
 3. Compute Projections (Agent): Run src/aam/experiments/olmo_conformity/vector_analysis.py to calculate $L_{turn}$ for Olmo-3.
 4. Generate Plots (Agent): Create "Tug-of-War" line charts (Layer vs Projection Score) for the paper.
 5. Finalize Text (Human): Replace placeholder stats (e.g., "78%") with actuals from the run.

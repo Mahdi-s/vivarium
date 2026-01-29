@@ -1,4 +1,4 @@
-# Agent Policy Setting in the Abstract Agent Machine
+# Agent Policy Setting in the Vivarium
 
 ## Table of Contents
 
@@ -17,7 +17,7 @@
 
 ## Overview
 
-The Abstract Agent Machine uses a **policy-based architecture** where each agent's decision-making logic is encapsulated in an `AgentPolicy` object. This design provides:
+The Vivarium uses a **policy-based architecture** where each agent's decision-making logic is encapsulated in an `AgentPolicy` object. This design provides:
 
 - **Separation of Concerns**: Agent logic is decoupled from the platform engine
 - **Pluggability**: Different policy implementations can be swapped easily
@@ -543,7 +543,7 @@ Modify `src/aam/tools.py` to add new `ToolSpec` definitions.
 ### Example 1: Phase 1 with 3 Agents
 
 ```bash
-python -m aam.run phase1 --steps 10 --agents 3 --seed 42
+vvm phase1 --steps 10 --agents 3 --seed 42
 ```
 
 **Policy Instantiation**:
@@ -570,7 +570,7 @@ return ActionRequest(action_name="emit_event", arguments=args, ...)
 ### Example 2: Phase 2 with Mock LLM
 
 ```bash
-python -m aam.run phase2 --steps 5 --agents 2 --seed 42 --mock-llm
+vvm phase2 --steps 5 --agents 2 --seed 42 --mock-llm
 ```
 
 **Policy Instantiation**:
@@ -608,7 +608,7 @@ return ActionRequest(action_name="post_message", arguments={"content": "hello (1
 ### Example 3: Phase 2 with Real LLM
 
 ```bash
-python -m aam.run phase2 \
+vvm phase2 \
   --steps 5 \
   --agents 2 \
   --model gpt-3.5-turbo \
@@ -740,7 +740,7 @@ def test_random_policy():
 
 ## Summary
 
-The agent policy system in the Abstract Agent Machine provides:
+The agent policy system in the Vivarium provides:
 
 1. **Protocol-Based Design**: `AgentPolicy` protocol ensures consistent interface
 2. **Multiple Implementations**: Random (Phase 1) and Cognitive (Phase 2) policies

@@ -1,4 +1,4 @@
-# Contributing to Abstract Agent Machine
+# Contributing to Vivarium
 
 Thank you for your interest in contributing! This document provides guidelines and instructions for contributing to the project.
 
@@ -35,13 +35,13 @@ Before submitting a PR:
 
 1. **Run Phase 1 smoke test:**
    ```bash
-   PYTHONPATH=src python -m aam.run phase1 --steps 10 --agents 2 --seed 42 --db test.db
+   PYTHONPATH=src vvm phase1 --steps 10 --agents 2 --seed 42 --db test.db
    ```
 
 2. **Verify determinism:**
    ```bash
-   PYTHONPATH=src python -m aam.run phase1 --steps 10 --agents 2 --seed 42 --db test1.db
-   PYTHONPATH=src python -m aam.run phase1 --steps 10 --agents 2 --seed 42 --db test2.db
+   PYTHONPATH=src vvm phase1 --steps 10 --agents 2 --seed 42 --db test1.db
+   PYTHONPATH=src vvm phase1 --steps 10 --agents 2 --seed 42 --db test2.db
    # Compare databases
    ```
 

@@ -1,4 +1,4 @@
-﻿Here is the technical implementation plan for upgrading the Abstract Agent Machine (AAM) framework.
+Here is the technical implementation plan for upgrading the Vivarium (VVM) framework.
 Section A: OLMo Integration Plan (PyTorch Backend)
 This workstream eliminates the "Dual-Stack" validity threat by unifying the generation and probing stacks. It enables the simulation to run directly on the PyTorch model instance used for activation capture.
 File

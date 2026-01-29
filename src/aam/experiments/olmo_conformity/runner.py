@@ -513,7 +513,7 @@ def run_suite(
                     print("  Activation capture: disabled (enable with --capture-activations)")
 
                 max_tokens = model_config.get("max_new_tokens", 128)
-                # Prefer CUDA on HPC, MPS on Apple Silicon, else CPU. Override via AAM_DEVICE if needed.
+                # Prefer CUDA on HPC, MPS on Apple Silicon, else CPU. Override via VVM_DEVICE if needed.
                 
                 # Resolve model path: use configured models_dir if available, else default
                 if models_dir_from_config:
@@ -523,7 +523,7 @@ def run_suite(
                 
                 gateway = HuggingFaceHookedGateway(
                     model_id_or_path=model_cache_path if os.path.isdir(model_cache_path) else model_id,
-                    device=os.environ.get("AAM_DEVICE"),
+                    device=os.environ.get("VVM_DEVICE"),
                     capture_context=cap_ctx if capture_activations else None,
                     max_new_tokens=max_tokens,
                 )

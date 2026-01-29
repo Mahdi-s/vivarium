@@ -1,8 +1,8 @@
-﻿Tool Assessment Report: Abstract Agent Machine (AAM)
+Tool Assessment Report: Vivarium (VVM)
 Executive Summary
-The Abstract Agent Machine (AAM) is a specialized research instrument designed to function as a "physics engine for cognition." It uniquely bridges the gap between Multi-Agent Systems (MAS) and Mechanistic Interpretability (MI) by enforcing deterministic execution while simultaneously capturing internal neural activations. Unlike commercial frameworks (e.g., AutoGen) or behavioral simulators (e.g., Concordia), AAM enables researchers to trace the causal link between social environment and internal neural states, making it an Essential tool for AI safety researchers studying deceptive alignment and sycophancy. However, its heavy storage footprint, dual-stack architecture (Llama.cpp + PyTorch), and hardcoded dependencies limit its utility for general-purpose agent engineering, rendering it Valuable but specialized for the broader community.
+Vivarium (VVM) is a specialized research instrument designed to function as a "physics engine for cognition." It uniquely bridges the gap between Multi-Agent Systems (MAS) and Mechanistic Interpretability (MI) by enforcing deterministic execution while simultaneously capturing internal neural activations. Unlike commercial frameworks (e.g., AutoGen) or behavioral simulators (e.g., Concordia), VVM enables researchers to trace the causal link between social environment and internal neural states, making it an Essential tool for AI safety researchers studying deceptive alignment and sycophancy. However, its heavy storage footprint, dual-stack architecture (Llama.cpp + PyTorch), and hardcoded dependencies limit its utility for general-purpose agent engineering, rendering it Valuable but specialized for the broader community.
 1. Tool Overview
-Core Functionality: AAM orchestrates deterministic multi-agent simulations using open-weight LLMs (Olmo, Llama). Its defining feature is the "Time-Aligned Activation Store": it hooks into the model's forward pass to capture and persist activation tensors (e.g., residual streams) to disk, synchronized precisely with the simulation tick and agent identity.
+Core Functionality: VVM orchestrates deterministic multi-agent simulations using open-weight LLMs (Olmo, Llama). Its defining feature is the "Time-Aligned Activation Store": it hooks into the model's forward pass to capture and persist activation tensors (e.g., residual streams) to disk, synchronized precisely with the simulation tick and agent identity.
 Architecture:
 * WorldEngine (src/aam/world_engine.py): An authoritative state machine that enforces a "Think Concurrently, Commit Sequentially" loop. It sorts and applies actions deterministically to ensure bit-perfect reproducibility.
 * Interpretability Layer (src/aam/interpretability.py): A wrapper around TransformerLens. It uses a CaptureContext to register hooks, extract tensors, and stream them to sharded .safetensors files, linking "Step 5" to specific neural states.
@@ -46,13 +46,13 @@ Component Diagram:
                                                           +--------------------+
 
 2. Competitive Landscape
-AAM occupies a "Blue Ocean" niche: Mechanistic Social Science.
+VVM occupies a "Blue Ocean" niche: Mechanistic Social Science.
 Tool
 	Core Approach
 	Strengths
 	Weaknesses
 	Differentiation
-	Abstract Agent Machine
+	Vivarium
 	Deterministic MAS + Activation Capture
 	Correlates behavior with neural states; "Glass Box" replayability.
 	High storage cost (TB/run); Complex dual-stack setup.

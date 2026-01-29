@@ -22,7 +22,7 @@ pip install json-repair
 Test core determinism and trace persistence:
 
 ```bash
-PYTHONPATH=src python -m aam.run phase1 --steps 10 --agents 3 --seed 42 --db test_phase1.db
+PYTHONPATH=src vvm phase1 --steps 10 --agents 3 --seed 42 --db test_phase1.db
 ```
 
 **Expected Output:**
@@ -34,7 +34,7 @@ PYTHONPATH=src python -m aam.run phase1 --steps 10 --agents 3 --seed 42 --db tes
 **Verify:**
 ```bash
 # Run again with same parameters
-PYTHONPATH=src python -m aam.run phase1 --steps 10 --agents 3 --seed 42 --db test_phase1_verify.db
+PYTHONPATH=src vvm phase1 --steps 10 --agents 3 --seed 42 --db test_phase1_verify.db
 
 # Compare databases (should be identical)
 sqlite3 test_phase1.db "SELECT COUNT(*) FROM trace;" 
@@ -46,7 +46,7 @@ sqlite3 test_phase1_verify.db "SELECT COUNT(*) FROM trace;"
 Test LangGraph integration and dual-mode action parsing:
 
 ```bash
-PYTHONPATH=src python -m aam.run phase2 \
+PYTHONPATH=src vvm phase2 \
   --steps 5 --agents 2 --seed 42 \
   --mock-llm \
   --db test_phase2_mock.db \
@@ -72,12 +72,12 @@ Test with actual GGUF model via llama.cpp server:
 **Terminal 1 - Start llama.cpp server:**
 ```bash
 # Use a small model for testing
-PYTHONPATH=src python -m aam.run llama serve models/ollama__library_smollm2_135m.gguf
+PYTHONPATH=src vvm llama serve models/ollama__library_smollm2_135m.gguf
 ```
 
 **Terminal 2 - Run simulation:**
 ```bash
-PYTHONPATH=src python -m aam.run phase2 \
+PYTHONPATH=src vvm phase2 \
   --steps 3 --agents 2 --seed 42 \
   --api-base http://127.0.0.1:8081/v1 \
   --api-key local \
@@ -122,7 +122,7 @@ Test counterfactual analysis and state reconstruction:
 
 ```bash
 # First, create a simulation
-PYTHONPATH=src python -m aam.run phase2 \
+PYTHONPATH=src vvm phase2 \
   --steps 10 --agents 2 --seed 42 \
   --mock-llm \
   --db test_replay.db
@@ -253,7 +253,7 @@ Test Parquet export for analysis:
 
 ```bash
 # First create a simulation
-PYTHONPATH=src python -m aam.run phase2 \
+PYTHONPATH=src vvm phase2 \
   --steps 10 --agents 2 --seed 42 \
   --mock-llm \
   --db test_export.db
@@ -287,7 +287,7 @@ EOF
 Verify state hash computation:
 
 ```bash
-PYTHONPATH=src python -m aam.run phase2 \
+PYTHONPATH=src vvm phase2 \
   --steps 5 --agents 2 --seed 42 \
   --mock-llm \
   --db test_hash.db
@@ -316,7 +316,7 @@ cat > test_retry.json << 'EOF'
 }
 EOF
 
-PYTHONPATH=src python -m aam.run experiment --config test_retry.json
+PYTHONPATH=src vvm experiment --config test_retry.json
 ```
 
 **Expected Output:**
@@ -334,8 +334,8 @@ Run all tests in sequence:
 set -e
 
 echo "=== Test 1: Phase 1 Determinism ==="
-PYTHONPATH=src python -m aam.run phase1 --steps 10 --agents 3 --seed 42 --db test1.db
-PYTHONPATH=src python -m aam.run phase1 --steps 10 --agents 3 --seed 42 --db test1_verify.db
+PYTHONPATH=src vvm phase1 --steps 10 --agents 3 --seed 42 --db test1.db
+PYTHONPATH=src vvm phase1 --steps 10 --agents 3 --seed 42 --db test1_verify.db
 COUNT1=$(sqlite3 test1.db "SELECT COUNT(*) FROM trace;")
 COUNT2=$(sqlite3 test1_verify.db "SELECT COUNT(*) FROM trace;")
 if [ "$COUNT1" == "$COUNT2" ]; then
@@ -346,7 +346,7 @@ else
 fi
 
 echo "=== Test 2: Phase 2 Mock LLM ==="
-PYTHONPATH=src python -m aam.run phase2 --steps 5 --agents 2 --seed 42 --mock-llm --db test2.db
+PYTHONPATH=src vvm phase2 --steps 5 --agents 2 --seed 42 --mock-llm --db test2.db
 MSG_COUNT=$(sqlite3 test2.db "SELECT COUNT(*) FROM messages;")
 if [ "$MSG_COUNT" -gt 0 ]; then
     echo "✓ Mock LLM test passed ($MSG_COUNT messages)"
@@ -356,7 +356,7 @@ else
 fi
 
 echo "=== Test 3: State Hash ==="
-PYTHONPATH=src python -m aam.run phase2 --steps 3 --agents 2 --seed 42 --mock-llm --db test3.db
+PYTHONPATH=src vvm phase2 --steps 3 --agents 2 --seed 42 --mock-llm --db test3.db
 HASH_COUNT=$(sqlite3 test3.db "SELECT COUNT(*) FROM trace WHERE environment_state_hash IS NOT NULL;")
 if [ "$HASH_COUNT" -gt 0 ]; then
     echo "✓ State hash test passed ($HASH_COUNT hashes computed)"

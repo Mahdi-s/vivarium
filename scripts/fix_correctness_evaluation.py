@@ -225,7 +225,7 @@ def main():
     
     if not args.dry_run:
         print("\n[Fix] Done! Now re-run the report generation:")
-        print(f"  PYTHONPATH=src python -m aam.run olmo-conformity-report \\")
+        print(f"  PYTHONPATH=src vvm olmo-conformity-report \\")
         print(f"    --run-id {args.run_id} \\")
         print(f"    --db {args.db} \\")
         print(f"    --run-dir {'/'.join(args.db.split('/')[:-1])}")

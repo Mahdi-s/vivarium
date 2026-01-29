@@ -1,7 +1,7 @@
-﻿Codebase Assessment Report: Abstract Agent Machine (AAM)
+Codebase Assessment Report: Vivarium (VVM)
 1. Executive Summary
-This report evaluates the engineering quality and scientific validity of the Abstract Agent Machine (AAM) codebase. The assessment is based on a review of the core architecture documentation (src/aam/) and a line-by-line inspection of the experimental tooling (experiments/olmo_conformity/).
-Verdict: The AAM is a high-integrity but fragile research instrument.
+This report evaluates the engineering quality and scientific validity of the Vivarium (VVM) codebase. The assessment is based on a review of the core architecture documentation (src/aam/) and a line-by-line inspection of the experimental tooling (experiments/olmo_conformity/).
+Verdict: VVM is a high-integrity but fragile research instrument.
 * Strengths: It implements rigor rarely seen in academic code, specifically cryptographic reproducibility (MerkleLog) and concurrency-safe data persistence.
 * Weaknesses: It suffers from a "Dual-Stack" validity risk (mismatch between simulation and probing models) and relies on brittle, hardcoded scaffolding in its experimental scripts.
 ________________
@@ -60,7 +60,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "src"))
       * Risk: This "sys.path hack" makes the script brittle. If the file is moved or the directory depth changes, the import of aam will fail.
       * Refinement: Rely on the pyproject.toml configuration. Installing the package in editable mode (pip install -e .) makes src/aam globally available in the environment without path manipulation.
 4. Final Recommendation
-The Abstract Agent Machine is architecturally sound for its primary goal—deterministic, traceable simulations. However, the "Dual-Brain" issue is a fatal flaw for mechanistic interpretability claims.
+Vivarium is architecturally sound for its primary goal—deterministic, traceable simulations. However, the "Dual-Brain" issue is a fatal flaw for mechanistic interpretability claims.
 Immediate Action Items:
          1. Unify the Inference Stack: Ensure simulation generation and activation capture use the exact same model weights.
          2. Diversify Probe Datasets: Eliminate lexical confounders in prepare_social_probe.py.

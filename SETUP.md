@@ -1,6 +1,6 @@
 # Setup and Environment Guide
 
-This document provides detailed instructions for setting up and running the Abstract Agent Machine across different phases and environments.
+This document provides detailed instructions for setting up and running Vivarium across different phases and environments.
 
 ## Table of Contents
 
@@ -112,13 +112,13 @@ Since the project uses a `src/` layout, you have two options:
 **Option A: Set PYTHONPATH (Quick)**
 ```bash
 export PYTHONPATH=/path/to/abstractAgentMachine/src
-python -m aam.run phase1 --steps 10
+vvm phase1 --steps 10
 ```
 
 **Option B: Install Package (Recommended)**
 ```bash
 uv sync  # or: pip install -e .
-python -m aam.run phase1 --steps 10
+vvm phase1 --steps 10
 ```
 
 ### Environment Variables
@@ -229,7 +229,7 @@ uv sync
 
 **Test:**
 ```bash
-PYTHONPATH=src python -m aam.run phase1 --steps 10 --agents 2 --seed 42 --db test.db
+PYTHONPATH=src vvm phase1 --steps 10 --agents 2 --seed 42 --db test.db
 ```
 
 ### Phase 2: Cognitive Layer
@@ -253,7 +253,7 @@ pip install json-repair  # For dirty JSON parsing
 
 **Test:**
 ```bash
-PYTHONPATH=src python -m aam.run phase2 --steps 5 --agents 2 --mock-llm --db test_phase2.db
+PYTHONPATH=src vvm phase2 --steps 5 --agents 2 --mock-llm --db test_phase2.db
 ```
 
 ### Phase 3: Interpretability Layer
@@ -280,7 +280,7 @@ pip install transformers accelerate  # Usually installed with transformer-lens
 **Test:**
 ```bash
 # List hooks (requires model download)
-PYTHONPATH=src python -m aam.run phase3 \
+PYTHONPATH=src vvm phase3 \
   --model-id gpt2 \
   --list-hooks
 ```
@@ -296,14 +296,14 @@ PYTHONPATH=src python -m aam.run phase3 \
 1. Install [Ollama](https://ollama.ai/)
 2. Pull a model: `ollama pull llama3.2:1b`
 3. Models are stored in `~/.ollama/models/`
-4. Use `aam.run llama list` to discover them
+4. Use `vvm llama list` to discover them
 
 **Option 2: Use LM Studio models**
 
 1. Install [LM Studio](https://lmstudio.ai/)
 2. Download models through the UI
 3. Models are stored in `~/Library/Application Support/LM Studio/models/` (macOS)
-4. Use `aam.run llama list` to discover them
+4. Use `vvm llama list` to discover them
 
 **Option 3: Manual placement**
 
@@ -316,7 +316,7 @@ PYTHONPATH=src python -m aam.run phase3 \
 
 **Export discovered models:**
 ```bash
-PYTHONPATH=src python -m aam.run llama export
+PYTHONPATH=src vvm llama export
 # Creates symlinks in models/ directory
 ```
 
@@ -325,7 +325,7 @@ PYTHONPATH=src python -m aam.run llama export
 **Public models:**
 ```bash
 # No setup needed, specify model ID:
-PYTHONPATH=src python -m aam.run phase3 --model-id gpt2 --list-hooks
+PYTHONPATH=src vvm phase3 --model-id gpt2 --list-hooks
 ```
 
 **Gated models (require authentication):**
@@ -338,7 +338,7 @@ huggingface-cli login
 If you have models downloaded locally:
 ```bash
 # Use local path as model-id
-PYTHONPATH=src python -m aam.run phase3 \
+PYTHONPATH=src vvm phase3 \
   --model-id /path/to/local/model \
   --list-hooks
 ```
@@ -351,15 +351,15 @@ Run this sequence to verify all phases:
 
 ```bash
 # Phase 1
-PYTHONPATH=src python -m aam.run phase1 --steps 3 --agents 2 --seed 42 --db verify_phase1.db
+PYTHONPATH=src vvm phase1 --steps 3 --agents 2 --seed 42 --db verify_phase1.db
 echo "Phase 1: ✓"
 
 # Phase 2 (mock)
-PYTHONPATH=src python -m aam.run phase2 --steps 3 --agents 2 --seed 42 --mock-llm --db verify_phase2.db
+PYTHONPATH=src vvm phase2 --steps 3 --agents 2 --seed 42 --mock-llm --db verify_phase2.db
 echo "Phase 2: ✓"
 
 # Phase 3 (if installed, requires model)
-# PYTHONPATH=src python -m aam.run phase3 --model-id gpt2 --list-hooks
+# PYTHONPATH=src vvm phase3 --model-id gpt2 --list-hooks
 # echo "Phase 3: ✓"
 ```
 
@@ -386,8 +386,8 @@ EOF verify_phase1.db
 Run the same simulation twice and compare:
 
 ```bash
-PYTHONPATH=src python -m aam.run phase1 --steps 10 --agents 2 --seed 42 --db test1.db
-PYTHONPATH=src python -m aam.run phase1 --steps 10 --agents 2 --seed 42 --db test2.db
+PYTHONPATH=src vvm phase1 --steps 10 --agents 2 --seed 42 --db test1.db
+PYTHONPATH=src vvm phase1 --steps 10 --agents 2 --seed 42 --db test2.db
 
 # Compare databases (should be identical)
 python3 << EOF
@@ -490,5 +490,5 @@ export AAM_DEBUG=1
 After setup, see:
 - [README.md](README.md) for usage examples
 - [PHASE1_ACCOMPLISHMENTS.md](PHASE1_ACCOMPLISHMENTS.md) for implementation details
-- [Abstract Agent Machine PRD.txt](Abstract Agent Machine PRD.txt) for full requirements
+- [Abstract Agent Machine PRD.txt](Abstract Agent Machine PRD.txt) for full requirements (Vivarium project)
 
