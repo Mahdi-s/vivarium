@@ -104,3 +104,5 @@ huggingface_cache/
 
 *.png
 *.pdf
+
+runs-old/*

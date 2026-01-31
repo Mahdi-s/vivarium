@@ -349,12 +349,17 @@ def run_single_experiment(
     log.info(f"  Command: {' '.join(cmd)}")
     
     try:
-        # Run the experiment
+        # Ensure models directory exists before running
+        models_cache_dir = REPO_ROOT / "models" / "huggingface_cache"
+        models_cache_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Run the experiment with explicit environment to ensure AAM_* vars are passed
         result = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
             cwd=str(REPO_ROOT),
+            env=os.environ.copy(),  # Explicitly pass environment with AAM_MODELS_DIR and AAM_RUNS_DIR
         )
         
         if result.returncode != 0:
@@ -1047,10 +1052,18 @@ def main():
     # These override paths.json settings when NOT in HPC mode
     if not args.hpc:
         # For local mode, set env vars to override any HPC paths in paths.json
-        os.environ["AAM_MODELS_DIR"] = str(models_dir / "huggingface_cache")
+        models_cache_path = models_dir / "huggingface_cache"
+        os.environ["AAM_MODELS_DIR"] = str(models_cache_path)
         os.environ["AAM_RUNS_DIR"] = str(runs_dir)
+        
+        # Create directories to ensure they exist
+        models_cache_path.mkdir(parents=True, exist_ok=True)
+        runs_dir.mkdir(parents=True, exist_ok=True)
+        
         logger.info(f"Set AAM_MODELS_DIR={os.environ['AAM_MODELS_DIR']}")
         logger.info(f"Set AAM_RUNS_DIR={os.environ['AAM_RUNS_DIR']}")
+        logger.info(f"Created/verified models cache directory: {models_cache_path}")
+        logger.info(f"Created/verified runs directory: {runs_dir}")
     
     # Load existing metadata
     metadata = load_metadata(metadata_path)
