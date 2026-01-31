@@ -629,9 +629,9 @@ def run_suite(
                         agent_id=agent_id
                     )
 
-                print(f"    [Runner] Calling gateway.chat()...")
+                print(f"    [Runner] Calling gateway.chat() with seed={seed}...")
                 t0 = time.time()
-                resp = gateway.chat(model=model_id_for_api, messages=messages, tools=None, tool_choice=None, temperature=temperature)
+                resp = gateway.chat(model=model_id_for_api, messages=messages, tools=None, tool_choice=None, temperature=temperature, seed=seed)
                 latency_ms = (time.time() - t0) * 1000.0
                 print(f"    [Runner] Gateway response received ({latency_ms:.1f}ms)")
 

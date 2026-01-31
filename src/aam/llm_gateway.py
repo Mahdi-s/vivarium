@@ -319,6 +319,7 @@ class LLMGateway(Protocol):
         tools: Optional[List[ToolSpec]] = None,
         tool_choice: Optional[str] = None,
         temperature: float = 0.0,
+        seed: Optional[int] = None,
     ) -> JsonDict: ...
 
 
@@ -331,6 +332,7 @@ class AsyncLLMGateway(Protocol):
         tools: Optional[List[ToolSpec]] = None,
         tool_choice: Optional[str] = None,
         temperature: float = 0.0,
+        seed: Optional[int] = None,
     ) -> JsonDict: ...
 
 
@@ -361,6 +363,7 @@ class LiteLLMGateway:
         tools: Optional[List[ToolSpec]] = None,
         tool_choice: Optional[str] = None,
         temperature: float = 0.0,
+        seed: Optional[int] = None,
     ) -> Dict[str, Any]:
         tool_payload = [t.as_openai_tool() for t in (tools or [])] or None
         kwargs: Dict[str, Any] = {
@@ -368,6 +371,8 @@ class LiteLLMGateway:
             "messages": messages,
             "temperature": temperature,
         }
+        if seed is not None:
+            kwargs["seed"] = seed
         if self.api_base:
             kwargs["api_base"] = self.api_base
             # For OpenAI-compatible local servers (e.g. llama-server), force provider resolution.
@@ -395,6 +400,7 @@ class LiteLLMGateway:
         tools: Optional[List[ToolSpec]] = None,
         tool_choice: Optional[str] = None,
         temperature: float = 0.0,
+        seed: Optional[int] = None,
     ) -> JsonDict:
         try:
             import litellm  # type: ignore
@@ -409,6 +415,7 @@ class LiteLLMGateway:
             tools=tools,
             tool_choice=tool_choice,
             temperature=temperature,
+            seed=seed,
         )
 
         resp = litellm.completion(**kwargs)
@@ -423,6 +430,7 @@ class LiteLLMGateway:
         tools: Optional[List[ToolSpec]] = None,
         tool_choice: Optional[str] = None,
         temperature: float = 0.0,
+        seed: Optional[int] = None,
     ) -> JsonDict:
         """
         True async (preferred for Phase 4 Barrier Scheduler).
@@ -441,6 +449,7 @@ class LiteLLMGateway:
             tools=tools,
             tool_choice=tool_choice,
             temperature=temperature,
+            seed=seed,
         )
 
         async def _call() -> JsonDict:
@@ -480,6 +489,7 @@ class MockLLMGateway:
         tools: Optional[List[ToolSpec]] = None,
         tool_choice: Optional[str] = None,
         temperature: float = 0.0,
+        seed: Optional[int] = None,
     ) -> JsonDict:
         # Fabricate a minimal OpenAI-like response structure.
         # We bias toward tool calls if tools are provided.
@@ -523,6 +533,7 @@ class MockLLMGateway:
         tools: Optional[List[ToolSpec]] = None,
         tool_choice: Optional[str] = None,
         temperature: float = 0.0,
+        seed: Optional[int] = None,
     ) -> JsonDict:
         return self.chat(
             model=model,
@@ -530,6 +541,7 @@ class MockLLMGateway:
             tools=tools,
             tool_choice=tool_choice,
             temperature=temperature,
+            seed=seed,
         )
 
 
@@ -710,6 +722,7 @@ class TransformerLensGateway:
         tools: Optional[List[ToolSpec]] = None,
         tool_choice: Optional[str] = None,
         temperature: float = 0.0,
+        seed: Optional[int] = None,
     ) -> JsonDict:
         # `model` is ignored for TL; we use self.model_id (keeps LLMGateway interface stable).
         _ = (model, tools, tool_choice)
@@ -721,9 +734,9 @@ class TransformerLensGateway:
             hooks = self.capture_context.build_fwd_hooks()
             self.capture_context.begin_inference()
             with self._model.hooks(fwd_hooks=hooks):
-                text = self._generate(prompt=prompt, temperature=temperature)
+                text = self._generate(prompt=prompt, temperature=temperature, seed=seed)
         else:
-            text = self._generate(prompt=prompt, temperature=temperature)
+            text = self._generate(prompt=prompt, temperature=temperature, seed=seed)
 
         # Return an OpenAI-ish response shape consumed by existing parsers.
         return {"choices": [{"message": {"role": "assistant", "content": text}}]}
@@ -736,6 +749,7 @@ class TransformerLensGateway:
         tools: Optional[List[ToolSpec]] = None,
         tool_choice: Optional[str] = None,
         temperature: float = 0.0,
+        seed: Optional[int] = None,
     ) -> JsonDict:
         # TL generation is compute-bound and synchronous; isolate it so the scheduler can remain async.
         return await asyncio.to_thread(
@@ -745,9 +759,14 @@ class TransformerLensGateway:
             tools=tools,
             tool_choice=tool_choice,
             temperature=temperature,
+            seed=seed,
         )
 
-    def _generate(self, *, prompt: str, temperature: float) -> str:
+    def _generate(self, *, prompt: str, temperature: float, seed: Optional[int] = None) -> str:
+        # Set seed for reproducibility if provided
+        if seed is not None:
+            import torch  # type: ignore
+            torch.manual_seed(seed)
         # HookedTransformer.generate API varies slightly across versions; be defensive.
         try:
             out = self._model.generate(
@@ -1060,6 +1079,7 @@ class HuggingFaceHookedGateway:
         tools: Optional[List[ToolSpec]] = None,
         tool_choice: Optional[str] = None,
         temperature: float = 0.0,
+        seed: Optional[int] = None,
     ) -> JsonDict:
         _ = (model, tools, tool_choice)
         prompt, used_chat_template = self._messages_to_prompt(messages)
@@ -1088,7 +1108,13 @@ class HuggingFaceHookedGateway:
 
         import torch  # type: ignore
 
-        print(f"      [HF Gateway] Starting generation (max_new_tokens={self.max_new_tokens})...")
+        # Set seed for reproducibility if provided
+        if seed is not None:
+            torch.manual_seed(seed)
+            if torch.cuda.is_available():
+                torch.cuda.manual_seed_all(seed)
+
+        print(f"      [HF Gateway] Starting generation (max_new_tokens={self.max_new_tokens}, seed={seed})...")
         with torch.no_grad():
             out = self._model.generate(**inputs, **gen_kwargs)
         print(f"      [HF Gateway] Generation complete, output shape: {out.shape}")
@@ -1278,6 +1304,7 @@ class HuggingFaceTransformersGateway:
         tools: Optional[List[ToolSpec]] = None,
         tool_choice: Optional[str] = None,
         temperature: float = 0.0,
+        seed: Optional[int] = None,
     ) -> JsonDict:
         """Generate a response using the local model."""
         _ = (model, tools, tool_choice)  # Ignored for local models
@@ -1287,6 +1314,12 @@ class HuggingFaceTransformersGateway:
         prompt = self._messages_to_prompt(messages)
         
         import torch
+        
+        # Set seed for reproducibility if provided
+        if seed is not None:
+            torch.manual_seed(seed)
+            if torch.cuda.is_available():
+                torch.cuda.manual_seed_all(seed)
         
         # Tokenize
         inputs = self._tokenizer(prompt, return_tensors="pt")
@@ -1323,6 +1356,7 @@ class HuggingFaceTransformersGateway:
         tools: Optional[List[ToolSpec]] = None,
         tool_choice: Optional[str] = None,
         temperature: float = 0.0,
+        seed: Optional[int] = None,
     ) -> JsonDict:
         """Async version - runs in thread pool."""
         return await asyncio.to_thread(
@@ -1332,6 +1366,7 @@ class HuggingFaceTransformersGateway:
             tools=tools,
             tool_choice=tool_choice,
             temperature=temperature,
+            seed=seed,
         )
 
 

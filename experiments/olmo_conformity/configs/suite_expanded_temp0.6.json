@@ -1,0 +1,103 @@
+{
+  "paths_config": "paths.json",
+  "suite_name": "olmo_conformity_expanded_temp0.6",
+  "suite_version": "v4",
+  "description": "Expanded conformity experiment with multiple dataset categories (math, science, knowledge, truthfulness, reasoning) at temperature 0.6 for moderate sampling variance.",
+  "datasets": [
+    {
+      "name": "immutable_facts_minimal",
+      "version": "v2",
+      "path": "experiments/olmo_conformity/datasets/immutable_facts/minimal_items_wrong.jsonl",
+      "category": "general",
+      "notes": "Curated factual questions (geography, science, math)"
+    },
+    {
+      "name": "social_conventions_minimal",
+      "version": "v2",
+      "path": "experiments/olmo_conformity/datasets/social_conventions/minimal_items_wrong.jsonl",
+      "category": "opinion",
+      "notes": "Opinion/preference questions"
+    },
+    {
+      "name": "gsm8k",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/math/gsm8k_items_wrong.jsonl",
+      "category": "math",
+      "notes": "Grade school math word problems - tests RL-Zero's training domain"
+    },
+    {
+      "name": "mmlu_math",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/math/mmlu_math_items_wrong.jsonl",
+      "category": "math",
+      "notes": "MMLU math subsets (high school, elementary, college)"
+    },
+    {
+      "name": "mmlu_science",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/science/mmlu_science_items_wrong.jsonl",
+      "category": "science",
+      "notes": "MMLU science subsets (physics, chemistry, biology)"
+    },
+    {
+      "name": "mmlu_knowledge",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/knowledge/mmlu_knowledge_items_wrong.jsonl",
+      "category": "knowledge",
+      "notes": "MMLU knowledge subsets (geography, history, world religions)"
+    },
+    {
+      "name": "truthfulqa",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/truthfulness/truthfulqa_items_wrong.jsonl",
+      "category": "truthfulness",
+      "notes": "TruthfulQA - tests tendency to reproduce common misconceptions"
+    },
+    {
+      "name": "arc",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/reasoning/arc_items_wrong.jsonl",
+      "category": "reasoning",
+      "notes": "ARC Challenge + Easy - science reasoning questions"
+    }
+  ],
+  "conditions": [
+    {
+      "name": "control",
+      "params": { "type": "control" },
+      "notes": "Baseline: direct question without social pressure"
+    },
+    {
+      "name": "asch_history_5",
+      "params": { "type": "synthetic_asch_history", "confederates": 5, "confidence": "high" },
+      "notes": "Asch paradigm: 5 confederates claim wrong_answer with high confidence"
+    },
+    {
+      "name": "authoritative_bias",
+      "params": { "type": "authoritative_bias", "user_claim_strength": "high" },
+      "notes": "Authoritative user claims wrong_answer with high confidence"
+    }
+  ],
+  "models": [
+    { "variant": "base", "model_id": "allenai/Olmo-3-1025-7B" },
+    { "variant": "instruct", "model_id": "allenai/Olmo-3-7B-Instruct" },
+    { "variant": "instruct_sft", "model_id": "allenai/Olmo-3-7B-Instruct-SFT" },
+    { "variant": "think", "model_id": "allenai/Olmo-3-7B-Think" },
+    { "variant": "think_sft", "model_id": "allenai/Olmo-3-7B-Think-SFT" },
+    { "variant": "rl_zero", "model_id": "allenai/Olmo-3-7B-RL-Zero-Math" }
+  ],
+  "run": {
+    "seed": 42,
+    "temperature": 0.6,
+    "max_items_per_dataset": 30,
+    "notes": "temperature=0.6 for moderate sampling variance; seed=42 for reproducibility"
+  },
+  "scientific_notes": {
+    "validation_gates": [
+      "Prompt gate: Every Asch/authoritative trial must use wrong_answer != ground_truth_text",
+      "Temperature 0.6: Moderate variance sampling",
+      "Category analysis: Results should be analyzed by dataset category to test domain effects"
+    ],
+    "categories": ["general", "opinion", "math", "science", "knowledge", "truthfulness", "reasoning"]
+  }
+}

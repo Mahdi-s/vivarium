@@ -1,10 +1,16 @@
 """
 Temperature Effect Analysis for Olmo Conformity Experiments
 
-Analyzes three runs comparing T=0 (deterministic), T=0.5 (moderate), and T=1 (stochastic) 
-decoding to understand how temperature affects social conformity in LLMs.
+Analyzes runs comparing different temperatures (T=0 to T=1 in 0.2 increments) 
+to understand how temperature affects social conformity in LLMs.
 
-Run IDs:
+Supports:
+- Multiple temperature levels (0.0, 0.2, 0.4, 0.6, 0.8, 1.0)
+- Category-based analysis (math, science, knowledge, truthfulness, reasoning)
+- Model × Category performance breakdowns
+- Statistical comparisons by category
+
+Original Run IDs (legacy):
 - T=0.0: 73b34738-b76e-4c55-8653-74b497b1989b
 - T=0.5: 4e6cd5a7-af59-4fe2-ae8d-c9bcc2f57c00
 - T=1.0: f1c7ed74-2561-4c52-9279-3d3269fcb7f3
@@ -54,6 +60,18 @@ TEMP_COLORS = {0.0: "steelblue", 0.5: "mediumseagreen", 1.0: "coral"}
 
 # Behavioral conditions (exclude probe capture conditions)
 BEHAVIORAL_CONDITIONS = ('control', 'asch_history_5', 'authoritative_bias')
+
+# Dataset categories for expanded analysis
+DATASET_CATEGORIES = ['general', 'opinion', 'math', 'science', 'knowledge', 'truthfulness', 'reasoning']
+CATEGORY_COLORS = {
+    'general': '#4363d8',      # blue
+    'opinion': '#911eb4',      # purple
+    'math': '#e6194B',         # red
+    'science': '#3cb44b',      # green
+    'knowledge': '#f58231',    # orange
+    'truthfulness': '#42d4f4', # cyan
+    'reasoning': '#f032e6',    # magenta
+}
 
 # Set plotting style
 plt.style.use('seaborn-v0_8-whitegrid')
@@ -556,26 +574,395 @@ def plot_heatmap_error_rates(rates_dict: Dict[float, pd.DataFrame], output_path:
 
 
 # ============================================================================
+# CATEGORY-BASED ANALYSIS FUNCTIONS
+# ============================================================================
+
+def get_behavioral_data_with_category(conn: sqlite3.Connection, run_id: str) -> pd.DataFrame:
+    """Extract behavioral data including dataset category information."""
+    query = """
+    SELECT 
+        t.trial_id,
+        t.model_id,
+        t.variant,
+        c.name AS condition_name,
+        c.params_json AS condition_params,
+        i.question,
+        i.ground_truth_text,
+        i.domain,
+        d.name AS dataset_name,
+        o.raw_text,
+        o.parsed_answer_text,
+        o.is_correct,
+        o.refusal_flag,
+        o.latency_ms,
+        o.token_usage_json,
+        o.parsed_answer_json
+    FROM conformity_trials t
+    JOIN conformity_conditions c ON t.condition_id = c.condition_id
+    JOIN conformity_items i ON t.item_id = i.item_id
+    JOIN conformity_datasets d ON i.dataset_id = d.dataset_id
+    JOIN conformity_outputs o ON t.trial_id = o.trial_id
+    WHERE t.run_id = ?
+      AND c.name IN (?, ?, ?);
+    """
+    
+    df = pd.read_sql_query(query, conn, params=[run_id, *BEHAVIORAL_CONDITIONS])
+    
+    # Map dataset names to categories
+    category_map = {
+        'immutable_facts_minimal': 'general',
+        'social_conventions_minimal': 'opinion',
+        'gsm8k': 'math',
+        'mmlu_math': 'math',
+        'mmlu_science': 'science',
+        'mmlu_knowledge': 'knowledge',
+        'truthfulqa': 'truthfulness',
+        'arc': 'reasoning',
+    }
+    df['category'] = df['dataset_name'].map(category_map).fillna('unknown')
+    
+    return df
+
+
+def calculate_rates_by_category(df: pd.DataFrame) -> pd.DataFrame:
+    """Calculate error rates by condition, model, and category."""
+    df = df.copy()
+    df['is_empty'] = df['raw_text'].isna() | (df['raw_text'] == '')
+    
+    agg = df.groupby(['condition_name', 'variant', 'category']).agg(
+        n_trials=('trial_id', 'count'),
+        n_correct=('is_correct', 'sum'),
+        n_refusals=('refusal_flag', 'sum'),
+        n_empty=('is_empty', 'sum'),
+        mean_latency=('latency_ms', 'mean'),
+        std_latency=('latency_ms', 'std'),
+    ).reset_index()
+    
+    agg['n_incorrect'] = agg['n_trials'] - agg['n_correct']
+    agg['accuracy'] = agg['n_correct'] / agg['n_trials']
+    agg['error_rate'] = 1 - agg['accuracy']
+    agg['refusal_rate'] = agg['n_refusals'] / agg['n_trials']
+    agg['empty_rate'] = agg['n_empty'] / agg['n_trials']
+    
+    return agg
+
+
+def plot_category_heatmap(rates_by_category: pd.DataFrame, output_path: Path, 
+                          temperature: float = 0.0, condition: str = 'control') -> None:
+    """
+    Figure: Category × Model Error Rate Heatmap
+    Shows how each model performs across different question categories.
+    """
+    # Filter for the specific condition
+    data = rates_by_category[rates_by_category['condition_name'] == condition]
+    
+    if data.empty:
+        print(f"  Warning: No data for condition {condition}")
+        return
+    
+    # Get unique variants and categories
+    variants = sorted(data['variant'].unique())
+    categories = [c for c in DATASET_CATEGORIES if c in data['category'].unique()]
+    
+    if not categories:
+        print(f"  Warning: No categories found in data")
+        return
+    
+    # Build matrix
+    matrix = np.zeros((len(variants), len(categories)))
+    for i, variant in enumerate(variants):
+        for j, category in enumerate(categories):
+            row = data[(data['variant'] == variant) & (data['category'] == category)]
+            if not row.empty:
+                matrix[i, j] = row['error_rate'].iloc[0]
+            else:
+                matrix[i, j] = np.nan
+    
+    # Create heatmap
+    fig, ax = plt.subplots(figsize=(12, 8))
+    
+    # Use masked array for NaN values
+    masked_matrix = np.ma.masked_invalid(matrix)
+    
+    im = ax.imshow(masked_matrix, cmap='RdYlGn_r', aspect='auto', vmin=0, vmax=1.0)
+    
+    ax.set_xticks(np.arange(len(categories)))
+    ax.set_xticklabels([c.title() for c in categories], rotation=45, ha='right')
+    ax.set_yticks(np.arange(len(variants)))
+    ax.set_yticklabels(variants)
+    ax.set_xlabel('Question Category')
+    ax.set_ylabel('Model Variant')
+    ax.set_title(f'Error Rate by Model and Category\n(T={temperature}, Condition: {condition.replace("_", " ").title()})')
+    
+    # Add text annotations
+    for i in range(len(variants)):
+        for j in range(len(categories)):
+            if not np.isnan(matrix[i, j]):
+                text = ax.text(j, i, f'{matrix[i, j]:.1%}',
+                              ha='center', va='center', fontsize=9,
+                              color='white' if matrix[i, j] > 0.5 else 'black')
+    
+    plt.colorbar(im, ax=ax, label='Error Rate', shrink=0.8)
+    plt.tight_layout()
+    
+    filename = f'category_heatmap_t{temperature}_{condition}'
+    plt.savefig(output_path / f'{filename}.png', dpi=300, bbox_inches='tight')
+    plt.savefig(output_path / f'{filename}.pdf', bbox_inches='tight')
+    plt.close()
+    print(f"  Saved category heatmap: {filename}")
+
+
+def plot_category_comparison(rates_by_category_dict: Dict[float, pd.DataFrame], 
+                             output_path: Path, variant: str = 'rl_zero') -> None:
+    """
+    Figure: Category Performance Comparison Across Temperatures
+    Shows how a specific model's category performance changes with temperature.
+    """
+    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+    
+    temps = sorted(rates_by_category_dict.keys())
+    
+    # Get categories from first available temperature
+    first_temp = next(iter(rates_by_category_dict.values()))
+    categories = [c for c in DATASET_CATEGORIES if c in first_temp['category'].unique()]
+    
+    if not categories:
+        print(f"  Warning: No categories found for category comparison plot")
+        return
+    
+    for ax_idx, condition in enumerate(['control', 'asch_history_5']):
+        ax = axes[ax_idx]
+        
+        for category in categories:
+            rates = []
+            for temp in temps:
+                data = rates_by_category_dict[temp]
+                row = data[(data['variant'] == variant) & 
+                          (data['category'] == category) & 
+                          (data['condition_name'] == condition)]
+                if not row.empty:
+                    rates.append(row['error_rate'].iloc[0])
+                else:
+                    rates.append(np.nan)
+            
+            ax.plot(temps, rates, 'o-', label=category.title(), 
+                   color=CATEGORY_COLORS.get(category, 'gray'), 
+                   linewidth=2, markersize=8)
+        
+        ax.set_xlabel('Temperature')
+        ax.set_ylabel('Error Rate')
+        condition_label = 'Control' if condition == 'control' else 'Asch (Social Pressure)'
+        ax.set_title(f'{variant.replace("_", " ").title()} - {condition_label}')
+        ax.set_xticks(temps)
+        ax.set_ylim(0, 1.05)
+        ax.axhline(y=0.5, color='gray', linestyle='--', alpha=0.3)
+        ax.legend(loc='best', fontsize=8)
+    
+    plt.suptitle(f'Category Performance vs Temperature ({variant})', fontsize=14, fontweight='bold')
+    plt.tight_layout()
+    
+    filename = f'category_comparison_{variant}'
+    plt.savefig(output_path / f'{filename}.png', dpi=300, bbox_inches='tight')
+    plt.savefig(output_path / f'{filename}.pdf', bbox_inches='tight')
+    plt.close()
+    print(f"  Saved category comparison: {filename}")
+
+
+def plot_math_vs_general_comparison(rates_by_category_dict: Dict[float, pd.DataFrame], 
+                                    output_path: Path) -> None:
+    """
+    Figure: Math vs General Performance - Testing Domain Mismatch Hypothesis
+    RL-Zero was trained on math, so it should perform better on math than general knowledge.
+    """
+    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+    
+    temps = sorted(rates_by_category_dict.keys())
+    variants = sorted(rates_by_category_dict[temps[0]]['variant'].unique())
+    
+    for ax_idx, condition in enumerate(['control', 'asch_history_5']):
+        ax = axes[ax_idx]
+        
+        x = np.arange(len(variants))
+        width = 0.35
+        
+        # Average error rate for math category
+        math_rates = []
+        general_rates = []
+        
+        for variant in variants:
+            math_vals = []
+            general_vals = []
+            
+            for temp in temps:
+                data = rates_by_category_dict[temp]
+                
+                # Math rate
+                math_row = data[(data['variant'] == variant) & 
+                               (data['category'] == 'math') & 
+                               (data['condition_name'] == condition)]
+                if not math_row.empty:
+                    math_vals.append(math_row['error_rate'].iloc[0])
+                
+                # General rate
+                general_row = data[(data['variant'] == variant) & 
+                                  (data['category'] == 'general') & 
+                                  (data['condition_name'] == condition)]
+                if not general_row.empty:
+                    general_vals.append(general_row['error_rate'].iloc[0])
+            
+            math_rates.append(np.mean(math_vals) if math_vals else np.nan)
+            general_rates.append(np.mean(general_vals) if general_vals else np.nan)
+        
+        ax.bar(x - width/2, math_rates, width, label='Math', color='#e6194B', alpha=0.8)
+        ax.bar(x + width/2, general_rates, width, label='General', color='#4363d8', alpha=0.8)
+        
+        ax.set_xlabel('Model Variant')
+        ax.set_ylabel('Average Error Rate')
+        condition_label = 'Control' if condition == 'control' else 'Asch (Social Pressure)'
+        ax.set_title(f'{condition_label}')
+        ax.set_xticks(x)
+        ax.set_xticklabels(variants, rotation=30, ha='right')
+        ax.set_ylim(0, 1.05)
+        ax.legend(loc='upper left')
+        ax.axhline(y=0.5, color='gray', linestyle='--', alpha=0.3)
+    
+    plt.suptitle('Math vs General Knowledge Performance by Model\n(Tests RL-Zero Domain Mismatch Hypothesis)', 
+                 fontsize=14, fontweight='bold')
+    plt.tight_layout()
+    
+    plt.savefig(output_path / 'math_vs_general_comparison.png', dpi=300, bbox_inches='tight')
+    plt.savefig(output_path / 'math_vs_general_comparison.pdf', bbox_inches='tight')
+    plt.close()
+    print(f"  Saved math vs general comparison")
+
+
+def generate_category_analysis_report(rates_by_category_dict: Dict[float, pd.DataFrame], 
+                                      output_path: Path) -> str:
+    """Generate a markdown report of category-based analysis."""
+    lines = [
+        "# Category-Based Analysis Report",
+        "",
+        "## Overview",
+        "",
+        "This analysis breaks down model performance by question category to understand:",
+        "- How different training stages perform on different types of questions",
+        "- Whether RL-Zero's domain mismatch hypothesis is supported (trained on math, tested on general)",
+        "- Temperature effects by category",
+        "",
+        "## Categories",
+        "",
+    ]
+    
+    # List categories
+    temps = sorted(rates_by_category_dict.keys())
+    first_temp = next(iter(rates_by_category_dict.values()))
+    categories = sorted(first_temp['category'].unique())
+    
+    for cat in categories:
+        lines.append(f"- **{cat.title()}**: Questions from {cat} domain")
+    
+    lines.extend(["", "## Summary Statistics by Category", ""])
+    
+    # Summary table for each temperature
+    for temp in temps:
+        lines.append(f"### Temperature = {temp}")
+        lines.append("")
+        
+        data = rates_by_category_dict[temp]
+        
+        # Control condition
+        control_data = data[data['condition_name'] == 'control']
+        if not control_data.empty:
+            lines.append("#### Control Condition (No Pressure)")
+            lines.append("")
+            lines.append("| Category | " + " | ".join(sorted(control_data['variant'].unique())) + " |")
+            lines.append("|" + "-|" * (len(control_data['variant'].unique()) + 1))
+            
+            for cat in categories:
+                row = f"| {cat.title()} |"
+                for variant in sorted(control_data['variant'].unique()):
+                    val = control_data[(control_data['category'] == cat) & 
+                                      (control_data['variant'] == variant)]
+                    if not val.empty:
+                        row += f" {val['error_rate'].iloc[0]:.1%} |"
+                    else:
+                        row += " - |"
+                lines.append(row)
+            lines.append("")
+        
+        # Asch condition
+        asch_data = data[data['condition_name'] == 'asch_history_5']
+        if not asch_data.empty:
+            lines.append("#### Asch Condition (Social Pressure)")
+            lines.append("")
+            lines.append("| Category | " + " | ".join(sorted(asch_data['variant'].unique())) + " |")
+            lines.append("|" + "-|" * (len(asch_data['variant'].unique()) + 1))
+            
+            for cat in categories:
+                row = f"| {cat.title()} |"
+                for variant in sorted(asch_data['variant'].unique()):
+                    val = asch_data[(asch_data['category'] == cat) & 
+                                   (asch_data['variant'] == variant)]
+                    if not val.empty:
+                        row += f" {val['error_rate'].iloc[0]:.1%} |"
+                    else:
+                        row += " - |"
+                lines.append(row)
+            lines.append("")
+    
+    # Domain mismatch analysis
+    lines.extend([
+        "## RL-Zero Domain Mismatch Analysis",
+        "",
+        "RL-Zero was trained on math problems with verifiable rewards. If domain mismatch explains",
+        "its high error rates on general questions, we should see:",
+        "- Lower error rates on math questions compared to general knowledge",
+        "- The gap should be larger for RL-Zero than other models",
+        "",
+    ])
+    
+    report = "\n".join(lines)
+    
+    with open(output_path / 'category_analysis_report.md', 'w') as f:
+        f.write(report)
+    
+    print(f"  Saved category analysis report")
+    return report
+
+
+# ============================================================================
 # MAIN ANALYSIS PIPELINE
 # ============================================================================
 
-def run_analysis() -> Dict[str, Any]:
-    """Run complete analysis pipeline for all three temperatures."""
+def run_analysis(include_category_analysis: bool = True) -> Dict[str, Any]:
+    """Run complete analysis pipeline for all temperatures.
+    
+    Args:
+        include_category_analysis: If True, also run category-based analysis
+                                   (requires expanded dataset runs with category info)
+    """
     print("=" * 80)
-    print("TEMPERATURE EFFECT ANALYSIS: T=0 vs T=0.5 vs T=1")
+    print("TEMPERATURE EFFECT ANALYSIS")
     print("=" * 80)
     
     results = {}
     configs = {}
     behavioral_data = {}
     rates_dict = {}
+    rates_by_category_dict = {}
     
     # ==========================================================================
     # PHASE 1: LOAD ALL RUNS
     # ==========================================================================
     print("\n### Phase 1: Data Validation and Summary Statistics ###")
     
+    available_temps = []
     for temp in TEMPERATURES:
+        if temp not in RUNS:
+            print(f"  Skipping T={temp} (no run configured)")
+            continue
+        available_temps.append(temp)
+        
         run_info = RUNS[temp]
         conn = connect_db(run_info["dir"])
         config = load_run_config(conn)
@@ -597,6 +984,17 @@ def run_analysis() -> Dict[str, Any]:
         rates = calculate_rates(behavioral)
         rates_dict[temp] = rates
         
+        # Try to get category-based data (for expanded datasets)
+        if include_category_analysis:
+            try:
+                behavioral_with_cat = get_behavioral_data_with_category(conn, config.run_id)
+                if 'category' in behavioral_with_cat.columns and len(behavioral_with_cat['category'].unique()) > 1:
+                    rates_by_cat = calculate_rates_by_category(behavioral_with_cat)
+                    rates_by_category_dict[temp] = rates_by_cat
+                    print(f"  Categories: {sorted(behavioral_with_cat['category'].unique())}")
+            except Exception as e:
+                print(f"  Warning: Could not load category data: {e}")
+        
         conn.close()
     
     results['configs'] = configs
@@ -608,7 +1006,7 @@ def run_analysis() -> Dict[str, Any]:
     # ==========================================================================
     print("\n### Phase 2: Error Rate Analysis ###")
     
-    for temp in TEMPERATURES:
+    for temp in available_temps:
         print(f"\nError Rates T={temp}:")
         rates = rates_dict[temp]
         print(rates[['condition_name', 'variant', 'accuracy', 'error_rate', 'n_trials', 'n_refusals']].to_string(index=False))
@@ -625,8 +1023,11 @@ def run_analysis() -> Dict[str, Any]:
     print("\nKey Temperature Effects (Asch condition, |Δ| > 0.05):")
     asch_comp = comparison[(comparison['condition'] == 'asch_history_5') & 
                            (abs(comparison['difference']) > 0.05)]
-    print(asch_comp[['comparison', 'variant', 'rate_low', 'rate_high', 
-                     'difference', 'p_value', 'effect_size_h']].to_string(index=False))
+    if not asch_comp.empty:
+        print(asch_comp[['comparison', 'variant', 'rate_low', 'rate_high', 
+                         'difference', 'p_value', 'effect_size_h']].to_string(index=False))
+    else:
+        print("  No significant temperature effects found")
     
     # ==========================================================================
     # PHASE 4: GENERATE VISUALIZATIONS
@@ -640,11 +1041,42 @@ def run_analysis() -> Dict[str, Any]:
     plot_heatmap_error_rates(rates_dict, OUTPUT_DIR)
     
     # ==========================================================================
-    # PHASE 5: SAVE DATA
+    # PHASE 5: CATEGORY-BASED ANALYSIS (if available)
     # ==========================================================================
-    print("\n### Phase 5: Saving Intermediate Data ###")
+    if rates_by_category_dict and include_category_analysis:
+        print("\n### Phase 5: Category-Based Analysis ###")
+        results['rates_by_category'] = rates_by_category_dict
+        
+        # Generate category heatmaps for each temperature
+        for temp in rates_by_category_dict:
+            print(f"\n  Generating category analysis for T={temp}...")
+            plot_category_heatmap(rates_by_category_dict[temp], OUTPUT_DIR, 
+                                  temperature=temp, condition='control')
+            plot_category_heatmap(rates_by_category_dict[temp], OUTPUT_DIR, 
+                                  temperature=temp, condition='asch_history_5')
+        
+        # Generate cross-temperature category comparisons
+        if len(rates_by_category_dict) > 1:
+            print("\n  Generating cross-temperature category comparisons...")
+            # Compare RL-Zero across categories (tests domain mismatch hypothesis)
+            plot_category_comparison(rates_by_category_dict, OUTPUT_DIR, variant='rl_zero')
+            
+            # Math vs general comparison
+            plot_math_vs_general_comparison(rates_by_category_dict, OUTPUT_DIR)
+            
+            # Generate category analysis report
+            generate_category_analysis_report(rates_by_category_dict, OUTPUT_DIR)
+        
+        # Save category-based rates
+        for temp in rates_by_category_dict:
+            rates_by_category_dict[temp].to_csv(OUTPUT_DIR / f'rates_by_category_t{temp}.csv', index=False)
     
-    for temp in TEMPERATURES:
+    # ==========================================================================
+    # PHASE 6: SAVE DATA
+    # ==========================================================================
+    print("\n### Phase 6: Saving Intermediate Data ###")
+    
+    for temp in available_temps:
         rates_dict[temp].to_csv(OUTPUT_DIR / f'rates_t{temp}.csv', index=False)
         behavioral_data[temp].to_csv(OUTPUT_DIR / f'behavioral_t{temp}.csv', index=False)
     
@@ -652,7 +1084,7 @@ def run_analysis() -> Dict[str, Any]:
     
     # Save combined rates for easy comparison
     combined = []
-    for temp in TEMPERATURES:
+    for temp in available_temps:
         df = rates_dict[temp].copy()
         df['temperature'] = temp
         combined.append(df)

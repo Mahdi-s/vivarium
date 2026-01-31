@@ -1,923 +1,757 @@
 """
-Generate comprehensive cross-temperature and cross-model visualizations.
+Cross-Temperature Paper Figures Generator
 
-This script loads data from multiple runs (different temperatures) and creates
-unified visualizations showing:
-1. Truth vs Social projections across layers (by temperature, model family, condition)
-2. Sycophancy rates across temperatures
-3. Turn layer detection across temperatures
-4. Vector collision patterns by temperature
+Generates 3 composite paper-quality figures from three temperature runs (T=0, T=0.5, T=1):
+- Figure 1: Behavioral composite (error rates / social pressure effect across variants×temperatures)
+- Figure 2: Mechanism / Turn-Layer (SVP-TVP across layers, per variant, with temperature curves)
+- Figure 3: Intervention composite (flip-to-truth rate vs alpha, per variant, with temperature curves)
 
 Usage:
-    python "Analysis Scripts/generate_cross_temperature_figures.py" \
-        --run-ids 20260124_133539_66ddd916-d61c-4b5d-8ece-594ecd23a983 \
-                  20260124_194416_f21e76a6-270c-4347-8a87-dcde3db4b371 \
-                  20260124_230102_0af03fbc-d576-4afa-9815-b37a11f57631 \
-        --output-dir ./cross_temp_analysis
+    python generate_cross_temperature_figures.py [--out-dir OUTPUT_DIR]
+
+The run IDs are configured in the RUNS dict below. Modify as needed.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import os
-import sys
+import sqlite3
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-try:
-    import pandas as pd
-    import matplotlib.pyplot as plt
-    import numpy as np
-    from matplotlib.patches import Rectangle
-except ImportError:
-    raise RuntimeError("pandas, matplotlib, and numpy are required for this script")
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from matplotlib.patches import Patch
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-SRC_ROOT = REPO_ROOT / "src"
-if str(SRC_ROOT) not in sys.path:
-    sys.path.insert(0, str(SRC_ROOT))
+# ============================================================================
+# CONFIGURATION
+# ============================================================================
 
-from aam.analytics.plotting_style import (
-    create_figure,
-    get_color_palette,
-    save_figure,
-    setup_publication_style,
-)
-from aam.analytics.utils import load_simulation_db
-from aam.persistence import TraceDb
+_SCRIPT_DIR = Path(__file__).resolve().parent
+_REPO_ROOT = _SCRIPT_DIR.parent
+DEFAULT_RUNS_DIR = _REPO_ROOT / "runs"
+DEFAULT_OUTPUT_DIR = _SCRIPT_DIR / "cross_temp_figures_output"
+
+# Run directories and IDs for all three temperatures
+RUNS = {
+    0.0: {
+        "dir": "20260127_211450_73b34738-b76e-4c55-8653-74b497b1989b",
+        "id": "73b34738-b76e-4c55-8653-74b497b1989b",
+    },
+    0.5: {
+        "dir": "20260127_231128_4e6cd5a7-af59-4fe2-ae8d-c9bcc2f57c00",
+        "id": "4e6cd5a7-af59-4fe2-ae8d-c9bcc2f57c00",
+    },
+    1.0: {
+        "dir": "20260127_222205_f1c7ed74-2561-4c52-9279-3d3269fcb7f3",
+        "id": "f1c7ed74-2561-4c52-9279-3d3269fcb7f3",
+    },
+}
+
+TEMPERATURES = [0.0, 0.5, 1.0]
+TEMP_LABELS = {0.0: "T=0", 0.5: "T=0.5", 1.0: "T=1"}
+TEMP_COLORS = {0.0: "#2C7BB6", 0.5: "#2CA25F", 1.0: "#D7191C"}  # Colorblind-safe: blue, green, red
+TEMP_LINESTYLES = {0.0: '-', 0.5: '--', 1.0: ':'}  # Different line styles to distinguish overlapping lines
+TEMP_MARKERS = {0.0: 'o', 0.5: 's', 1.0: '^'}  # Different markers
+
+BEHAVIORAL_CONDITIONS = ('control', 'asch_history_5', 'authoritative_bias')
+CONDITION_LABELS = {
+    'control': 'Control',
+    'asch_history_5': 'Asch (5)',
+    'authoritative_bias': 'Authority',
+}
+
+VARIANTS = ['base', 'instruct', 'instruct_sft', 'think', 'think_sft', 'rl_zero']
+VARIANT_LABELS = {
+    'base': 'Base',
+    'instruct': 'Instruct',
+    'instruct_sft': 'Instruct-SFT',
+    'think': 'Think',
+    'think_sft': 'Think-SFT',
+    'rl_zero': 'RL-Zero',
+}
+
+# Model ID to variant mapping
+MODEL_TO_VARIANT = {
+    "allenai/Olmo-3-1025-7B": "base",
+    "allenai/Olmo-3-7B-Instruct": "instruct",
+    "allenai/Olmo-3-7B-Instruct-SFT": "instruct_sft",
+    "allenai/Olmo-3-7B-Think": "think",
+    "allenai/Olmo-3-7B-Think-SFT": "think_sft",
+    "allenai/Olmo-3-7B-RL-Zero-Math": "rl_zero",
+}
+
+# ============================================================================
+# SETUP
+# ============================================================================
+
+def setup_style():
+    """Setup publication-quality plotting style."""
+    plt.style.use('seaborn-v0_8-whitegrid')
+    plt.rcParams.update({
+        'font.size': 11,
+        'axes.titlesize': 12,
+        'axes.labelsize': 11,
+        'xtick.labelsize': 10,
+        'ytick.labelsize': 10,
+        'legend.fontsize': 10,
+        'figure.titlesize': 14,
+        'figure.dpi': 150,
+        'savefig.dpi': 300,
+        'savefig.bbox': 'tight',
+        'axes.spines.top': False,
+        'axes.spines.right': False,
+    })
 
 
-@dataclass
-class RunData:
-    """Container for run data with metadata."""
-    run_id: str
-    run_dir: str
-    temperature: float
-    db: TraceDb
+def connect_db(runs_dir: Path, run_dir: str) -> sqlite3.Connection:
+    """Connect to simulation database with row factory."""
+    db_path = runs_dir / run_dir / "simulation.db"
+    conn = sqlite3.connect(str(db_path))
+    conn.row_factory = sqlite3.Row
+    return conn
 
 
-def find_run_dir_for_run_id(*, run_id: str, runs_dir: str) -> str:
-    """Find the most recently modified run directory matching run_id."""
-    base = Path(runs_dir).expanduser().resolve()
-    if not base.exists():
-        raise FileNotFoundError(f"runs_dir not found: {base}")
+# ============================================================================
+# DATA LOADING
+# ============================================================================
 
-    matches: list[Path] = []
-    # Handle extended run IDs with -temp0 suffix
-    base_run_id = run_id.replace("-temp0", "")
+def load_behavioral_data(conn: sqlite3.Connection, run_id: str) -> pd.DataFrame:
+    """Load behavioral trial data from a single run (one row per trial, using first/original output)."""
+    query = """
+    WITH first_outputs AS (
+        SELECT trial_id, MIN(created_at) AS min_created_at
+        FROM conformity_outputs
+        GROUP BY trial_id
+    ),
+    first_output_ids AS (
+        SELECT MIN(o.output_id) AS output_id, o.trial_id
+        FROM conformity_outputs o
+        JOIN first_outputs fo ON fo.trial_id = o.trial_id AND fo.min_created_at = o.created_at
+        GROUP BY o.trial_id
+    )
+    SELECT 
+        t.trial_id,
+        t.variant,
+        c.name AS condition_name,
+        i.ground_truth_text,
+        o.is_correct,
+        o.refusal_flag
+    FROM conformity_trials t
+    JOIN conformity_conditions c ON t.condition_id = c.condition_id
+    JOIN conformity_items i ON t.item_id = i.item_id
+    JOIN first_output_ids foi ON foi.trial_id = t.trial_id
+    JOIN conformity_outputs o ON o.output_id = foi.output_id
+    WHERE t.run_id = ?
+      AND c.name IN (?, ?, ?);
+    """
+    df = pd.read_sql_query(query, conn, params=[run_id, *BEHAVIORAL_CONDITIONS])
+    return df
+
+
+def load_probe_projections(conn: sqlite3.Connection, run_id: str) -> pd.DataFrame:
+    """Load probe projections (may be from probe-capture or behavioral trials)."""
+    query = """
+    SELECT 
+        p.trial_id,
+        p.probe_id,
+        p.layer_index,
+        p.value_float,
+        pr.probe_kind,
+        pr.model_id,
+        t.variant,
+        c.name AS condition_name
+    FROM conformity_probe_projections p
+    JOIN conformity_probes pr ON pr.probe_id = p.probe_id
+    JOIN conformity_trials t ON t.trial_id = p.trial_id
+    JOIN conformity_conditions c ON c.condition_id = t.condition_id
+    WHERE pr.run_id = ?
+    ORDER BY p.trial_id, p.layer_index;
+    """
+    df = pd.read_sql_query(query, conn, params=[run_id])
+    return df
+
+
+def load_intervention_data(conn: sqlite3.Connection, run_id: str) -> pd.DataFrame:
+    """Load intervention results from a single run."""
+    query = """
+    SELECT 
+        r.result_id,
+        r.trial_id,
+        r.flipped_to_truth,
+        i.alpha,
+        i.name AS intervention_name,
+        t.variant,
+        c.name AS condition_name
+    FROM conformity_intervention_results r
+    JOIN conformity_interventions i ON i.intervention_id = r.intervention_id
+    JOIN conformity_trials t ON t.trial_id = r.trial_id
+    JOIN conformity_conditions c ON c.condition_id = t.condition_id
+    WHERE i.run_id = ?;
+    """
+    df = pd.read_sql_query(query, conn, params=[run_id])
+    return df
+
+
+def load_all_data(runs_dir: Path) -> Dict[str, Any]:
+    """Load all data from all three temperature runs."""
+    data = {
+        'behavioral': {},
+        'projections': {},
+        'interventions': {},
+    }
     
-    for p in base.iterdir():
-        if not p.is_dir():
-            continue
-        n = p.name
-        # Extract run_id from directory name (format: timestamp_timestamp_runid or timestamp_timestamp_runid-temp0)
-        # Try to match the base run_id
-        if n == run_id or n.endswith(run_id):
-            matches.append(p)
-        elif n.endswith(f"{base_run_id}-temp0") or n.endswith(base_run_id):
-            matches.append(p)
-        # Also try extracting run_id from directory name
-        parts = n.split("_")
-        if len(parts) >= 3:
-            extracted_id = "_".join(parts[2:])
-            if extracted_id == run_id or extracted_id == base_run_id:
-                matches.append(p)
-            elif extracted_id.endswith(f"-temp0") and extracted_id.replace("-temp0", "") == base_run_id:
-                matches.append(p)
-
-    if not matches:
-        raise FileNotFoundError(f"No run directory found for run_id={run_id!r} (base={base_run_id!r}) under {str(base)!r}")
-
-    matches.sort(key=lambda x: x.stat().st_mtime, reverse=True)
-    return str(matches[0])
-
-
-def extract_temperature_from_db(db: TraceDb, run_id: str) -> float:
-    """Extract temperature from conformity_trials table."""
-    row = db.conn.execute(
-        """
-        SELECT DISTINCT temperature
-        FROM conformity_trials
-        WHERE run_id = ?
-        LIMIT 1
-        """,
-        (run_id,),
-    ).fetchone()
-    
-    if row is None:
-        # Try to extract from run config
-        run_row = db.conn.execute(
-            "SELECT config_json FROM runs WHERE run_id = ?",
-            (run_id,),
-        ).fetchone()
-        if run_row:
-            try:
-                config = json.loads(run_row["config_json"])
-                temp = config.get("run", {}).get("temperature", 0.0)
-                return float(temp)
-            except:
-                pass
-        return 0.0
-    
-    return float(row["temperature"])
-
-
-def load_runs_data(run_ids: List[str], runs_dir: str) -> List[RunData]:
-    """Load data from multiple runs."""
-    runs_data = []
-    
-    for run_id in run_ids:
-        # Handle extended run IDs with -temp0 suffix
-        base_run_id = run_id.replace("-temp0", "")
-        try:
-            run_dir = find_run_dir_for_run_id(run_id=run_id, runs_dir=runs_dir)
-        except FileNotFoundError as e:
-            print(f"Warning: {e}, skipping run {run_id}")
-            continue
+    for temp, run_info in RUNS.items():
+        conn = connect_db(runs_dir, run_info["dir"])
+        run_id = run_info["id"]
         
-        try:
-            db = load_simulation_db(run_dir)
-            # Try to get run_id from database first
-            db_run_id_row = db.conn.execute(
-                "SELECT run_id FROM runs ORDER BY created_at DESC LIMIT 1"
-            ).fetchone()
-            
-            if db_run_id_row:
-                actual_run_id = db_run_id_row["run_id"]
+        data['behavioral'][temp] = load_behavioral_data(conn, run_id)
+        data['projections'][temp] = load_probe_projections(conn, run_id)
+        data['interventions'][temp] = load_intervention_data(conn, run_id)
+        
+        conn.close()
+    
+    return data
+
+
+# ============================================================================
+# FIGURE 1: BEHAVIORAL COMPOSITE
+# ============================================================================
+
+def compute_rates(df: pd.DataFrame) -> pd.DataFrame:
+    """Compute error and refusal rates by condition and variant."""
+    agg = df.groupby(['condition_name', 'variant']).agg(
+        n_trials=('trial_id', 'count'),
+        n_correct=('is_correct', 'sum'),
+        n_refusals=('refusal_flag', 'sum'),
+    ).reset_index()
+    
+    agg['error_rate'] = 1 - (agg['n_correct'] / agg['n_trials'])
+    agg['refusal_rate'] = agg['n_refusals'] / agg['n_trials']
+    
+    return agg
+
+
+def generate_figure1_behavioral(data: Dict[str, Any], output_dir: Path) -> str:
+    """
+    Generate Figure 1: Behavioral composite.
+    
+    Layout: 3 heatmaps (one per condition) showing error rates as variants×temperature.
+    """
+    rates_by_temp = {temp: compute_rates(df) for temp, df in data['behavioral'].items()}
+    
+    fig, axes = plt.subplots(1, 3, figsize=(15, 6))
+    
+    for idx, condition in enumerate(BEHAVIORAL_CONDITIONS):
+        ax = axes[idx]
+        
+        # Build matrix: rows=variants, cols=temperatures
+        matrix = np.zeros((len(VARIANTS), len(TEMPERATURES)))
+        for i, variant in enumerate(VARIANTS):
+            for j, temp in enumerate(TEMPERATURES):
+                df = rates_by_temp[temp]
+                row = df[(df['condition_name'] == condition) & (df['variant'] == variant)]
+                if not row.empty:
+                    matrix[i, j] = row['error_rate'].iloc[0]
+        
+        # Heatmap
+        im = ax.imshow(matrix, cmap='RdYlGn_r', aspect='auto', vmin=0.4, vmax=1.0)
+        
+        # X-axis labels (temperature)
+        ax.set_xticks(range(len(TEMPERATURES)))
+        ax.set_xticklabels([TEMP_LABELS[t] for t in TEMPERATURES])
+        ax.set_xlabel('Temperature')
+        
+        # Y-axis labels (model variants) - only on leftmost panel
+        ax.set_yticks(range(len(VARIANTS)))
+        if idx == 0:
+            ax.set_yticklabels([VARIANT_LABELS[v] for v in VARIANTS])
+            ax.set_ylabel('Model Variant')
+        else:
+            ax.set_yticklabels([])
+        
+        ax.set_title(CONDITION_LABELS.get(condition, condition), fontweight='bold')
+        
+        # Annotations
+        for i in range(len(VARIANTS)):
+            for j in range(len(TEMPERATURES)):
+                val = matrix[i, j]
+                color = 'white' if val > 0.7 else 'black'
+                ax.text(j, i, f'{val:.0%}', ha='center', va='center', 
+                       fontsize=9, color=color, fontweight='bold')
+    
+    # Colorbar
+    cbar = fig.colorbar(im, ax=axes, shrink=0.8, label='Error Rate')
+    
+    plt.suptitle('Figure 1: Error Rates Across Models, Conditions, and Temperatures', 
+                 fontsize=14, fontweight='bold', y=1.02)
+    
+    # Save
+    output_path = output_dir / 'figure1_behavioral_composite'
+    plt.savefig(f'{output_path}.png', dpi=300, bbox_inches='tight')
+    plt.savefig(f'{output_path}.pdf', bbox_inches='tight')
+    plt.close()
+    
+    print(f"  Saved: {output_path}.png/pdf")
+    return str(output_path)
+
+
+def generate_figure1b_social_pressure(data: Dict[str, Any], output_dir: Path) -> str:
+    """
+    Generate Figure 1b: Social pressure effect (Asch - Control) by variant and temperature.
+    """
+    rates_by_temp = {temp: compute_rates(df) for temp, df in data['behavioral'].items()}
+    
+    fig, ax = plt.subplots(figsize=(10, 6))
+    
+    x = np.arange(len(VARIANTS))
+    width = 0.25
+    
+    for i, temp in enumerate(TEMPERATURES):
+        df = rates_by_temp[temp]
+        effects = []
+        for variant in VARIANTS:
+            control = df[(df['condition_name'] == 'control') & (df['variant'] == variant)]
+            asch = df[(df['condition_name'] == 'asch_history_5') & (df['variant'] == variant)]
+            if not control.empty and not asch.empty:
+                effect = asch['error_rate'].iloc[0] - control['error_rate'].iloc[0]
             else:
-                # Fall back to base_run_id
-                actual_run_id = base_run_id
-            
-            temperature = extract_temperature_from_db(db, actual_run_id)
-            
-            runs_data.append(RunData(
-                run_id=actual_run_id,
-                run_dir=run_dir,
-                temperature=temperature,
-                db=db,
-            ))
-        except Exception as e:
-            print(f"Warning: Failed to load run {run_id}: {e}, skipping")
-            continue
-    
-    return runs_data
-
-
-def get_temperature_color(temperature: float) -> str:
-    """Get a consistent color for a temperature value."""
-    temp_colors = {
-        0.0: "#1f77b4",  # blue
-        0.5: "#ff7f0e",  # orange
-        1.0: "#d62728",  # red
-    }
-    return temp_colors.get(temperature, "#7f7f7f")
-
-
-def get_variant_linestyle(variant: str) -> str:
-    """Get a consistent linestyle for a model variant."""
-    variant_styles = {
-        "base": "-",
-        "instruct": "--",
-        "instruct_sft": "-.",
-        "think": ":",
-        "think_sft": (0, (3, 1, 1, 1)),
-        "rl_zero": (0, (5, 5)),
-    }
-    return variant_styles.get(variant, "-")
-
-
-def get_variant_display_name(variant: str) -> str:
-    """Get a display name for a model variant."""
-    display_names = {
-        "base": "Base",
-        "instruct": "Instruct",
-        "instruct_sft": "Instruct-SFT",
-        "think": "Think",
-        "think_sft": "Think-SFT",
-        "rl_zero": "RL-Zero",
-    }
-    return display_names.get(variant, variant)
-
-
-def generate_tug_of_war_figure(
-    runs_data: List[RunData],
-    output_dir: str,
-    condition_filter: Optional[str] = None,
-) -> Dict[str, str]:
-    """
-    Generate Figure 2-style Truth vs Social projections across layers,
-    showing all temperatures and model families in unified plots.
-    
-    Args:
-        runs_data: List of RunData objects
-        output_dir: Output directory for figures
-        condition_filter: Optional condition name to filter (e.g., "asch_history_5")
-    
-    Returns:
-        Dict mapping figure_name -> path
-    """
-    setup_publication_style()
-    figures = {}
-    
-    # Collect all projection data
-    all_projections = []
-    
-    for run in runs_data:
-        # Get probe IDs
-        truth_probe = run.db.conn.execute(
-            """
-            SELECT probe_id FROM conformity_probes
-            WHERE run_id = ? AND probe_kind = 'truth'
-            ORDER BY created_at DESC LIMIT 1
-            """,
-            (run.run_id,),
-        ).fetchone()
+                effect = 0
+            effects.append(effect)
         
-        social_probe = run.db.conn.execute(
-            """
-            SELECT probe_id FROM conformity_probes
-            WHERE run_id = ? AND probe_kind = 'social'
-            ORDER BY created_at DESC LIMIT 1
-            """,
-            (run.run_id,),
-        ).fetchone()
-        
-        if not truth_probe or not social_probe:
-            continue
-        
-        truth_probe_id = truth_probe["probe_id"]
-        social_probe_id = social_probe["probe_id"]
-        
-        # Load projections
-        query = """
-            SELECT 
-                p.layer_index,
-                p.value_float,
-                pr.probe_kind,
-                t.variant,
-                c.name AS condition_name,
-                t.temperature
-            FROM conformity_probe_projections p
-            JOIN conformity_probes pr ON pr.probe_id = p.probe_id
-            JOIN conformity_trials t ON t.trial_id = p.trial_id
-            JOIN conformity_conditions c ON c.condition_id = t.condition_id
-            WHERE pr.run_id = ? AND pr.probe_id IN (?, ?)
-        """
-        
-        params = [run.run_id, truth_probe_id, social_probe_id]
-        if condition_filter:
-            query += " AND c.name = ?"
-            params.append(condition_filter)
-        
-        query += " ORDER BY p.layer_index"
-        
-        df = pd.read_sql_query(query, run.db.conn, params=params)
-        
-        if not df.empty:
-            df["run_temperature"] = run.temperature
-            all_projections.append(df)
+        offset = (i - 1) * width
+        bars = ax.bar(x + offset, effects, width, label=TEMP_LABELS[temp], 
+                     color=TEMP_COLORS[temp], alpha=0.9)
     
-    if not all_projections:
-        return figures
-    
-    combined_df = pd.concat(all_projections, ignore_index=True)
-    
-    # Separate truth and social
-    truth_data = combined_df[combined_df["probe_kind"] == "truth"].copy()
-    social_data = combined_df[combined_df["probe_kind"] == "social"].copy()
-    
-    if truth_data.empty or social_data.empty:
-        return figures
-    
-    # Compute means by layer, variant, temperature, condition
-    truth_mean = (
-        truth_data.groupby(["variant", "run_temperature", "condition_name", "layer_index"], as_index=False)
-        ["value_float"]
-        .agg(mean_value="mean", std_value="std", n="count")
-    )
-    
-    social_mean = (
-        social_data.groupby(["variant", "run_temperature", "condition_name", "layer_index"], as_index=False)
-        ["value_float"]
-        .agg(mean_value="mean", std_value="std", n="count")
-    )
-    
-    # Create separate plots for each condition
-    conditions = sorted(truth_mean["condition_name"].unique())
-    
-    for condition in conditions:
-        if condition_filter and condition != condition_filter:
-            continue
-        
-        # Filter data for this condition
-        cond_truth = truth_mean[truth_mean["condition_name"] == condition]
-        cond_social = social_mean[social_mean["condition_name"] == condition]
-        
-        if cond_truth.empty or cond_social.empty:
-            continue
-        
-        # Create figure with subplots for each variant
-        variants = sorted(cond_truth["variant"].unique())
-        n_variants = len(variants)
-        
-        # Use a grid layout: 2 columns, rows as needed
-        n_cols = 2
-        n_rows = (n_variants + n_cols - 1) // n_cols
-        
-        fig, axes = plt.subplots(n_rows, n_cols, figsize=(16, 4 * n_rows), constrained_layout=True)
-        if n_variants == 1:
-            axes = [axes]
-        elif n_rows == 1:
-            axes = axes.reshape(1, -1)
-        axes = axes.flatten()
-        
-        for idx, variant in enumerate(variants):
-            ax = axes[idx]
-            
-            var_truth = cond_truth[cond_truth["variant"] == variant]
-            var_social = cond_social[cond_social["variant"] == variant]
-            
-            # Plot each temperature
-            temperatures = sorted(var_truth["run_temperature"].unique())
-            
-            for temp in temperatures:
-                temp_truth = var_truth[var_truth["run_temperature"] == temp].sort_values("layer_index")
-                temp_social = var_social[var_social["run_temperature"] == temp].sort_values("layer_index")
-                
-                color = get_temperature_color(temp)
-                linestyle = get_variant_linestyle(variant)
-                
-                # Plot truth (solid line)
-                if not temp_truth.empty:
-                    ax.plot(
-                        temp_truth["layer_index"],
-                        temp_truth["mean_value"],
-                        label=f"Truth (T={temp})",
-                        color=color,
-                        linestyle="-",
-                        linewidth=2.5,
-                        marker="o" if len(temp_truth) <= 32 else None,
-                        markersize=4,
-                    )
-                
-                # Plot social (dashed line)
-                if not temp_social.empty:
-                    ax.plot(
-                        temp_social["layer_index"],
-                        temp_social["mean_value"],
-                        label=f"Social (T={temp})",
-                        color=color,
-                        linestyle="--",
-                        linewidth=2.5,
-                        marker="s" if len(temp_social) <= 32 else None,
-                        markersize=4,
-                        alpha=0.8,
-                    )
-            
-            ax.set_xlabel("Layer Index", fontsize=12)
-            ax.set_ylabel("Projection Value", fontsize=12)
-            ax.set_title(f"{get_variant_display_name(variant)} - {condition}", fontsize=14, fontweight="bold")
-            ax.grid(True, alpha=0.3)
-            ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left", fontsize=10)
-            
-            # Add vertical line at typical turn layer (20-24)
-            ax.axvspan(20, 24, alpha=0.1, color="gray", label="Typical Turn Layer")
-        
-        # Hide unused subplots
-        for idx in range(n_variants, len(axes)):
-            axes[idx].set_visible(False)
-        
-        fig.suptitle(
-            f"Truth vs Social Projections Across Layers\n{condition}",
-            fontsize=16,
-            fontweight="bold",
-            y=1.0,
-        )
-        
-        fig_path = os.path.join(output_dir, f"tug_of_war_{condition.replace(' ', '_').lower()}")
-        saved = save_figure(fig, fig_path)
-        figures[f"tug_of_war_{condition}"] = saved.get("png", saved.get("pdf", ""))
-        plt.close(fig)
-    
-    return figures
-
-
-def generate_sycophancy_by_temperature(
-    runs_data: List[RunData],
-    output_dir: str,
-) -> Dict[str, str]:
-    """
-    Generate sycophancy rate comparison across temperatures.
-    
-    Returns:
-        Dict mapping figure_name -> path
-    """
-    setup_publication_style()
-    figures = {}
-    
-    all_sycophancy = []
-    
-    for run in runs_data:
-        # Load behavioral data
-        df = pd.read_sql_query(
-            """
-            SELECT 
-                t.variant,
-                t.item_id,
-                t.model_id,
-                c.name AS condition_name,
-                o.is_correct,
-                o.raw_text,
-                t.temperature
-            FROM conformity_trials t
-            JOIN conformity_conditions c ON c.condition_id = t.condition_id
-            JOIN conformity_outputs o ON o.trial_id = t.trial_id
-            WHERE t.run_id = ? AND o.is_correct IS NOT NULL
-            """,
-            run.db.conn,
-            params=(run.run_id,),
-        )
-        
-        if df.empty:
-            continue
-        
-        # Mark empty responses
-        df["is_empty_response"] = df["raw_text"].apply(lambda x: x is None or (isinstance(x, str) and x.strip() == ""))
-        df_non_empty = df[~df["is_empty_response"]].copy()
-        
-        # Compute sycophancy
-        control_trials = df_non_empty[df_non_empty["condition_name"] == "control"].copy()
-        pressure_trials = df_non_empty[
-            df_non_empty["condition_name"].isin(["asch_history_5", "authoritative_bias"])
-        ].copy()
-        
-        if not control_trials.empty and not pressure_trials.empty:
-            merged = control_trials.merge(
-                pressure_trials,
-                on=["variant", "model_id", "item_id"],
-                suffixes=("_control", "_pressure"),
-                how="inner",
-            )
-            
-            control_correct = merged[merged["is_correct_control"] == 1].copy()
-            
-            if not control_correct.empty:
-                sycophancy = (
-                    control_correct.groupby(["variant", "condition_name_pressure"], as_index=False)
-                    .agg({"is_correct_pressure": ["mean", "count"]})
-                )
-                sycophancy.columns = ["variant", "pressure_condition", "pressure_accuracy", "n_items"]
-                sycophancy["sycophancy_rate"] = 1.0 - sycophancy["pressure_accuracy"]
-                sycophancy["temperature"] = run.temperature
-                all_sycophancy.append(sycophancy)
-    
-    if not all_sycophancy:
-        return figures
-    
-    combined = pd.concat(all_sycophancy, ignore_index=True)
-    
-    # Create grouped bar chart
-    fig, ax = create_figure(size_key="wide")
-    
-    # Pivot for grouped bars
-    pivot = combined.pivot_table(
-        index="variant",
-        columns=["pressure_condition", "temperature"],
-        values="sycophancy_rate",
-        fill_value=0.0,
-    )
-    
-    # Create grouped bars
-    variants = sorted(combined["variant"].unique())
-    conditions = sorted(combined["pressure_condition"].unique())
-    temperatures = sorted(combined["temperature"].unique())
-    
-    x = np.arange(len(variants))
-    width = 0.35 / len(conditions) / len(temperatures)
-    
-    for cond_idx, condition in enumerate(conditions):
-        for temp_idx, temp in enumerate(temperatures):
-            offset = (cond_idx * len(temperatures) + temp_idx) * width - (len(conditions) * len(temperatures) * width) / 2 + width / 2
-            
-            values = []
-            for variant in variants:
-                try:
-                    val = pivot.loc[variant, (condition, temp)]
-                except KeyError:
-                    val = 0.0
-                values.append(val)
-            
-            color = get_temperature_color(temp)
-            alpha = 0.7 if condition == "asch_history_5" else 0.9
-            
-            ax.bar(
-                x + offset,
-                values,
-                width,
-                label=f"{condition} (T={temp})",
-                color=color,
-                alpha=alpha,
-                edgecolor="black",
-                linewidth=0.5,
-            )
-    
-    ax.set_xlabel("Model Variant", fontsize=14)
-    ax.set_ylabel("Sycophancy Rate", fontsize=14)
-    ax.set_title("Sycophancy Rate Across Temperatures and Conditions", fontsize=16, fontweight="bold")
+    ax.set_ylabel('Social Pressure Effect\n(Asch Error Rate − Control Error Rate)')
+    ax.set_xlabel('Model Variant')
+    ax.set_title('Figure 1b: Social Pressure Effect by Temperature', fontweight='bold')
     ax.set_xticks(x)
-    ax.set_xticklabels([get_variant_display_name(v) for v in variants], rotation=45, ha="right")
-    ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left", fontsize=10)
-    ax.grid(True, alpha=0.3, axis="y")
-    ax.set_ylim(0, 1.0)
+    ax.set_xticklabels([VARIANT_LABELS[v] for v in VARIANTS], rotation=30, ha='right')
+    ax.axhline(y=0, color='black', linestyle='-', linewidth=0.8)
+    ax.legend(loc='upper right')
+    ax.set_ylim(-0.25, 0.2)
     
-    fig_path = os.path.join(output_dir, "sycophancy_by_temperature")
-    saved = save_figure(fig, fig_path)
-    figures["sycophancy_by_temperature"] = saved.get("png", saved.get("pdf", ""))
-    plt.close(fig)
+    # Save
+    output_path = output_dir / 'figure1b_social_pressure_effect'
+    plt.savefig(f'{output_path}.png', dpi=300, bbox_inches='tight')
+    plt.savefig(f'{output_path}.pdf', bbox_inches='tight')
+    plt.close()
     
-    return figures
+    print(f"  Saved: {output_path}.png/pdf")
+    return str(output_path)
 
 
-def generate_turn_layer_by_temperature(
-    runs_data: List[RunData],
-    output_dir: str,
-) -> Dict[str, str]:
+# ============================================================================
+# FIGURE 2: MECHANISM / TURN-LAYER
+# ============================================================================
+
+def generate_figure2_mechanism(data: Dict[str, Any], output_dir: Path) -> str:
     """
-    Generate turn layer analysis across temperatures.
+    Generate Figure 2: Mechanism / Turn-Layer composite.
     
-    Returns:
-        Dict mapping figure_name -> path
+    Layout: 2×3 grid (one panel per variant) showing SVP-TVP difference across layers
+    for each temperature.
+    
+    NOTE: Currently uses probe-capture trial projections. For the full story,
+    we need projections computed on behavioral (Asch) trials.
     """
-    setup_publication_style()
-    figures = {}
+    # Check if we have any projection data
+    has_projections = any(len(df) > 0 for df in data['projections'].values())
     
-    all_turn_layers = []
+    if not has_projections:
+        print("  WARNING: No probe projection data available for mechanism figure")
+        return ""
     
-    for run in runs_data:
-        # Get probe IDs
-        truth_probe = run.db.conn.execute(
-            """
-            SELECT probe_id FROM conformity_probes
-            WHERE run_id = ? AND probe_kind = 'truth'
-            ORDER BY created_at DESC LIMIT 1
-            """,
-            (run.run_id,),
-        ).fetchone()
+    fig, axes = plt.subplots(2, 3, figsize=(15, 10), sharex=True, sharey=True)
+    axes = axes.flatten()
+    
+    for idx, variant in enumerate(VARIANTS):
+        ax = axes[idx]
         
-        social_probe = run.db.conn.execute(
-            """
-            SELECT probe_id FROM conformity_probes
-            WHERE run_id = ? AND probe_kind = 'social'
-            ORDER BY created_at DESC LIMIT 1
-            """,
-            (run.run_id,),
-        ).fetchone()
+        for temp in TEMPERATURES:
+            df = data['projections'][temp]
+            if df.empty:
+                continue
+            
+            # Map model_id to variant
+            df = df.copy()
+            df['mapped_variant'] = df['model_id'].map(MODEL_TO_VARIANT)
+            
+            # Filter to this variant (by model mapping, since probe trials may have variant="huggingface")
+            variant_df = df[df['mapped_variant'] == variant]
+            
+            if variant_df.empty:
+                continue
+            
+            # Separate truth and social projections
+            truth_df = variant_df[variant_df['probe_kind'].str.contains('truth', case=False, na=False)]
+            social_df = variant_df[variant_df['probe_kind'].str.contains('social', case=False, na=False)]
+            
+            if truth_df.empty or social_df.empty:
+                continue
+            
+            # Compute mean by layer
+            truth_mean = truth_df.groupby('layer_index')['value_float'].mean()
+            social_mean = social_df.groupby('layer_index')['value_float'].mean()
+            
+            # Compute difference (SVP - TVP)
+            layers = sorted(set(truth_mean.index) & set(social_mean.index))
+            if not layers:
+                continue
+            
+            diff = [social_mean[l] - truth_mean[l] for l in layers]
+            
+            ax.plot(layers, diff, 
+                   linestyle=TEMP_LINESTYLES[temp],
+                   marker=TEMP_MARKERS[temp],
+                   label=TEMP_LABELS[temp], 
+                   color=TEMP_COLORS[temp], 
+                   linewidth=2, 
+                   markersize=5,
+                   alpha=0.8)
         
-        if not truth_probe or not social_probe:
-            continue
+        # Reference line at 0 (turn point)
+        ax.axhline(y=0, color='gray', linestyle='--', alpha=0.7, linewidth=1)
         
-        truth_probe_id = truth_probe["probe_id"]
-        social_probe_id = social_probe["probe_id"]
+        ax.set_title(VARIANT_LABELS[variant], fontweight='bold')
+        if idx >= 3:
+            ax.set_xlabel('Layer Index')
+        if idx % 3 == 0:
+            ax.set_ylabel('Social − Truth Projection')
         
-        # Find first collision layer per trial
-        df = pd.read_sql_query(
-            """
-            WITH truth AS (
-              SELECT trial_id, layer_index, value_float AS truth_val
-              FROM conformity_probe_projections
-              WHERE probe_id = ?
-            ),
-            social AS (
-              SELECT trial_id, layer_index, value_float AS social_val
-              FROM conformity_probe_projections
-              WHERE probe_id = ?
-            ),
-            merged AS (
-              SELECT
-                t.trial_id,
-                t.layer_index,
-                (s.social_val - t.truth_val) AS diff
-              FROM truth t
-              JOIN social s
-                ON s.trial_id = t.trial_id AND s.layer_index = t.layer_index
-            ),
-            collisions AS (
-              SELECT trial_id, MIN(layer_index) AS first_collision_layer
-              FROM merged
-              WHERE diff > 0
-              GROUP BY trial_id
-            )
-            SELECT
-              c.trial_id,
-              c.first_collision_layer,
-              tr.variant,
-              cond.name AS condition_name,
-              tr.temperature
-            FROM collisions c
-            JOIN conformity_trials tr ON tr.trial_id = c.trial_id
-            JOIN conformity_conditions cond ON cond.condition_id = tr.condition_id
-            WHERE tr.run_id = ?
-            ORDER BY c.first_collision_layer ASC;
-            """,
-            run.db.conn,
-            params=(truth_probe_id, social_probe_id, run.run_id),
-        )
+        if idx == 0:
+            ax.legend(loc='upper left', fontsize=9)
+    
+    plt.suptitle('Figure 2: Truth vs Social Vector Difference Across Layers\n'
+                 '(Positive = Social dominates; Turn Layer where line crosses 0)',
+                 fontsize=14, fontweight='bold', y=1.02)
+    
+    plt.tight_layout()
+    
+    # Add note about data source
+    fig.text(0.5, -0.02, 
+             'Note: Lines overlap because probe projections are computed on identical input texts across temperatures.\n'
+             'Temperature affects generation, not input activations. Different line styles used for visibility.',
+             ha='center', fontsize=9, style='italic', alpha=0.7)
+    
+    # Save
+    output_path = output_dir / 'figure2_mechanism_turn_layer'
+    plt.savefig(f'{output_path}.png', dpi=300, bbox_inches='tight')
+    plt.savefig(f'{output_path}.pdf', bbox_inches='tight')
+    plt.close()
+    
+    print(f"  Saved: {output_path}.png/pdf")
+    return str(output_path)
+
+
+# ============================================================================
+# FIGURE 3: INTERVENTION COMPOSITE
+# ============================================================================
+
+def generate_figure3_intervention(data: Dict[str, Any], output_dir: Path) -> str:
+    """
+    Generate Figure 3: Intervention composite.
+    
+    Layout: 2×3 grid (one panel per variant) showing flip-to-truth rate vs alpha
+    for each temperature.
+    """
+    # Check which temperatures have intervention data
+    temps_with_data = [t for t, df in data['interventions'].items() if len(df) > 0]
+    
+    if not temps_with_data:
+        print("  WARNING: No intervention data available for any temperature")
+        return ""
+    
+    print(f"  Intervention data available for: {[TEMP_LABELS[t] for t in temps_with_data]}")
+    
+    fig, axes = plt.subplots(2, 3, figsize=(15, 10), sharex=True, sharey=True)
+    axes = axes.flatten()
+    
+    for idx, variant in enumerate(VARIANTS):
+        ax = axes[idx]
         
-        if not df.empty:
-            df["run_temperature"] = run.temperature
-            all_turn_layers.append(df)
+        has_data_for_variant = False
+        
+        for temp in TEMPERATURES:
+            df = data['interventions'][temp]
+            if df.empty:
+                continue
+            
+            variant_df = df[df['variant'] == variant]
+            if variant_df.empty:
+                continue
+            
+            # Compute flip rate by alpha
+            flip_by_alpha = variant_df.groupby('alpha').agg(
+                flip_rate=('flipped_to_truth', 'mean'),
+                n=('result_id', 'count')
+            ).reset_index()
+            
+            if flip_by_alpha.empty:
+                continue
+            
+            has_data_for_variant = True
+            ax.plot(flip_by_alpha['alpha'], flip_by_alpha['flip_rate'], 
+                   'o-', label=TEMP_LABELS[temp], color=TEMP_COLORS[temp], 
+                   linewidth=2, markersize=6)
+        
+        ax.set_title(VARIANT_LABELS[variant], fontweight='bold')
+        ax.set_ylim(-0.05, 1.05)
+        
+        if idx >= 3:
+            ax.set_xlabel('Intervention Strength (α)')
+        if idx % 3 == 0:
+            ax.set_ylabel('Flip-to-Truth Rate')
+        
+        if idx == 0 and has_data_for_variant:
+            ax.legend(loc='upper left', fontsize=9)
+        
+        if not has_data_for_variant:
+            ax.text(0.5, 0.5, 'No data', ha='center', va='center', 
+                   transform=ax.transAxes, fontsize=12, alpha=0.5)
     
-    if not all_turn_layers:
-        return figures
+    plt.suptitle('Figure 3: Causal Intervention Effect\n'
+                 '(Flip-to-Truth Rate by Social Vector Subtraction Strength)',
+                 fontsize=14, fontweight='bold', y=1.02)
     
-    combined = pd.concat(all_turn_layers, ignore_index=True)
+    plt.tight_layout()
     
-    # Create violin/box plot showing turn layer distribution
-    fig, ax = create_figure(size_key="wide")
+    # Add note about missing temperatures
+    missing_temps = [TEMP_LABELS[t] for t in TEMPERATURES if t not in temps_with_data]
+    if missing_temps:
+        fig.text(0.5, -0.02, 
+                 f'Note: Intervention data missing for {", ".join(missing_temps)}.',
+                 ha='center', fontsize=9, style='italic', alpha=0.7)
     
-    variants = sorted(combined["variant"].unique())
-    temperatures = sorted(combined["run_temperature"].unique())
-    conditions = sorted(combined["condition_name"].unique())
+    # Save
+    output_path = output_dir / 'figure3_intervention_composite'
+    plt.savefig(f'{output_path}.png', dpi=300, bbox_inches='tight')
+    plt.savefig(f'{output_path}.pdf', bbox_inches='tight')
+    plt.close()
     
-    # Filter to pressure conditions only
-    pressure_conditions = [c for c in conditions if c in ["asch_history_5", "authoritative_bias"]]
+    print(f"  Saved: {output_path}.png/pdf")
+    return str(output_path)
+
+
+# ============================================================================
+# FIGURE 4: TEMPERATURE SCATTER (Item-Level Conformity)
+# ============================================================================
+
+CONDITION_COLORS = {
+    'control': '#2CA02C',           # Green
+    'asch_history_5': '#D62728',    # Red  
+    'authoritative_bias': '#1F77B4', # Blue
+}
+
+VARIANT_MARKERS = {
+    'base': 'o',
+    'instruct': 's',
+    'instruct_sft': '^',
+    'think': 'D',
+    'think_sft': 'v',
+    'rl_zero': 'P',
+}
+
+
+def generate_figure4_temperature_scatter(data: Dict[str, Any], output_dir: Path) -> str:
+    """
+    Generate Figure 4: Temperature Effect on Error Rates.
     
-    if not pressure_conditions:
-        return figures
+    Scatter plots comparing error rates between temperatures, with:
+    - Color = Condition (Control/Asch/Authority)
+    - Marker shape = Model variant
+    - y=x line shows where no temperature effect would be
     
-    # Create grouped positions
-    positions = []
-    labels = []
-    data_groups = []
+    Points above the line = higher error at higher temperature
+    Points below the line = lower error at higher temperature
+    """
+    rates_by_temp = {temp: compute_rates(df) for temp, df in data['behavioral'].items()}
     
-    pos = 0
-    for variant in variants:
-        for condition in pressure_conditions:
-            for temp in temperatures:
-                subset = combined[
-                    (combined["variant"] == variant) &
-                    (combined["condition_name"] == condition) &
-                    (combined["run_temperature"] == temp)
-                ]
+    # Create 1x3 layout: T=0 vs T=0.5, T=0 vs T=1, T=0.5 vs T=1
+    temp_pairs = [(0.0, 0.5), (0.0, 1.0), (0.5, 1.0)]
+    
+    fig, axes = plt.subplots(1, 3, figsize=(16, 6.5))
+    
+    # Make room at the top for legends
+    fig.subplots_adjust(top=0.75, wspace=0.25)
+    
+    for ax_idx, (t_low, t_high) in enumerate(temp_pairs):
+        ax = axes[ax_idx]
+        
+        df_low = rates_by_temp[t_low]
+        df_high = rates_by_temp[t_high]
+        
+        # Plot each condition × variant combination
+        for condition in BEHAVIORAL_CONDITIONS:
+            for variant in VARIANTS:
+                row_low = df_low[(df_low['condition_name'] == condition) & (df_low['variant'] == variant)]
+                row_high = df_high[(df_high['condition_name'] == condition) & (df_high['variant'] == variant)]
                 
-                if not subset.empty:
-                    positions.append(pos)
-                    labels.append(f"{get_variant_display_name(variant)}\n{condition}\nT={temp}")
-                    data_groups.append(subset["first_collision_layer"].values)
-                    pos += 1
+                if row_low.empty or row_high.empty:
+                    continue
+                
+                x = row_low['error_rate'].iloc[0]
+                y = row_high['error_rate'].iloc[0]
+                
+                ax.scatter(x, y, 
+                          c=CONDITION_COLORS[condition],
+                          marker=VARIANT_MARKERS[variant],
+                          s=120,
+                          alpha=0.8,
+                          edgecolors='white',
+                          linewidths=0.5)
+        
+        # y=x reference line
+        ax.plot([0, 1], [0, 1], 'k--', alpha=0.5, linewidth=1.5, label='y=x (no effect)')
+        
+        # Formatting
+        ax.set_xlim(0.4, 1.0)
+        ax.set_ylim(0.4, 1.0)
+        ax.set_aspect('equal')
+        ax.set_xlabel(f'Error Rate ({TEMP_LABELS[t_low]})')
+        ax.set_ylabel(f'Error Rate ({TEMP_LABELS[t_high]})')
+        ax.set_title(f'{TEMP_LABELS[t_low]} vs {TEMP_LABELS[t_high]}', fontweight='bold')
+        
+        # Add region annotations
+        ax.fill_between([0.4, 1.0], [0.4, 1.0], [1.0, 1.0], alpha=0.05, color='red')
+        ax.fill_between([0.4, 1.0], [0.4, 0.4], [0.4, 1.0], alpha=0.05, color='green')
+        
+        if ax_idx == 2:
+            ax.text(0.95, 0.45, 'Higher T\nimproves', ha='right', va='bottom', fontsize=8, alpha=0.6)
+            ax.text(0.45, 0.95, 'Higher T\nhurts', ha='left', va='top', fontsize=8, alpha=0.6)
     
-    if not data_groups:
-        return figures
+    # Create legend with condition colors and variant markers
+    from matplotlib.lines import Line2D
     
-    # Create box plot
-    bp = ax.boxplot(
-        data_groups,
-        positions=positions,
-        widths=0.6,
-        patch_artist=True,
-        showmeans=True,
-        meanline=False,
-    )
+    # Condition legend
+    condition_handles = [Line2D([0], [0], marker='o', color='w', markerfacecolor=CONDITION_COLORS[c], 
+                                markersize=10, label=CONDITION_LABELS[c]) 
+                        for c in BEHAVIORAL_CONDITIONS]
     
-    # Color boxes by temperature
-    color_idx = 0
-    for patch in bp["boxes"]:
-        # Determine temperature from position
-        idx = color_idx // len(pressure_conditions) % len(temperatures)
-        temp = temperatures[idx]
-        patch.set_facecolor(get_temperature_color(temp))
-        patch.set_alpha(0.7)
-        patch.set_edgecolor("black")
-        patch.set_linewidth(1)
-        color_idx += 1
+    # Variant legend  
+    variant_handles = [Line2D([0], [0], marker=VARIANT_MARKERS[v], color='gray', 
+                              markersize=8, linestyle='', label=VARIANT_LABELS[v])
+                      for v in VARIANTS]
     
-    ax.set_xticks(positions)
-    ax.set_xticklabels(labels, rotation=45, ha="right", fontsize=9)
-    ax.set_ylabel("First Collision Layer (Turn Layer)", fontsize=14)
-    ax.set_title("Turn Layer Distribution Across Temperatures", fontsize=16, fontweight="bold")
-    ax.grid(True, alpha=0.3, axis="y")
+    # Add legends in a horizontal row at the top, outside the plot area
+    legend1 = fig.legend(handles=condition_handles, loc='upper left', bbox_to_anchor=(0.08, 0.99),
+                        title='Condition', fontsize=9, title_fontsize=10, framealpha=0.95,
+                        ncol=1, columnspacing=0.5)
+    legend2 = fig.legend(handles=variant_handles, loc='upper left', bbox_to_anchor=(0.22, 0.99),
+                        title='Model', fontsize=9, title_fontsize=10, ncol=3, framealpha=0.95,
+                        columnspacing=0.8)
+    fig.add_artist(legend1)
     
-    fig_path = os.path.join(output_dir, "turn_layer_by_temperature")
-    saved = save_figure(fig, fig_path)
-    figures["turn_layer_by_temperature"] = saved.get("png", saved.get("pdf", ""))
-    plt.close(fig)
+    plt.suptitle('Figure 4: Temperature Effect on Error Rates\n'
+                 '(Points above diagonal = temperature increases errors)',
+                 fontsize=14, fontweight='bold', y=1.02)
     
-    return figures
+    plt.tight_layout()
+    
+    # Save
+    output_path = output_dir / 'figure4_temperature_scatter'
+    plt.savefig(f'{output_path}.png', dpi=300, bbox_inches='tight')
+    plt.savefig(f'{output_path}.pdf', bbox_inches='tight')
+    plt.close()
+    
+    print(f"  Saved: {output_path}.png/pdf")
+    return str(output_path)
 
 
-def generate_vector_difference_heatmap(
-    runs_data: List[RunData],
-    output_dir: str,
-) -> Dict[str, str]:
-    """
-    Generate heatmap showing (Social - Truth) difference across layers, temperatures, and variants.
+# ============================================================================
+# SUMMARY TABLE
+# ============================================================================
+
+def generate_summary_table(data: Dict[str, Any], output_dir: Path) -> str:
+    """Generate a summary CSV with key metrics across all temperatures."""
+    rows = []
     
-    Returns:
-        Dict mapping figure_name -> path
-    """
-    setup_publication_style()
-    figures = {}
-    
-    all_differences = []
-    
-    for run in runs_data:
-        # Get probe IDs
-        truth_probe = run.db.conn.execute(
-            """
-            SELECT probe_id FROM conformity_probes
-            WHERE run_id = ? AND probe_kind = 'truth'
-            ORDER BY created_at DESC LIMIT 1
-            """,
-            (run.run_id,),
-        ).fetchone()
+    for temp in TEMPERATURES:
+        df = data['behavioral'][temp]
+        rates = compute_rates(df)
         
-        social_probe = run.db.conn.execute(
-            """
-            SELECT probe_id FROM conformity_probes
-            WHERE run_id = ? AND probe_kind = 'social'
-            ORDER BY created_at DESC LIMIT 1
-            """,
-            (run.run_id,),
-        ).fetchone()
-        
-        if not truth_probe or not social_probe:
-            continue
-        
-        truth_probe_id = truth_probe["probe_id"]
-        social_probe_id = social_probe["probe_id"]
-        
-        # Compute difference
-        df = pd.read_sql_query(
-            """
-            WITH truth AS (
-              SELECT trial_id, layer_index, value_float AS truth_val
-              FROM conformity_probe_projections
-              WHERE probe_id = ?
-            ),
-            social AS (
-              SELECT trial_id, layer_index, value_float AS social_val
-              FROM conformity_probe_projections
-              WHERE probe_id = ?
-            )
-            SELECT
-              tr.variant,
-              cond.name AS condition_name,
-              t.layer_index,
-              (s.social_val - t.truth_val) AS diff,
-              tr.temperature
-            FROM truth t
-            JOIN social s
-              ON s.trial_id = t.trial_id AND s.layer_index = t.layer_index
-            JOIN conformity_trials tr ON tr.trial_id = t.trial_id
-            JOIN conformity_conditions cond ON cond.condition_id = tr.condition_id
-            WHERE tr.run_id = ? AND cond.name IN ('control', 'asch_history_5', 'authoritative_bias')
-            """,
-            run.db.conn,
-            params=(truth_probe_id, social_probe_id, run.run_id),
-        )
-        
-        if not df.empty:
-            df["run_temperature"] = run.temperature
-            all_differences.append(df)
+        for _, row in rates.iterrows():
+            rows.append({
+                'temperature': temp,
+                'variant': row['variant'],
+                'condition': row['condition_name'],
+                'n_trials': row['n_trials'],
+                'error_rate': row['error_rate'],
+                'refusal_rate': row['refusal_rate'],
+            })
     
-    if not all_differences:
-        return figures
+    summary_df = pd.DataFrame(rows)
+    output_path = output_dir / 'cross_temperature_summary.csv'
+    summary_df.to_csv(output_path, index=False)
     
-    combined = pd.concat(all_differences, ignore_index=True)
-    
-    # Create heatmap for each variant and condition combination
-    variants = sorted(combined["variant"].unique())
-    conditions = sorted(combined["condition_name"].unique())
-    
-    for variant in variants:
-        for condition in conditions:
-            var_cond_data = combined[
-                (combined["variant"] == variant) &
-                (combined["condition_name"] == condition)
-            ]
-            
-            if var_cond_data.empty:
-                continue
-            
-            # Pivot: layers x temperatures
-            pivot = var_cond_data.pivot_table(
-                index="layer_index",
-                columns="run_temperature",
-                values="diff",
-                aggfunc="mean",
-            )
-            
-            if pivot.empty:
-                continue
-            
-            fig, ax = create_figure(size_key="single")
-            
-            im = ax.imshow(
-                pivot.values,
-                aspect="auto",
-                cmap="RdBu_r",
-                interpolation="nearest",
-            )
-            
-            ax.set_xticks(range(len(pivot.columns)))
-            ax.set_xticklabels([f"T={t}" for t in pivot.columns])
-            ax.set_yticks(range(len(pivot.index)))
-            ax.set_yticklabels(pivot.index)
-            ax.set_xlabel("Temperature", fontsize=14)
-            ax.set_ylabel("Layer Index", fontsize=14)
-            ax.set_title(
-                f"Social - Truth Difference\n{get_variant_display_name(variant)} - {condition}",
-                fontsize=16,
-                fontweight="bold",
-            )
-            
-            cbar = plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-            cbar.set_label("SVP - TVP", fontsize=12)
-            
-            fig_path = os.path.join(
-                output_dir,
-                f"vector_difference_heatmap_{variant}_{condition.replace(' ', '_').lower()}",
-            )
-            saved = save_figure(fig, fig_path)
-            figures[f"vector_difference_heatmap_{variant}_{condition}"] = saved.get("png", saved.get("pdf", ""))
-            plt.close(fig)
-    
-    return figures
+    print(f"  Saved: {output_path}")
+    return str(output_path)
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Generate cross-temperature and cross-model visualizations"
-    )
-    parser.add_argument(
-        "--run-ids",
-        nargs="+",
-        required=True,
-        help="List of run IDs to analyze",
-    )
-    parser.add_argument(
-        "--runs-dir",
-        type=str,
-        default=str(REPO_ROOT / "runs"),
-        help="Base runs/ directory",
-    )
-    parser.add_argument(
-        "--output-dir",
-        type=str,
-        required=True,
-        help="Output directory for figures",
-    )
-    parser.add_argument(
-        "--condition",
-        type=str,
-        default=None,
-        help="Optional condition filter (e.g., 'asch_history_5')",
-    )
-    
+# ============================================================================
+# MAIN
+# ============================================================================
+
+def main():
+    parser = argparse.ArgumentParser(description='Generate cross-temperature paper figures')
+    parser.add_argument('--runs-dir', type=str, default=str(DEFAULT_RUNS_DIR),
+                       help='Base directory containing run folders')
+    parser.add_argument('--out-dir', type=str, default=str(DEFAULT_OUTPUT_DIR),
+                       help='Output directory for figures')
     args = parser.parse_args()
     
-    # Create output directory
-    os.makedirs(args.output_dir, exist_ok=True)
+    runs_dir = Path(args.runs_dir)
+    output_dir = Path(args.out_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
     
-    # Load runs data
-    print(f"Loading data from {len(args.run_ids)} runs...")
-    runs_data = load_runs_data(args.run_ids, args.runs_dir)
+    print("="*60)
+    print("Cross-Temperature Paper Figures Generator")
+    print("="*60)
     
-    print(f"Loaded {len(runs_data)} runs with temperatures: {[r.temperature for r in runs_data]}")
+    # Setup
+    setup_style()
+    
+    # Load data
+    print("\n[1] Loading data from all runs...")
+    data = load_all_data(runs_dir)
+    
+    for temp in TEMPERATURES:
+        n_behavioral = len(data['behavioral'][temp])
+        n_projections = len(data['projections'][temp])
+        n_interventions = len(data['interventions'][temp])
+        print(f"  {TEMP_LABELS[temp]}: {n_behavioral} behavioral, {n_projections} projections, {n_interventions} interventions")
     
     # Generate figures
-    all_figures = {}
+    print("\n[2] Generating Figure 1: Behavioral composite...")
+    generate_figure1_behavioral(data, output_dir)
+    generate_figure1b_social_pressure(data, output_dir)
     
-    print("Generating tug-of-war figures...")
-    tug_figures = generate_tug_of_war_figure(runs_data, args.output_dir, args.condition)
-    all_figures.update(tug_figures)
+    print("\n[3] Generating Figure 2: Mechanism / Turn-Layer...")
+    generate_figure2_mechanism(data, output_dir)
     
-    print("Generating sycophancy by temperature figure...")
-    syc_figures = generate_sycophancy_by_temperature(runs_data, args.output_dir)
-    all_figures.update(syc_figures)
+    print("\n[4] Generating Figure 3: Intervention composite...")
+    generate_figure3_intervention(data, output_dir)
     
-    print("Generating turn layer by temperature figure...")
-    turn_figures = generate_turn_layer_by_temperature(runs_data, args.output_dir)
-    all_figures.update(turn_figures)
+    print("\n[5] Generating Figure 4: Temperature scatter...")
+    generate_figure4_temperature_scatter(data, output_dir)
     
-    print("Generating vector difference heatmaps...")
-    heatmap_figures = generate_vector_difference_heatmap(runs_data, args.output_dir)
-    all_figures.update(heatmap_figures)
+    print("\n[6] Generating summary table...")
+    generate_summary_table(data, output_dir)
     
-    # Print results
-    print("\nGenerated figures:")
-    for name, path in all_figures.items():
-        print(f"  {name}={path}")
-    
-    # Close databases
-    for run in runs_data:
-        run.db.close()
-    
-    return 0
+    print("\n" + "="*60)
+    print("COMPLETE")
+    print("="*60)
+    print(f"Output directory: {output_dir}")
+    print("\nGenerated files:")
+    for f in sorted(output_dir.glob('*')):
+        print(f"  - {f.name}")
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    main()
