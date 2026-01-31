@@ -12,11 +12,21 @@ Output Structure:
 - Individual runs saved to: {runs_dir}/{timestamp}_{run_id}/
 - Combined analysis saved to: {repo_root}/Comparing_Experiments/
 
+Path Configuration:
+- By default (local mode): uses {repo_root}/models and {repo_root}/runs
+- With --hpc flag: uses paths from experiments/olmo_conformity/configs/paths.json
+
 Usage:
-    # Full pipeline (run experiments + all analysis)
+    # Full pipeline (run experiments + all analysis) - LOCAL mode
     python run_expanded_experiments.py
     
-    # With custom runs directory
+    # Keep Mac awake during experiments (recommended for long runs)
+    python run_expanded_experiments.py --no-sleep
+    
+    # HPC mode - uses paths from paths.json
+    python run_expanded_experiments.py --hpc
+    
+    # With custom runs directory (overrides both local and HPC defaults)
     python run_expanded_experiments.py --runs-dir /scratch/runs
     
     # Using Ollama for inference
@@ -30,14 +40,22 @@ Usage:
     
     # Dry run (show what would be done without executing)
     python run_expanded_experiments.py --dry-run
+    
+Sleep Prevention (macOS):
+    The --no-sleep flag uses macOS's built-in 'caffeinate' utility to prevent
+    the system from sleeping while experiments run. This allows you to close
+    the laptop lid (if on AC power) or let the screen turn off without
+    interrupting the experiment pipeline.
 """
 
 from __future__ import annotations
 
 import argparse
+import atexit
 import json
 import logging
 import os
+import platform
 import subprocess
 import sys
 import time
@@ -46,16 +64,101 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+# Global reference to caffeinate process for cleanup
+_caffeinate_process: Optional[subprocess.Popen] = None
+
+
+def start_caffeinate(logger: Optional[logging.Logger] = None) -> bool:
+    """
+    Start caffeinate to prevent macOS from sleeping.
+    
+    Uses caffeinate with flags:
+    - -s: Prevent system sleep (keeps CPU running)
+    - -i: Prevent idle sleep
+    - -w: Wait for process with given PID (our script's PID)
+    
+    This ensures the Mac stays awake even with the lid closed (if on AC power)
+    or screen off while the experiments run.
+    
+    Returns:
+        True if caffeinate was started successfully, False otherwise
+    """
+    global _caffeinate_process
+    log = logger or logging.getLogger("expanded_experiments")
+    
+    # Only works on macOS
+    if platform.system() != "Darwin":
+        log.info("Not on macOS, skipping caffeinate (sleep prevention)")
+        return False
+    
+    # Check if caffeinate is available
+    try:
+        subprocess.run(["which", "caffeinate"], capture_output=True, check=True)
+    except subprocess.CalledProcessError:
+        log.warning("caffeinate not found, system may sleep during experiments")
+        return False
+    
+    try:
+        # Start caffeinate that waits for our process
+        # -s: prevent system sleep
+        # -i: prevent idle sleep  
+        # -w: wait for specified PID to finish
+        current_pid = os.getpid()
+        _caffeinate_process = subprocess.Popen(
+            ["caffeinate", "-s", "-i", "-w", str(current_pid)],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        log.info(f"Started caffeinate (PID {_caffeinate_process.pid}) to prevent sleep during experiments")
+        log.info("  Your Mac will stay awake even with screen off or lid closed (on AC power)")
+        
+        # Register cleanup handler
+        atexit.register(stop_caffeinate, logger)
+        
+        return True
+    except Exception as e:
+        log.warning(f"Failed to start caffeinate: {e}")
+        return False
+
+
+def stop_caffeinate(logger: Optional[logging.Logger] = None) -> None:
+    """Stop the caffeinate process if running."""
+    global _caffeinate_process
+    log = logger or logging.getLogger("expanded_experiments")
+    
+    if _caffeinate_process is not None:
+        try:
+            _caffeinate_process.terminate()
+            _caffeinate_process.wait(timeout=5)
+            log.info("Stopped caffeinate - system can sleep normally again")
+        except Exception as e:
+            log.debug(f"Error stopping caffeinate: {e}")
+        finally:
+            _caffeinate_process = None
+
 # Resolve paths
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parents[2]  # experiments/olmo_conformity/configs -> repo root
 CONFIGS_DIR = SCRIPT_DIR
+PATHS_CONFIG_FILE = CONFIGS_DIR / "paths.json"
+RUNS_SUMMARY_DIR = CONFIGS_DIR / "runs_summary"
+
+# Default paths (local mode - repo root)
+DEFAULT_MODELS_DIR = REPO_ROOT / "models"
 DEFAULT_RUNS_DIR = REPO_ROOT / "runs"
 COMPARING_EXPERIMENTS_DIR = REPO_ROOT / "Comparing_Experiments"
 
 # Temperature configurations
 TEMPERATURES = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
 CONFIG_TEMPLATE = "suite_expanded_temp{temp}.json"
+
+
+def load_hpc_paths() -> Dict[str, str]:
+    """Load paths from paths.json for HPC mode."""
+    if PATHS_CONFIG_FILE.exists():
+        with open(PATHS_CONFIG_FILE, 'r') as f:
+            return json.load(f)
+    return {}
 
 # Logging setup
 LOG_FORMAT = "%(asctime)s [%(levelname)s] %(message)s"
@@ -114,6 +217,78 @@ def save_metadata(metadata: Dict[str, Any], metadata_path: Path) -> None:
     metadata_path.parent.mkdir(parents=True, exist_ok=True)
     with open(metadata_path, 'w') as f:
         json.dump(metadata, f, indent=2)
+
+
+def save_runs_summary_csv(metadata: Dict[str, Any], logger: Optional[logging.Logger] = None) -> Path:
+    """
+    Save a CSV summary of all runs to runs_summary/ folder.
+    
+    Creates a CSV with columns:
+    - run_id: The unique run identifier
+    - temperature: The temperature setting for this run
+    - status: completed, failed, or skipped
+    - config_file: The config JSON used
+    - started_at: Timestamp when run started
+    - completed_at: Timestamp when run completed
+    - run_dir: Full path to run directory
+    - error_message: Error details if failed (empty if successful)
+    
+    Returns:
+        Path to the saved CSV file
+    """
+    log = logger or logging.getLogger("expanded_experiments")
+    
+    # Ensure directory exists
+    RUNS_SUMMARY_DIR.mkdir(parents=True, exist_ok=True)
+    
+    # Generate timestamped filename
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    csv_path = RUNS_SUMMARY_DIR / f"runs_summary_{timestamp}.csv"
+    
+    # Also maintain a "latest" symlink/copy
+    latest_path = RUNS_SUMMARY_DIR / "runs_summary_latest.csv"
+    
+    # Build rows
+    rows = []
+    experiments = metadata.get("experiments", {})
+    
+    for temp_str in sorted(experiments.keys(), key=float):
+        info = experiments[temp_str]
+        rows.append({
+            "run_id": info.get("run_id", ""),
+            "temperature": info.get("temperature", float(temp_str)),
+            "status": info.get("status", "unknown"),
+            "config_file": info.get("config_file", ""),
+            "started_at": info.get("started_at", ""),
+            "completed_at": info.get("completed_at", ""),
+            "run_dir": info.get("run_dir", ""),
+            "db_path": info.get("db_path", ""),
+            "error_message": info.get("error_message", "") or "",
+        })
+    
+    # Write CSV
+    if rows:
+        import csv
+        fieldnames = ["run_id", "temperature", "status", "config_file", "started_at", 
+                      "completed_at", "run_dir", "db_path", "error_message"]
+        
+        with open(csv_path, 'w', newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(rows)
+        
+        # Copy to latest
+        with open(latest_path, 'w', newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(rows)
+        
+        log.info(f"Saved runs summary CSV: {csv_path}")
+        log.info(f"Updated latest summary: {latest_path}")
+    else:
+        log.warning("No experiments to save in CSV summary")
+    
+    return csv_path
 
 
 def run_single_experiment(
@@ -772,10 +947,21 @@ def main():
     )
     
     parser.add_argument(
+        "--hpc",
+        action="store_true",
+        help="Use HPC paths from paths.json (default: use local repo paths)",
+    )
+    parser.add_argument(
         "--runs-dir",
         type=str,
-        default=str(DEFAULT_RUNS_DIR),
-        help=f"Base directory for experiment outputs (default: {DEFAULT_RUNS_DIR})",
+        default=None,
+        help=f"Base directory for experiment outputs (default: {DEFAULT_RUNS_DIR} for local, paths.json for HPC)",
+    )
+    parser.add_argument(
+        "--models-dir",
+        type=str,
+        default=None,
+        help=f"Base directory for model files (default: {DEFAULT_MODELS_DIR} for local, paths.json for HPC)",
     )
     parser.add_argument(
         "--api-base",
@@ -810,6 +996,11 @@ def main():
         default=None,
         help="Comma-separated list of temperatures to run (default: all)",
     )
+    parser.add_argument(
+        "--no-sleep",
+        action="store_true",
+        help="Prevent macOS from sleeping during experiments (uses caffeinate)",
+    )
     
     args = parser.parse_args()
     
@@ -819,7 +1010,16 @@ def main():
     else:
         temps_to_run = TEMPERATURES
     
-    runs_dir = Path(args.runs_dir)
+    # Determine paths based on mode (HPC vs local)
+    if args.hpc:
+        # HPC mode: load paths from paths.json
+        hpc_paths = load_hpc_paths()
+        models_dir = Path(args.models_dir) if args.models_dir else Path(hpc_paths.get("models_dir", str(DEFAULT_MODELS_DIR)))
+        runs_dir = Path(args.runs_dir) if args.runs_dir else Path(hpc_paths.get("runs_dir", str(DEFAULT_RUNS_DIR)))
+    else:
+        # Local mode: use repo-relative defaults
+        models_dir = Path(args.models_dir) if args.models_dir else DEFAULT_MODELS_DIR
+        runs_dir = Path(args.runs_dir) if args.runs_dir else DEFAULT_RUNS_DIR
     metadata_path = COMPARING_EXPERIMENTS_DIR / "runs_metadata.json"
     log_path = COMPARING_EXPERIMENTS_DIR / "analysis_log.txt"
     
@@ -831,11 +1031,26 @@ def main():
     logger.info("EXPANDED CONFORMITY EXPERIMENTS PIPELINE")
     logger.info("=" * 60)
     logger.info(f"Repo root: {REPO_ROOT}")
+    logger.info(f"Mode: {'HPC' if args.hpc else 'LOCAL'}")
+    logger.info(f"Models directory: {models_dir}")
     logger.info(f"Runs directory: {runs_dir}")
     logger.info(f"Output directory: {COMPARING_EXPERIMENTS_DIR}")
     logger.info(f"Temperatures: {temps_to_run}")
     if args.dry_run:
         logger.info("MODE: DRY RUN (no changes will be made)")
+    
+    # Prevent macOS from sleeping if requested
+    if args.no_sleep:
+        start_caffeinate(logger)
+    
+    # Set environment variables for the runner to use
+    # These override paths.json settings when NOT in HPC mode
+    if not args.hpc:
+        # For local mode, set env vars to override any HPC paths in paths.json
+        os.environ["AAM_MODELS_DIR"] = str(models_dir / "huggingface_cache")
+        os.environ["AAM_RUNS_DIR"] = str(runs_dir)
+        logger.info(f"Set AAM_MODELS_DIR={os.environ['AAM_MODELS_DIR']}")
+        logger.info(f"Set AAM_RUNS_DIR={os.environ['AAM_RUNS_DIR']}")
     
     # Load existing metadata
     metadata = load_metadata(metadata_path)
@@ -892,6 +1107,9 @@ def main():
                 }
                 save_metadata(metadata, metadata_path)
                 logger.info(f"Metadata saved to {metadata_path}")
+                
+                # Update CSV summary after each run (for real-time tracking)
+                save_runs_summary_csv(metadata, logger)
     
     # Phase 2: Generate per-run reports
     if not args.only_analysis:
@@ -927,6 +1145,10 @@ def main():
         dry_run=args.dry_run,
     )
     
+    # Save final CSV summary
+    if not args.dry_run:
+        csv_path = save_runs_summary_csv(metadata, logger)
+    
     # Summary
     logger.info("")
     logger.info("=" * 60)
@@ -943,6 +1165,9 @@ def main():
     logger.info(f"Combined analysis: {'SUCCESS' if success else 'FAILED'}")
     logger.info(f"Output directory: {COMPARING_EXPERIMENTS_DIR}")
     logger.info(f"Metadata file: {metadata_path}")
+    if not args.dry_run:
+        logger.info(f"Runs summary CSV: {csv_path}")
+        logger.info(f"Runs summary dir: {RUNS_SUMMARY_DIR}")
     
     return 0 if success else 1
 

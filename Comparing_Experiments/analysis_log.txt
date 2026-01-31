@@ -1,0 +1,199 @@
+2026-01-31 02:06:45 [INFO] ============================================================
+2026-01-31 02:06:45 [INFO] EXPANDED CONFORMITY EXPERIMENTS PIPELINE
+2026-01-31 02:06:45 [INFO] ============================================================
+2026-01-31 02:06:45 [INFO] Repo root: /Users/mahdi/repos/abstractAgentMachine
+2026-01-31 02:06:45 [INFO] Runs directory: /Users/mahdi/repos/abstractAgentMachine/runs
+2026-01-31 02:06:45 [INFO] Output directory: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments
+2026-01-31 02:06:45 [INFO] Temperatures: [0.0, 0.2, 0.4]
+2026-01-31 02:06:45 [INFO] 
+2026-01-31 02:06:45 [INFO] ============================================================
+2026-01-31 02:06:45 [INFO] PHASE 1: RUNNING EXPERIMENTS
+2026-01-31 02:06:45 [INFO] ============================================================
+2026-01-31 02:06:45 [INFO] 
+2026-01-31 02:06:45 [INFO] --- Temperature 0.0 ---
+2026-01-31 02:06:45 [INFO] Running experiment for T=0.0...
+2026-01-31 02:06:45 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m aam olmo-conformity --suite-config /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/suite_expanded_temp0.0.json --runs-dir /Users/mahdi/repos/abstractAgentMachine/runs
+2026-01-31 02:06:47 [ERROR] Experiment failed with return code 1
+2026-01-31 02:06:47 [ERROR] STDERR: Traceback (most recent call last):
+  File "/Users/mahdi/miniconda3/lib/python3.11/pathlib.py", line 1116, in mkdir
+    os.mkdir(self, mode)
+FileNotFoundError: [Errno 2] No such file or directory: '/scratch1/mahdisae/olmo_models'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/mahdi/miniconda3/lib/python3.11/pathlib.py", line 1116, in mkdir
+    os.mkdir(self, mode)
+FileNotFoundError: [Errno 2] No such file or directory: '/scratch1/mahdisae'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/aam/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/aam/run.py", line 616, in main
+    paths = run_olmo_conformity_suite(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/aam/experiments/olmo_conformity/runner.py", line 496, in run_suite
+    _, _was_downloaded = ensure_olmo_model_downloaded(
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/aam/experiments/olmo_conformity/olmo_utils.py", line 131, in ensure_olmo_model_downloaded
+    models_path.mkdir(parents=True, exist_ok=True)
+  File "/Users/mahdi/miniconda3/lib/python3.11/pathlib.py", line 1120, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+  File "/Users/mahdi/miniconda3/lib/python3.11/pathlib.py", line 1120, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+  File "/Users/mahdi/miniconda3/lib/python3.11/pathlib.py", line 1116, in mkdir
+    os.mkdir(self, mode)
+OSError: [Errno 30] Read-only file system: '/scratch1'
+
+2026-01-31 02:06:47 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-01-31 02:06:47 [INFO] 
+2026-01-31 02:06:47 [INFO] --- Temperature 0.2 ---
+2026-01-31 02:06:47 [INFO] Running experiment for T=0.2...
+2026-01-31 02:06:47 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m aam olmo-conformity --suite-config /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/suite_expanded_temp0.2.json --runs-dir /Users/mahdi/repos/abstractAgentMachine/runs
+2026-01-31 02:06:48 [ERROR] Experiment failed with return code 1
+2026-01-31 02:06:48 [ERROR] STDERR: Traceback (most recent call last):
+  File "/Users/mahdi/miniconda3/lib/python3.11/pathlib.py", line 1116, in mkdir
+    os.mkdir(self, mode)
+FileNotFoundError: [Errno 2] No such file or directory: '/scratch1/mahdisae/olmo_models'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/mahdi/miniconda3/lib/python3.11/pathlib.py", line 1116, in mkdir
+    os.mkdir(self, mode)
+FileNotFoundError: [Errno 2] No such file or directory: '/scratch1/mahdisae'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/aam/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/aam/run.py", line 616, in main
+    paths = run_olmo_conformity_suite(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/aam/experiments/olmo_conformity/runner.py", line 496, in run_suite
+    _, _was_downloaded = ensure_olmo_model_downloaded(
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/aam/experiments/olmo_conformity/olmo_utils.py", line 131, in ensure_olmo_model_downloaded
+    models_path.mkdir(parents=True, exist_ok=True)
+  File "/Users/mahdi/miniconda3/lib/python3.11/pathlib.py", line 1120, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+  File "/Users/mahdi/miniconda3/lib/python3.11/pathlib.py", line 1120, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+  File "/Users/mahdi/miniconda3/lib/python3.11/pathlib.py", line 1116, in mkdir
+    os.mkdir(self, mode)
+OSError: [Errno 30] Read-only file system: '/scratch1'
+
+2026-01-31 02:06:48 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-01-31 02:06:48 [INFO] 
+2026-01-31 02:06:48 [INFO] --- Temperature 0.4 ---
+2026-01-31 02:06:48 [INFO] Running experiment for T=0.4...
+2026-01-31 02:06:48 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m aam olmo-conformity --suite-config /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/suite_expanded_temp0.4.json --runs-dir /Users/mahdi/repos/abstractAgentMachine/runs
+2026-01-31 02:06:49 [ERROR] Experiment failed with return code 1
+2026-01-31 02:06:49 [ERROR] STDERR: Traceback (most recent call last):
+  File "/Users/mahdi/miniconda3/lib/python3.11/pathlib.py", line 1116, in mkdir
+    os.mkdir(self, mode)
+FileNotFoundError: [Errno 2] No such file or directory: '/scratch1/mahdisae/olmo_models'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/mahdi/miniconda3/lib/python3.11/pathlib.py", line 1116, in mkdir
+    os.mkdir(self, mode)
+FileNotFoundError: [Errno 2] No such file or directory: '/scratch1/mahdisae'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/aam/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/aam/run.py", line 616, in main
+    paths = run_olmo_conformity_suite(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/aam/experiments/olmo_conformity/runner.py", line 496, in run_suite
+    _, _was_downloaded = ensure_olmo_model_downloaded(
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/aam/experiments/olmo_conformity/olmo_utils.py", line 131, in ensure_olmo_model_downloaded
+    models_path.mkdir(parents=True, exist_ok=True)
+  File "/Users/mahdi/miniconda3/lib/python3.11/pathlib.py", line 1120, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+  File "/Users/mahdi/miniconda3/lib/python3.11/pathlib.py", line 1120, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+  File "/Users/mahdi/miniconda3/lib/python3.11/pathlib.py", line 1116, in mkdir
+    os.mkdir(self, mode)
+OSError: [Errno 30] Read-only file system: '/scratch1'
+
+2026-01-31 02:06:49 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-01-31 02:06:49 [INFO] 
+2026-01-31 02:06:49 [INFO] ============================================================
+2026-01-31 02:06:49 [INFO] PHASE 2: GENERATING PER-RUN REPORTS
+2026-01-31 02:06:49 [INFO] ============================================================
+2026-01-31 02:06:49 [INFO] Skipping T=0.0 (status=failed)
+2026-01-31 02:06:49 [INFO] Skipping T=0.2 (status=failed)
+2026-01-31 02:06:49 [INFO] Skipping T=0.4 (status=failed)
+2026-01-31 02:06:49 [INFO] 
+2026-01-31 02:06:49 [INFO] ============================================================
+2026-01-31 02:06:49 [INFO] PHASE 3: GENERATING COMBINED ANALYSIS
+2026-01-31 02:06:49 [INFO] ============================================================
+2026-01-31 02:06:49 [INFO] Generating combined cross-temperature analysis...
+2026-01-31 02:06:49 [WARNING] Need at least 2 completed runs for comparison analysis
+2026-01-31 02:06:49 [INFO] 
+2026-01-31 02:06:49 [INFO] ============================================================
+2026-01-31 02:06:49 [INFO] PIPELINE COMPLETE
+2026-01-31 02:06:49 [INFO] ============================================================
+2026-01-31 02:06:49 [INFO] Experiments completed: 0
+2026-01-31 02:06:49 [INFO] Experiments failed: 3
+2026-01-31 02:06:49 [INFO] Combined analysis: FAILED
+2026-01-31 02:06:49 [INFO] Output directory: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments
+2026-01-31 02:06:49 [INFO] Metadata file: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-01-31 02:15:34 [INFO] ============================================================
+2026-01-31 02:15:34 [INFO] EXPANDED CONFORMITY EXPERIMENTS PIPELINE
+2026-01-31 02:15:34 [INFO] ============================================================
+2026-01-31 02:15:34 [INFO] Repo root: /Users/mahdi/repos/abstractAgentMachine
+2026-01-31 02:15:34 [INFO] Mode: LOCAL
+2026-01-31 02:15:34 [INFO] Models directory: /Users/mahdi/repos/abstractAgentMachine/models
+2026-01-31 02:15:34 [INFO] Runs directory: /Users/mahdi/repos/abstractAgentMachine/runs
+2026-01-31 02:15:34 [INFO] Output directory: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments
+2026-01-31 02:15:34 [INFO] Temperatures: [0.0, 0.2, 0.4]
+2026-01-31 02:15:34 [INFO] Set AAM_MODELS_DIR=/Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-01-31 02:15:34 [INFO] Set AAM_RUNS_DIR=/Users/mahdi/repos/abstractAgentMachine/runs
+2026-01-31 02:15:34 [INFO] 
+2026-01-31 02:15:34 [INFO] ============================================================
+2026-01-31 02:15:34 [INFO] PHASE 1: RUNNING EXPERIMENTS
+2026-01-31 02:15:34 [INFO] ============================================================
+2026-01-31 02:15:34 [INFO] 
+2026-01-31 02:15:34 [INFO] --- Temperature 0.0 ---
+2026-01-31 02:15:34 [INFO] Running experiment for T=0.0...
+2026-01-31 02:15:34 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m aam olmo-conformity --suite-config /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/suite_expanded_temp0.0.json --runs-dir /Users/mahdi/repos/abstractAgentMachine/runs
+2026-01-31 02:23:39 [INFO] ============================================================
+2026-01-31 02:23:39 [INFO] EXPANDED CONFORMITY EXPERIMENTS PIPELINE
+2026-01-31 02:23:39 [INFO] ============================================================
+2026-01-31 02:23:39 [INFO] Repo root: /Users/mahdi/repos/abstractAgentMachine
+2026-01-31 02:23:39 [INFO] Mode: LOCAL
+2026-01-31 02:23:39 [INFO] Models directory: /Users/mahdi/repos/abstractAgentMachine/models
+2026-01-31 02:23:39 [INFO] Runs directory: /Users/mahdi/repos/abstractAgentMachine/runs
+2026-01-31 02:23:39 [INFO] Output directory: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments
+2026-01-31 02:23:39 [INFO] Temperatures: [0.0, 0.2, 0.4]
+2026-01-31 02:23:39 [INFO] Started caffeinate (PID 52992) to prevent sleep during experiments
+2026-01-31 02:23:39 [INFO]   Your Mac will stay awake even with screen off or lid closed (on AC power)
+2026-01-31 02:23:39 [INFO] Set AAM_MODELS_DIR=/Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-01-31 02:23:39 [INFO] Set AAM_RUNS_DIR=/Users/mahdi/repos/abstractAgentMachine/runs
+2026-01-31 02:23:39 [INFO] 
+2026-01-31 02:23:39 [INFO] ============================================================
+2026-01-31 02:23:39 [INFO] PHASE 1: RUNNING EXPERIMENTS
+2026-01-31 02:23:39 [INFO] ============================================================
+2026-01-31 02:23:39 [INFO] 
+2026-01-31 02:23:39 [INFO] --- Temperature 0.0 ---
+2026-01-31 02:23:39 [INFO] Running experiment for T=0.0...
+2026-01-31 02:23:39 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m aam olmo-conformity --suite-config /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/suite_expanded_temp0.0.json --runs-dir /Users/mahdi/repos/abstractAgentMachine/runs

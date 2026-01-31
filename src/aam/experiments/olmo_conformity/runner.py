@@ -319,8 +319,11 @@ def run_suite(
     
     # Load paths config (models_dir, runs_dir) from shared config file
     paths_cfg = load_paths_config(suite_config_path, cfg)
-    models_dir_from_config = paths_cfg.get("models_dir")
-    config_runs_dir = paths_cfg.get("runs_dir")
+    
+    # Environment variables take precedence over config file
+    # This allows the automation script to override HPC paths for local runs
+    models_dir_from_config = os.environ.get("AAM_MODELS_DIR") or paths_cfg.get("models_dir")
+    config_runs_dir = os.environ.get("AAM_RUNS_DIR") or paths_cfg.get("runs_dir")
     
     # Use config runs_dir as default if CLI didn't specify a custom path
     effective_runs_dir = runs_dir

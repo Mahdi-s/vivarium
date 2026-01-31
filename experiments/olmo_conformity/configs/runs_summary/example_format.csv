@@ -1,0 +1,4 @@
+run_id,temperature,status,config_file,started_at,completed_at,run_dir,db_path,error_message
+abc12345-def6-7890-abcd-ef1234567890,0.0,completed,suite_expanded_temp0.0.json,2026-01-31T15:00:00,2026-01-31T15:30:00,/Users/mahdi/repos/abstractAgentMachine/runs/20260131_150000_abc12345,/Users/mahdi/repos/abstractAgentMachine/runs/20260131_150000_abc12345/simulation.db,
+bcd23456-ef78-9012-bcde-f23456789012,0.2,completed,suite_expanded_temp0.2.json,2026-01-31T15:31:00,2026-01-31T16:01:00,/Users/mahdi/repos/abstractAgentMachine/runs/20260131_153100_bcd23456,/Users/mahdi/repos/abstractAgentMachine/runs/20260131_153100_bcd23456/simulation.db,
+,0.4,failed,suite_expanded_temp0.4.json,2026-01-31T16:02:00,2026-01-31T16:02:30,,,CUDA out of memory
