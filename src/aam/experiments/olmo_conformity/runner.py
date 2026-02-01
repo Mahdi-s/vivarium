@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import gc
 import os
 import time
 import uuid
@@ -744,6 +745,23 @@ def run_suite(
                     token_usage_json=None,
                 )
                 print(f"    [Runner] Trial {trial_num}/{total_trials} complete (correct={is_correct}, refusal={refusal})\n")
+
+        # Clean up model memory between iterations to prevent MPS device mismatch errors
+        # This is critical when running multiple 7B models sequentially on Apple Silicon
+        try:
+            import torch
+            if hasattr(gateway, "_model"):
+                del gateway._model
+            if hasattr(gateway, "_tokenizer"):
+                del gateway._tokenizer
+            del gateway
+            gc.collect()
+            # Clear MPS cache if using Apple Silicon
+            if hasattr(torch, "mps") and hasattr(torch.mps, "empty_cache"):
+                torch.mps.empty_cache()
+            print(f"[Runner] Memory cleanup complete for model {model_id}")
+        except Exception as e:
+            print(f"[Runner] Warning: Memory cleanup failed: {e}")
 
     print(f"\n[Runner] All {total_trials} trials completed")
     trace_db.close()
