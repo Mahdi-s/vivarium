@@ -496,11 +496,15 @@ def generate_per_run_report(
     run_id: str,
     db_path: str,
     run_dir: str,
+    runs_dir: Path,
     logger: Optional[logging.Logger] = None,
     dry_run: bool = False,
 ) -> bool:
     """
     Generate analysis report for a single run.
+    
+    db_path and run_dir from metadata may be from another machine; we resolve
+    paths from the current runs_dir so the report finds the DB on this host.
     
     Returns:
         True if successful, False otherwise
@@ -511,13 +515,23 @@ def generate_per_run_report(
         log.info(f"[DRY RUN] Would generate report for run {run_id[:8]}...")
         return True
     
+    # Resolve paths from current runs_dir so report works when metadata paths
+    # were recorded on another machine (e.g. after git pull) or are stale
+    run_dir_basename = os.path.basename(run_dir.rstrip("/")) or run_dir
+    resolved_run_dir = runs_dir / run_dir_basename
+    resolved_db_path = resolved_run_dir / "simulation.db"
+    
+    if not resolved_db_path.exists():
+        log.warning(f"DB not found at {resolved_db_path}, skipping report (run may be on another node or path)")
+        return False
+    
     log.info(f"Generating report for run {run_id[:8]}...")
     
     cmd = [
         sys.executable, "-m", "aam", "olmo-conformity-report",
         "--run-id", run_id,
-        "--db", db_path,
-        "--run-dir", run_dir,
+        "--db", str(resolved_db_path),
+        "--run-dir", str(resolved_run_dir),
     ]
     
     env = os.environ.copy()
@@ -1227,6 +1241,7 @@ def main():
                 run_id=info["run_id"],
                 db_path=info["db_path"],
                 run_dir=info["run_dir"],
+                runs_dir=runs_dir,
                 logger=logger,
                 dry_run=args.dry_run,
             )
