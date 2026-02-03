@@ -1,0 +1,17 @@
+{
+  "created_at": "2026-01-31T20:11:08.136100",
+  "updated_at": "2026-02-01T05:31:53.933864",
+  "experiments": {
+    "0.0": {
+      "temperature": 0.0,
+      "run_id": "62d6de1d-0f4f-46c8-b028-820063383d59",
+      "run_dir": "/Users/mahdi/repos/abstractAgentMachine/runs/20260131_201109_62d6de1d-0f4f-46c8-b028-820063383d59",
+      "db_path": "/Users/mahdi/repos/abstractAgentMachine/runs/20260131_201109_62d6de1d-0f4f-46c8-b028-820063383d59/simulation.db",
+      "config_file": "suite_expanded_temp0.0.json",
+      "status": "completed",
+      "error_message": null,
+      "started_at": "2026-01-31T20:11:08.136263",
+      "completed_at": "2026-02-01T05:31:53.932749"
+    }
+  }
+}

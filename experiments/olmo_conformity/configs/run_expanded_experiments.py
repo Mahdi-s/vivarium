@@ -68,6 +68,41 @@ from typing import Any, Dict, List, Optional, Tuple
 _caffeinate_process: Optional[subprocess.Popen] = None
 
 
+def get_memory_usage_mb() -> float:
+    """
+    Get current process memory usage in MB.
+    
+    Uses psutil if available, falls back to resource module on Unix.
+    Returns 0.0 if unable to determine memory usage.
+    """
+    try:
+        import psutil
+        process = psutil.Process(os.getpid())
+        return process.memory_info().rss / (1024 * 1024)
+    except ImportError:
+        pass
+    
+    try:
+        import resource
+        # getrusage returns memory in KB on Linux, bytes on macOS
+        usage = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        if platform.system() == "Darwin":
+            return usage / (1024 * 1024)  # macOS: bytes to MB
+        else:
+            return usage / 1024  # Linux: KB to MB
+    except (ImportError, AttributeError):
+        pass
+    
+    return 0.0
+
+
+def log_memory_usage(logger: logging.Logger, context: str = "") -> None:
+    """Log current memory usage with optional context."""
+    mem_mb = get_memory_usage_mb()
+    if mem_mb > 0:
+        logger.info(f"Memory usage{' (' + context + ')' if context else ''}: {mem_mb:.1f} MB")
+
+
 def start_caffeinate(logger: Optional[logging.Logger] = None) -> bool:
     """
     Start caffeinate to prevent macOS from sleeping.
@@ -179,20 +214,38 @@ class ExperimentResult:
     completed_at: Optional[str] = None
 
 
-def setup_logging(log_file: Optional[Path] = None) -> logging.Logger:
-    """Configure logging to console and optionally to file."""
+def setup_logging(log_file: Optional[Path] = None, max_bytes: int = 10_000_000, backup_count: int = 3) -> logging.Logger:
+    """
+    Configure logging to console and optionally to file with rotation.
+    
+    Args:
+        log_file: Path to log file (optional)
+        max_bytes: Maximum log file size before rotation (default 10MB)
+        backup_count: Number of backup files to keep (default 3)
+    """
+    from logging.handlers import RotatingFileHandler
+    
     logger = logging.getLogger("expanded_experiments")
     logger.setLevel(logging.INFO)
+    
+    # Prevent duplicate handlers on re-initialization
+    if logger.handlers:
+        logger.handlers.clear()
     
     # Console handler
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setFormatter(logging.Formatter(LOG_FORMAT, DATE_FORMAT))
     logger.addHandler(console_handler)
     
-    # File handler (if specified)
+    # File handler with rotation (if specified)
     if log_file:
         log_file.parent.mkdir(parents=True, exist_ok=True)
-        file_handler = logging.FileHandler(log_file, mode='a')
+        file_handler = RotatingFileHandler(
+            log_file, 
+            mode='a', 
+            maxBytes=max_bytes,
+            backupCount=backup_count
+        )
         file_handler.setFormatter(logging.Formatter(LOG_FORMAT, DATE_FORMAT))
         logger.addHandler(file_handler)
     
@@ -353,13 +406,18 @@ def run_single_experiment(
         models_cache_dir = REPO_ROOT / "models" / "huggingface_cache"
         models_cache_dir.mkdir(parents=True, exist_ok=True)
         
+        # Ensure subprocess can import aam: add repo src to PYTHONPATH (needed on HPC when not pip-installed)
+        env = os.environ.copy()
+        src_dir = str(REPO_ROOT / "src")
+        env["PYTHONPATH"] = src_dir + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
+        
         # Run the experiment with explicit environment to ensure AAM_* vars are passed
         result = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
             cwd=str(REPO_ROOT),
-            env=os.environ.copy(),  # Explicitly pass environment with AAM_MODELS_DIR and AAM_RUNS_DIR
+            env=env,
         )
         
         if result.returncode != 0:
@@ -462,12 +520,17 @@ def generate_per_run_report(
         "--run-dir", run_dir,
     ]
     
+    env = os.environ.copy()
+    src_dir = str(REPO_ROOT / "src")
+    env["PYTHONPATH"] = src_dir + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
+    
     try:
         result = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
             cwd=str(REPO_ROOT),
+            env=env,
         )
         
         if result.returncode != 0:
@@ -494,9 +557,16 @@ def generate_combined_analysis(
     
     This function creates analysis comparing all temperature runs.
     
+    MEMORY OPTIMIZATION: 
+    - Data is loaded incrementally and cleaned up after use
+    - gc.collect() is called after major processing steps
+    - Only rates_dict (small summary data) is kept in memory for plotting
+    
     Returns:
         True if successful, False otherwise
     """
+    import gc
+    
     log = logger or logging.getLogger("expanded_experiments")
     
     if dry_run:
@@ -545,10 +615,10 @@ def generate_combined_analysis(
         # Set plotting style
         plt.style.use('seaborn-v0_8-whitegrid')
         
-        # Load data from each run
-        behavioral_data = {}
+        # MEMORY OPTIMIZATION: Only keep rates_dict (small summaries) in memory
+        # Process behavioral data incrementally and release it
         rates_dict = {}
-        configs = {}
+        combined_rates = []  # For combined CSV
         
         for temp in completed_temps:
             run_info = runs_dict[temp]
@@ -588,13 +658,12 @@ def generate_combined_analysis(
             """
             
             df = pd.read_sql_query(query, conn, params=[run_info["id"]])
-            behavioral_data[temp] = df
+            conn.close()  # Close connection ASAP
             
-            # Calculate rates
-            df_copy = df.copy()
-            df_copy['is_empty'] = df_copy['raw_text'].isna() | (df_copy['raw_text'] == '')
+            # Calculate rates (small summary DataFrame)
+            df['is_empty'] = df['raw_text'].isna() | (df['raw_text'] == '')
             
-            rates = df_copy.groupby(['condition_name', 'variant']).agg(
+            rates = df.groupby(['condition_name', 'variant']).agg(
                 n_trials=('trial_id', 'count'),
                 n_correct=('is_correct', 'sum'),
                 n_refusals=('refusal_flag', 'sum'),
@@ -606,45 +675,55 @@ def generate_combined_analysis(
             rates['n_incorrect'] = rates['n_trials'] - rates['n_correct']
             rates_dict[temp] = rates
             
-            conn.close()
+            # Save per-temperature rates immediately
+            rates.to_csv(tables_dir / f"rates_t{temp}.csv", index=False)
+            
+            # Add to combined rates list (with temperature column)
+            rates_with_temp = rates.copy()
+            rates_with_temp['temperature'] = temp
+            combined_rates.append(rates_with_temp)
+            
+            # MEMORY CLEANUP: Release the large behavioral DataFrame
+            del df
+            gc.collect()
+            log.info(f"  Processed T={temp}, memory cleaned")
         
         if not rates_dict:
             log.error("No data loaded from any runs")
             return False
         
-        # Generate figures
+        # Save combined CSV
+        log.info("Saving combined data tables...")
+        combined_df = pd.concat(combined_rates, ignore_index=True)
+        combined_df.to_csv(tables_dir / "rates_combined.csv", index=False)
+        del combined_df, combined_rates
+        gc.collect()
+        
+        # Generate figures (rates_dict is small - OK to keep in memory)
         log.info("Generating comparison figures...")
         
         # Figure 1: Error rates by condition and temperature
         _plot_error_rates_comparison(rates_dict, completed_temps, figures_dir, log)
+        gc.collect()
         
         # Figure 2: Temperature curves
         _plot_temperature_curves(rates_dict, completed_temps, figures_dir, log)
+        gc.collect()
         
         # Figure 3: Social pressure effect
         _plot_social_pressure_effect(rates_dict, completed_temps, figures_dir, log)
+        gc.collect()
         
         # Figure 4: Heatmap
         _plot_heatmap(rates_dict, completed_temps, figures_dir, log)
-        
-        # Save combined CSV files
-        log.info("Saving combined data tables...")
-        
-        # Combined rates
-        combined_rates = []
-        for temp in completed_temps:
-            df = rates_dict[temp].copy()
-            df['temperature'] = temp
-            combined_rates.append(df)
-        combined_df = pd.concat(combined_rates, ignore_index=True)
-        combined_df.to_csv(tables_dir / "rates_combined.csv", index=False)
-        
-        # Per-temperature rates
-        for temp in completed_temps:
-            rates_dict[temp].to_csv(tables_dir / f"rates_t{temp}.csv", index=False)
+        gc.collect()
         
         # Generate summary report
         _generate_summary_report(metadata, rates_dict, completed_temps, output_dir, log)
+        
+        # Final cleanup
+        del rates_dict
+        gc.collect()
         
         log.info(f"Combined analysis saved to {output_dir}")
         return True
@@ -1041,6 +1120,7 @@ def main():
     logger.info(f"Runs directory: {runs_dir}")
     logger.info(f"Output directory: {COMPARING_EXPERIMENTS_DIR}")
     logger.info(f"Temperatures: {temps_to_run}")
+    log_memory_usage(logger, "pipeline start")
     if args.dry_run:
         logger.info("MODE: DRY RUN (no changes will be made)")
     
@@ -1123,6 +1203,13 @@ def main():
                 
                 # Update CSV summary after each run (for real-time tracking)
                 save_runs_summary_csv(metadata, logger)
+            
+            # MEMORY CLEANUP: Force garbage collection after each experiment
+            # The subprocess itself cleans up model memory, but this ensures
+            # any Python objects from result processing are released
+            import gc
+            gc.collect()
+            log_memory_usage(logger, f"after T={temp} experiment")
     
     # Phase 2: Generate per-run reports
     if not args.only_analysis:
@@ -1149,6 +1236,7 @@ def main():
     logger.info("=" * 60)
     logger.info("PHASE 3: GENERATING COMBINED ANALYSIS")
     logger.info("=" * 60)
+    log_memory_usage(logger, "before combined analysis")
     
     success = generate_combined_analysis(
         metadata=metadata,
@@ -1157,6 +1245,11 @@ def main():
         logger=logger,
         dry_run=args.dry_run,
     )
+    
+    # Final garbage collection after analysis
+    import gc
+    gc.collect()
+    log_memory_usage(logger, "after combined analysis")
     
     # Save final CSV summary
     if not args.dry_run:

@@ -1,23 +1,83 @@
-2026-01-31 11:17:11 [INFO] ============================================================
-2026-01-31 11:17:11 [INFO] EXPANDED CONFORMITY EXPERIMENTS PIPELINE
-2026-01-31 11:17:11 [INFO] ============================================================
-2026-01-31 11:17:11 [INFO] Repo root: /Users/mahdi/repos/abstractAgentMachine
-2026-01-31 11:17:11 [INFO] Mode: LOCAL
-2026-01-31 11:17:11 [INFO] Models directory: /Users/mahdi/repos/abstractAgentMachine/models
-2026-01-31 11:17:11 [INFO] Runs directory: /Users/mahdi/repos/abstractAgentMachine/runs
-2026-01-31 11:17:11 [INFO] Output directory: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments
-2026-01-31 11:17:11 [INFO] Temperatures: [0.0, 0.2, 0.4]
-2026-01-31 11:17:11 [INFO] Started caffeinate (PID 72391) to prevent sleep during experiments
-2026-01-31 11:17:11 [INFO]   Your Mac will stay awake even with screen off or lid closed (on AC power)
-2026-01-31 11:17:11 [INFO] Set AAM_MODELS_DIR=/Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
-2026-01-31 11:17:11 [INFO] Set AAM_RUNS_DIR=/Users/mahdi/repos/abstractAgentMachine/runs
-2026-01-31 11:17:11 [INFO] Created/verified models cache directory: /Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
-2026-01-31 11:17:11 [INFO] Created/verified runs directory: /Users/mahdi/repos/abstractAgentMachine/runs
-2026-01-31 11:17:11 [INFO] 
-2026-01-31 11:17:11 [INFO] ============================================================
-2026-01-31 11:17:11 [INFO] PHASE 1: RUNNING EXPERIMENTS
-2026-01-31 11:17:11 [INFO] ============================================================
-2026-01-31 11:17:11 [INFO] 
-2026-01-31 11:17:11 [INFO] --- Temperature 0.0 ---
-2026-01-31 11:17:11 [INFO] Running experiment for T=0.0...
-2026-01-31 11:17:11 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m aam olmo-conformity --suite-config /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/suite_expanded_temp0.0.json --runs-dir /Users/mahdi/repos/abstractAgentMachine/runs
+2026-01-31 19:51:50 [INFO] ============================================================
+2026-01-31 19:51:50 [INFO] EXPANDED CONFORMITY EXPERIMENTS PIPELINE
+2026-01-31 19:51:50 [INFO] ============================================================
+2026-01-31 19:51:50 [INFO] Repo root: /Users/mahdi/repos/abstractAgentMachine
+2026-01-31 19:51:50 [INFO] Mode: LOCAL
+2026-01-31 19:51:50 [INFO] Models directory: /Users/mahdi/repos/abstractAgentMachine/models
+2026-01-31 19:51:50 [INFO] Runs directory: /Users/mahdi/repos/abstractAgentMachine/runs
+2026-01-31 19:51:50 [INFO] Output directory: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments
+2026-01-31 19:51:50 [INFO] Temperatures: [0.0]
+2026-01-31 19:51:50 [INFO] Started caffeinate (PID 2684) to prevent sleep during experiments
+2026-01-31 19:51:50 [INFO]   Your Mac will stay awake even with screen off or lid closed (on AC power)
+2026-01-31 19:51:50 [INFO] Set AAM_MODELS_DIR=/Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-01-31 19:51:50 [INFO] Set AAM_RUNS_DIR=/Users/mahdi/repos/abstractAgentMachine/runs
+2026-01-31 19:51:50 [INFO] Created/verified models cache directory: /Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-01-31 19:51:50 [INFO] Created/verified runs directory: /Users/mahdi/repos/abstractAgentMachine/runs
+2026-01-31 19:51:50 [INFO] 
+2026-01-31 19:51:50 [INFO] ============================================================
+2026-01-31 19:51:50 [INFO] PHASE 1: RUNNING EXPERIMENTS
+2026-01-31 19:51:50 [INFO] ============================================================
+2026-01-31 19:51:50 [INFO] 
+2026-01-31 19:51:50 [INFO] --- Temperature 0.0 ---
+2026-01-31 19:51:50 [INFO] Running experiment for T=0.0...
+2026-01-31 19:51:50 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m aam olmo-conformity --suite-config /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/suite_expanded_temp0.0.json --runs-dir /Users/mahdi/repos/abstractAgentMachine/runs
+2026-01-31 20:09:31 [INFO] Stopped caffeinate - system can sleep normally again
+2026-01-31 20:11:08 [INFO] ============================================================
+2026-01-31 20:11:08 [INFO] EXPANDED CONFORMITY EXPERIMENTS PIPELINE
+2026-01-31 20:11:08 [INFO] ============================================================
+2026-01-31 20:11:08 [INFO] Repo root: /Users/mahdi/repos/abstractAgentMachine
+2026-01-31 20:11:08 [INFO] Mode: LOCAL
+2026-01-31 20:11:08 [INFO] Models directory: /Users/mahdi/repos/abstractAgentMachine/models
+2026-01-31 20:11:08 [INFO] Runs directory: /Users/mahdi/repos/abstractAgentMachine/runs
+2026-01-31 20:11:08 [INFO] Output directory: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments
+2026-01-31 20:11:08 [INFO] Temperatures: [0.0]
+2026-01-31 20:11:08 [INFO] Memory usage (pipeline start): 26.8 MB
+2026-01-31 20:11:08 [INFO] Started caffeinate (PID 3822) to prevent sleep during experiments
+2026-01-31 20:11:08 [INFO]   Your Mac will stay awake even with screen off or lid closed (on AC power)
+2026-01-31 20:11:08 [INFO] Set AAM_MODELS_DIR=/Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-01-31 20:11:08 [INFO] Set AAM_RUNS_DIR=/Users/mahdi/repos/abstractAgentMachine/runs
+2026-01-31 20:11:08 [INFO] Created/verified models cache directory: /Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-01-31 20:11:08 [INFO] Created/verified runs directory: /Users/mahdi/repos/abstractAgentMachine/runs
+2026-01-31 20:11:08 [INFO] 
+2026-01-31 20:11:08 [INFO] ============================================================
+2026-01-31 20:11:08 [INFO] PHASE 1: RUNNING EXPERIMENTS
+2026-01-31 20:11:08 [INFO] ============================================================
+2026-01-31 20:11:08 [INFO] 
+2026-01-31 20:11:08 [INFO] --- Temperature 0.0 ---
+2026-01-31 20:11:08 [INFO] Running experiment for T=0.0...
+2026-01-31 20:11:08 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m aam olmo-conformity --suite-config /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/suite_expanded_temp0.0.json --runs-dir /Users/mahdi/repos/abstractAgentMachine/runs
+2026-02-01 05:31:53 [INFO] Experiment completed successfully
+2026-02-01 05:31:53 [INFO]   Run ID: 62d6de1d-0f4f-46c8-b028-820063383d59
+2026-02-01 05:31:53 [INFO]   Run dir: /Users/mahdi/repos/abstractAgentMachine/runs/20260131_201109_62d6de1d-0f4f-46c8-b028-820063383d59
+2026-02-01 05:31:53 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-02-01 05:31:53 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260201_053153.csv
+2026-02-01 05:31:53 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-02-01 05:31:53 [INFO] Memory usage (after T=0.0 experiment): 37.2 MB
+2026-02-01 05:31:53 [INFO] 
+2026-02-01 05:31:53 [INFO] ============================================================
+2026-02-01 05:31:53 [INFO] PHASE 2: GENERATING PER-RUN REPORTS
+2026-02-01 05:31:53 [INFO] ============================================================
+2026-02-01 05:31:53 [INFO] Generating report for run 62d6de1d...
+2026-02-01 05:31:58 [INFO] Report generated successfully for 62d6de1d
+2026-02-01 05:31:58 [INFO] 
+2026-02-01 05:31:58 [INFO] ============================================================
+2026-02-01 05:31:58 [INFO] PHASE 3: GENERATING COMBINED ANALYSIS
+2026-02-01 05:31:58 [INFO] ============================================================
+2026-02-01 05:31:58 [INFO] Memory usage (before combined analysis): 37.3 MB
+2026-02-01 05:31:58 [INFO] Generating combined cross-temperature analysis...
+2026-02-01 05:31:58 [WARNING] Need at least 2 completed runs for comparison analysis
+2026-02-01 05:31:58 [INFO] Memory usage (after combined analysis): 37.3 MB
+2026-02-01 05:31:58 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260201_053158.csv
+2026-02-01 05:31:58 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-02-01 05:31:58 [INFO] 
+2026-02-01 05:31:58 [INFO] ============================================================
+2026-02-01 05:31:58 [INFO] PIPELINE COMPLETE
+2026-02-01 05:31:58 [INFO] ============================================================
+2026-02-01 05:31:58 [INFO] Experiments completed: 1
+2026-02-01 05:31:58 [INFO] Experiments failed: 0
+2026-02-01 05:31:58 [INFO] Combined analysis: FAILED
+2026-02-01 05:31:58 [INFO] Output directory: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments
+2026-02-01 05:31:58 [INFO] Metadata file: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-02-01 05:31:58 [INFO] Runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260201_053158.csv
+2026-02-01 05:31:58 [INFO] Runs summary dir: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary
+2026-02-01 05:31:58 [INFO] Stopped caffeinate - system can sleep normally again

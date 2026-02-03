@@ -1,0 +1,2 @@
+run_id,temperature,status,config_file,started_at,completed_at,run_dir,db_path,error_message
+62d6de1d-0f4f-46c8-b028-820063383d59,0.0,completed,suite_expanded_temp0.0.json,2026-01-31T20:11:08.136263,2026-02-01T05:31:53.932749,/Users/mahdi/repos/abstractAgentMachine/runs/20260131_201109_62d6de1d-0f4f-46c8-b028-820063383d59,/Users/mahdi/repos/abstractAgentMachine/runs/20260131_201109_62d6de1d-0f4f-46c8-b028-820063383d59/simulation.db,
