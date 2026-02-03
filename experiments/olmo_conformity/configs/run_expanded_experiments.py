@@ -1089,6 +1089,11 @@ def main():
         help="Show what would be done without executing",
     )
     parser.add_argument(
+        "--force-rerun",
+        action="store_true",
+        help="Run experiments even if metadata marks them completed (e.g. when runs were on another machine)",
+    )
+    parser.add_argument(
         "--temps",
         type=str,
         default=None,
@@ -1172,9 +1177,9 @@ def main():
         for temp in temps_to_run:
             temp_str = str(temp)
             
-            # Check if already completed
+            # Check if already completed (unless --force-rerun: e.g. metadata from another machine)
             existing = metadata.get("experiments", {}).get(temp_str, {})
-            if existing.get("status") == "completed" and not args.dry_run:
+            if existing.get("status") == "completed" and not args.dry_run and not args.force_rerun:
                 logger.info(f"T={temp} already completed, skipping (run_id={existing.get('run_id', 'N/A')[:8]}...)")
                 continue
             
