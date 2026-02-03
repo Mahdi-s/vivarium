@@ -518,6 +518,18 @@ def run_suite(
 
                 max_tokens = model_config.get("max_new_tokens", 128)
                 # Prefer CUDA on HPC, MPS on Apple Silicon, else CPU. Override via VVM_DEVICE if needed.
+
+                # Ensure HF/Transformers uses the configured cache directory (critical on HPC where home
+                # quotas are small and repeated downloads are expensive). The suite config / paths.json
+                # provides `models_dir` as a cache path (typically .../huggingface_cache).
+                if models_dir_from_config:
+                    try:
+                        hf_cache = Path(models_dir_from_config)
+                        os.environ.setdefault("HF_HOME", str(hf_cache.parent))
+                        os.environ.setdefault("HUGGINGFACE_HUB_CACHE", str(hf_cache))
+                        os.environ.setdefault("TRANSFORMERS_CACHE", str(hf_cache))
+                    except Exception:
+                        pass
                 
                 # Resolve model path: use configured models_dir if available, else default
                 if models_dir_from_config:
@@ -766,5 +778,4 @@ def run_suite(
     print(f"\n[Runner] All {total_trials} trials completed")
     trace_db.close()
     return paths
-
 

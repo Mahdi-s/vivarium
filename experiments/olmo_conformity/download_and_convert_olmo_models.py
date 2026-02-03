@@ -181,6 +181,12 @@ def download_model(model_id: str, cache_dir: Path) -> Path:
             cache_dir=str(cache_dir),
             torch_dtype="auto",
         )
+        # Fix generation_config so save_pretrained() does not fail: either do_sample=True
+        # or unset temperature/top_p. Prefer making do_sample True so config is preserved.
+        if getattr(model, "generation_config", None) is not None:
+            gc = model.generation_config
+            if getattr(gc, "temperature", None) is not None or getattr(gc, "top_p", None) is not None:
+                gc.do_sample = True
         model.save_pretrained(str(model_path))
         
         print(f"✓ Downloaded via transformers to: {model_path}")

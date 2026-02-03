@@ -34,6 +34,9 @@ Usage:
     
     # Skip running, only generate analysis from existing runs
     python run_expanded_experiments.py --skip-runs
+
+    # Run experiments only (useful for splitting temperatures across HPC jobs)
+    python run_expanded_experiments.py --runs-only --temps 0.0
     
     # Only regenerate combined analysis (requires runs_metadata.json)
     python run_expanded_experiments.py --only-analysis
@@ -59,6 +62,7 @@ import platform
 import subprocess
 import sys
 import time
+from contextlib import contextmanager
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
@@ -255,8 +259,13 @@ def setup_logging(log_file: Optional[Path] = None, max_bytes: int = 10_000_000, 
 def load_metadata(metadata_path: Path) -> Dict[str, Any]:
     """Load existing metadata or return empty structure."""
     if metadata_path.exists():
-        with open(metadata_path, 'r') as f:
-            return json.load(f)
+        try:
+            with open(metadata_path, 'r') as f:
+                return json.load(f)
+        except Exception:
+            # If the file is corrupted/partial (e.g., interrupted write), fall back
+            # to a new metadata structure rather than crashing the whole pipeline.
+            pass
     return {
         "created_at": datetime.now().isoformat(),
         "updated_at": datetime.now().isoformat(),
@@ -265,11 +274,52 @@ def load_metadata(metadata_path: Path) -> Dict[str, Any]:
 
 
 def save_metadata(metadata: Dict[str, Any], metadata_path: Path) -> None:
-    """Save metadata to JSON file."""
+    """
+    Save metadata to JSON file (atomic write).
+
+    Atomic replace prevents partial writes if the process is interrupted.
+    """
     metadata["updated_at"] = datetime.now().isoformat()
     metadata_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(metadata_path, 'w') as f:
+    tmp_path = metadata_path.with_suffix(metadata_path.suffix + ".tmp")
+    with open(tmp_path, 'w') as f:
         json.dump(metadata, f, indent=2)
+    os.replace(tmp_path, metadata_path)
+
+
+@contextmanager
+def _metadata_lock(metadata_path: Path, *, timeout_s: float = 600.0, poll_s: float = 0.25):
+    """
+    Cross-process lock for metadata updates.
+
+    We lock a sibling lockfile so that multiple HPC jobs can safely append/update
+    `runs_metadata.json` without clobbering each other's updates.
+    """
+    lock_path = metadata_path.with_suffix(metadata_path.suffix + ".lock")
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    # Use fcntl when available (auto-released on process exit).
+    try:
+        import fcntl  # type: ignore
+    except Exception:  # pragma: no cover
+        fcntl = None  # type: ignore
+
+    start = time.time()
+    with open(lock_path, "a+") as f:
+        if fcntl is not None:
+            while True:
+                try:
+                    fcntl.flock(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    break
+                except BlockingIOError:
+                    if (time.time() - start) > float(timeout_s):
+                        raise TimeoutError(f"Timed out waiting for metadata lock: {lock_path}")
+                    time.sleep(float(poll_s))
+        yield
+        if fcntl is not None:
+            try:
+                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+            except Exception:
+                pass
 
 
 def save_runs_summary_csv(metadata: Dict[str, Any], logger: Optional[logging.Logger] = None) -> Path:
@@ -294,8 +344,9 @@ def save_runs_summary_csv(metadata: Dict[str, Any], logger: Optional[logging.Log
     # Ensure directory exists
     RUNS_SUMMARY_DIR.mkdir(parents=True, exist_ok=True)
     
-    # Generate timestamped filename
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    # Generate timestamped filename.
+    # Include microseconds so concurrent HPC jobs don't collide on the same second.
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     csv_path = RUNS_SUMMARY_DIR / f"runs_summary_{timestamp}.csv"
     
     # Also maintain a "latest" symlink/copy
@@ -646,8 +697,27 @@ def generate_combined_analysis(
             conn = sqlite3.connect(str(db_path))
             conn.row_factory = sqlite3.Row
             
-            # Load behavioral data
+            # Load behavioral data (one row per trial, using the first/original output).
+            #
+            # IMPORTANT:
+            # - Filter to factual-only rows (o.is_correct IS NOT NULL) so accuracy/error rates
+            #   aren't contaminated by opinion tasks (e.g., social_conventions) that have no
+            #   ground-truth label in the repo.
+            # - Select the first output per trial to avoid double-counting when later phases
+            #   (e.g., interventions) append additional outputs to the same trial.
             query = """
+            WITH first_outputs AS (
+                SELECT trial_id, MIN(created_at) AS min_created_at
+                FROM conformity_outputs
+                GROUP BY trial_id
+            ),
+            first_output_ids AS (
+                SELECT MIN(o.output_id) AS output_id, o.trial_id
+                FROM conformity_outputs o
+                JOIN first_outputs fo
+                  ON fo.trial_id = o.trial_id AND fo.min_created_at = o.created_at
+                GROUP BY o.trial_id
+            )
             SELECT 
                 t.trial_id,
                 t.model_id,
@@ -666,9 +736,11 @@ def generate_combined_analysis(
             JOIN conformity_conditions c ON t.condition_id = c.condition_id
             JOIN conformity_items i ON t.item_id = i.item_id
             JOIN conformity_datasets d ON i.dataset_id = d.dataset_id
-            JOIN conformity_outputs o ON t.trial_id = o.trial_id
+            JOIN first_output_ids foi ON foi.trial_id = t.trial_id
+            JOIN conformity_outputs o ON o.output_id = foi.output_id
             WHERE t.run_id = ?
-              AND c.name IN ('control', 'asch_history_5', 'authoritative_bias');
+              AND c.name IN ('control', 'asch_history_5', 'authoritative_bias')
+              AND o.is_correct IS NOT NULL;
             """
             
             df = pd.read_sql_query(query, conn, params=[run_info["id"]])
@@ -1084,6 +1156,11 @@ def main():
         help="Only regenerate combined analysis (requires existing metadata)",
     )
     parser.add_argument(
+        "--runs-only",
+        action="store_true",
+        help="Run experiments (phase 1) and update metadata only (skip per-run reports and combined analysis)",
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Show what would be done without executing",
@@ -1106,6 +1183,10 @@ def main():
     )
     
     args = parser.parse_args()
+
+    if args.runs_only and (args.skip_runs or args.only_analysis):
+        print("Error: --runs-only cannot be combined with --skip-runs or --only-analysis", file=sys.stderr)
+        return 2
     
     # Parse temperatures
     if args.temps:
@@ -1124,7 +1205,14 @@ def main():
         models_dir = Path(args.models_dir) if args.models_dir else DEFAULT_MODELS_DIR
         runs_dir = Path(args.runs_dir) if args.runs_dir else DEFAULT_RUNS_DIR
     metadata_path = COMPARING_EXPERIMENTS_DIR / "runs_metadata.json"
-    log_path = COMPARING_EXPERIMENTS_DIR / "analysis_log.txt"
+    # If we split temperatures into separate HPC jobs, multiple processes would write
+    # to the same rotating log file (not multiprocess-safe). Use per-temp log files
+    # for single-temp runs-only jobs.
+    if args.runs_only and len(temps_to_run) == 1:
+        temp_slug = str(temps_to_run[0]).replace(".", "p")
+        log_path = COMPARING_EXPERIMENTS_DIR / f"analysis_log_t{temp_slug}.txt"
+    else:
+        log_path = COMPARING_EXPERIMENTS_DIR / "analysis_log.txt"
     
     # Setup logging
     COMPARING_EXPERIMENTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -1166,6 +1254,7 @@ def main():
     
     # Load existing metadata
     metadata = load_metadata(metadata_path)
+    phase1_results: List[ExperimentResult] = []
     
     # Phase 1: Run experiments (unless skipped)
     if not args.skip_runs and not args.only_analysis:
@@ -1181,6 +1270,19 @@ def main():
             existing = metadata.get("experiments", {}).get(temp_str, {})
             if existing.get("status") == "completed" and not args.dry_run and not args.force_rerun:
                 logger.info(f"T={temp} already completed, skipping (run_id={existing.get('run_id', 'N/A')[:8]}...)")
+                phase1_results.append(
+                    ExperimentResult(
+                        temperature=temp,
+                        run_id=str(existing.get("run_id") or ""),
+                        run_dir=str(existing.get("run_dir") or ""),
+                        db_path=str(existing.get("db_path") or ""),
+                        config_file=str(existing.get("config_file") or ""),
+                        status="skipped",
+                        error_message=None,
+                        started_at=None,
+                        completed_at=None,
+                    )
+                )
                 continue
             
             # Build config path
@@ -1203,25 +1305,33 @@ def main():
                 logger=logger,
                 dry_run=args.dry_run,
             )
+            phase1_results.append(result)
             
             # Save result to metadata
             if not args.dry_run:
-                metadata["experiments"][temp_str] = {
-                    "temperature": result.temperature,
-                    "run_id": result.run_id,
-                    "run_dir": result.run_dir,
-                    "db_path": result.db_path,
-                    "config_file": result.config_file,
-                    "status": result.status,
-                    "error_message": result.error_message,
-                    "started_at": result.started_at,
-                    "completed_at": result.completed_at,
-                }
-                save_metadata(metadata, metadata_path)
-                logger.info(f"Metadata saved to {metadata_path}")
-                
-                # Update CSV summary after each run (for real-time tracking)
-                save_runs_summary_csv(metadata, logger)
+                # Concurrency-safe update: reload+merge under a cross-process lock.
+                with _metadata_lock(metadata_path):
+                    latest = load_metadata(metadata_path)
+                    latest.setdefault("experiments", {})
+                    latest["experiments"][temp_str] = {
+                        "temperature": result.temperature,
+                        "run_id": result.run_id,
+                        "run_dir": result.run_dir,
+                        "db_path": result.db_path,
+                        "config_file": result.config_file,
+                        "status": result.status,
+                        "error_message": result.error_message,
+                        "started_at": result.started_at,
+                        "completed_at": result.completed_at,
+                    }
+                    save_metadata(latest, metadata_path)
+                    logger.info(f"Metadata saved to {metadata_path}")
+                    
+                    # Update CSV summary after each run (for real-time tracking)
+                    save_runs_summary_csv(latest, logger)
+
+                    # Keep our in-process view up-to-date for later phases.
+                    metadata = latest
             
             # MEMORY CLEANUP: Force garbage collection after each experiment
             # The subprocess itself cleans up model memory, but this ensures
@@ -1229,6 +1339,23 @@ def main():
             import gc
             gc.collect()
             log_memory_usage(logger, f"after T={temp} experiment")
+
+        # If this job is intended to only run the experiments, stop here.
+        if args.runs_only:
+            logger.info("")
+            logger.info("=" * 60)
+            logger.info("RUNS-ONLY MODE: SKIPPING REPORTS + COMBINED ANALYSIS")
+            logger.info("=" * 60)
+
+            failed = [r for r in phase1_results if r.status == "failed"]
+            completed = [r for r in phase1_results if r.status == "completed"]
+            skipped = [r for r in phase1_results if r.status == "skipped"]
+
+            logger.info(f"Temperatures requested: {temps_to_run}")
+            logger.info(f"Completed: {len(completed)}; Failed: {len(failed)}; Skipped: {len(skipped)}")
+            for r in failed:
+                logger.info(f"  FAILED T={r.temperature}: {r.error_message or 'Unknown error'}")
+            return 1 if failed else 0
     
     # Phase 2: Generate per-run reports
     if not args.only_analysis:
