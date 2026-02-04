@@ -109,7 +109,11 @@ def run_truth_social_vector_analysis(
         run_id=run_id,
         train_dataset_id=truth_dataset_id,
         model_id=model_id,
-        probe_kind=f"truth{variant_suffix}",
+        # IMPORTANT: Keep probe_kind stable ("truth"/"social") so downstream analytics
+        # and resume/posthoc utilities can reliably locate probes. Variant separation
+        # is achieved via (run_id, model_id) + variant-scoped projections and
+        # variant-suffixed artifact filenames.
+        probe_kind="truth",
         layers=layers,
         component=component,
         token_position=token_position,
@@ -152,7 +156,8 @@ def run_truth_social_vector_analysis(
                 run_id=run_id,
                 train_dataset_id=social_dataset_id,
                 model_id=model_id,
-                probe_kind=f"social{variant_suffix}",
+                # IMPORTANT: Keep probe_kind stable ("truth"/"social"); see note above.
+                probe_kind="social",
                 layers=layers,
                 component=component,
                 token_position=token_position,

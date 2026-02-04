@@ -375,7 +375,9 @@ def run_suite(
                 dataset_id=dataset_id,
                 domain=str(it.get("domain") or "unknown"),
                 question=str(it.get("question") or ""),
-                ground_truth_text=(str(it["ground_truth_text"]) if "ground_truth_text" in it else None),
+                # IMPORTANT: Avoid `str(None) == "None"` which would incorrectly create
+                # a fake ground truth for unlabeled items (e.g., social_conventions).
+                ground_truth_text=(None if it.get("ground_truth_text") is None else str(it.get("ground_truth_text"))),
                 ground_truth_json=(it.get("ground_truth_json") if isinstance(it.get("ground_truth_json"), dict) else None),
                 source_json=source_data if source_data else None,
             )
@@ -778,4 +780,3 @@ def run_suite(
     print(f"\n[Runner] All {total_trials} trials completed")
     trace_db.close()
     return paths
-

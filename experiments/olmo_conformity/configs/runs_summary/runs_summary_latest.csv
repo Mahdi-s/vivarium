@@ -1,2 +1,7 @@
 run_id,temperature,status,config_file,started_at,completed_at,run_dir,db_path,error_message
-62d6de1d-0f4f-46c8-b028-820063383d59,0.0,completed,suite_expanded_temp0.0.json,2026-01-31T20:11:08.136263,2026-02-01T05:31:53.932749,/Users/mahdi/repos/abstractAgentMachine/runs/20260131_201109_62d6de1d-0f4f-46c8-b028-820063383d59,/Users/mahdi/repos/abstractAgentMachine/runs/20260131_201109_62d6de1d-0f4f-46c8-b028-820063383d59/simulation.db,
+56478e99-7607-4957-9f53-a53b73a7e9d4,0.0,completed,suite_expanded_temp0.0.json,,,20260203_170602_56478e99-7607-4957-9f53-a53b73a7e9d4,runs-hpc/20260203_170602_56478e99-7607-4957-9f53-a53b73a7e9d4/simulation.db,
+99127619-fcc7-4fd4-ba3a-cc810610249f,0.2,completed,suite_expanded_temp0.2.json,,,20260203_170602_99127619-fcc7-4fd4-ba3a-cc810610249f,runs-hpc/20260203_170602_99127619-fcc7-4fd4-ba3a-cc810610249f/simulation.db,
+271bb5b2-572d-4ecd-8577-b07a7cd10846,0.4,completed,suite_expanded_temp0.4.json,,,20260203_170602_271bb5b2-572d-4ecd-8577-b07a7cd10846,runs-hpc/20260203_170602_271bb5b2-572d-4ecd-8577-b07a7cd10846/simulation.db,
+dda9d6b3-a516-41b3-a85a-b424de8f15d3,0.6,completed,suite_expanded_temp0.6.json,,,20260203_170602_dda9d6b3-a516-41b3-a85a-b424de8f15d3,runs-hpc/20260203_170602_dda9d6b3-a516-41b3-a85a-b424de8f15d3/simulation.db,
+eb777acc-3ab5-4f87-b073-249a50d25863,0.8,completed,suite_expanded_temp0.8.json,,,20260203_170602_eb777acc-3ab5-4f87-b073-249a50d25863,runs-hpc/20260203_170602_eb777acc-3ab5-4f87-b073-249a50d25863/simulation.db,
+fa0b1d4f-d547-4094-b07c-4f9efc20f771,1.0,completed,suite_expanded_temp1.0.json,,,20260203_185521_fa0b1d4f-d547-4094-b07c-4f9efc20f771,runs-hpc/20260203_185521_fa0b1d4f-d547-4094-b07c-4f9efc20f771/simulation.db,

@@ -81,3 +81,137 @@
 2026-02-01 05:31:58 [INFO] Runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260201_053158.csv
 2026-02-01 05:31:58 [INFO] Runs summary dir: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary
 2026-02-01 05:31:58 [INFO] Stopped caffeinate - system can sleep normally again
+2026-02-04 00:30:49 [INFO] ============================================================
+2026-02-04 00:30:49 [INFO] EXPANDED CONFORMITY EXPERIMENTS PIPELINE
+2026-02-04 00:30:49 [INFO] ============================================================
+2026-02-04 00:30:49 [INFO] Repo root: /Users/mahdi/repos/abstractAgentMachine
+2026-02-04 00:30:49 [INFO] Mode: HPC
+2026-02-04 00:30:49 [INFO] Models directory: /scratch1/mahdisae/olmo_experiments/models/huggingface_cache
+2026-02-04 00:30:49 [INFO] Runs directory: runs-hpc
+2026-02-04 00:30:49 [INFO] Output directory: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments
+2026-02-04 00:30:49 [INFO] Temperatures: [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+2026-02-04 00:30:49 [INFO] Memory usage (pipeline start): 27.4 MB
+2026-02-04 00:30:49 [INFO] 
+2026-02-04 00:30:49 [INFO] ============================================================
+2026-02-04 00:30:49 [INFO] PHASE 2: GENERATING PER-RUN REPORTS
+2026-02-04 00:30:49 [INFO] ============================================================
+2026-02-04 00:30:49 [INFO] Generating report for run 56478e99...
+2026-02-04 00:31:09 [INFO] Report generated successfully for 56478e99
+2026-02-04 00:31:09 [INFO] Generating report for run 99127619...
+2026-02-04 00:31:23 [INFO] Report generated successfully for 99127619
+2026-02-04 00:31:23 [INFO] Generating report for run 271bb5b2...
+2026-02-04 00:31:37 [INFO] Report generated successfully for 271bb5b2
+2026-02-04 00:31:37 [INFO] Generating report for run dda9d6b3...
+2026-02-04 00:31:51 [INFO] Report generated successfully for dda9d6b3
+2026-02-04 00:31:51 [INFO] Generating report for run eb777acc...
+2026-02-04 00:32:04 [INFO] Report generated successfully for eb777acc
+2026-02-04 00:32:04 [INFO] Generating report for run fa0b1d4f...
+2026-02-04 00:32:18 [INFO] Report generated successfully for fa0b1d4f
+2026-02-04 00:32:18 [INFO] 
+2026-02-04 00:32:18 [INFO] ============================================================
+2026-02-04 00:32:18 [INFO] PHASE 3: GENERATING COMBINED ANALYSIS
+2026-02-04 00:32:18 [INFO] ============================================================
+2026-02-04 00:32:18 [INFO] Memory usage (before combined analysis): 28.2 MB
+2026-02-04 00:32:18 [INFO] Generating combined cross-temperature analysis...
+2026-02-04 00:32:18 [INFO] Analyzing 6 temperature levels: [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+2026-02-04 00:32:28 [INFO] Loading data for T=0.0...
+2026-02-04 00:32:28 [INFO]   Processed T=0.0, memory cleaned
+2026-02-04 00:32:28 [INFO] Loading data for T=0.2...
+2026-02-04 00:32:28 [INFO]   Processed T=0.2, memory cleaned
+2026-02-04 00:32:28 [INFO] Loading data for T=0.4...
+2026-02-04 00:32:28 [INFO]   Processed T=0.4, memory cleaned
+2026-02-04 00:32:28 [INFO] Loading data for T=0.6...
+2026-02-04 00:32:28 [INFO]   Processed T=0.6, memory cleaned
+2026-02-04 00:32:28 [INFO] Loading data for T=0.8...
+2026-02-04 00:32:28 [INFO]   Processed T=0.8, memory cleaned
+2026-02-04 00:32:28 [INFO] Loading data for T=1.0...
+2026-02-04 00:32:28 [INFO]   Processed T=1.0, memory cleaned
+2026-02-04 00:32:28 [INFO] Saving combined data tables...
+2026-02-04 00:32:28 [INFO] Generating comparison figures...
+2026-02-04 00:32:29 [INFO]   Saved error_rates_by_temperature
+2026-02-04 00:32:29 [INFO]   Saved temperature_curves
+2026-02-04 00:32:29 [INFO]   Saved social_pressure_effect
+2026-02-04 00:32:30 [INFO]   Saved error_rate_heatmap
+2026-02-04 00:32:30 [INFO]   Saved analysis_report.md
+2026-02-04 00:32:30 [INFO] Combined analysis saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments
+2026-02-04 00:32:30 [INFO] Memory usage (after combined analysis): 594.9 MB
+2026-02-04 00:32:30 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260204_003230_250523.csv
+2026-02-04 00:32:30 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-02-04 00:32:30 [INFO] 
+2026-02-04 00:32:30 [INFO] ============================================================
+2026-02-04 00:32:30 [INFO] PIPELINE COMPLETE
+2026-02-04 00:32:30 [INFO] ============================================================
+2026-02-04 00:32:30 [INFO] Experiments completed: 6
+2026-02-04 00:32:30 [INFO] Experiments failed: 0
+2026-02-04 00:32:30 [INFO] Combined analysis: SUCCESS
+2026-02-04 00:32:30 [INFO] Output directory: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments
+2026-02-04 00:32:30 [INFO] Metadata file: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-02-04 00:32:30 [INFO] Runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260204_003230_250523.csv
+2026-02-04 00:32:30 [INFO] Runs summary dir: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary
+2026-02-04 00:46:52 [INFO] ============================================================
+2026-02-04 00:46:52 [INFO] EXPANDED CONFORMITY EXPERIMENTS PIPELINE
+2026-02-04 00:46:52 [INFO] ============================================================
+2026-02-04 00:46:52 [INFO] Repo root: /Users/mahdi/repos/abstractAgentMachine
+2026-02-04 00:46:52 [INFO] Mode: HPC
+2026-02-04 00:46:52 [INFO] Models directory: /scratch1/mahdisae/olmo_experiments/models/huggingface_cache
+2026-02-04 00:46:52 [INFO] Runs directory: runs-hpc
+2026-02-04 00:46:52 [INFO] Output directory: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments
+2026-02-04 00:46:52 [INFO] Temperatures: [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+2026-02-04 00:46:52 [INFO] Memory usage (pipeline start): 27.4 MB
+2026-02-04 00:46:52 [INFO] 
+2026-02-04 00:46:52 [INFO] ============================================================
+2026-02-04 00:46:52 [INFO] PHASE 2: GENERATING PER-RUN REPORTS
+2026-02-04 00:46:52 [INFO] ============================================================
+2026-02-04 00:46:52 [INFO] Generating report for run 56478e99...
+2026-02-04 00:47:06 [INFO] Report generated successfully for 56478e99
+2026-02-04 00:47:06 [INFO] Generating report for run 99127619...
+2026-02-04 00:47:20 [INFO] Report generated successfully for 99127619
+2026-02-04 00:47:20 [INFO] Generating report for run 271bb5b2...
+2026-02-04 00:47:34 [INFO] Report generated successfully for 271bb5b2
+2026-02-04 00:47:34 [INFO] Generating report for run dda9d6b3...
+2026-02-04 00:47:47 [INFO] Report generated successfully for dda9d6b3
+2026-02-04 00:47:47 [INFO] Generating report for run eb777acc...
+2026-02-04 00:48:01 [INFO] Report generated successfully for eb777acc
+2026-02-04 00:48:01 [INFO] Generating report for run fa0b1d4f...
+2026-02-04 00:48:15 [INFO] Report generated successfully for fa0b1d4f
+2026-02-04 00:48:15 [INFO] 
+2026-02-04 00:48:15 [INFO] ============================================================
+2026-02-04 00:48:15 [INFO] PHASE 3: GENERATING COMBINED ANALYSIS
+2026-02-04 00:48:15 [INFO] ============================================================
+2026-02-04 00:48:15 [INFO] Memory usage (before combined analysis): 28.6 MB
+2026-02-04 00:48:15 [INFO] Generating combined cross-temperature analysis...
+2026-02-04 00:48:15 [INFO] Analyzing 6 temperature levels: [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+2026-02-04 00:48:25 [INFO] Loading data for T=0.0...
+2026-02-04 00:48:25 [INFO]   Processed T=0.0, memory cleaned
+2026-02-04 00:48:25 [INFO] Loading data for T=0.2...
+2026-02-04 00:48:25 [INFO]   Processed T=0.2, memory cleaned
+2026-02-04 00:48:25 [INFO] Loading data for T=0.4...
+2026-02-04 00:48:25 [INFO]   Processed T=0.4, memory cleaned
+2026-02-04 00:48:25 [INFO] Loading data for T=0.6...
+2026-02-04 00:48:25 [INFO]   Processed T=0.6, memory cleaned
+2026-02-04 00:48:25 [INFO] Loading data for T=0.8...
+2026-02-04 00:48:25 [INFO]   Processed T=0.8, memory cleaned
+2026-02-04 00:48:25 [INFO] Loading data for T=1.0...
+2026-02-04 00:48:25 [INFO]   Processed T=1.0, memory cleaned
+2026-02-04 00:48:25 [INFO] Saving combined data tables...
+2026-02-04 00:48:25 [INFO] Generating comparison figures...
+2026-02-04 00:48:26 [INFO]   Saved error_rates_by_temperature
+2026-02-04 00:48:27 [INFO]   Saved temperature_curves
+2026-02-04 00:48:27 [INFO]   Saved social_pressure_effect
+2026-02-04 00:48:27 [INFO]   Saved error_rate_heatmap
+2026-02-04 00:48:27 [INFO]   Saved analysis_report.md
+2026-02-04 00:48:27 [INFO] Combined analysis saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments
+2026-02-04 00:48:27 [INFO] Memory usage (after combined analysis): 610.1 MB
+2026-02-04 00:48:27 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260204_004827_822912.csv
+2026-02-04 00:48:27 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-02-04 00:48:27 [INFO] 
+2026-02-04 00:48:27 [INFO] ============================================================
+2026-02-04 00:48:27 [INFO] PIPELINE COMPLETE
+2026-02-04 00:48:27 [INFO] ============================================================
+2026-02-04 00:48:27 [INFO] Experiments completed: 6
+2026-02-04 00:48:27 [INFO] Experiments failed: 0
+2026-02-04 00:48:27 [INFO] Combined analysis: SUCCESS
+2026-02-04 00:48:27 [INFO] Output directory: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments
+2026-02-04 00:48:27 [INFO] Metadata file: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-02-04 00:48:27 [INFO] Runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260204_004827_822912.csv
+2026-02-04 00:48:27 [INFO] Runs summary dir: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary

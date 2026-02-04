@@ -273,7 +273,7 @@ def run_intervention_sweep(
 
     # Choose trials (default: all immutable-fact trials with is_correct not NULL)
     base_query = """
-      SELECT t.trial_id, i.ground_truth_text
+      SELECT t.trial_id, i.ground_truth_text, t.seed
       FROM conformity_trials t
       JOIN conformity_items i ON i.item_id = t.item_id
       WHERE t.run_id = ?
@@ -315,11 +315,19 @@ def run_intervention_sweep(
         for tr in trials:
             trial_id = str(tr["trial_id"])
             ground_truth = (str(tr["ground_truth_text"]) if tr["ground_truth_text"] is not None else None)
+            seed = int(tr["seed"]) if tr["seed"] is not None else None
             messages = _load_trial_messages(trace_db=trace_db, trial_id=trial_id)
 
             # Baseline generation (no hooks)
             t0 = time.time()
-            resp_before = gateway.chat(model=model_id, messages=messages, tools=None, tool_choice=None, temperature=temperature)
+            resp_before = gateway.chat(
+                model=model_id,
+                messages=messages,
+                tools=None,
+                tool_choice=None,
+                temperature=temperature,
+                seed=seed,
+            )
             latency_before = (time.time() - t0) * 1000.0
             text_before = ""
             try:
@@ -367,7 +375,14 @@ def run_intervention_sweep(
 
             t1 = time.time()
             try:
-                resp_after = gateway.chat(model=model_id, messages=messages, tools=None, tool_choice=None, temperature=temperature)
+                resp_after = gateway.chat(
+                    model=model_id,
+                    messages=messages,
+                    tools=None,
+                    tool_choice=None,
+                    temperature=temperature,
+                    seed=seed,
+                )
             finally:
                 for h in intervention_handles:
                     try:
@@ -415,5 +430,4 @@ def run_intervention_sweep(
             inserted += 1
 
     return inserted
-
 

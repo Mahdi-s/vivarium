@@ -207,6 +207,20 @@ def run_full_experiment(config: ExperimentConfig) -> Dict[str, Any]:
         
         if model_row:
             model_id = model_row["model_id"]
+            # IMPORTANT: Full runs may include multiple (model_id, variant) entries.
+            # Interventions must only run on trials that match the probe/model used,
+            # otherwise we'd steer the wrong model on the wrong prompts (scientifically invalid).
+            #
+            # Also restrict to factual trials + pressure conditions by default:
+            # - factual only: ground_truth_text IS NOT NULL
+            # - pressure only: Asch + Authority (control isn't a conformity target)
+            esc_model_id = str(model_id).replace("'", "''")
+            trial_filter_sql = (
+                "i.ground_truth_text IS NOT NULL "
+                "AND t.model_id = '" + esc_model_id + "' "
+                "AND t.condition_id IN (SELECT condition_id FROM conformity_conditions "
+                "WHERE name IN ('asch_history_5','authoritative_bias'))"
+            )
             inserted = run_intervention_sweep(
                 trace_db=trace_db,
                 run_id=results["run_id"],
@@ -218,6 +232,7 @@ def run_full_experiment(config: ExperimentConfig) -> Dict[str, Any]:
                 alpha_values=intervention_alphas,
                 max_new_tokens=64,
                 temperature=config.temperature,
+                trial_filter_sql=trial_filter_sql,
             )
             
             results["intervention_stats"] = {
@@ -255,6 +270,14 @@ def run_full_experiment(config: ExperimentConfig) -> Dict[str, Any]:
             if not os.path.exists(artifact_path):
                 print(f"  Warning: Social probe artifact not found for {variant}, skipping")
                 continue
+
+            esc_variant = str(variant).replace("'", "''")
+            trial_filter_sql = (
+                "i.ground_truth_text IS NOT NULL "
+                "AND t.variant = '" + esc_variant + "' "
+                "AND t.condition_id IN (SELECT condition_id FROM conformity_conditions "
+                "WHERE name IN ('asch_history_5','authoritative_bias'))"
+            )
             
             inserted = run_intervention_sweep(
                 trace_db=trace_db,
@@ -267,6 +290,7 @@ def run_full_experiment(config: ExperimentConfig) -> Dict[str, Any]:
                 alpha_values=intervention_alphas,
                 max_new_tokens=64,
                 temperature=config.temperature,
+                trial_filter_sql=trial_filter_sql,
             )
             
             results["intervention_stats"]["by_variant"][variant] = inserted

@@ -12,6 +12,7 @@ from aam.persistence import TraceDb
 
 from .io import deterministic_prompt_hash, read_jsonl, sha256_file
 from .prompts import build_messages
+from .olmo_utils import get_olmo_model_config
 
 
 JsonDict = Dict[str, Any]
@@ -134,7 +135,12 @@ def capture_probe_dataset_to_db(
     )
     cap_ctx = CaptureContext(output_dir=activations_dir, config=cap_cfg, dtype=str(capture.dtype), trace_db=trace_db)
     model_id_str = str(capture.model_id)
-    gateway = select_local_gateway(model_id_or_path=model_id_str, capture_context=cap_ctx)
+    # Keep probe capture generation settings aligned with the model family defaults.
+    # In particular, Think variants often need a larger token budget to reach an
+    # explicit "True/False" answer after the <think> block.
+    model_cfg = get_olmo_model_config(model_id_str) if "olmo" in model_id_str.lower() else {}
+    max_new_tokens = int(model_cfg.get("max_new_tokens", 128))
+    gateway = select_local_gateway(model_id_or_path=model_id_str, capture_context=cap_ctx, max_new_tokens=max_new_tokens)
     if variant is None:
         variant = "huggingface" if "olmo" in model_id_str.lower() else "transformerlens"
 
@@ -189,7 +195,7 @@ def capture_probe_dataset_to_db(
             variant=variant,
             item_id=item_id,
             condition_id=condition_id,
-            seed=0,
+            seed=42,
             temperature=temperature,
         )
         trace_db.upsert_conformity_trial_step(trial_id=trial_id, time_step=time_step, agent_id=str(capture.agent_id))
@@ -210,7 +216,16 @@ def capture_probe_dataset_to_db(
         msgs = build_messages(system=system_prompt, user=user_prompt, history=history)
         cap_ctx.begin_inference()
         t0 = time.time()
-        resp = gateway.chat(model=str(capture.model_id), messages=msgs, tools=None, tool_choice=None, temperature=temperature)
+        # Deterministic capture: probes should be stable across reruns.
+        # We fix the RNG seed even when temperature > 0 to reduce variance.
+        resp = gateway.chat(
+            model=str(capture.model_id),
+            messages=msgs,
+            tools=None,
+            tool_choice=None,
+            temperature=temperature,
+            seed=42,
+        )
         latency_ms = (time.time() - t0) * 1000.0
 
         # Commit activations and flush to shard file aligned to time_step
@@ -462,5 +477,3 @@ def compute_and_store_probe_projections_for_trials(
     if rows_to_insert:
         trace_db.insert_conformity_projection_rows(rows=rows_to_insert)
     return len(rows_to_insert)
-
-
