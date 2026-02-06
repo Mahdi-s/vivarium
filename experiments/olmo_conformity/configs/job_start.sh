@@ -12,7 +12,7 @@
 
 
 cd /home1/mahdisae/aam/abstractAgentMachine
-source .venv/bin/activate
+source /scratch1/mahdisae/aam_venv/bin/activate
 
 export CUDA_VISIBLE_DEVICES=0,1
 export PYTHONNOUSERSITE=1

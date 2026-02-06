@@ -2,5 +2,6 @@
   "models_dir": "/scratch1/mahdisae/olmo_experiments/models/huggingface_cache",
   "runs_dir": "/scratch1/mahdisae/olmo_experiments/runs",
   "ollama_base": "http://localhost:11434/v1",
-  "ollama_judge_model": "gpt-oss:20b"
+  "ollama_judge_model": "gpt-oss:20b",
+  "ollama_server_path": "/scratch1/mahdisae/ollama/bin/ollama"
 }

@@ -12,7 +12,7 @@
 
 
 cd /home1/mahdisae/aam/abstractAgentMachine
-source .venv/bin/activate
+source /scratch1/mahdisae/aam_venv/bin/activate
 
 export CUDA_VISIBLE_DEVICES=0,1
 export PYTHONNOUSERSITE=1
@@ -24,4 +24,3 @@ mkdir -p "${MPLCONFIGDIR}"
 
 
 python experiments/olmo_conformity/configs/run_interpretability_posthoc.py --run-id fa0b1d4f-d547-4094-b07c-4f9efc20f771 --hpc
-

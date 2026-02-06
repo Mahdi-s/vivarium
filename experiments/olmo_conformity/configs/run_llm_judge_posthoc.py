@@ -15,7 +15,9 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import Dict, Optional
 
@@ -40,6 +42,87 @@ def _find_run_dir(*, runs_dir: Path, run_id: str) -> Path:
     if not matches:
         raise FileNotFoundError(f"Could not find run_dir under {runs_dir} ending with _{run_id}")
     return matches[0]
+
+
+def _ollama_base_for_env(ollama_base: str) -> str:
+    """
+    Convert an OpenAI-compatible base (e.g. http://localhost:11434/v1) to OLLAMA_HOST
+    (e.g. localhost:11434).
+    """
+    s = str(ollama_base).strip()
+    if "://" in s:
+        s = s.split("://", 1)[1]
+    s = s.split("/", 1)[0]
+    return s
+
+
+def _wait_for_ollama(*, ollama_base: str, timeout_s: float = 30.0) -> bool:
+    """
+    Wait until Ollama's OpenAI-compatible endpoint responds.
+    """
+    try:
+        import httpx
+    except Exception:
+        return False
+
+    url = str(ollama_base).rstrip("/") + "/models"
+    deadline = time.time() + float(timeout_s)
+    while time.time() < deadline:
+        try:
+            r = httpx.get(url, timeout=2.0)
+            if r.status_code < 500:
+                return True
+        except Exception:
+            pass
+        time.sleep(0.5)
+    return False
+
+
+def _ensure_ollama_serving(*, paths: Dict[str, str], ollama_base: str, judge_model: str) -> Optional[subprocess.Popen]:
+    """
+    If ollama_base is unreachable and paths.json defines ollama_server_path, start
+    `ollama serve` in the background and wait until it responds.
+
+    Returns:
+      Popen handle if we started a server (caller should terminate it), else None.
+    """
+    if _wait_for_ollama(ollama_base=ollama_base, timeout_s=2.0):
+        return None
+
+    ollama_path = paths.get("ollama_server_path")
+    if not ollama_path:
+        return None
+
+    exe = Path(ollama_path)
+    if not exe.exists():
+        raise FileNotFoundError(f"ollama_server_path does not exist: {exe}")
+
+    env = os.environ.copy()
+    env["OLLAMA_HOST"] = _ollama_base_for_env(ollama_base)
+
+    print(f"Starting Ollama server: {exe} serve (OLLAMA_HOST={env['OLLAMA_HOST']}, judge_model={judge_model})")
+    proc = subprocess.Popen(
+        [str(exe), "serve"],
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+    )
+
+    ok = _wait_for_ollama(ollama_base=ollama_base, timeout_s=30.0)
+    if not ok:
+        try:
+            if proc.stdout is not None:
+                tail = proc.stdout.read(4000)
+                if tail:
+                    print("Ollama output (tail):")
+                    print(tail)
+        except Exception:
+            pass
+        proc.terminate()
+        raise RuntimeError(f"Started Ollama, but {ollama_base}/models never became reachable.")
+
+    return proc
 
 
 def main() -> int:
@@ -80,31 +163,43 @@ def main() -> int:
     print(f"  judge_model={judge_model}")
     print(f"  ollama_base={ollama_base}")
 
-    from aam.run import main as aam_main  # imported after sys.path setup
+    ollama_proc: Optional[subprocess.Popen] = None
+    try:
+        if bool(args.hpc):
+            ollama_proc = _ensure_ollama_serving(paths=paths, ollama_base=str(ollama_base), judge_model=str(judge_model))
 
-    argv = [
-        "olmo-conformity-judgeval",
-        "--run-id",
-        str(args.run_id),
-        "--db",
-        str(db_path),
-        "--judge-model",
-        str(judge_model),
-        "--ollama-base",
-        str(ollama_base),
-        "--max-concurrency",
-        str(int(args.max_concurrency)),
-        "--trial-scope",
-        str(args.trial_scope),
-    ]
-    if bool(args.force):
-        argv.append("--force")
-    if args.limit is not None:
-        argv.extend(["--limit", str(int(args.limit))])
+        from aam.run import main as aam_main  # imported after sys.path setup
 
-    return int(aam_main(argv))
+        argv = [
+            "olmo-conformity-judgeval",
+            "--run-id",
+            str(args.run_id),
+            "--db",
+            str(db_path),
+            "--judge-model",
+            str(judge_model),
+            "--ollama-base",
+            str(ollama_base),
+            "--max-concurrency",
+            str(int(args.max_concurrency)),
+            "--trial-scope",
+            str(args.trial_scope),
+        ]
+        if bool(args.force):
+            argv.append("--force")
+        if args.limit is not None:
+            argv.extend(["--limit", str(int(args.limit))])
+
+        return int(aam_main(argv))
+    finally:
+        if ollama_proc is not None:
+            print("Stopping Ollama server...")
+            try:
+                ollama_proc.terminate()
+                ollama_proc.wait(timeout=10)
+            except Exception:
+                pass
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

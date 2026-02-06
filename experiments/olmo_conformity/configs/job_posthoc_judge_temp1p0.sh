@@ -10,8 +10,10 @@
 #SBATCH --time=24:00:00
 #SBATCH --job-name=AAM_OLMO_JUDGE_T1P0
 
+set -euo pipefail
+
 cd /home1/mahdisae/aam/abstractAgentMachine
-source .venv/bin/activate
+source /scratch1/mahdisae/aam_venv/bin/activate
 
 export PYTHONNOUSERSITE=1
 export PYTHONPATH="/home1/mahdisae/aam/abstractAgentMachine/src:${PYTHONPATH}"
@@ -24,4 +26,3 @@ python experiments/olmo_conformity/configs/run_llm_judge_posthoc.py \
   --hpc \
   --max-concurrency 4 \
   --trial-scope behavioral-only
-
