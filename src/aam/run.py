@@ -173,7 +173,7 @@ def main(argv: list[str] | None = None) -> int:
     pc.add_argument("--capture-components", type=str, default=None, help="Comma-separated component names (e.g. 'resid_post')")
     pc.add_argument("--capture-dtype", type=str, default="float16", choices=["float16", "float32"], help="Dtype for activation tensors")
     pc.add_argument("--use-judgeval", action="store_true", help="Enable Judge Eval evaluation during trials")
-    pc.add_argument("--judgeval-judge-model", type=str, default="llama3.2", help="Ollama model to use as judge")
+    pc.add_argument("--judgeval-judge-model", type=str, default="gpt-oss:20b", help="Ollama model to use as judge")
     pc.add_argument("--judgeval-ollama-base", type=str, default="http://localhost:11434/v1", help="Ollama API base URL")
 
     # Olmo Conformity probe utilities (TransformerLens capture + probe training)
@@ -202,10 +202,18 @@ def main(argv: list[str] | None = None) -> int:
     )
     pj.add_argument("--run-id", type=str, required=True)
     pj.add_argument("--db", type=str, required=True, help="Path to simulation.db for the run")
-    pj.add_argument("--judge-model", type=str, default="llama3.2", help="Ollama model to use as judge")
+    pj.add_argument("--judge-model", type=str, default="gpt-oss:20b", help="Ollama model to use as judge")
     pj.add_argument("--ollama-base", type=str, default="http://localhost:11434/v1", help="Ollama API base URL")
     pj.add_argument("--force", action="store_true", help="Overwrite existing parsed_answer_json if present")
     pj.add_argument("--limit", type=int, default=None, help="Optional cap on number of trials to score")
+    pj.add_argument("--max-concurrency", type=int, default=4, help="Max concurrent judge requests (default: 4)")
+    pj.add_argument(
+        "--trial-scope",
+        type=str,
+        default="behavioral-only",
+        choices=["behavioral-only", "all"],
+        help="Which trials to score (default: behavioral-only).",
+    )
 
     pl = sub.add_parser("olmo-conformity-logit-lens", help="Compute logit-lens top-k across layers for each trial")
     pl.add_argument("--run-id", type=str, required=True)
@@ -706,28 +714,25 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if mode == "olmo-conformity-judgeval":
-        # Post-hoc JudgeEval: populate conformity_outputs.parsed_answer_json for the latest output per trial.
-        from aam.experiments.olmo_conformity.judgeval_scorers import (
-            ConformityExample,
-            ConformityScorer,
-            RationalizationScorer,
-            TruthfulnessScorer,
-            JUDGEVAL_AVAILABLE,
+        # Post-hoc LLM judge: populate conformity_outputs.parsed_answer_json for the first output per trial.
+        # Uses a condition-aware rubric and provides the exact prompts to the judge.
+        from aam.experiments.olmo_conformity.ollama_judge import (
+            JudgeInput,
+            OllamaJudgeClient,
+            OllamaJudgeConfig,
         )
-
-        if not JUDGEVAL_AVAILABLE:
-            print("Error: judgeval is not installed. Install it and retry (and ensure httpx is available).")
-            return 1
 
         trace_db = TraceDb(TraceDbConfig(db_path=str(args.db)))
         trace_db.connect()
         trace_db.init_schema()
 
-        # Latest output per trial
+        # First prompt + first output per trial (stable; avoids accidentally judging later intervention outputs).
         where = "t.run_id = ?"
         params: list[object] = [str(args.run_id)]
+        if str(args.trial_scope) == "behavioral-only":
+            where += " AND c.name IN ('control', 'asch_history_5', 'authoritative_bias')"
         if not bool(args.force):
-            where += " AND o.parsed_answer_json IS NULL"
+            where += " AND (o.parsed_answer_json IS NULL OR o.parsed_answer_json = '')"
         if args.limit is not None:
             limit_sql = " LIMIT ?"
             params.append(int(args.limit))
@@ -736,24 +741,46 @@ def main(argv: list[str] | None = None) -> int:
 
         rows = trace_db.conn.execute(
             f"""
-            WITH latest_outputs AS (
-              SELECT trial_id, MAX(created_at) AS max_created_at
+            WITH first_prompts AS (
+              SELECT trial_id, MIN(created_at) AS min_created_at
+              FROM conformity_prompts
+              GROUP BY trial_id
+            ),
+            first_prompt_ids AS (
+              SELECT MIN(p.prompt_id) AS prompt_id, p.trial_id
+              FROM conformity_prompts p
+              JOIN first_prompts fp ON fp.trial_id = p.trial_id AND fp.min_created_at = p.created_at
+              GROUP BY p.trial_id
+            ),
+            first_outputs AS (
+              SELECT trial_id, MIN(created_at) AS min_created_at
               FROM conformity_outputs
               GROUP BY trial_id
             )
             SELECT
               t.trial_id,
               t.variant,
+              t.item_id AS item_id,
               c.name AS condition_name,
+              c.params_json AS condition_params_json,
+              d.name AS dataset_name,
               i.question AS question,
               i.ground_truth_text AS ground_truth_text,
+              i.source_json AS source_json,
+              p.system_prompt AS system_prompt,
+              p.user_prompt AS user_prompt,
+              p.chat_history_json AS chat_history_json,
               o.output_id,
-              o.raw_text AS raw_text
+              o.raw_text AS raw_text,
+              o.parsed_answer_json AS parsed_answer_json
             FROM conformity_trials t
             JOIN conformity_conditions c ON c.condition_id = t.condition_id
             JOIN conformity_items i ON i.item_id = t.item_id
-            JOIN latest_outputs lo ON lo.trial_id = t.trial_id
-            JOIN conformity_outputs o ON o.trial_id = t.trial_id AND o.created_at = lo.max_created_at
+            JOIN conformity_datasets d ON d.dataset_id = i.dataset_id
+            LEFT JOIN first_prompt_ids fpi ON fpi.trial_id = t.trial_id
+            LEFT JOIN conformity_prompts p ON p.prompt_id = fpi.prompt_id
+            JOIN first_outputs fo ON fo.trial_id = t.trial_id
+            JOIN conformity_outputs o ON o.trial_id = t.trial_id AND o.created_at = fo.min_created_at
             WHERE {where}
             ORDER BY t.created_at ASC
             {limit_sql};
@@ -766,44 +793,94 @@ def main(argv: list[str] | None = None) -> int:
             trace_db.close()
             return 0
 
-        async def _score_one(example: ConformityExample) -> dict[str, float]:
-            scores: dict[str, float] = {}
-            conformity = ConformityScorer(judge_model=str(args.judge_model), ollama_base=str(args.ollama_base))
-            truthfulness = TruthfulnessScorer(judge_model=str(args.judge_model), ollama_base=str(args.ollama_base))
-            rationalization = RationalizationScorer(judge_model=str(args.judge_model), ollama_base=str(args.ollama_base))
-            scores["conformity"] = float(await conformity.a_score_example(example))
-            scores["truthfulness"] = float(await truthfulness.a_score_example(example))
-            scores["rationalization"] = float(await rationalization.a_score_example(example))
-            return scores
-
         updated = 0
         failed = 0
-        for idx, r in enumerate(rows, start=1):
-            output_id = str(r["output_id"])
-            example = ConformityExample(  # type: ignore[call-arg]
-                question=str(r["question"] or ""),
-                answer=str(r["raw_text"] or ""),
-                ground_truth=(str(r["ground_truth_text"]) if r["ground_truth_text"] is not None else None),
-                condition=str(r["condition_name"] or "unknown"),
-            )
-            try:
-                scores = asyncio.run(_score_one(example))
-            except Exception as e:
-                failed += 1
-                print(f"Warning: JudgeEval scoring failed for output_id={output_id[:8]}: {e}")
-                continue
 
+        def _parse_json(s: object) -> dict[str, object]:
+            if s is None:
+                return {}
+            try:
+                return json.loads(str(s))
+            except Exception:
+                return {}
+
+        def _wrong_answer(source_json: object) -> Optional[str]:
+            try:
+                d = _parse_json(source_json)
+                wa = d.get("wrong_answer")
+                return str(wa) if wa is not None and str(wa).strip() != "" else None
+            except Exception:
+                return None
+
+        def _condition_type(params_json: object, fallback: str) -> str:
+            d = _parse_json(params_json)
+            t = d.get("type")
+            if t is None or str(t).strip() == "":
+                return fallback
+            return str(t)
+
+        async def _score_all() -> list[tuple[str, Optional[dict[str, object]], Optional[str]]]:
+            import asyncio
+
+            cfg = OllamaJudgeConfig(
+                model=str(args.judge_model),
+                ollama_base=str(args.ollama_base),
+            )
+            results: list[tuple[str, Optional[dict[str, object]], Optional[str]]] = []
+
+            sem = asyncio.Semaphore(max(1, int(args.max_concurrency)))
+            async with OllamaJudgeClient(cfg) as judge:
+
+                async def score_one(r: Any) -> None:
+                    nonlocal results
+                    output_id = str(r["output_id"])
+                    try:
+                        cond_name = str(r["condition_name"] or "unknown")
+                        ji = JudgeInput(
+                            condition_name=cond_name,
+                            condition_type=_condition_type(r["condition_params_json"], cond_name),
+                            system_prompt=str(r["system_prompt"] or ""),
+                            user_prompt=str(r["user_prompt"] or ""),
+                            chat_history_json=str(r["chat_history_json"] or "[]"),
+                            question=str(r["question"] or ""),
+                            model_output_raw=str(r["raw_text"] or ""),
+                            reference_answer=(str(r["ground_truth_text"]) if r["ground_truth_text"] is not None else None),
+                            injected_wrong_answer=_wrong_answer(r["source_json"]),
+                            dataset_name=str(r["dataset_name"] or ""),
+                            item_id=str(r["item_id"] or ""),
+                            variant=str(r["variant"] or ""),
+                        )
+                        async with sem:
+                            scored = await judge.judge(ji)
+                        results.append((output_id, scored, None))
+                    except Exception as e:
+                        results.append((output_id, None, str(e)))
+
+                tasks = [asyncio.create_task(score_one(r)) for r in rows]
+                for idx, fut in enumerate(asyncio.as_completed(tasks), start=1):
+                    await fut
+                    if idx % 25 == 0 or idx == len(tasks):
+                        print(f"Judged {idx}/{len(tasks)}...")
+
+            return results
+
+        import asyncio
+
+        scored_rows = asyncio.run(_score_all())
+        for output_id, scored, err in scored_rows:
+            if scored is None:
+                failed += 1
+                print(f"Warning: Judge scoring failed for output_id={output_id[:8]}: {err}")
+                continue
             try:
                 trace_db.conn.execute(
                     "UPDATE conformity_outputs SET parsed_answer_json = ? WHERE output_id = ?;",
-                    (json.dumps(scores, ensure_ascii=False), output_id),
+                    (json.dumps(scored, ensure_ascii=False), output_id),
                 )
                 updated += 1
-                if idx % 10 == 0 or idx == len(rows):
-                    print(f"Scored {idx}/{len(rows)} (updated={updated}, failed={failed})")
             except Exception as e:
                 failed += 1
-                print(f"Warning: JudgeEval DB update failed for output_id={output_id[:8]}: {e}")
+                print(f"Warning: Judge DB update failed for output_id={output_id[:8]}: {e}")
 
         trace_db.conn.commit()
         trace_db.close()
@@ -1313,5 +1390,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
-

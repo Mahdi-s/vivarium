@@ -291,22 +291,24 @@ vvm olmo-conformity-posthoc \
   --alphas "0.5,1.0,2.0" \
   --max-new-tokens 64
 
-# Judge Eval scoring (requires Ollama with llama3.2:3b model)
+# LLM judge scoring (requires Ollama with the judge model available)
 vvm olmo-conformity-judgeval \
   --run-id "b2cc39a5-3d9d-444d-8489-bb74d6946973" \
   --db "runs/20251217_002021_b2cc39a5-3d9d-444d-8489-bb74d6946973/simulation.db" \
-  --judge-model "llama3.2:3b" \
-  --ollama-base "http://localhost:11434/v1"
+  --judge-model "gpt-oss:20b" \
+  --ollama-base "http://localhost:11434/v1" \
+  --max-concurrency 4 \
+  --trial-scope behavioral-only
 ```
 
-**Judge Eval Framework**:
+**LLM Judge Framework**:
 
-The experiment uses the `judgeval` Python package with custom scorers that run locally via Ollama:
-- **ConformityScorer**: Detects sycophancy and conformity patterns (0-1 scale)
-- **TruthfulnessScorer**: Evaluates factual accuracy (0-1 scale)
-- **RationalizationScorer**: Analyzes reasoning quality for Think models (0-1 scale)
+The experiment includes a condition-aware Ollama judge that evaluates each stored transcript using the *exact* system/user prompts shown to the model:
+- **Truthfulness**: semantic correctness vs `ground_truth_text` (when available)
+- **Conformity**: degree of yielding to the injected wrong answer / pressure (condition-specific rubric)
+- **Rationalization**: (optional) reasoning faithfulness when `<think>...</think>` is present
 
-Scores are stored in `conformity_outputs.parsed_answer_json` as JSON. See the [Overview of the first experiment](supplementary%20documentation%20/Overview%20of%20the%20first%20experiment.md) for detailed analysis and interpretation.
+Scores are stored in `conformity_outputs.parsed_answer_json` as JSON (including `_llm_judge.prompt_version`). See the [Overview of the first experiment](supplementary%20documentation%20/Overview%20of%20the%20first%20experiment.md) for analysis and interpretation.
 
 **What Gets Captured**:
 - Behavioral metrics: correctness, refusal flags by condition
@@ -667,10 +669,12 @@ Populates judge eval scores (conformity, truthfulness, rationalization) for outp
 Options:
 - `--run-id UUID`: Run identifier
 - `--db PATH`: Path to simulation.db
-- `--judge-model MODEL`: Ollama model to use as judge (default: `llama3.2`)
+- `--judge-model MODEL`: Ollama model to use as judge (default: `gpt-oss:20b`)
 - `--ollama-base URL`: Ollama API base URL (default: `http://localhost:11434/v1`)
 - `--force`: Overwrite existing scores
 - `--limit N`: Optional cap on number of outputs to score
+- `--max-concurrency N`: Max concurrent judge requests (default: 4)
+- `--trial-scope SCOPE`: `behavioral-only` (default) or `all`
 
 ### `olmo-conformity-resume` - Resume from Crash
 
@@ -852,4 +856,3 @@ If SQLite shows "database is locked":
 - ✅ **Olmo Conformity Experiment**: Full experiment framework with behavioral trials, probe training, interventions, logit lens, and judge eval
 - ✅ **Judge Eval Framework**: Local Ollama-based evaluation with conformity, truthfulness, and rationalization scorers
 - 🔄 **Future**: Distributed execution, advanced domain state tables
-
