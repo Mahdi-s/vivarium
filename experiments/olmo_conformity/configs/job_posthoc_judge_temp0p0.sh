@@ -18,7 +18,7 @@ source /scratch1/mahdisae/aam_venv/bin/activate
 export PYTHONNOUSERSITE=1
 
 # Ensure repo sources are importable even if not pip-installed on the cluster.
-export PYTHONPATH="/home1/mahdisae/aam/abstractAgentMachine/src:${PYTHONPATH}"
+export PYTHONPATH="/home1/mahdisae/aam/abstractAgentMachine/src:${PYTHONPATH:-}"
 
 # Avoid matplotlib trying to write under $HOME on HPC (some analysis modules import matplotlib).
 export MPLCONFIGDIR="/scratch1/mahdisae/olmo_experiments/mpl_cache/${SLURM_JOB_ID}"

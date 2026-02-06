@@ -16,7 +16,7 @@ cd /home1/mahdisae/aam/abstractAgentMachine
 source /scratch1/mahdisae/aam_venv/bin/activate
 
 export PYTHONNOUSERSITE=1
-export PYTHONPATH="/home1/mahdisae/aam/abstractAgentMachine/src:${PYTHONPATH}"
+export PYTHONPATH="/home1/mahdisae/aam/abstractAgentMachine/src:${PYTHONPATH:-}"
 
 export MPLCONFIGDIR="/scratch1/mahdisae/olmo_experiments/mpl_cache/${SLURM_JOB_ID}"
 mkdir -p "${MPLCONFIGDIR}"

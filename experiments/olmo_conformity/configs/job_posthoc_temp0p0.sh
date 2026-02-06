@@ -18,7 +18,7 @@ export CUDA_VISIBLE_DEVICES=0,1
 export PYTHONNOUSERSITE=1
 
 # Ensure repo sources are importable even if not pip-installed on the cluster.
-export PYTHONPATH="/home1/mahdisae/aam/abstractAgentMachine/src:${PYTHONPATH}"
+export PYTHONPATH="/home1/mahdisae/aam/abstractAgentMachine/src:${PYTHONPATH:-}"
 
 # Avoid matplotlib trying to write under $HOME on HPC.
 export MPLCONFIGDIR="/scratch1/mahdisae/olmo_experiments/mpl_cache/${SLURM_JOB_ID}"
