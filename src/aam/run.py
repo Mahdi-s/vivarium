@@ -1087,7 +1087,7 @@ def main(argv: list[str] | None = None) -> int:
                 if str(args.intervention_scope) == "pressure-only":
                     trial_filter_sql = (
                         "i.ground_truth_text IS NOT NULL "
-                        "AND t.condition_id IN (SELECT condition_id FROM conformity_conditions WHERE name IN ('asch_history_5','authoritative_bias'))"
+                        "AND t.condition_id IN (SELECT condition_id FROM conformity_conditions WHERE name != 'control' AND name NOT LIKE '%probe_capture%')"
                     )
                 else:
                     trial_filter_sql = "i.ground_truth_text IS NOT NULL"

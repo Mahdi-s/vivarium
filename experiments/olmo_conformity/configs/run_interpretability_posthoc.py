@@ -458,7 +458,7 @@ def run_interventions_battery1(
             "AND i.ground_truth_text IS NOT NULL "
             "AND i.dataset_id IN (SELECT dataset_id FROM conformity_datasets WHERE name = 'immutable_facts_minimal') "
             "AND t.condition_id IN (SELECT condition_id FROM conformity_conditions "
-            "WHERE name IN ('asch_history_5','authoritative_bias'))"
+            "WHERE name != 'control' AND name NOT LIKE '%probe_capture%'))"
         )
 
         print("\n" + "=" * 70)

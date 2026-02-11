@@ -231,6 +231,30 @@ class TraceDb:
         )
         self.conn.execute("CREATE INDEX IF NOT EXISTS idx_conformity_prompts_trial ON conformity_prompts(trial_id);")
 
+        # Prompt rendering metadata (structured; enables tracing prompt construction decisions)
+        self.conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS conformity_prompt_metadata (
+              prompt_id TEXT PRIMARY KEY,
+              metadata_json TEXT NOT NULL,
+              created_at REAL NOT NULL,
+              FOREIGN KEY(prompt_id) REFERENCES conformity_prompts(prompt_id)
+            );
+            """
+        )
+
+        # Trial metadata (generation config, gateway info, etc.)
+        self.conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS conformity_trial_metadata (
+              trial_id TEXT PRIMARY KEY,
+              metadata_json TEXT NOT NULL,
+              created_at REAL NOT NULL,
+              FOREIGN KEY(trial_id) REFERENCES conformity_trials(trial_id)
+            );
+            """
+        )
+
         # Map each trial to a deterministic capture step (for activation_metadata alignment)
         self.conn.execute(
             """
@@ -747,6 +771,44 @@ class TraceDb:
                 (prompt_id, trial_id, system_prompt, user_prompt, _json_dumps_any(chat_history), rendered_prompt_hash, ts),
             )
 
+    def upsert_conformity_prompt_metadata(
+        self,
+        *,
+        prompt_id: str,
+        metadata: Dict[str, Any],
+        created_at: Optional[float] = None,
+    ) -> None:
+        ts = float(time.time() if created_at is None else created_at)
+        with self.conn:
+            self.conn.execute(
+                """
+                INSERT INTO conformity_prompt_metadata(prompt_id, metadata_json, created_at)
+                VALUES (?, ?, ?)
+                ON CONFLICT(prompt_id) DO UPDATE SET
+                  metadata_json=excluded.metadata_json;
+                """,
+                (prompt_id, _json_dumps_any(metadata), ts),
+            )
+
+    def upsert_conformity_trial_metadata(
+        self,
+        *,
+        trial_id: str,
+        metadata: Dict[str, Any],
+        created_at: Optional[float] = None,
+    ) -> None:
+        ts = float(time.time() if created_at is None else created_at)
+        with self.conn:
+            self.conn.execute(
+                """
+                INSERT INTO conformity_trial_metadata(trial_id, metadata_json, created_at)
+                VALUES (?, ?, ?)
+                ON CONFLICT(trial_id) DO UPDATE SET
+                  metadata_json=excluded.metadata_json;
+                """,
+                (trial_id, _json_dumps_any(metadata), ts),
+            )
+
     def upsert_conformity_trial_step(
         self, *, trial_id: str, time_step: int, agent_id: str, created_at: Optional[float] = None
     ) -> None:
@@ -931,5 +993,3 @@ class TraceDb:
             return
         self._conn.close()
         self._conn = None
-
-

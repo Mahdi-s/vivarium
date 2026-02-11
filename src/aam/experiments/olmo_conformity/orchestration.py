@@ -219,7 +219,7 @@ def run_full_experiment(config: ExperimentConfig) -> Dict[str, Any]:
                 "i.ground_truth_text IS NOT NULL "
                 "AND t.model_id = '" + esc_model_id + "' "
                 "AND t.condition_id IN (SELECT condition_id FROM conformity_conditions "
-                "WHERE name IN ('asch_history_5','authoritative_bias'))"
+                "WHERE name != 'control' AND name NOT LIKE '%probe_capture%'))"
             )
             inserted = run_intervention_sweep(
                 trace_db=trace_db,
@@ -276,7 +276,7 @@ def run_full_experiment(config: ExperimentConfig) -> Dict[str, Any]:
                 "i.ground_truth_text IS NOT NULL "
                 "AND t.variant = '" + esc_variant + "' "
                 "AND t.condition_id IN (SELECT condition_id FROM conformity_conditions "
-                "WHERE name IN ('asch_history_5','authoritative_bias'))"
+                "WHERE name != 'control' AND name NOT LIKE '%probe_capture%'))"
             )
             
             inserted = run_intervention_sweep(

@@ -477,8 +477,6 @@ def compute_activation_comparison(
         "condition_comparison": {},
     }
     
-    conditions = ["control", "asch_history_5", "authoritative_bias"]
-    
     for layer_idx in layer_indices:
         print(f"  Analyzing layer {layer_idx}...")
         vectors, metadata = load_activation_vectors(
@@ -495,6 +493,15 @@ def compute_activation_comparison(
             "conditions": {},
         }
         
+        # Determine conditions dynamically (exclude probe-capture conditions)
+        conditions = sorted(
+            [
+                c
+                for c in metadata.get("condition_name", []).unique().tolist()
+                if "probe_capture" not in str(c)
+            ]
+        )
+
         # Compute statistics by condition
         condition_centroids = {}
         
@@ -580,15 +587,50 @@ def plot_activation_comparison(
     
     # Figure 1: Mean activation norms by layer and condition
     layers = sorted(layer_stats.keys())
-    conditions = ["control", "asch_history_5", "authoritative_bias"]
-    condition_labels = {"control": "Control", "asch_history_5": "Asch", "authoritative_bias": "Authority"}
-    condition_colors = {"control": "#4363d8", "asch_history_5": "#e6194B", "authoritative_bias": "#3cb44b"}
+
+    available_conditions = sorted(
+        {
+            cond
+            for layer in layers
+            for cond in (layer_stats.get(layer, {}).get("conditions", {}) or {}).keys()
+            if "probe_capture" not in str(cond)
+        }
+    )
+
+    # Prefer a small, interpretable subset if many conditions are present.
+    preferred_conditions = [
+        "control",
+        "asch_history_5",
+        "asch_zhu_unbiased_unanimous_confident",
+        "asch_zhu_unbiased_diverse_plain",
+        "asch_zhu_unbiased_qd",
+        "asch_zhu_unbiased_da",
+        "authoritative_bias",
+        "authority_zhu_unbiased_trust",
+    ]
+    conditions = [c for c in preferred_conditions if c in available_conditions]
+    if not conditions:
+        conditions = available_conditions[:6]
+
+    condition_labels = {
+        "control": "Control",
+        "asch_history_5": "Asch (Conservative)",
+        "authoritative_bias": "Authority (Conservative)",
+        "asch_zhu_unbiased_unanimous_confident": "Asch (Confident)",
+        "asch_zhu_unbiased_diverse_plain": "Asch (Diverse Control)",
+        "asch_zhu_unbiased_qd": "Asch (QD)",
+        "asch_zhu_unbiased_da": "Asch (DA)",
+        "authority_zhu_unbiased_trust": "Authority (Trust)",
+    }
     
     fig, ax = plt.subplots(figsize=(10, 6))
     
     x = np.arange(len(layers))
-    width = 0.25
-    
+    width = min(0.8 / max(1, len(conditions)), 0.25)
+
+    colors = get_color_palette(len(conditions))
+    color_map = {cond: colors[i] for i, cond in enumerate(conditions)}
+
     for i, condition in enumerate(conditions):
         norms = []
         for layer in layers:
@@ -597,10 +639,17 @@ def plot_activation_comparison(
                 norms.append(cond_data.get("mean_norm", 0))
             else:
                 norms.append(0)
-        
-        offset = (i - 1) * width
-        ax.bar(x + offset, norms, width, label=condition_labels.get(condition, condition),
-               color=condition_colors.get(condition, "gray"), alpha=0.8)
+
+        center = (len(conditions) - 1) / 2.0
+        offset = (i - center) * width
+        ax.bar(
+            x + offset,
+            norms,
+            width,
+            label=condition_labels.get(condition, condition),
+            color=color_map.get(condition, "gray"),
+            alpha=0.8,
+        )
     
     ax.set_xlabel("Layer Index")
     ax.set_ylabel("Mean Activation Norm")

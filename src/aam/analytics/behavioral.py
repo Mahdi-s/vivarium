@@ -299,19 +299,18 @@ def generate_behavioral_graphs(
     all_variants = sorted(df["variant"].unique())
     all_conditions = sorted(df["condition_name"].unique())
     
-    # FIXED: Only include actual behavioral pressure conditions, not probe capture conditions
-    # Probe capture conditions (truth_probe_capture_*, social_probe_capture_*) are for 
-    # interpretability analysis, not behavioral sycophancy measurement
-    BEHAVIORAL_PRESSURE_CONDITIONS = {"asch_history_5", "authoritative_bias"}
-    pressure_conditions = [c for c in all_conditions if c in BEHAVIORAL_PRESSURE_CONDITIONS]
+    # Include all behavioral pressure conditions (exclude control and probe-capture conditions).
+    pressure_conditions = [
+        c for c in all_conditions if c != "control" and "probe_capture" not in str(c)
+    ]
     
     # Figure 1: Sycophancy Behavioral Outcome (Bar Chart)
     # Compute sycophancy rate per variant - EXCLUDE empty responses
     df_non_empty = df[~df["is_empty_response"]].copy()
     
     control_trials = df_non_empty[df_non_empty["condition_name"] == "control"].copy()
-    # FIXED: Only include behavioral pressure conditions in pressure_trials
-    pressure_trials = df_non_empty[df_non_empty["condition_name"].isin(BEHAVIORAL_PRESSURE_CONDITIONS)].copy()
+    # Only include behavioral pressure conditions in pressure_trials
+    pressure_trials = df_non_empty[df_non_empty["condition_name"].isin(pressure_conditions)].copy()
     
     # Initialize sycophancy data for ALL variants/conditions (fill with 0.0)
     sycophancy_records = []

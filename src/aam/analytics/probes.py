@@ -28,7 +28,13 @@ from aam.analytics.statistics import compute_ttest
 from aam.persistence import TraceDb
 
 
-_BEHAVIORAL_CONDITIONS = {"control", "asch_history_5", "authoritative_bias"}
+def _is_behavioral_condition_name(name: Any) -> bool:
+    """Exclude probe-capture conditions from behavioral/probe-facing analyses."""
+    try:
+        s = str(name or "")
+    except Exception:
+        return False
+    return "probe_capture" not in s
 
 
 def compute_probe_metrics(
@@ -91,10 +97,8 @@ def compute_probe_metrics(
             "statistics": {"message": "No probe projections found"},
         }
 
-    # Prefer behavioral conditions for paper-facing analyses if present.
-    behavioral_df = df[df["condition_name"].isin(_BEHAVIORAL_CONDITIONS)].copy()
-    if not behavioral_df.empty:
-        df = behavioral_df
+    # Exclude probe-capture conditions (they are for training/activation collection, not behavioral plots).
+    df = df[df["condition_name"].apply(_is_behavioral_condition_name)].copy()
 
     metrics: Dict[str, Any] = {
         "run_id": run_id,
@@ -260,10 +264,8 @@ def generate_probe_graphs(
     if df.empty:
         return figures
 
-    # Prefer behavioral conditions for paper-facing figures if present.
-    behavioral_df = df[df["condition_name"].isin(_BEHAVIORAL_CONDITIONS)].copy()
-    if not behavioral_df.empty:
-        df = behavioral_df
+    # Exclude probe-capture conditions (they are for training/activation collection, not behavioral plots).
+    df = df[df["condition_name"].apply(_is_behavioral_condition_name)].copy()
     
     # Figure 2: Truth vs Social Signal Across Layers (Line Plot)
     truth_data = df[df["probe_kind"] == "truth"].copy()

@@ -1,7 +1,7 @@
 {
   "suite_name": "olmo_conformity_fixed_behavioral",
-  "suite_version": "v2",
-  "description": "Fixed behavioral suite for Olmo conformity experiment. Changes from suite_small: (1) Uses minimal_items_wrong.jsonl with explicit wrong_answer fields to prevent answer leakage, (2) Removes probe_capture conditions (handled separately by vector_analysis.py), (3) Keeps only behavioral conditions (control, Asch, authoritative), (4) Excludes social_conventions dataset (opinion-based items have no factual wrong_answer).",
+  "suite_version": "v3",
+  "description": "Fixed behavioral suite for Olmo conformity experiment. Includes conservative anti-conformity prompts plus Zhu et al. (arXiv:2410.12428)-inspired unbiased/biasing variants (tone, Diverse control, Question Distillation, Devil's Advocate). Changes from suite_small: (1) Uses minimal_items_wrong.jsonl with explicit wrong_answer fields to prevent answer leakage, (2) Removes probe_capture conditions (handled separately by vector_analysis.py).",
   "datasets": [
     {
       "name": "immutable_facts_minimal",
@@ -22,9 +22,54 @@
       "notes": "Asch paradigm: 5 confederates claim wrong_answer with high confidence"
     },
     {
+      "name": "asch_zhu_unbiased_unanimous_plain",
+      "params": { "type": "asch_peer_pressure", "system_style": "control", "prompt_style": "conversation", "confederates": 5, "consensus": "unanimous", "tone": "plain" },
+      "notes": "Zhu et al.-style Asch: unbiased system + unanimous-plain confederates"
+    },
+    {
+      "name": "asch_zhu_unbiased_unanimous_neutral",
+      "params": { "type": "asch_peer_pressure", "system_style": "control", "prompt_style": "conversation", "confederates": 5, "consensus": "unanimous", "tone": "neutral" },
+      "notes": "Zhu et al.-style Asch: unbiased system + unanimous-neutral (more natural) confederates"
+    },
+    {
+      "name": "asch_zhu_unbiased_unanimous_confident",
+      "params": { "type": "asch_peer_pressure", "system_style": "control", "prompt_style": "conversation", "confederates": 5, "consensus": "unanimous", "tone": "confident" },
+      "notes": "Zhu et al.-style Asch: unbiased system + unanimous-confident confederates"
+    },
+    {
+      "name": "asch_zhu_unbiased_unanimous_uncertain",
+      "params": { "type": "asch_peer_pressure", "system_style": "control", "prompt_style": "conversation", "confederates": 5, "consensus": "unanimous", "tone": "uncertain" },
+      "notes": "Zhu et al.-style Asch: unbiased system + unanimous-uncertain confederates"
+    },
+    {
+      "name": "asch_zhu_unbiased_diverse_plain",
+      "params": { "type": "asch_peer_pressure", "system_style": "control", "prompt_style": "conversation", "confederates": 5, "consensus": "diverse", "tone": "plain" },
+      "notes": "Zhu et al.-style control: Diverse answers (no majority) with same dialogue format"
+    },
+    {
+      "name": "asch_zhu_unbiased_qd",
+      "params": { "type": "asch_peer_pressure", "system_style": "control", "prompt_style": "conversation", "confederates": 5, "consensus": "unanimous", "tone": "plain", "distillation": true },
+      "notes": "Zhu et al.-style intervention: Question Distillation (summarize unanimous answer, reduce repetition)"
+    },
+    {
+      "name": "asch_zhu_unbiased_da",
+      "params": { "type": "asch_peer_pressure", "system_style": "control", "prompt_style": "conversation", "confederates": 5, "consensus": "unanimous", "tone": "plain", "devils_advocate": true },
+      "notes": "Zhu et al.-style intervention: Devil's Advocate (one dissenter breaks unanimity)"
+    },
+    {
       "name": "authoritative_bias",
       "params": { "type": "authoritative_bias", "user_claim_strength": "high" },
       "notes": "Authoritative user claims wrong_answer with high confidence"
+    },
+    {
+      "name": "authority_zhu_unbiased_trust",
+      "params": { "type": "authority_claim", "system_style": "control", "claim_style": "trust" },
+      "notes": "Zhu et al. appendix sycophancy-style authority claim: 'I trust that the answer must be ...' (unbiased system)"
+    },
+    {
+      "name": "authority_zhu_unbiased_trust_da",
+      "params": { "type": "authority_claim", "system_style": "control", "claim_style": "trust", "devils_advocate": true },
+      "notes": "Zhu et al. appendix mitigation: add an alternate (incorrect) option to reduce sycophancy (DA)"
     }
   ],
   "models": [
@@ -42,7 +87,7 @@
     "temperature": 0.0,
     "top_k": 50,
     "top_p": 0.9,
-    "max_items_per_dataset": 10,
+    "max_items_per_dataset": 200,
     "notes": "temperature=0.0 for deterministic responses; top_k=50/top_p=0.9 locked; seed for reproducibility"
   },
   "scientific_notes": {
