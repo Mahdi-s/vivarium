@@ -44,8 +44,10 @@ MODELS = [
     ("allenai/Olmo-3-7B-RL-Zero-Math", "olmo-3-7b-rl-zero-math.gguf"),
     ("allenai/Olmo-3-7B-Think", "olmo-3-7b-think.gguf"),
     ("allenai/Olmo-3-7B-Think-SFT", "olmo-3-7b-think-sft.gguf"),
+    ("allenai/Olmo-3-7B-Think-DPO", "olmo-3-7b-think-dpo.gguf"),
     ("allenai/Olmo-3-7B-Instruct", "olmo-3-7b-instruct.gguf"),
     ("allenai/Olmo-3-7B-Instruct-SFT", "olmo-3-7b-instruct-sft.gguf"),
+    ("allenai/Olmo-3-7B-Instruct-DPO", "olmo-3-7b-instruct-dpo.gguf"),
 ]
 
 

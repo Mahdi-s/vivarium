@@ -28,6 +28,9 @@ from aam.analytics.statistics import compute_ttest
 from aam.persistence import TraceDb
 
 
+_BEHAVIORAL_CONDITIONS = {"control", "asch_history_5", "authoritative_bias"}
+
+
 def compute_probe_metrics(
     trace_db: TraceDb,
     run_id: str,
@@ -87,7 +90,12 @@ def compute_probe_metrics(
             "metrics": {},
             "statistics": {"message": "No probe projections found"},
         }
-    
+
+    # Prefer behavioral conditions for paper-facing analyses if present.
+    behavioral_df = df[df["condition_name"].isin(_BEHAVIORAL_CONDITIONS)].copy()
+    if not behavioral_df.empty:
+        df = behavioral_df
+
     metrics: Dict[str, Any] = {
         "run_id": run_id,
         "metrics": {},
@@ -251,6 +259,11 @@ def generate_probe_graphs(
     
     if df.empty:
         return figures
+
+    # Prefer behavioral conditions for paper-facing figures if present.
+    behavioral_df = df[df["condition_name"].isin(_BEHAVIORAL_CONDITIONS)].copy()
+    if not behavioral_df.empty:
+        df = behavioral_df
     
     # Figure 2: Truth vs Social Signal Across Layers (Line Plot)
     truth_data = df[df["probe_kind"] == "truth"].copy()

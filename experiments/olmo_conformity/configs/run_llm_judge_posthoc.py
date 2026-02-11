@@ -146,7 +146,7 @@ def main() -> int:
     if runs_dir is None and bool(args.hpc):
         runs_dir = paths.get("runs_dir")
     if runs_dir is None:
-        runs_dir = "./runs"
+        runs_dir = "runs-hpc-full/probe/runs"
 
     run_dir = Path(args.run_dir) if args.run_dir else _find_run_dir(runs_dir=Path(runs_dir), run_id=str(args.run_id))
     db_path = Path(args.db) if args.db else (run_dir / "simulation.db")

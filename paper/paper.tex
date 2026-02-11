@@ -88,6 +88,8 @@
 
 \begin{abstract}
 The alignment of Large Language Models (LLMs) with human intent has largely been achieved through Reinforcement Learning from Human Feedback (RLHF). While effective at improving tractability and safety, recent scholarship suggests that RLHF can inadvertently incentivize ``sycophancy''---the tendency of a model to align with a user's stated or implied beliefs, even when those beliefs are objectively incorrect. We present a systematic experimental analysis of social conformity behaviors in the Olmo-3 model family, leveraging its transparent ``glass-box'' ecosystem to isolate the effects of training stages on epistemic integrity. Adapting the classical Asch paradigm to a generative AI context, we evaluate six model variants across six sampling temperatures ($T \in \{0.0,0.2,0.4,0.6,0.8,1.0\}$) and three conditions (Control, Asch-style peer consensus, and explicit Authority claims), totaling 23{,}760 trials (21{,}600 factual with ground truth; 2{,}160 opinion). We find that training stage dominates and interacts strongly with pressure mechanism: instruction-tuned variants are most susceptible (Instruct-SFT: $\Delta$Error $=+8.4$ pp under Asch; Instruct: $+7.1$ pp under Authority pooled across temperatures), while Think and Think-SFT are often corrective under pressure ($\Delta$Error $=-3.4$ and $-4.1$ pp under Asch; $-1.6$ and $-2.7$ pp under Authority) and exhibit lower truth-override rates. Temperature has a small but significant main effect (odds ratio $\mathrm{OR}_{T=1\,\mathrm{vs}\,0}=1.13$, LRT $p=0.010$) and primarily amplifies errors under social pressure (+2.34 pp Asch; +3.39 pp Authority from $T=0$ to $T=1$; Control +0.34 pp). Finally, on opinion items without ground truth, peer consensus increases wrong-answer endorsement for most variants, but Think/Think-SFT endorse the injected answer only $\sim$10--18\% under pressure and refuse $\sim$28--52\% of prompts.
+\vspace{0.25em}
+\textbf{Mechanistically}, layerwise truth/social probe projections reveal an internal ``tug-of-war'': instruction-tuned variants exhibit very early social dominance (turn layers near the input), while Base/Think variants maintain stronger truth dominance deeper into the network with comparatively modest temperature shifts.
 \end{abstract}
 
 \keywords{social conformity, sycophancy, large language models, RLHF, temperature, alignment}
@@ -241,6 +243,8 @@ We define the following metrics. Let $Y^{(c)} \in \{0,1\}$ denote factual correc
 \end{align*}
 \normalsize
 
+\textbf{Truth/Social projections and Turn Layer.} For mechanistic analysis we capture residual-stream activations (\texttt{resid\_post}, last-token position) and train per-variant linear probes to define a \textit{truth direction} and a \textit{social/consensus direction}. On each behavioral trial we compute layerwise probe projections: Truth Vector Projection (TVP) and Social Vector Projection (SVP). We define the \textbf{turn layer} as the smallest layer index where $\text{SVP}>\text{TVP}$ for that trial (and condition), interpreted as the depth at which social signal overtakes truth signal.
+
 A positive pressure effect indicates that social context \textit{increased} errors (expected conformity); a negative value indicates that social context \textit{decreased} errors (corrective behavior). Truth override isolates conformity by conditioning on control-correct items (a behavioral proxy for ``model knew the truth'' in Control), which is critical when baseline error rates are high. Conversely, truth rescue conditions on control-incorrect items (a proxy for ``model did not know the truth'' in Control), and quantifies whether social context ever \textit{helps} the model become correct.
 
 Some truth override cells are \textit{undefined} when the denominator is zero (no control-correct items). We render these cells as explicit NA and accompany truth-override heatmaps with denominator heatmaps (\# control-correct items) to avoid over-interpreting low-powered cells. Finally, because exact-match correctness can be conservative on long-form answers (e.g., TruthfulQA), we also compute a ground-truth free factual conformity metric: wrong-answer flip rate, which measures adoption of the injected \texttt{wrong\_answer} under pressure among items where Control did not already endorse the wrong answer. We report raw wrong-answer endorsement rates only for opinion items (no ground truth); on factual items we emphasize the conditional flip metric.
@@ -380,6 +384,37 @@ Think-SFT & $-$4.1 & 9.6 & $3.0\times 10^{-6}$ & $-$2.7 & 11.8 & $2.4\times 10^{
 \end{table*}
 
 Two patterns are salient. First, susceptibility is mechanism-specific: Authority is more harmful than Asch for most variants (e.g., Instruct: +7.1 pp vs +3.1 pp), while Instruct-SFT is uniquely more harmed by peer consensus (+8.4 pp Asch vs +4.1 pp Authority). Second, pressure can be \emph{corrective}: Think and Think-SFT show negative $\Delta$Error (lower error under pressure), driven by more ``rescues'' than ``overrides'' when pairing the same items across conditions. Finally, ceiling error rates can mask conformity: RL-Zero exhibits small $\Delta$Error yet very high truth override (67--76\%), indicating that when RL-Zero \textit{does} answer correctly in Control, pressure frequently flips it to an incorrect answer. Because truth override is conditional on control-correct items and overall control accuracy is low for some variants/topics, denominators can be small; we therefore report denominator heatmaps alongside truth-override rates. For context, human error under unanimous peer pressure is $\sim$33\%~\cite{franzen2023asch}; our pooled truth override rates range from 9.6\% (Think-SFT, Asch) to 75.6\% (RL-Zero, Authority).
+
+\subsection{Mechanistic Interpretability: Truth vs Social ``Tug-of-War''}
+\label{sec:mechanistic}
+
+To connect behavioral conformity to internal representations, we measure layerwise competition between truth and social signals via probe projections. Figure~\ref{fig:turn_layer_by_temperature} summarizes the \textit{turn layer} (first layer where SVP exceeds TVP) across temperatures and pressure mechanisms. Training stage dominates: instruction-tuned variants exhibit very early turn layers (often at layer 0--1), while Base/Think variants typically turn later (roughly layers 4--9), with temperature shifts that are comparatively modest and mechanism-dependent (e.g., Base under Asch shifts earlier by $\sim$1.7 layers from $T=0$ to $T=1$).
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=\textwidth]{turn_layer_by_temperature.png}
+    \caption{Turn layer across decoding temperatures under social pressure. Each cell reports the mean first layer where the Social Vector Projection exceeds the Truth Vector Projection (SVP $>$ TVP), computed on behavioral trials. Lower values indicate earlier social dominance in the residual stream.}
+    \label{fig:turn_layer_by_temperature}
+\end{figure*}
+
+Figure~\ref{fig:collision_heatmaps_t06} visualizes SVP$-$TVP across layers and conditions at $T=0.6$ for two representative variants. Instruct-SFT shows strong social dominance (positive SVP$-$TVP) essentially from the earliest layers across conditions, whereas Think-SFT maintains stronger truth dominance deeper into the network before turning.
+
+\begin{figure*}[t]
+    \centering
+    \begin{subfigure}[t]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{collision_heatmap_instruct_sft_T0.6.png}
+        \caption{Instruct-SFT ($T=0.6$)}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{collision_heatmap_think_sft_T0.6.png}
+        \caption{Think-SFT ($T=0.6$)}
+    \end{subfigure}
+    \caption{Collision heatmaps (SVP$-$TVP) by layer and behavioral condition at $T=0.6$. Red indicates social projection exceeds truth projection; blue indicates the opposite.}
+    \label{fig:collision_heatmaps_t06}
+\end{figure*}
 
 \subsection{Topic-wise Breakdown}
 
@@ -574,7 +609,7 @@ Temperature has a small but significant main effect (Table~\ref{tab:regression})
 \subsection{Limitations}
 
 \begin{enumerate}
-    \item \textbf{No mechanistic traces in this temperature sweep}: The present results focus on behavioral outcomes (accuracy, pressure deltas, truth override, and opinion agreement). Although the broader codebase supports activation capture, probe training, and causal interventions, these mechanistic artifacts were not available for the runs analyzed here; mechanistic interpretability is therefore deferred to future work.
+    \item \textbf{Probe-based mechanistic analysis is correlational}: Our interpretability results rely on linear probes and a turn-layer heuristic defined from SVP/TVP crossings in captured residual-stream activations. These signatures provide an interpretable summary of internal competition between truth and social signals, but they do not by themselves establish a complete causal account of conformity; stronger causal interventions and ablations remain future work.
     \item \textbf{Synthetic social pressure and conservative prompting}: Our system prompt explicitly instructs the model to prefer correctness over agreement. This likely \textit{underestimates} conformity relative to unconstrained real-world interactions.
     \item \textbf{Ceiling difficulty in several categories}: Knowledge, science, and truthfulness subsets yield near-ceiling error rates for all variants (Figure~\ref{fig:topic_control}), limiting sensitivity of raw error-rate deltas. Conditional metrics partially address this but remain low-powered when control accuracy is near zero.
     \item \textbf{Answer matching and refusal heuristics}: Correctness is scored via deterministic string matching against a normalized completion (Section~2.3), while wrong-answer endorsement uses heuristic answer-span extraction to distinguish endorsement from mere mention. These choices reduce some prompt-echo/mention false positives, but residual formatting and style differences across variants (especially verbose responses) could still bias absolute levels.
@@ -590,6 +625,7 @@ This study provides a large-scale analysis of how sampling temperature, training
     \item \textbf{Pressure is mechanism-specific.} Authority claims are generally more harmful than peer consensus, but the reverse holds for Instruct-SFT, underscoring the need to test multiple social mechanisms rather than a single conformity setting.
     \item \textbf{Temperature primarily amplifies pressure.} Temperature has a modest main effect overall and disproportionately worsens behavior under social pressure, motivating conservative decoding defaults for socially biased contexts.
     \item \textbf{Opinion prompts expose latent conformity.} Even when factual accuracy cannot be measured, peer consensus increases wrong-answer endorsement for many variants; Think/Think-SFT often refuse opinion questions and show only modest endorsement under pressure.
+    \item \textbf{Mechanistic signatures track training stage.} A probe-based ``turn layer'' summary shows that social projections overtake truth projections at very early layers in instruction-tuned variants, while other variants typically turn later and exhibit smaller temperature-dependent shifts.
 \end{enumerate}
 
 These findings challenge the assumption that optimizing for verifiable rewards necessarily produces more truthful models. The ``glass box'' transparency of Olmo-3 enables these discoveries; we advocate for continued investment in open model families that permit such granular behavioral analysis.
