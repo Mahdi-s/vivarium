@@ -104,6 +104,9 @@ def main(argv: list[str] | None = None) -> int:
     p2.add_argument("--no-validate", action="store_true")
     p2.add_argument("--nondeterministic-timestamps", action="store_true")
     p2.add_argument("--message-history", type=int, default=20)
+    p2.add_argument("--temperature", type=float, default=0.2, help="Sampling temperature (0=greedy)")
+    p2.add_argument("--top-k", "--top-n", dest="top_k", type=int, default=None, help="Top-k sampling cutoff (aka top_n)")
+    p2.add_argument("--top-p", "--nucleus-p", dest="top_p", type=float, default=None, help="Nucleus sampling cutoff (aka nucleus_p)")
     p2.add_argument("--rate-limit-rpm", type=int, default=None, help="Rate limit: requests per minute")
     p2.add_argument("--rate-limit-tpm", type=int, default=None, help="Rate limit: tokens per minute")
     p2.add_argument("--rate-limit-max-concurrent", type=int, default=10, help="Rate limit: max concurrent requests")
@@ -557,12 +560,24 @@ def main(argv: list[str] | None = None) -> int:
                         ),
                     )
                 )
-                agents[agent_id] = default_cognitive_policy(gateway=gateway, model=str(cfg.policy.model))
+                agents[agent_id] = default_cognitive_policy(
+                    gateway=gateway,
+                    model=str(cfg.policy.model),
+                    temperature=float(cfg.policy.temperature),
+                    top_k=(int(cfg.policy.top_k) if cfg.policy.top_k is not None else None),
+                    top_p=(float(cfg.policy.top_p) if cfg.policy.top_p is not None else None),
+                )
             else:
                 if not cfg.policy.model_id:
                     raise RuntimeError("experiment policy.kind=transformerlens requires policy.model_id")
                 gateway = TransformerLensGateway(model_id=str(cfg.policy.model_id), capture_context=capture_context)
-                agents[agent_id] = default_cognitive_policy(gateway=gateway, model=str(cfg.policy.model_id))
+                agents[agent_id] = default_cognitive_policy(
+                    gateway=gateway,
+                    model=str(cfg.policy.model_id),
+                    temperature=float(cfg.policy.temperature),
+                    top_k=(int(cfg.policy.top_k) if cfg.policy.top_k is not None else None),
+                    top_p=(float(cfg.policy.top_p) if cfg.policy.top_p is not None else None),
+                )
 
         engine = WorldEngine(
             config=WorldEngineConfig(
@@ -1274,6 +1289,9 @@ def main(argv: list[str] | None = None) -> int:
                 "model": args.model,
                 "mock_llm": bool(args.mock_llm),
                 "message_history": args.message_history,
+                "temperature": float(args.temperature),
+                "top_k": (int(args.top_k) if args.top_k is not None else None),
+                "top_p": (float(args.top_p) if args.top_p is not None else None),
             }
         )
     if mode == "phase3":
@@ -1335,7 +1353,13 @@ def main(argv: list[str] | None = None) -> int:
                     ),
                 )
             )
-            agents[agent_id] = default_cognitive_policy(gateway=gateway, model=args.model)
+            agents[agent_id] = default_cognitive_policy(
+                gateway=gateway,
+                model=args.model,
+                temperature=float(args.temperature),
+                top_k=(int(args.top_k) if args.top_k is not None else None),
+                top_p=(float(args.top_p) if args.top_p is not None else None),
+            )
         else:
             gateway = TransformerLensGateway(model_id=str(args.model_id), capture_context=capture_context)
             if bool(args.list_hooks):

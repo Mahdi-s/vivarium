@@ -112,6 +112,8 @@ class CognitiveAgentPolicy:
     model: str
     tools: List[ToolSpec]
     temperature: float = 0.2
+    top_k: Optional[int] = None
+    top_p: Optional[float] = None
 
     def __post_init__(self) -> None:
         try:
@@ -153,6 +155,8 @@ class CognitiveAgentPolicy:
                 tools=(self.tools if supports_tools else None),
                 tool_choice=("auto" if supports_tools else None),
                 temperature=self.temperature,
+                top_k=self.top_k,
+                top_p=self.top_p,
             )
             state["llm_response"] = resp
             return state
@@ -273,6 +277,8 @@ class SimpleCognitivePolicy:
     model: str
     tools: List[ToolSpec]
     temperature: float = 0.2
+    top_k: Optional[int] = None
+    top_p: Optional[float] = None
 
     def decide(self, *, run_id: str, time_step: int, agent_id: str, observation: Observation) -> ActionRequest:
         supports_tools = bool(getattr(self.gateway, "supports_tool_calls", True))
@@ -285,6 +291,8 @@ class SimpleCognitivePolicy:
             tools=(self.tools if supports_tools else None),
             tool_choice=("auto" if supports_tools else None),
             temperature=self.temperature,
+            top_k=self.top_k,
+            top_p=self.top_p,
         )
         tool = _extract_tool_call(resp)
         if supports_tools and tool is not None:
@@ -348,6 +356,8 @@ class SimpleCognitivePolicy:
                 tools=(self.tools if supports_tools else None),
                 tool_choice=("auto" if supports_tools else None),
                 temperature=self.temperature,
+                top_k=self.top_k,
+                top_p=self.top_p,
             )
         else:
             resp = await asyncio.to_thread(
@@ -357,6 +367,8 @@ class SimpleCognitivePolicy:
                 tools=(self.tools if supports_tools else None),
                 tool_choice=("auto" if supports_tools else None),
                 temperature=self.temperature,
+                top_k=self.top_k,
+                top_p=self.top_p,
             )
 
         tool = _extract_tool_call(resp)
@@ -406,10 +418,24 @@ class SimpleCognitivePolicy:
         )
 
 
-def default_cognitive_policy(*, gateway: LLMGateway, model: str) -> CognitiveAgentPolicy:
+def default_cognitive_policy(
+    *, gateway: LLMGateway, model: str, temperature: float = 0.2, top_k: Optional[int] = None, top_p: Optional[float] = None
+) -> CognitiveAgentPolicy:
     # Prefer LangGraph implementation when available; otherwise fall back (still Phase 2, but no graph).
     if langgraph_available():
-        return CognitiveAgentPolicy(gateway=gateway, model=model, tools=_tool_specs())
-    return SimpleCognitivePolicy(gateway=gateway, model=model, tools=_tool_specs())
-
-
+        return CognitiveAgentPolicy(
+            gateway=gateway,
+            model=model,
+            tools=_tool_specs(),
+            temperature=temperature,
+            top_k=top_k,
+            top_p=top_p,
+        )
+    return SimpleCognitivePolicy(
+        gateway=gateway,
+        model=model,
+        tools=_tool_specs(),
+        temperature=temperature,
+        top_k=top_k,
+        top_p=top_p,
+    )

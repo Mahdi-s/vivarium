@@ -319,6 +319,8 @@ class LLMGateway(Protocol):
         tools: Optional[List[ToolSpec]] = None,
         tool_choice: Optional[str] = None,
         temperature: float = 0.0,
+        top_k: Optional[int] = None,
+        top_p: Optional[float] = None,
         seed: Optional[int] = None,
     ) -> JsonDict: ...
 
@@ -332,6 +334,8 @@ class AsyncLLMGateway(Protocol):
         tools: Optional[List[ToolSpec]] = None,
         tool_choice: Optional[str] = None,
         temperature: float = 0.0,
+        top_k: Optional[int] = None,
+        top_p: Optional[float] = None,
         seed: Optional[int] = None,
     ) -> JsonDict: ...
 
@@ -363,6 +367,8 @@ class LiteLLMGateway:
         tools: Optional[List[ToolSpec]] = None,
         tool_choice: Optional[str] = None,
         temperature: float = 0.0,
+        top_k: Optional[int] = None,
+        top_p: Optional[float] = None,
         seed: Optional[int] = None,
     ) -> Dict[str, Any]:
         tool_payload = [t.as_openai_tool() for t in (tools or [])] or None
@@ -371,6 +377,15 @@ class LiteLLMGateway:
             "messages": messages,
             "temperature": temperature,
         }
+        if top_k is not None and int(top_k) > 0:
+            kwargs["top_k"] = int(top_k)
+        if top_p is not None:
+            try:
+                top_p_f = float(top_p)
+                if 0.0 < top_p_f <= 1.0:
+                    kwargs["top_p"] = top_p_f
+            except Exception:
+                pass
         if seed is not None:
             kwargs["seed"] = seed
         if self.api_base:
@@ -392,6 +407,64 @@ class LiteLLMGateway:
                 kwargs["tool_choice"] = {"type": "function", "function": {"name": tool_choice}}
         return kwargs
 
+    @staticmethod
+    def _should_retry_without_top_k(err: Exception) -> bool:
+        s = str(err).lower()
+        if "top_k" not in s:
+            return False
+        return any(
+            x in s
+            for x in (
+                "unrecognized",
+                "unrecognised",
+                "unknown",
+                "unexpected",
+                "invalid",
+                "not supported",
+                "unsupported",
+            )
+        )
+
+    @staticmethod
+    def _should_retry_without_top_p(err: Exception) -> bool:
+        s = str(err).lower()
+        if "top_p" not in s:
+            return False
+        return any(
+            x in s
+            for x in (
+                "unrecognized",
+                "unrecognised",
+                "unknown",
+                "unexpected",
+                "invalid",
+                "not supported",
+                "unsupported",
+            )
+        )
+
+    @staticmethod
+    def _strip_top_k_if_known_unsupported(*, litellm_mod: Any, kwargs: Dict[str, Any]) -> None:
+        """
+        Avoid sending top_k to providers that almost certainly reject it (e.g., OpenAI/Azure),
+        unless an explicit api_base is set (likely a permissive local server).
+        """
+        if "top_k" not in kwargs:
+            return
+        if kwargs.get("api_base"):
+            return
+        try:
+            provider, _model, _api_base, _api_key = litellm_mod.get_llm_provider(  # type: ignore[attr-defined]
+                model=str(kwargs.get("model") or ""),
+                custom_llm_provider=kwargs.get("custom_llm_provider"),
+                api_base=kwargs.get("api_base"),
+                api_key=kwargs.get("api_key"),
+            )
+        except Exception:
+            return
+        if str(provider).lower() in ("openai", "azure"):
+            kwargs.pop("top_k", None)
+
     def chat(
         self,
         *,
@@ -400,6 +473,8 @@ class LiteLLMGateway:
         tools: Optional[List[ToolSpec]] = None,
         tool_choice: Optional[str] = None,
         temperature: float = 0.0,
+        top_k: Optional[int] = None,
+        top_p: Optional[float] = None,
         seed: Optional[int] = None,
     ) -> JsonDict:
         try:
@@ -415,10 +490,33 @@ class LiteLLMGateway:
             tools=tools,
             tool_choice=tool_choice,
             temperature=temperature,
+            top_k=top_k,
+            top_p=top_p,
             seed=seed,
         )
+        self._strip_top_k_if_known_unsupported(litellm_mod=litellm, kwargs=kwargs)
 
-        resp = litellm.completion(**kwargs)
+        try:
+            resp = litellm.completion(**kwargs)
+        except Exception as e:
+            if "top_k" in kwargs and self._should_retry_without_top_k(e):
+                kwargs.pop("top_k", None)
+                resp = litellm.completion(**kwargs)
+                try:
+                    if isinstance(resp, dict):
+                        resp.setdefault("_aam_meta", {})["top_k_ignored"] = True
+                except Exception:
+                    pass
+            elif "top_p" in kwargs and self._should_retry_without_top_p(e):
+                kwargs.pop("top_p", None)
+                resp = litellm.completion(**kwargs)
+                try:
+                    if isinstance(resp, dict):
+                        resp.setdefault("_aam_meta", {})["top_p_ignored"] = True
+                except Exception:
+                    pass
+            else:
+                raise
         # Keep full response for downstream parsing.
         return resp
 
@@ -430,6 +528,8 @@ class LiteLLMGateway:
         tools: Optional[List[ToolSpec]] = None,
         tool_choice: Optional[str] = None,
         temperature: float = 0.0,
+        top_k: Optional[int] = None,
+        top_p: Optional[float] = None,
         seed: Optional[int] = None,
     ) -> JsonDict:
         """
@@ -449,17 +549,49 @@ class LiteLLMGateway:
             tools=tools,
             tool_choice=tool_choice,
             temperature=temperature,
+            top_k=top_k,
+            top_p=top_p,
             seed=seed,
         )
+        self._strip_top_k_if_known_unsupported(litellm_mod=litellm, kwargs=kwargs)
 
         async def _call() -> JsonDict:
             # Prefer LiteLLM async API if available.
             acompletion = getattr(litellm, "acompletion", None)
-            if callable(acompletion):
-                return await acompletion(**kwargs)
+            try:
+                if callable(acompletion):
+                    return await acompletion(**kwargs)
 
-            # Fallback: run the sync call in a worker thread to avoid blocking the loop.
-            return await asyncio.to_thread(litellm.completion, **kwargs)
+                # Fallback: run the sync call in a worker thread to avoid blocking the loop.
+                return await asyncio.to_thread(litellm.completion, **kwargs)
+            except Exception as e:
+                if "top_k" in kwargs and self._should_retry_without_top_k(e):
+                    kwargs2 = dict(kwargs)
+                    kwargs2.pop("top_k", None)
+                    if callable(acompletion):
+                        resp = await acompletion(**kwargs2)
+                    else:
+                        resp = await asyncio.to_thread(litellm.completion, **kwargs2)
+                    try:
+                        if isinstance(resp, dict):
+                            resp.setdefault("_aam_meta", {})["top_k_ignored"] = True
+                    except Exception:
+                        pass
+                    return resp
+                if "top_p" in kwargs and self._should_retry_without_top_p(e):
+                    kwargs2 = dict(kwargs)
+                    kwargs2.pop("top_p", None)
+                    if callable(acompletion):
+                        resp = await acompletion(**kwargs2)
+                    else:
+                        resp = await asyncio.to_thread(litellm.completion, **kwargs2)
+                    try:
+                        if isinstance(resp, dict):
+                            resp.setdefault("_aam_meta", {})["top_p_ignored"] = True
+                    except Exception:
+                        pass
+                    return resp
+                raise
 
         # Apply rate limiting if configured
         if self._rate_limiter is not None:
@@ -489,8 +621,11 @@ class MockLLMGateway:
         tools: Optional[List[ToolSpec]] = None,
         tool_choice: Optional[str] = None,
         temperature: float = 0.0,
+        top_k: Optional[int] = None,
+        top_p: Optional[float] = None,
         seed: Optional[int] = None,
     ) -> JsonDict:
+        _ = (top_k, top_p)
         # Fabricate a minimal OpenAI-like response structure.
         # We bias toward tool calls if tools are provided.
         do_tool = bool(tools) and (tool_choice in (None, "auto") or tool_choice == "post_message")
@@ -533,6 +668,8 @@ class MockLLMGateway:
         tools: Optional[List[ToolSpec]] = None,
         tool_choice: Optional[str] = None,
         temperature: float = 0.0,
+        top_k: Optional[int] = None,
+        top_p: Optional[float] = None,
         seed: Optional[int] = None,
     ) -> JsonDict:
         return self.chat(
@@ -541,6 +678,8 @@ class MockLLMGateway:
             tools=tools,
             tool_choice=tool_choice,
             temperature=temperature,
+            top_k=top_k,
+            top_p=top_p,
             seed=seed,
         )
 
@@ -722,6 +861,8 @@ class TransformerLensGateway:
         tools: Optional[List[ToolSpec]] = None,
         tool_choice: Optional[str] = None,
         temperature: float = 0.0,
+        top_k: Optional[int] = None,
+        top_p: Optional[float] = None,
         seed: Optional[int] = None,
     ) -> JsonDict:
         # `model` is ignored for TL; we use self.model_id (keeps LLMGateway interface stable).
@@ -734,9 +875,9 @@ class TransformerLensGateway:
             hooks = self.capture_context.build_fwd_hooks()
             self.capture_context.begin_inference()
             with self._model.hooks(fwd_hooks=hooks):
-                text = self._generate(prompt=prompt, temperature=temperature, seed=seed)
+                text = self._generate(prompt=prompt, temperature=temperature, top_k=top_k, top_p=top_p, seed=seed)
         else:
-            text = self._generate(prompt=prompt, temperature=temperature, seed=seed)
+            text = self._generate(prompt=prompt, temperature=temperature, top_k=top_k, top_p=top_p, seed=seed)
 
         # Return an OpenAI-ish response shape consumed by existing parsers.
         return {"choices": [{"message": {"role": "assistant", "content": text}}]}
@@ -749,6 +890,8 @@ class TransformerLensGateway:
         tools: Optional[List[ToolSpec]] = None,
         tool_choice: Optional[str] = None,
         temperature: float = 0.0,
+        top_k: Optional[int] = None,
+        top_p: Optional[float] = None,
         seed: Optional[int] = None,
     ) -> JsonDict:
         # TL generation is compute-bound and synchronous; isolate it so the scheduler can remain async.
@@ -759,23 +902,45 @@ class TransformerLensGateway:
             tools=tools,
             tool_choice=tool_choice,
             temperature=temperature,
+            top_k=top_k,
+            top_p=top_p,
             seed=seed,
         )
 
-    def _generate(self, *, prompt: str, temperature: float, seed: Optional[int] = None) -> str:
+    def _generate(
+        self,
+        *,
+        prompt: str,
+        temperature: float,
+        top_k: Optional[int] = None,
+        top_p: Optional[float] = None,
+        seed: Optional[int] = None,
+    ) -> str:
         # Set seed for reproducibility if provided
         if seed is not None:
             import torch  # type: ignore
             torch.manual_seed(seed)
         # HookedTransformer.generate API varies slightly across versions; be defensive.
+        gen_kwargs: Dict[str, Any] = {"max_new_tokens": self.max_new_tokens}
+        if float(temperature) > 0.0:
+            gen_kwargs["temperature"] = float(temperature)
+            if top_k is not None and int(top_k) > 0:
+                gen_kwargs["top_k"] = int(top_k)
+            if top_p is not None:
+                try:
+                    top_p_f = float(top_p)
+                    if 0.0 < top_p_f <= 1.0:
+                        gen_kwargs["top_p"] = top_p_f
+                except Exception:
+                    pass
         try:
-            out = self._model.generate(
-                prompt,
-                max_new_tokens=self.max_new_tokens,
-                temperature=float(temperature),
-            )
+            out = self._model.generate(prompt, **gen_kwargs)
         except TypeError:
-            out = self._model.generate(prompt, max_new_tokens=self.max_new_tokens)
+            # Retry without sampling kwargs (older TL versions).
+            gen_kwargs.pop("top_k", None)
+            gen_kwargs.pop("top_p", None)
+            gen_kwargs.pop("temperature", None)
+            out = self._model.generate(prompt, **gen_kwargs)
         return out if isinstance(out, str) else str(out)
 
 
@@ -1079,6 +1244,8 @@ class HuggingFaceHookedGateway:
         tools: Optional[List[ToolSpec]] = None,
         tool_choice: Optional[str] = None,
         temperature: float = 0.0,
+        top_k: Optional[int] = None,
+        top_p: Optional[float] = None,
         seed: Optional[int] = None,
     ) -> JsonDict:
         _ = (model, tools, tool_choice)
@@ -1105,6 +1272,15 @@ class HuggingFaceHookedGateway:
         }
         if do_sample:
             gen_kwargs["temperature"] = float(temperature)
+            if top_k is not None and int(top_k) > 0:
+                gen_kwargs["top_k"] = int(top_k)
+            if top_p is not None:
+                try:
+                    top_p_f = float(top_p)
+                    if 0.0 < top_p_f <= 1.0:
+                        gen_kwargs["top_p"] = top_p_f
+                except Exception:
+                    pass
 
         import torch  # type: ignore
 
@@ -1304,6 +1480,8 @@ class HuggingFaceTransformersGateway:
         tools: Optional[List[ToolSpec]] = None,
         tool_choice: Optional[str] = None,
         temperature: float = 0.0,
+        top_k: Optional[int] = None,
+        top_p: Optional[float] = None,
         seed: Optional[int] = None,
     ) -> JsonDict:
         """Generate a response using the local model."""
@@ -1328,11 +1506,21 @@ class HuggingFaceTransformersGateway:
             inputs = {k: v.to(device) for k, v in inputs.items()}
         
         # Generate
+        top_p_value: Optional[float] = None
+        if temperature > 0 and top_p is not None:
+            try:
+                top_p_f = float(top_p)
+                if 0.0 < top_p_f <= 1.0:
+                    top_p_value = top_p_f
+            except Exception:
+                top_p_value = None
         with torch.no_grad():
             outputs = self._model.generate(
                 **inputs,
                 max_new_tokens=self.max_new_tokens,
                 temperature=temperature if temperature > 0 else None,
+                top_k=(int(top_k) if (temperature > 0 and top_k is not None and int(top_k) > 0) else None),
+                top_p=top_p_value,
                 do_sample=temperature > 0,
                 pad_token_id=self._tokenizer.eos_token_id,
             )
@@ -1356,6 +1544,8 @@ class HuggingFaceTransformersGateway:
         tools: Optional[List[ToolSpec]] = None,
         tool_choice: Optional[str] = None,
         temperature: float = 0.0,
+        top_k: Optional[int] = None,
+        top_p: Optional[float] = None,
         seed: Optional[int] = None,
     ) -> JsonDict:
         """Async version - runs in thread pool."""
@@ -1366,7 +1556,7 @@ class HuggingFaceTransformersGateway:
             tools=tools,
             tool_choice=tool_choice,
             temperature=temperature,
+            top_k=top_k,
+            top_p=top_p,
             seed=seed,
         )
-
-

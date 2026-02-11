@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from aam.persistence import TraceDb
 from aam.llm_gateway import HuggingFaceHookedGateway
+from aam.output_parsing import OutputParsingConfig, classify_output
 
 from .scoring import evaluate_correctness, is_refusal, parse_answer_text
 
@@ -32,7 +33,7 @@ def _messages_to_prompt(messages: List[JsonDict]) -> str:
     return "\n".join(lines)
 
 
-def _load_trial_messages(*, trace_db: TraceDb, trial_id: str) -> List[JsonDict]:
+def _load_trial_messages(*, trace_db: TraceDb, trial_id: str) -> Tuple[List[JsonDict], str, str]:
     row = trace_db.conn.execute(
         """
         SELECT p.system_prompt, p.user_prompt, p.chat_history_json
@@ -53,12 +54,15 @@ def _load_trial_messages(*, trace_db: TraceDb, trial_id: str) -> List[JsonDict]:
     except Exception:
         history = []
 
-    messages: List[JsonDict] = [{"role": "system", "content": str(row["system_prompt"])}]
+    system_prompt = str(row["system_prompt"])
+    user_prompt = str(row["user_prompt"])
+
+    messages: List[JsonDict] = [{"role": "system", "content": system_prompt}]
     for m in history:
         if isinstance(m, dict):
             messages.append({"role": str(m.get("role", "user")), "content": str(m.get("content", ""))})
-    messages.append({"role": "user", "content": str(row["user_prompt"])})
-    return messages
+    messages.append({"role": "user", "content": user_prompt})
+    return messages, system_prompt, user_prompt
 
 
 def _extract_text_from_generation(out: Any, prompt: str) -> str:
@@ -108,6 +112,8 @@ def run_intervention_sweep(
     normalize_vector: bool = True,
     trial_filter_sql: Optional[str] = None,
     temperature: float = 0.0,
+    top_k: Optional[int] = None,
+    top_p: Optional[float] = None,
 ) -> int:
     """
     Executes activation steering by subtracting alpha * v_social at specified layers.
@@ -123,6 +129,7 @@ def run_intervention_sweep(
     # Use HF gateway so OLMo-3 works without TransformerLens.
     # Note: this is slower than TL but unlocks interventions on Olmo.
     gateway = HuggingFaceHookedGateway(model_id_or_path=model_id, capture_context=None, max_new_tokens=int(max_new_tokens))
+    output_parse_cfg = OutputParsingConfig()
 
     # Choose trials (default: all immutable-fact trials with is_correct not NULL)
     base_query = """
@@ -169,7 +176,7 @@ def run_intervention_sweep(
             trial_id = str(tr["trial_id"])
             ground_truth = (str(tr["ground_truth_text"]) if tr["ground_truth_text"] is not None else None)
             seed = int(tr["seed"]) if tr["seed"] is not None else None
-            messages = _load_trial_messages(trace_db=trace_db, trial_id=trial_id)
+            messages, system_prompt, user_prompt = _load_trial_messages(trace_db=trace_db, trial_id=trial_id)
 
             # Baseline generation (no hooks)
             t0 = time.time()
@@ -179,6 +186,8 @@ def run_intervention_sweep(
                 tools=None,
                 tool_choice=None,
                 temperature=temperature,
+                top_k=top_k,
+                top_p=top_p,
                 seed=seed,
             )
             latency_before = (time.time() - t0) * 1000.0
@@ -187,6 +196,14 @@ def run_intervention_sweep(
                 text_before = str(resp_before["choices"][0]["message"].get("content") or "")
             except Exception:
                 text_before = str(resp_before)
+            classified_before = classify_output(
+                raw_text=text_before,
+                cfg=output_parse_cfg,
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                expected_answer_texts=([ground_truth] if ground_truth is not None else []),
+                token_logprobs=None,
+            )
             parsed_before = parse_answer_text(text_before)
             refusal_before = is_refusal(text_before)
             is_correct_before = evaluate_correctness(
@@ -204,7 +221,12 @@ def run_intervention_sweep(
                 is_correct=is_correct_before,
                 refusal_flag=refusal_before,
                 latency_ms=latency_before,
-                token_usage_json=None,
+                token_usage_json={
+                    "_output_quality": {
+                        "label": classified_before.label.value,
+                        "metadata": classified_before.metadata,
+                    }
+                },
                 created_at=now,
             )
 
@@ -237,6 +259,8 @@ def run_intervention_sweep(
                     tools=None,
                     tool_choice=None,
                     temperature=temperature,
+                    top_k=top_k,
+                    top_p=top_p,
                     seed=seed,
                 )
             finally:
@@ -251,6 +275,14 @@ def run_intervention_sweep(
                 text_after = str(resp_after["choices"][0]["message"].get("content") or "")
             except Exception:
                 text_after = str(resp_after)
+            classified_after = classify_output(
+                raw_text=text_after,
+                cfg=output_parse_cfg,
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                expected_answer_texts=([ground_truth] if ground_truth is not None else []),
+                token_logprobs=None,
+            )
             parsed_after = parse_answer_text(text_after)
             refusal_after = is_refusal(text_after)
             is_correct_after = evaluate_correctness(
@@ -268,7 +300,12 @@ def run_intervention_sweep(
                 is_correct=is_correct_after,
                 refusal_flag=refusal_after,
                 latency_ms=latency_after,
-                token_usage_json=None,
+                token_usage_json={
+                    "_output_quality": {
+                        "label": classified_after.label.value,
+                        "metadata": classified_after.metadata,
+                    }
+                },
                 created_at=now,
             )
 

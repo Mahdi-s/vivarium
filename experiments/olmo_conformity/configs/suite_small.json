@@ -23,15 +23,18 @@
     { "variant": "base", "model_id": "allenai/Olmo-3-1025-7B" },
     { "variant": "instruct", "model_id": "allenai/Olmo-3-7B-Instruct" },
     { "variant": "instruct_sft", "model_id": "allenai/Olmo-3-7B-Instruct-SFT" },
+    { "variant": "instruct_dpo", "model_id": "allenai/Olmo-3-7B-Instruct-DPO" },
     { "variant": "think", "model_id": "allenai/Olmo-3-7B-Think" },
     { "variant": "think_sft", "model_id": "allenai/Olmo-3-7B-Think-SFT" },
+    { "variant": "think_dpo", "model_id": "allenai/Olmo-3-7B-Think-DPO" },
     { "variant": "rl_zero", "model_id": "allenai/Olmo-3-7B-RL-Zero-Math" }
   ],
   "run": {
     "seed": 42,
     "temperature": 0.0,
-    "max_items_per_dataset": 10
+    "top_k": 50,
+    "top_p": 0.9,
+    "max_items_per_dataset": 10,
+    "notes": "Sampling defaults: top_k=50, top_p=0.9 (locked); temperature varies across suite configs"
   }
 }
-
-

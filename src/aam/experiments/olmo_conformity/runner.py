@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from aam.interpretability import CaptureConfig, CaptureContext
 from aam.llm_gateway import HuggingFaceHookedGateway, LiteLLMGateway, MockLLMGateway, RateLimitConfig, TransformerLensGateway
+from aam.output_parsing import OutputParsingConfig, classify_output
 from aam.persistence import TraceDb, TraceDbConfig
 from aam.types import RunMetadata
 
@@ -197,6 +198,8 @@ def run_suite(
     repo_root = str(Path(__file__).resolve().parents[4])
     prompts_root = os.path.join(repo_root, "experiments", "olmo_conformity", "prompts")
 
+    output_parse_cfg = OutputParsingConfig()
+
     # Register datasets + items
     dataset_ids: Dict[str, str] = {}
     for ds in cfg.get("datasets", []):
@@ -243,6 +246,22 @@ def run_suite(
 
     # Execute trials (behavioral only). Interpretability/probes/interventions are separate steps.
     temperature = float(cfg.get("run", {}).get("temperature", 0.0))
+    top_k_raw = cfg.get("run", {}).get("top_k", cfg.get("run", {}).get("top_n"))
+    top_k: Optional[int]
+    try:
+        top_k = (None if top_k_raw is None else int(top_k_raw))
+    except Exception:
+        top_k = None
+    if top_k is not None and top_k <= 0:
+        top_k = None
+    top_p_raw = cfg.get("run", {}).get("top_p", cfg.get("run", {}).get("nucleus_p"))
+    top_p: Optional[float]
+    try:
+        top_p = (None if top_p_raw is None else float(top_p_raw))
+    except Exception:
+        top_p = None
+    if top_p is not None and not (0.0 < top_p <= 1.0):
+        top_p = None
     seed = int(cfg.get("run", {}).get("seed", 42))
 
     # Setup Judge Eval tracer if requested
@@ -500,7 +519,16 @@ def run_suite(
 
                 print(f"    [Runner] Calling gateway.chat() with seed={seed}...")
                 t0 = time.time()
-                resp = gateway.chat(model=model_id_for_api, messages=messages, tools=None, tool_choice=None, temperature=temperature, seed=seed)
+                resp = gateway.chat(
+                    model=model_id_for_api,
+                    messages=messages,
+                    tools=None,
+                    tool_choice=None,
+                    temperature=temperature,
+                    top_k=top_k,
+                    top_p=top_p,
+                    seed=seed,
+                )
                 latency_ms = (time.time() - t0) * 1000.0
                 print(f"    [Runner] Gateway response received ({latency_ms:.1f}ms)")
 
@@ -523,6 +551,17 @@ def run_suite(
                     raw_text = str(resp["choices"][0]["message"].get("content") or "")
                 except Exception:
                     raw_text = str(resp)
+
+                classified = classify_output(
+                    raw_text=raw_text,
+                    cfg=output_parse_cfg,
+                    system_prompt=system,
+                    user_prompt=user,
+                    expected_answer_texts=(
+                        [str(item.get("ground_truth_text"))] if item.get("ground_truth_text") is not None else []
+                    ),
+                    token_logprobs=None,
+                )
 
                 parsed = parse_answer_text(raw_text)
                 refusal = is_refusal(raw_text)
@@ -596,6 +635,13 @@ def run_suite(
                 parsed_json = None
                 if judgeval_scores:
                     parsed_json = judgeval_scores
+
+                token_usage_json = {
+                    "_output_quality": {
+                        "label": classified.label.value,
+                        "metadata": classified.metadata,
+                    }
+                }
                 
                 trace_db.insert_conformity_output(
                     output_id=output_id,
@@ -606,7 +652,7 @@ def run_suite(
                     is_correct=is_correct,
                     refusal_flag=refusal,
                     latency_ms=latency_ms,
-                    token_usage_json=None,
+                    token_usage_json=token_usage_json,
                 )
                 print(f"    [Runner] Trial {trial_num}/{total_trials} complete (correct={is_correct}, refusal={refusal})\n")
 

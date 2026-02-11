@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from typing import Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field
 
 from aam.scheduler import SortMode
 
@@ -32,6 +32,20 @@ class ExperimentPolicySection(BaseModel):
 
     # Cognitive policy / gateways
     model: str = "gpt-3.5-turbo"
+    temperature: float = Field(0.2, ge=0.0, description="Sampling temperature (0=greedy)")
+    top_k: Optional[int] = Field(
+        None,
+        ge=1,
+        validation_alias=AliasChoices("top_k", "top_n"),
+        description="Top-k sampling cutoff (aka top_n)",
+    )
+    top_p: Optional[float] = Field(
+        None,
+        gt=0.0,
+        le=1.0,
+        validation_alias=AliasChoices("top_p", "nucleus_p"),
+        description="Nucleus sampling cutoff (aka nucleus_p)",
+    )
     mock_llm: bool = False
     api_base: Optional[str] = None
     api_key: Optional[str] = None
@@ -69,5 +83,3 @@ def load_experiment_config(path: str) -> ExperimentConfig:
     """
     data = json.loads(Path(path).read_text(encoding="utf-8"))
     return ExperimentConfig.model_validate(data)
-
-
