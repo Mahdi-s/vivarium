@@ -50,6 +50,9 @@ def generate_core_figures(*, trace_db: TraceDb, run_id: str, run_dir: str) -> Di
             compute_behavioral_metrics,
             generate_behavioral_graphs,
             export_behavioral_logs,
+            compute_answer_logprob_metrics,
+            generate_answer_logprob_graphs,
+            export_answer_logprob_logs,
             compute_probe_metrics,
             generate_probe_graphs,
             export_probe_logs,
@@ -64,6 +67,9 @@ def generate_core_figures(*, trace_db: TraceDb, run_id: str, run_dir: str) -> Di
         compute_behavioral_metrics = None  # type: ignore[assignment]
         generate_behavioral_graphs = None  # type: ignore[assignment]
         export_behavioral_logs = None  # type: ignore[assignment]
+        compute_answer_logprob_metrics = None  # type: ignore[assignment]
+        generate_answer_logprob_graphs = None  # type: ignore[assignment]
+        export_answer_logprob_logs = None  # type: ignore[assignment]
         compute_probe_metrics = None  # type: ignore[assignment]
         generate_probe_graphs = None  # type: ignore[assignment]
         export_probe_logs = None  # type: ignore[assignment]
@@ -97,6 +103,15 @@ def generate_core_figures(*, trace_db: TraceDb, run_id: str, run_dir: str) -> Di
             m = compute_behavioral_metrics(trace_db, run_id, run_dir)
             out.update(generate_behavioral_graphs(trace_db, run_id, run_dir, m))
             export_behavioral_logs(trace_db, run_id, run_dir, m)
+        except Exception:
+            pass
+
+    # 1b) Answer logprob preference (Correct vs Conforming; requires posthoc logprob table)
+    if compute_answer_logprob_metrics and generate_answer_logprob_graphs and export_answer_logprob_logs:
+        try:
+            m = compute_answer_logprob_metrics(trace_db, run_id, run_dir)
+            out.update(generate_answer_logprob_graphs(trace_db, run_id, run_dir, m))
+            export_answer_logprob_logs(trace_db, run_id, run_dir, m)
         except Exception:
             pass
 
@@ -261,5 +276,4 @@ def generate_core_figures(*, trace_db: TraceDb, run_id: str, run_dir: str) -> Di
             print(f"Warning: Could not generate Judge Eval plots: {e}")
 
     return out
-
 

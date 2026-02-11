@@ -44,7 +44,13 @@ sys.path.insert(0, str(SRC_DIR))
 
 from aam.analytics.reporting import ScientificReportGenerator  # noqa: E402
 from aam.experiments.olmo_conformity.analysis import generate_core_figures  # noqa: E402
+from aam.experiments.olmo_conformity.answer_logprobs import (  # noqa: E402
+    compute_and_store_answer_logprobs_for_run,
+)
 from aam.experiments.olmo_conformity.intervention import run_intervention_sweep  # noqa: E402
+from aam.experiments.olmo_conformity.logit_lens import (  # noqa: E402
+    compute_logit_lens_topk_for_trials,
+)
 from aam.experiments.olmo_conformity.olmo_utils import get_olmo_model_config  # noqa: E402
 from aam.experiments.olmo_conformity.prompts import build_messages  # noqa: E402
 from aam.experiments.olmo_conformity.vector_analysis import run_truth_social_vector_analysis  # noqa: E402
@@ -517,6 +523,12 @@ def main(argv: Optional[List[str]] = None) -> int:
     p.add_argument("--probe-dtype", type=str, default="float16", choices=["float16", "float32"])
     p.add_argument("--skip-vector-analysis", action="store_true")
 
+    # Logits / answer probabilities
+    p.add_argument("--skip-logit-lens", action="store_true", help="Skip logit-lens top-k computation from captured activations.")
+    p.add_argument("--logit-lens-layers", type=str, default=default_layers_32, help="Comma-separated layer indices for logit lens.")
+    p.add_argument("--logit-lens-k", type=int, default=10, help="Top-k tokens to store per (trial, layer).")
+    p.add_argument("--skip-answer-logprobs", action="store_true", help="Skip answer-level logprob probes (correct vs conforming).")
+
     # Interventions
     p.add_argument("--skip-interventions", action="store_true")
     p.add_argument("--intervention-battery", type=str, default="battery1", choices=["battery1", "none"])
@@ -578,7 +590,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     # 1) Capture activations for behavioral trials
     capture_layers = _parse_csv_ints(str(args.capture_layers))
     if not bool(args.skip_activations):
-        print("\n[Step 1/4] Backfilling behavioral activations...")
+        print("\n[Step 1/5] Backfilling behavioral activations...")
         cap_stats = backfill_behavioral_activations(
             trace_db=trace_db,
             run_id=resolved.run_id,
@@ -591,11 +603,73 @@ def main(argv: Optional[List[str]] = None) -> int:
         print(f"[OK] Activation backfill summary: captured={cap_stats['captured_trials']} skipped={cap_stats['skipped_trials']}")
     else:
         cap_stats = {"skipped": True}
-        print("\n[Step 1/4] Skipping activation backfill (--skip-activations)")
+        print("\n[Step 1/5] Skipping activation backfill (--skip-activations)")
 
-    # 2) Vector analysis (truth/social probes + projections) per variant
+    # 2) Logit lens + answer logprobs (posthoc, per run)
+    logit_lens_stats: Dict[str, Any] = {"skipped": True}
+    if bool(args.skip_logit_lens):
+        print("\n[Step 2/5] Skipping logit lens (--skip-logit-lens)")
+    else:
+        print("\n[Step 2/5] Computing logit lens top-k from captured activations...")
+        logit_layers = _parse_csv_ints(str(args.logit_lens_layers))
+        k = int(args.logit_lens_k)
+        inserted_total = 0
+        by_model: Dict[str, Any] = {}
+        model_rows = trace_db.conn.execute(
+            """
+            SELECT DISTINCT model_id
+            FROM conformity_trials
+            WHERE run_id = ?
+            ORDER BY model_id ASC;
+            """,
+            (str(resolved.run_id),),
+        ).fetchall()
+        model_ids = [str(r["model_id"]) for r in model_rows]
+        for model_id in model_ids:
+            tids = trace_db.conn.execute(
+                """
+                SELECT t.trial_id
+                FROM conformity_trials t
+                JOIN conformity_conditions c ON c.condition_id = t.condition_id
+                WHERE t.run_id = ? AND t.model_id = ? AND c.name NOT LIKE '%probe_capture%'
+                ORDER BY t.created_at ASC, t.trial_id ASC;
+                """,
+                (str(resolved.run_id), str(model_id)),
+            ).fetchall()
+            trial_ids = [str(r["trial_id"]) for r in tids]
+            inserted = compute_logit_lens_topk_for_trials(
+                trace_db=trace_db,
+                trial_ids=trial_ids,
+                model_id=str(model_id),
+                layers=list(logit_layers),
+                k=int(k),
+                skip_existing=True,
+            )
+            by_model[str(model_id)] = {"n_trials": int(len(trial_ids)), "inserted": int(inserted)}
+            inserted_total += int(inserted)
+        logit_lens_stats = {"by_model_id": by_model, "inserted_total": int(inserted_total)}
+        print(f"[OK] Logit lens rows inserted: {inserted_total}")
+
+    answer_logprob_stats: Dict[str, Any] = {"skipped": True}
+    if bool(args.skip_answer_logprobs):
+        print("\n[Step 2/5] Skipping answer logprobs (--skip-answer-logprobs)")
+    else:
+        print("\n[Step 2/5] Computing answer-level logprobs (correct vs conforming)...")
+        answer_logprob_stats = compute_and_store_answer_logprobs_for_run(
+            trace_db=trace_db,
+            run_id=str(resolved.run_id),
+            include_empty_think=True,
+            include_observed_think=True,
+            include_alternate_answer=True,
+            skip_existing=True,
+        )
+        print(
+            f"[OK] Answer logprobs inserted: {answer_logprob_stats.get('total_inserted')} (errors={answer_logprob_stats.get('total_errors')})"
+        )
+
+    # 3) Vector analysis (truth/social probes + projections) per variant
     if not bool(args.skip_vector_analysis):
-        print("\n[Step 2/4] Running vector analysis (per variant)...")
+        print("\n[Step 3/5] Running vector analysis (per variant)...")
         probe_layers = _parse_csv_ints(str(args.probe_layers))
         vector_results = run_vector_analysis_all_variants(
             trace_db=trace_db,
@@ -612,14 +686,14 @@ def main(argv: Optional[List[str]] = None) -> int:
         print("[OK] Vector analysis complete")
     else:
         vector_results = {"skipped": True, "by_variant": {}}
-        print("\n[Step 2/4] Skipping vector analysis (--skip-vector-analysis)")
+        print("\n[Step 3/5] Skipping vector analysis (--skip-vector-analysis)")
 
-    # 3) Interventions (targeted battery)
+    # 4) Interventions (targeted battery)
     if bool(args.skip_interventions) or str(args.intervention_battery) == "none":
         intervention_results = {"skipped": True}
-        print("\n[Step 3/4] Skipping interventions")
+        print("\n[Step 4/5] Skipping interventions")
     else:
-        print("\n[Step 3/4] Running interventions...")
+        print("\n[Step 4/5] Running interventions...")
         intervention_layers = _parse_csv_ints(str(args.intervention_layers))
         intervention_alphas = _parse_csv_floats(str(args.intervention_alphas))
         if str(args.intervention_battery) == "battery1":
@@ -637,17 +711,17 @@ def main(argv: Optional[List[str]] = None) -> int:
 
         print("[OK] Interventions complete")
 
-    # 4) Reports + scientific report
+    # 5) Reports + scientific report
     if bool(args.skip_reports):
         report_paths: Dict[str, str] = {}
         scientific_report_path: Optional[str] = None
-        print("\n[Step 4/4] Skipping reports (--skip-reports)")
+        print("\n[Step 5/5] Skipping reports (--skip-reports)")
     else:
-        print("\n[Step 4/4] Regenerating report figures/tables...")
+        print("\n[Step 5/5] Regenerating report figures/tables...")
         report_paths = generate_core_figures(trace_db=trace_db, run_id=resolved.run_id, run_dir=str(resolved.run_dir))
         print(f"[OK] Generated {len(report_paths)} core figure(s)")
 
-        print("\n[Step 4/4] Generating scientific report...")
+        print("\n[Step 5/5] Generating scientific report...")
         scientific_report_path = None
         try:
             reporter = ScientificReportGenerator(Path(resolved.run_dir))
@@ -672,6 +746,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         "temperature": float(resolved.temperature),
         "trial_steps_inserted": int(trial_steps_inserted),
         "activation_backfill": cap_stats,
+        "logit_lens": logit_lens_stats,
+        "answer_logprobs": answer_logprob_stats,
         "vector_analysis": vector_results,
         "interventions": intervention_results,
         "report_paths": report_paths,

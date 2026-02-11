@@ -371,6 +371,36 @@ class TraceDb:
             "CREATE INDEX IF NOT EXISTS idx_conformity_logit_trial ON conformity_logit_lens(trial_id, layer_index, token_index);"
         )
 
+        # Answer-level logprob probes (posthoc): compare probability of correct vs conforming answers.
+        #
+        # One row per (trial_id, context_kind, candidate_kind):
+        # - context_kind enables multiple evaluation contexts (e.g., assistant_start vs observed_think_prefix)
+        # - candidate_kind enables multiple candidates (e.g., ground_truth vs wrong_answer vs alternate_answer)
+        #
+        # candidate_text is stored for traceability; metadata_json stores tokenization + prefix hashing.
+        self.conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS conformity_answer_logprobs (
+              trial_id TEXT NOT NULL,
+              context_kind TEXT NOT NULL,
+              candidate_kind TEXT NOT NULL,
+              candidate_text TEXT NOT NULL,
+              token_count INTEGER NOT NULL,
+              logprob_sum REAL NOT NULL,
+              logprob_mean REAL NOT NULL,
+              first_token_id INTEGER,
+              first_token_logprob REAL,
+              metadata_json TEXT NOT NULL,
+              created_at REAL NOT NULL,
+              PRIMARY KEY(trial_id, context_kind, candidate_kind),
+              FOREIGN KEY(trial_id) REFERENCES conformity_trials(trial_id)
+            );
+            """
+        )
+        self.conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_conformity_answerlog_trial ON conformity_answer_logprobs(trial_id, context_kind);"
+        )
+
         # Intervention definitions (activation steering)
         self.conn.execute(
             """
@@ -859,6 +889,56 @@ class TraceDb:
                     (1 if bool(refusal_flag) else 0),
                     latency_ms,
                     (_json_dumps_any(token_usage_json) if token_usage_json is not None else None),
+                    ts,
+                ),
+            )
+
+    def upsert_conformity_answer_logprob(
+        self,
+        *,
+        trial_id: str,
+        context_kind: str,
+        candidate_kind: str,
+        candidate_text: str,
+        token_count: int,
+        logprob_sum: float,
+        logprob_mean: float,
+        first_token_id: Optional[int],
+        first_token_logprob: Optional[float],
+        metadata: Dict[str, Any],
+        created_at: Optional[float] = None,
+    ) -> None:
+        ts = float(time.time() if created_at is None else created_at)
+        with self.conn:
+            self.conn.execute(
+                """
+                INSERT INTO conformity_answer_logprobs(
+                  trial_id, context_kind, candidate_kind, candidate_text,
+                  token_count, logprob_sum, logprob_mean,
+                  first_token_id, first_token_logprob,
+                  metadata_json, created_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(trial_id, context_kind, candidate_kind) DO UPDATE SET
+                  candidate_text=excluded.candidate_text,
+                  token_count=excluded.token_count,
+                  logprob_sum=excluded.logprob_sum,
+                  logprob_mean=excluded.logprob_mean,
+                  first_token_id=excluded.first_token_id,
+                  first_token_logprob=excluded.first_token_logprob,
+                  metadata_json=excluded.metadata_json;
+                """,
+                (
+                    str(trial_id),
+                    str(context_kind),
+                    str(candidate_kind),
+                    str(candidate_text),
+                    int(token_count),
+                    float(logprob_sum),
+                    float(logprob_mean),
+                    (None if first_token_id is None else int(first_token_id)),
+                    (None if first_token_logprob is None else float(first_token_logprob)),
+                    _json_dumps_any(metadata or {}),
                     ts,
                 ),
             )

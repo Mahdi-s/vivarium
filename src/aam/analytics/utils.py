@@ -199,6 +199,17 @@ def check_missing_prerequisites(trace_db: TraceDb, run_id: str) -> Dict[str, boo
         (run_id,),
     ).fetchone()[0]
     missing["logit_lens"] = logit_count > 0
+
+    # Check for answer logprob probes (correct vs conforming)
+    answer_logprob_count = trace_db.conn.execute(
+        """
+        SELECT COUNT(*) FROM conformity_answer_logprobs a
+        JOIN conformity_trials t ON t.trial_id = a.trial_id
+        WHERE t.run_id = ?
+        """,
+        (run_id,),
+    ).fetchone()[0]
+    missing["answer_logprobs"] = answer_logprob_count > 0
     
     # Check for activation metadata (for attention capture)
     activation_count = trace_db.conn.execute(

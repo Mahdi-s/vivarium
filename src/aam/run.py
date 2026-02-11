@@ -289,6 +289,11 @@ def main(argv: list[str] | None = None) -> int:
     pph.add_argument("--trial-scope", type=str, default="behavioral-only", choices=["all", "behavioral-only"])
     pph.add_argument("--parse-think-tokens", action="store_true", help="Parse <think>...</think> blocks into conformity_think_tokens")
     pph.add_argument("--no-logit-lens", action="store_true", help="Skip logit lens computation")
+    pph.add_argument(
+        "--no-answer-logprobs",
+        action="store_true",
+        help="Skip answer-level logprob probes (correct vs conforming) for behavioral trials",
+    )
     pph.add_argument("--no-interventions", action="store_true", help="Skip interventions")
     pph.add_argument("--no-report", action="store_true", help="Skip report regeneration (figures/tables)")
     pph.add_argument(
@@ -1027,6 +1032,10 @@ def main(argv: list[str] | None = None) -> int:
                 f"DELETE FROM conformity_think_tokens WHERE trial_id IN ({','.join(['?']*len(trial_ids))});",
                 trial_ids,
             )
+            trace_db.conn.execute(
+                f"DELETE FROM conformity_answer_logprobs WHERE trial_id IN ({','.join(['?']*len(trial_ids))});",
+                trial_ids,
+            )
             # Remove prior intervention rows for this run (results first).
             trace_db.conn.execute(
                 """
@@ -1060,6 +1069,39 @@ def main(argv: list[str] | None = None) -> int:
                 k=k,
                 skip_existing=(not bool(args.clear_existing)),
             )
+
+        # Answer logprobs (correct vs conforming)
+        answer_inserted = 0
+        answer_errors = 0
+        if not bool(args.no_answer_logprobs):
+            from aam.experiments.olmo_conformity.answer_logprobs import (
+                compute_and_store_answer_logprobs_for_model,
+            )
+
+            # Respect trial_scope by grouping the selected trials by model_id.
+            groups: Dict[str, List[str]] = {}
+            if trial_ids:
+                rows = trace_db.conn.execute(
+                    f"SELECT trial_id, model_id FROM conformity_trials WHERE trial_id IN ({','.join(['?']*len(trial_ids))});",
+                    trial_ids,
+                ).fetchall()
+                for r in rows:
+                    mid = str(r["model_id"])
+                    groups.setdefault(mid, []).append(str(r["trial_id"]))
+
+            for mid, tids in groups.items():
+                res = compute_and_store_answer_logprobs_for_model(
+                    trace_db=trace_db,
+                    run_id=str(run_id),
+                    model_id=str(mid),
+                    trial_ids=list(tids),
+                    include_empty_think=True,
+                    include_observed_think=True,
+                    include_alternate_answer=True,
+                    skip_existing=(not bool(args.clear_existing)),
+                )
+                answer_inserted += int(res.get("inserted") or 0)
+                answer_errors += int(res.get("errors") or 0)
 
         # Interventions
         intervention_inserted = 0
@@ -1122,6 +1164,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"model_id={model_id}")
         print(f"trial_scope={args.trial_scope} (n_trials={len(trial_ids)})")
         print(f"logit_lens_rows_inserted={logit_inserted}")
+        if not bool(args.no_answer_logprobs):
+            print(f"answer_logprobs_inserted={answer_inserted} (errors={answer_errors})")
         if bool(args.parse_think_tokens):
             print(f"think_tokens_inserted={think_inserted}")
         print(f"intervention_results_inserted={intervention_inserted}")

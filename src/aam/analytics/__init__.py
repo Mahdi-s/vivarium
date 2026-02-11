@@ -31,6 +31,11 @@ from aam.analytics.tokens import (
     generate_token_graphs,
     export_token_logs,
 )
+from aam.analytics.answer_logprobs import (
+    compute_answer_logprob_metrics,
+    generate_answer_logprob_graphs,
+    export_answer_logprob_logs,
+)
 
 __all__ = [
     "compute_behavioral_metrics",
@@ -64,4 +69,7 @@ __all__ = [
     "compute_token_metrics",
     "generate_token_graphs",
     "export_token_logs",
+    "compute_answer_logprob_metrics",
+    "generate_answer_logprob_graphs",
+    "export_answer_logprob_logs",
 ]
