@@ -996,15 +996,46 @@ class HuggingFaceHookedGateway:
             # Default: cuda/mps -> fp16, cpu -> fp32
             torch_dtype = torch.float16 if dev in ("cuda", "mps") else torch.float32
 
-        # Load config and sanitize rope_scaling types (Olmo3 uses ints here; transformers warns).
+        # Best-effort: sanitize cached HF config.json before loading.
+        #
+        # Some model configs (notably OLMo3 variants) ship with integer `beta_fast`/`beta_slow`
+        # under `rope_scaling` (or `rope_parameters` in some forks). Newer Transformers versions
+        # warn (or may error) when these fields are not floats.
+        try:
+            if os.path.isdir(self.model_id_or_path):
+                cfg_json_path = os.path.join(self.model_id_or_path, "config.json")
+                if os.path.isfile(cfg_json_path):
+                    import json
+
+                    with open(cfg_json_path, "r") as f:
+                        raw = json.load(f)
+                    changed = False
+                    for field in ("rope_scaling", "rope_parameters"):
+                        v = raw.get(field)
+                        if isinstance(v, dict):
+                            for k in ("beta_fast", "beta_slow"):
+                                if k in v and isinstance(v[k], int):
+                                    v[k] = float(v[k])
+                                    changed = True
+                    if changed:
+                        tmp_path = cfg_json_path + ".tmp"
+                        with open(tmp_path, "w") as f:
+                            json.dump(raw, f, indent=2)
+                            f.write("\n")
+                        os.replace(tmp_path, cfg_json_path)
+        except Exception:
+            pass
+
+        # Load config and sanitize rope_* types in-memory.
         cfg = AutoConfig.from_pretrained(self.model_id_or_path, trust_remote_code=True)
         try:
-            rs = getattr(cfg, "rope_scaling", None)
-            if isinstance(rs, dict):
-                if "beta_fast" in rs and isinstance(rs["beta_fast"], int):
-                    rs["beta_fast"] = float(rs["beta_fast"])
-                if "beta_slow" in rs and isinstance(rs["beta_slow"], int):
-                    rs["beta_slow"] = float(rs["beta_slow"])
+            for attr in ("rope_scaling", "rope_parameters"):
+                rs = getattr(cfg, attr, None)
+                if isinstance(rs, dict):
+                    if "beta_fast" in rs and isinstance(rs["beta_fast"], int):
+                        rs["beta_fast"] = float(rs["beta_fast"])
+                    if "beta_slow" in rs and isinstance(rs["beta_slow"], int):
+                        rs["beta_slow"] = float(rs["beta_slow"])
         except Exception:
             pass
 

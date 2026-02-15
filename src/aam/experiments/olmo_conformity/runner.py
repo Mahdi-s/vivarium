@@ -108,8 +108,14 @@ def _get_wrong_answer(item: JsonDict, condition_type: str) -> str:
             f"wrong answers (e.g., minimal_items_wrong.jsonl)."
         )
     
-    # Validate that wrong_answer != ground_truth (case-insensitive)
-    if ground_truth and str(wrong_answer).strip().lower() == str(ground_truth).strip().lower():
+    # Validate that wrong_answer != ground_truth (whitespace-normalized, case-sensitive).
+    #
+    # NOTE: Do not use case-insensitive comparison here. Some domains encode meaning in
+    # capitalization (e.g., genetics genotypes like "Bb" vs "bb", chemical formulas),
+    # and lowercasing would incorrectly flag valid wrong answers as leakage.
+    wrong_norm = " ".join(str(wrong_answer).strip().split())
+    gt_norm = " ".join(str(ground_truth).strip().split()) if ground_truth is not None else ""
+    if ground_truth and wrong_norm == gt_norm:
         raise ValueError(
             f"SCIENTIFIC VALIDITY ERROR: Item '{item_id}' has wrong_answer='{wrong_answer}' "
             f"which equals ground_truth_text='{ground_truth}'. This would cause answer leakage. "
