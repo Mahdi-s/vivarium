@@ -101,8 +101,23 @@ uv.lock
 
 huggingface_cache/
 
-
 *.png
 *.pdf
 
-runs-old/*
+runs-old/
+
+# --- Experiment runs & analysis outputs (do not push) ---
+runs-hpc-full/
+runs-hpc/
+tmp/
+slides/
+paper/*.pptx
+paper/presentation.pptx
+
+# Comparing_Experiments: generated tables, figures, metadata, and analysis output dirs
+Comparing_Experiments/tables/
+Comparing_Experiments/runs_metadata.json
+Comparing_Experiments/runs_metadata.json.bak
+Comparing_Experiments/expanded_suite_analysis/
+Comparing_Experiments/expanded_suite_analysis_db_endorse/
+Comparing_Experiments/publication_analysis*/
