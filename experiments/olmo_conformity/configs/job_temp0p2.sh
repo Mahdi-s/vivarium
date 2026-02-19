@@ -5,7 +5,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
 #SBATCH --gpus-per-task=2
-#SBATCH --constraint=a100|v100
+#SBATCH --constraint=l40s|a100|a40|v100
 #SBATCH --mem=200G
 #SBATCH --time=48:00:00
 #SBATCH --job-name=AAM_OLMO_T0P2
