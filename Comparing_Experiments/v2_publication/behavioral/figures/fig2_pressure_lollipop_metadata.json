@@ -1,0 +1,55 @@
+{
+  "filename": "fig2_pressure_lollipop.png",
+  "title": "Social Pressure Effect on Error Rate",
+  "description": "Diverging lollipop chart showing pressure deltas (\u0394Error = Pressure \u2212 Control). Positive = conformity, negative = corrective. Circles = Asch, Diamonds = Authority.",
+  "x_axis": "Pressure Effect (\u0394Error)",
+  "y_axis": "Model Training Stage",
+  "data_summary": {
+    "Base": {
+      "delta_asch": "+0.0305",
+      "delta_authority": "+0.0278"
+    },
+    "Instruct": {
+      "delta_asch": "+0.0226",
+      "delta_authority": "+0.0672"
+    },
+    "Instruct-SFT": {
+      "delta_asch": "+0.1052",
+      "delta_authority": "+0.0564"
+    },
+    "Think": {
+      "delta_asch": "+0.0037",
+      "delta_authority": "+0.0175"
+    },
+    "Think-SFT": {
+      "delta_asch": "+nan",
+      "delta_authority": "+nan"
+    }
+  },
+  "key_observations": [
+    "Instruct strongly susceptible to Authority (+6.7%)",
+    "Instruct-SFT strongly susceptible to Asch (+10.5%)",
+    "Instruct-SFT strongly susceptible to Authority (+5.6%)"
+  ],
+  "statistical_notes": [],
+  "variants_included": [
+    "Base",
+    "Instruct",
+    "Instruct-SFT",
+    "Think",
+    "Think-SFT"
+  ],
+  "temperatures": [
+    0.0,
+    0.2,
+    0.4,
+    0.6,
+    0.8,
+    1.0
+  ],
+  "conditions": [
+    "Asch (Peer)",
+    "Authority"
+  ],
+  "categories": []
+}

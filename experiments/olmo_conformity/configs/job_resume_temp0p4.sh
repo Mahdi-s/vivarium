@@ -12,8 +12,8 @@
 
 set -euo pipefail
 
-# RESUME run for T=0.4
-# Original run_id: 0d0eb2bd-7575-4945-85fa-a9ddc38f8c3a
+# RESUME run for T=0.4 (run_v2: runs-hpc-full/run_v2/runs)
+# run_id: 0d0eb2bd-7575-4945-85fa-a9ddc38f8c3a
 # Models to complete: instruct_dpo, think, think_sft, think_dpo, rl_zero
 
 cd /home1/mahdisae/aam/abstractAgentMachine
@@ -29,4 +29,5 @@ mkdir -p "${MPLCONFIGDIR}"
 
 python -m aam olmo-conformity \
     --suite-config experiments/olmo_conformity/configs/suite_resume_temp0.4.json \
-    --runs-dir /scratch1/mahdisae/olmo_experiments/runs
+    --runs-dir runs-hpc-full/run_v2/runs \
+    --run-id 0d0eb2bd-7575-4945-85fa-a9ddc38f8c3a

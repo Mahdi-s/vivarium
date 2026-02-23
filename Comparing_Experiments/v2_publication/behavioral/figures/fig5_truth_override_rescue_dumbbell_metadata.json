@@ -1,0 +1,84 @@
+{
+  "filename": "fig5_truth_override_rescue_dumbbell.png",
+  "title": "Truth Override vs Truth Rescue (Dumbbell Chart)",
+  "description": "Dumbbell chart. Triangle-up (red) = truth-override rate, Triangle-down (blue) = truth-rescue rate.",
+  "x_axis": "Rate",
+  "y_axis": "Model Training Stage",
+  "data_summary": {
+    "Asch (Peer)": {
+      "Base": {
+        "truth_override": "0.4700",
+        "truth_rescue": "0.0825"
+      },
+      "Instruct": {
+        "truth_override": "0.3605",
+        "truth_rescue": "0.0635"
+      },
+      "Instruct-SFT": {
+        "truth_override": "0.6069",
+        "truth_rescue": "0.0559"
+      },
+      "Think": {
+        "truth_override": "0.3846",
+        "truth_rescue": "0.0603"
+      },
+      "Think-SFT": {
+        "truth_override": "NA",
+        "truth_rescue": "NA"
+      }
+    },
+    "Authority": {
+      "Base": {
+        "truth_override": "0.4496",
+        "truth_rescue": "0.0807"
+      },
+      "Instruct": {
+        "truth_override": "0.5282",
+        "truth_rescue": "0.0503"
+      },
+      "Instruct-SFT": {
+        "truth_override": "0.4231",
+        "truth_rescue": "0.0614"
+      },
+      "Think": {
+        "truth_override": "0.3684",
+        "truth_rescue": "0.0433"
+      },
+      "Think-SFT": {
+        "truth_override": "NA",
+        "truth_rescue": "NA"
+      }
+    }
+  },
+  "key_observations": [
+    "Base under Asch (Peer): high truth-override (47.0%)",
+    "Instruct under Asch (Peer): high truth-override (36.0%)",
+    "Instruct-SFT under Asch (Peer): high truth-override (60.7%)",
+    "Think under Asch (Peer): high truth-override (38.5%)",
+    "Base under Authority: high truth-override (45.0%)",
+    "Instruct under Authority: high truth-override (52.8%)",
+    "Instruct-SFT under Authority: high truth-override (42.3%)",
+    "Think under Authority: high truth-override (36.8%)"
+  ],
+  "statistical_notes": [],
+  "variants_included": [
+    "Base",
+    "Instruct",
+    "Instruct-SFT",
+    "Think",
+    "Think-SFT"
+  ],
+  "temperatures": [
+    0.0,
+    0.2,
+    0.4,
+    0.6,
+    0.8,
+    1.0
+  ],
+  "conditions": [
+    "Asch (Peer)",
+    "Authority"
+  ],
+  "categories": []
+}

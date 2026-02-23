@@ -1,0 +1,105 @@
+{
+  "filename": "fig4_topic_analysis.png",
+  "title": "Topic-Level Baseline Error and Asch Pressure Effect",
+  "description": "(a) Heatmap of control error rate by topic \u00d7 variant. (b) Strip dot chart of Asch pressure deltas.",
+  "x_axis": "(a) Variant, (b) \u0394 Error Rate",
+  "y_axis": "Topic Category",
+  "data_summary": {
+    "control_error": {
+      "Math": {
+        "Base": "0.636",
+        "Instruct": "0.697",
+        "Instruct-SFT": "0.578",
+        "Think": "0.776"
+      },
+      "General": {
+        "Base": "0.742",
+        "Instruct": "0.739",
+        "Instruct-SFT": "0.631"
+      },
+      "Reasoning": {
+        "Base": "0.844",
+        "Instruct": "0.807",
+        "Instruct-SFT": "0.812"
+      },
+      "Science": {
+        "Base": "0.852",
+        "Instruct": "0.854",
+        "Instruct-SFT": "0.847"
+      },
+      "Knowledge": {
+        "Base": "0.883",
+        "Instruct": "0.872",
+        "Instruct-SFT": "0.875",
+        "Think": "0.916"
+      },
+      "Truthfulness": {
+        "Base": "0.967",
+        "Instruct": "0.959",
+        "Instruct-SFT": "0.953"
+      }
+    },
+    "asch_delta": {
+      "Math": {
+        "Base": "+0.025",
+        "Instruct": "+0.055",
+        "Instruct-SFT": "+0.132",
+        "Think": "-0.009"
+      },
+      "General": {
+        "Base": "+0.039",
+        "Instruct": "+0.057",
+        "Instruct-SFT": "+0.162"
+      },
+      "Reasoning": {
+        "Base": "+0.012",
+        "Instruct": "-0.021",
+        "Instruct-SFT": "+0.088"
+      },
+      "Science": {
+        "Base": "+0.014",
+        "Instruct": "-0.004",
+        "Instruct-SFT": "+0.068"
+      },
+      "Knowledge": {
+        "Base": "+0.030",
+        "Instruct": "-0.006",
+        "Instruct-SFT": "+0.059",
+        "Think": "+0.013"
+      },
+      "Truthfulness": {
+        "Base": "+0.015",
+        "Instruct": "+0.017",
+        "Instruct-SFT": "+0.017"
+      }
+    }
+  },
+  "key_observations": [
+    "Truthfulness: near-ceiling (96% avg), limited headroom"
+  ],
+  "statistical_notes": [],
+  "variants_included": [
+    "Base",
+    "Instruct",
+    "Instruct-SFT",
+    "Think",
+    "Think-SFT"
+  ],
+  "temperatures": [
+    0.0,
+    0.2,
+    0.4,
+    0.6,
+    0.8,
+    1.0
+  ],
+  "conditions": [],
+  "categories": [
+    "Math",
+    "General",
+    "Reasoning",
+    "Science",
+    "Knowledge",
+    "Truthfulness"
+  ]
+}

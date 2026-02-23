@@ -12,8 +12,8 @@
 
 set -euo pipefail
 
-# RESUME run for T=0.0
-# Original run_id: 3d70c15d-9fdf-4521-9d72-0ae1feec0238
+# RESUME run for T=0.0 (run_v2: runs-hpc-full/run_v2/runs)
+# run_id: 3d70c15d-9fdf-4521-9d72-0ae1feec0238
 # Models to complete: instruct_dpo, think, think_sft, think_dpo, rl_zero
 # Uses suite_resume config (incomplete models only) to avoid re-running base/instruct/instruct_sft.
 
@@ -30,4 +30,5 @@ mkdir -p "${MPLCONFIGDIR}"
 
 python -m aam olmo-conformity \
     --suite-config experiments/olmo_conformity/configs/suite_resume_temp0.0.json \
-    --runs-dir /scratch1/mahdisae/olmo_experiments/runs
+    --runs-dir runs-hpc-full/run_v2/runs \
+    --run-id 3d70c15d-9fdf-4521-9d72-0ae1feec0238

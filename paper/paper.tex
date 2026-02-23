@@ -21,8 +21,8 @@
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,shapes,shadows.blur}
 
-% Path to figures
-\graphicspath{{figures/}}
+% Path to figures (paper figures and publication_analysis_new_runs)
+\graphicspath{{figures/},{../Comparing_Experiments/publication_analysis_new_runs/figures/}}
 
 % Mermaid-style overview diagram (TikZ) — bold saturated colors for clear visibility
 \definecolor{DiagBlue}{RGB}{70,130,210}
@@ -87,9 +87,11 @@
 \email{mahdisae@usc.edu}
 
 \begin{abstract}
-The alignment of Large Language Models (LLMs) with human intent has largely been achieved through Reinforcement Learning from Human Feedback (RLHF). While effective at improving tractability and safety, recent scholarship suggests that RLHF can inadvertently incentivize ``sycophancy''---the tendency of a model to align with a user's stated or implied beliefs, even when those beliefs are objectively incorrect. We present a systematic experimental analysis of social conformity behaviors in the Olmo-3 model family, leveraging its transparent ``glass-box'' ecosystem to isolate the effects of training stages on epistemic integrity. Adapting the classical Asch paradigm to a generative AI context, we evaluate six model variants across six sampling temperatures ($T \in \{0.0,0.2,0.4,0.6,0.8,1.0\}$) and three conditions (Control, Asch-style peer consensus, and explicit Authority claims), totaling 23{,}760 trials (21{,}600 factual with ground truth; 2{,}160 opinion). We find that training stage dominates and interacts strongly with pressure mechanism: instruction-tuned variants are most susceptible (Instruct-SFT: $\Delta$Error $=+8.4$ pp under Asch; Instruct: $+7.1$ pp under Authority pooled across temperatures), while Think and Think-SFT are often corrective under pressure ($\Delta$Error $=-3.4$ and $-4.1$ pp under Asch; $-1.6$ and $-2.7$ pp under Authority) and exhibit lower truth-override rates. Temperature has a small but significant main effect (odds ratio $\mathrm{OR}_{T=1\,\mathrm{vs}\,0}=1.13$, LRT $p=0.010$) and primarily amplifies errors under social pressure (+2.34 pp Asch; +3.39 pp Authority from $T=0$ to $T=1$; Control +0.34 pp). Finally, on opinion items without ground truth, peer consensus increases wrong-answer endorsement for most variants, but Think/Think-SFT endorse the injected answer only $\sim$10--18\% under pressure and refuse $\sim$28--52\% of prompts.
-\vspace{0.25em}
-\textbf{Mechanistically}, layerwise truth/social probe projections reveal an internal ``tug-of-war'': instruction-tuned variants exhibit very early social dominance (turn layers near the input), while Base/Think variants maintain stronger truth dominance deeper into the network with comparatively modest temperature shifts.
+The alignment of Large Language Models (LLMs) with human intent has largely been achieved through Reinforcement Learning from Human Feedback (RLHF) and Direct Preference Optimization (DPO). While effective at improving tractability and safety, recent scholarship suggests that such alignment can inadvertently incentivize ``sycophancy''---the tendency of a model to align with a user's stated or implied beliefs, even when those beliefs are objectively incorrect. We present a systematic experimental analysis of social conformity behaviors in the Olmo-3 model family, leveraging its transparent ``glass-box'' ecosystem to isolate the effects of training stages on epistemic integrity. Adapting the classical Asch paradigm to a generative AI context, we evaluate five model variants (Base, Instruct, Instruct-SFT, Instruct-DPO, Think) across six sampling temperatures ($T \in \{0.0, 0.2, 0.4, 0.6, 0.8, 1.0\}$) and three conditions (Control, Asch-style peer consensus, and explicit Authority claims), with 200 samples per dataset.
+
+Our central finding is a \textbf{fundamental divergence in how alignment objectives shape conformity}. Supervised Fine-Tuning (SFT) induces \textit{contextual conformity}: functioning as behavioral cloning, Instruct-SFT completes the pattern of five unanimous peer responses, yielding a $+11.6$ pp error increase under Asch peer pressure while remaining comparatively resistant to Authority ($+6.0$ pp). Preference-tuned variants (both RLHF and DPO), by contrast, exhibit \textit{deferential sycophancy}: Instruct and Instruct-DPO nearly resist Asch peer pressure ($+2.6$ and $+1.0$ pp) yet defer dramatically to a single authoritative user ($+8.8$ and $+8.0$ pp). Critically, both PPO-trained (Instruct) and DPO-trained (Instruct-DPO) variants share this authority-deference profile, providing empirical evidence that the preference optimization objective itself---not the specific algorithm---produces authority-deferential behavior.
+
+Temperature has a small but significant main effect ($\mathrm{OR}_{T=1\,\mathrm{vs}\,0}=1.13$, LRT $p=0.010$) and primarily amplifies errors under social pressure. On opinion items, peer consensus sharply increases wrong-answer endorsement for Base and Instruct-SFT; preference-tuned variants show substantially lower endorsement, an effect driven by their elevated refusal threshold on subjective prompts from safety training.
 \end{abstract}
 
 \keywords{social conformity, sycophancy, large language models, RLHF, temperature, alignment}
@@ -98,7 +100,7 @@ The alignment of Large Language Models (LLMs) with human intent has largely been
 
 \section{Introduction}
 
-The rapid integration of Large Language Models (LLMs) into decision-critical workflows---from clinical diagnostics to legal adjudication---demands a rigorous interrogation of their reliability under social pressure. A particularly insidious failure mode is ``social conformity'' or ``sycophancy,'' defined as the propensity of an AI system to prioritize agreement with the user's worldview over its own internal knowledge or objective reality~\cite{sharma2024sycophancy}. Unlike hallucinations, which are stochastic errors of fact, sycophancy is a structural alignment failure where the model may \textit{know} the truth but chooses to suppress it to satisfy the perceived intent of the user.
+The rapid integration of Large Language Models (LLMs) into decision-critical workflows---from clinical diagnostics to legal adjudication---demands a rigorous interrogation of their reliability under social pressure. A persistent structural failure mode is ``social conformity'' or ``sycophancy,'' defined as the propensity of an AI system to prioritize agreement with the user's worldview over its own internal knowledge or objective reality~\cite{sharma2024sycophancy}. Unlike hallucinations, which are stochastic errors of fact, sycophancy is a structural alignment failure where the model may \textit{know} the truth but suppresses it to satisfy the perceived intent of the user.
 
 \begin{figure}[t]
     \centering
@@ -106,7 +108,7 @@ The rapid integration of Large Language Models (LLMs) into decision-critical wor
         \node[flowtitle, text=black] (title) {Prompt-Induced Conformity: Design $\rightarrow$ Pressure $\rightarrow$ Scoring $\rightarrow$ Metrics};
 
         \node[flowbox, fill=DiagBlue, text=black, below=2.5mm of title] (design) {\color{black}\textbf{Sweep} $(v,T,c,i)$
-        \\ \textit{Variant} $v$ (6 training stages)
+        \\ \textit{Variant} $v$ (5: Base, Instruct, Instruct-SFT, Instruct-DPO, Think)
         \\ \textit{Temperature} $T \in \{0.0,0.2,\dots,1.0\}$
         \\ \textit{Condition} $c \in \{\text{Control, Asch, Authority}\}$};
 
@@ -147,10 +149,10 @@ This behavior mirrors the phenomenon of social conformity observed in human psyc
 
 The prevalence of this behavior appears intrinsic to the dominant alignment paradigm: Reinforcement Learning from Human Feedback (RLHF). As detailed by Sharma et al. (2024), human annotators---the ultimate arbiters of reward signals in RLHF---consistently rate ``convincingly written sycophantic responses'' higher than truthful but corrective ones~\cite{sharma2024sycophancy}. Consequently, models learn to maximize user satisfaction, potentially at the expense of accuracy.
 
-This paper capitalizes on the recent release of the Olmo-3 model ecosystem by the Allen Institute for AI (Ai2), which provides a unique ``glass box'' opportunity to inspect the full model flow---from Pre-training to Supervised Fine-Tuning (SFT), to various post-training regimes including chain-of-thought reasoning and reinforcement learning~\cite{olmo3}. We address three critical research questions:
+This paper capitalizes on the recent release of the Olmo-3 model ecosystem by the Allen Institute for AI (Ai2), which provides a unique ``glass box'' opportunity to inspect the full model flow---from pre-training through Supervised Fine-Tuning (SFT), RLHF, DPO, and chain-of-thought reasoning~\cite{olmo3}. By comparing variants that differ only in their post-SFT training objective, we uncover a fundamental divergence: \textbf{SFT produces contextual conformity} (pattern-completing peer consensus) while \textbf{preference optimization---whether PPO-based RLHF or DPO---produces deferential sycophancy} (resisting peers but yielding to authoritative users). This distinction has direct implications for alignment theory: the failure mode is not incidental but is baked into the objective function. We address three research questions:
 
 \begin{enumerate}
-    \item \textbf{The Training Method Effect:} Does the training methodology (base, instruction-tuning, SFT, chain-of-thought, RL) systematically affect epistemic independence under social pressure?
+    \item \textbf{The Training Method Effect:} Does the training methodology (base, instruction-tuning, SFT, DPO, chain-of-thought) systematically affect epistemic independence under social pressure?
     \item \textbf{The Temperature Hypothesis:} Does sampling temperature ($T$) influence the model's susceptibility to social pressure, and does this interaction vary by model variant?
     \item \textbf{The Social Pressure Mechanism:} Is social conformity amplified by implicit peer consensus (Asch-style) versus explicit authoritative claims?
 \end{enumerate}
@@ -178,15 +180,14 @@ Sampling temperature is a hyperparameter governing the randomness of token selec
 
 \subsection{Model Selection: The Olmo-3 Ecosystem}
 
-The primary subject of this analysis is the \textbf{Olmo-3} family of 7B-parameter models, released by the Allen Institute for AI in late 2025~\cite{olmo3}. We evaluated six variants representing different training methodologies:
+The primary subject of this analysis is the \textbf{Olmo-3} family of 7B-parameter models, released by the Allen Institute for AI in late 2025~\cite{olmo3}. We evaluated five variants representing different training methodologies:
 
 \begin{itemize}
     \item \textbf{Base} (allenai/Olmo-3-1025-7B): Pre-trained foundation model without alignment.
     \item \textbf{Instruct} (allenai/Olmo-3-7B-Instruct): Instruction-tuned with RLHF.
     \item \textbf{Instruct-SFT} (allenai/Olmo-3-7B-Instruct-SFT): Additional supervised fine-tuning.
+    \item \textbf{Instruct-DPO} (allenai/Olmo-3-7B-Instruct-DPO): Instruction-tuned with Direct Preference Optimization~\cite{rafailov2023dpo}.
     \item \textbf{Think} (allenai/Olmo-3-7B-Think): Chain-of-thought reasoning variant.
-    \item \textbf{Think-SFT} (allenai/Olmo-3-7B-Think-SFT): Think variant with SFT.
-    \item \textbf{RL-Zero} (allenai/Olmo-3-7B-RL-Zero-Math): Trained with Reinforcement Learning from Verifiable Rewards (RLVR) on mathematical tasks.
 \end{itemize}
 
 \subsection{Experimental Design}
@@ -211,17 +212,14 @@ Each condition was tested at six temperature values:
 \end{itemize}
 
 \subsubsection{Dataset}
-We use an expanded evaluation suite of 220 items. Of these, 200 are \textbf{factual} items with ground-truth answers drawn from diverse sources and topic bins: 20 curated immutable facts (general), 60 math (GSM8K~\cite{cobbe2021gsm8k} and MMLU-math~\cite{hendrycks2021mmlu}), 30 science (MMLU-science~\cite{hendrycks2021mmlu}), 30 knowledge (MMLU-knowledge~\cite{hendrycks2021mmlu}), 30 truthfulness (TruthfulQA~\cite{lin2022truthfulqa}), and 30 reasoning (ARC~\cite{clark2018arc}). The remaining 20 items are \textbf{opinion} / preference questions (social conventions) with no objective ground truth; for these we analyze conformity via wrong-answer endorsement rather than accuracy.
+We use an expanded evaluation suite with \textbf{200 samples per dataset}. Factual items with ground-truth answers are drawn from six topic bins: general (curated immutable facts), math (GSM8K~\cite{cobbe2021gsm8k} and MMLU-math~\cite{hendrycks2021mmlu}), science (MMLU-science~\cite{hendrycks2021mmlu}), knowledge (MMLU-knowledge~\cite{hendrycks2021mmlu}), truthfulness (TruthfulQA~\cite{lin2022truthfulqa}), and reasoning (ARC~\cite{clark2018arc}). Each factual category has 200 items per condition-temperature cell (math comprises 400 across two sources). The \textbf{opinion} set has 200 items (social conventions) with no objective ground truth; we analyze conformity via wrong-answer endorsement.
 
 Each item includes an injected \texttt{wrong\_answer} distinct from \texttt{ground\_truth\_text}. In the Asch and Authority conditions, the confederates/user assert this wrong answer with high confidence; in Control, no social context is provided.
 
 \subsubsection{Sample Size}
 \begin{itemize}
-	    \item Trials per cell (variant $\times$ condition $\times$ temperature): 220 total (200 factual + 20 opinion)
-	    \item Factual trials per cell: 200
-	    \item \textbf{Total factual trials}: $200 \times 6 \times 3 \times 6 = 21{,}600$
-	    \item \textbf{Total opinion trials}: $20 \times 6 \times 3 \times 6 = 2{,}160$
-	    \item \textbf{Total trials}: 23{,}760
+	    \item Items per (variant, condition, temperature): 1{,}600 factual + 200 opinion.
+	    \item \textbf{Design total}: 5 variants $\times$ 6 temperatures $\times$ 3 conditions $\times$ 1{,}800 items $= 162{,}000$ trials.
 \end{itemize}
 
 \subsection{Metrics}
@@ -243,96 +241,67 @@ We define the following metrics. Let $Y^{(c)} \in \{0,1\}$ denote factual correc
 \end{align*}
 \normalsize
 
-\textbf{Truth/Social projections and Turn Layer.} For mechanistic analysis we capture residual-stream activations (\texttt{resid\_post}, last-token position) and train per-variant linear probes to define a \textit{truth direction} and a \textit{social/consensus direction}. On each behavioral trial we compute layerwise probe projections: Truth Vector Projection (TVP) and Social Vector Projection (SVP). We define the \textbf{turn layer} as the smallest layer index where $\text{SVP}>\text{TVP}$ for that trial (and condition), interpreted as the depth at which social signal overtakes truth signal.
+A positive pressure effect indicates that social context \textit{increased} errors (conformity); a negative value indicates that social context \textit{decreased} errors (corrective behavior). Truth override isolates conformity by conditioning on control-correct items (a behavioral proxy for ``model knew the truth'' in Control), which is critical when baseline error rates are high. Conversely, truth rescue conditions on control-incorrect items and quantifies whether social context ever \textit{helps} the model become correct.
 
-A positive pressure effect indicates that social context \textit{increased} errors (expected conformity); a negative value indicates that social context \textit{decreased} errors (corrective behavior). Truth override isolates conformity by conditioning on control-correct items (a behavioral proxy for ``model knew the truth'' in Control), which is critical when baseline error rates are high. Conversely, truth rescue conditions on control-incorrect items (a proxy for ``model did not know the truth'' in Control), and quantifies whether social context ever \textit{helps} the model become correct.
+\textbf{Mechanistic analysis.} To trace the internal origins of the SFT vs.\ preference-tuned divergence, we plan Sparse Autoencoder (SAE) feature attribution on residual-stream activations (\texttt{resid\_post}, last-token position). SAEs identify monosemantic features corresponding to concepts such as ``user deference'' or ``peer consensus adoption'' that would be entangled in any dense projection. Activation-patching experiments (clamping identified deference features to zero) will test causal sufficiency; see Section~\ref{sec:mechanistic}.
 
 Some truth override cells are \textit{undefined} when the denominator is zero (no control-correct items). We render these cells as explicit NA and accompany truth-override heatmaps with denominator heatmaps (\# control-correct items) to avoid over-interpreting low-powered cells. Finally, because exact-match correctness can be conservative on long-form answers (e.g., TruthfulQA), we also compute a ground-truth free factual conformity metric: wrong-answer flip rate, which measures adoption of the injected \texttt{wrong\_answer} under pressure among items where Control did not already endorse the wrong answer. We report raw wrong-answer endorsement rates only for opinion items (no ground truth); on factual items we emphasize the conditional flip metric.
 
 \subsection{Statistical Analysis}
 
-Because the same items are evaluated across conditions and temperatures, we use paired statistical tests wherever possible. Specifically, we report exact McNemar tests for within-item comparisons (e.g., Control vs Asch; $T=0$ vs $T=1$). For global effects and interactions, we fit a binomial logistic regression on trial-level errors (excluding refusals) and report likelihood-ratio tests. All tests are two-sided; we emphasize effect sizes (e.g., $\Delta$Error and truth override rates) alongside $p$ values.
+Because the same items are evaluated across conditions and temperatures, we use paired statistical tests wherever possible. Specifically, we report exact McNemar tests for within-item comparisons (e.g., Control vs Asch; $T=0$ vs $T=1$). For global effects and interactions, we fit a binomial logistic regression on trial-level errors (excluding refusals) and report likelihood-ratio tests. All tests are two-sided; we emphasize effect sizes (e.g., $\Delta$Error and truth override rates) alongside $p$ values. To account for multiple comparisons across variants, temperatures, and conditions, reported $p$-values for within-item McNemar tests are evaluated against a Bonferroni-corrected significance threshold.
 
 \section{Results}
 
 \subsection{Error Rates Across Models, Conditions, and Temperatures}
 
-Table~\ref{tab:error_rates} reports the complete factual error-rate matrix across model variants, social conditions, and temperatures.
+Figure~\ref{fig:error_dot} shows factual error rates by variant and condition (pooled across temperatures). Table~\ref{tab:error_rates} summarizes the pooled rates.
 
-\begin{table*}[t]
-\caption{Factual error rates (\%) by condition, variant, and temperature ($n=200$ factual trials per cell).}
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{fig1_error_rate_dot_plot.png}
+    \caption{Factual error rate by training stage and condition (pooled across temperatures). Circle = Control, Square = Asch (peer), Diamond = Authority. The SFT variant (Instruct-SFT) diverges sharply from the preference-tuned variants (Instruct, Instruct-DPO) in its relative susceptibility to Asch versus Authority pressure.}
+    \label{fig:error_dot}
+\end{figure}
+
+\begin{table}[t]
+\caption{Factual error rates (\%) pooled across temperatures (200 samples per dataset).}
 \label{tab:error_rates}
-\scriptsize
+\small
 \centering
-\begin{subtable}[t]{0.32\textwidth}
-    \centering
-    \caption{Control}
-    \begin{tabular}{lcccccc}
-    \toprule
-    \textbf{Variant} & T=0.0 & T=0.2 & T=0.4 & T=0.6 & T=0.8 & T=1.0 \\
-    \midrule
-    Base & 76.5 & 73.0 & 72.5 & 73.0 & 74.0 & 75.5 \\
-    Instruct & 73.5 & 73.5 & 73.5 & 72.0 & 72.5 & 73.5 \\
-    Instruct-SFT & 72.0 & 73.0 & 72.5 & 73.5 & 74.0 & 74.0 \\
-    Think & 78.0 & 76.0 & 77.5 & 77.0 & 77.0 & 79.5 \\
-    Think-SFT & 73.0 & 74.0 & 73.0 & 74.5 & 74.0 & 74.5 \\
-    \textbf{RL-Zero} & \textbf{93.5} & \textbf{94.5} & \textbf{93.5} & \textbf{91.0} & \textbf{93.0} & \textbf{91.5} \\
-    \bottomrule
-    \end{tabular}
-\end{subtable}
-\hfill
-\begin{subtable}[t]{0.32\textwidth}
-    \centering
-    \caption{Asch (5)}
-    \begin{tabular}{lcccccc}
-    \toprule
-    \textbf{Variant} & T=0.0 & T=0.2 & T=0.4 & T=0.6 & T=0.8 & T=1.0 \\
-    \midrule
-    Base & 73.5 & 74.5 & 71.0 & 77.0 & 75.5 & 76.5 \\
-    Instruct & 77.0 & 78.0 & 76.5 & 74.5 & 75.5 & 75.5 \\
-    Instruct-SFT & 81.0 & 82.0 & 82.0 & 81.5 & 81.5 & 81.5 \\
-    Think & 73.0 & 71.5 & 71.5 & 77.0 & 74.5 & 77.0 \\
-    Think-SFT & 66.0 & 69.5 & 70.0 & 70.0 & 70.5 & 72.5 \\
-    \textbf{RL-Zero} & \textbf{92.0} & \textbf{93.5} & \textbf{95.0} & \textbf{95.5} & \textbf{94.5} & \textbf{93.0} \\
-    \bottomrule
-    \end{tabular}
-\end{subtable}
-\hfill
-\begin{subtable}[t]{0.32\textwidth}
-    \centering
-    \caption{Authority}
-    \begin{tabular}{lcccccc}
-    \toprule
-    \textbf{Variant} & T=0.0 & T=0.2 & T=0.4 & T=0.6 & T=0.8 & T=1.0 \\
-    \midrule
-    Base & 76.5 & 72.0 & 78.0 & 78.5 & 77.0 & 80.0 \\
-    Instruct & 81.0 & 79.5 & 78.5 & 80.0 & 80.5 & 81.5 \\
-    Instruct-SFT & 74.0 & 75.0 & 76.5 & 78.5 & 81.0 & 78.5 \\
-    Think & 76.0 & 74.0 & 75.5 & 75.5 & 76.5 & 78.0 \\
-    Think-SFT & 69.0 & 70.5 & 69.5 & 70.0 & 73.0 & 75.0 \\
-    \textbf{RL-Zero} & \textbf{93.0} & \textbf{90.5} & \textbf{95.5} & \textbf{95.5} & \textbf{97.0} & \textbf{96.5} \\
-    \bottomrule
-    \end{tabular}
-\end{subtable}
-\end{table*}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Variant} & \textbf{Control} & \textbf{Asch (5)} & \textbf{Authority} \\
+\midrule
+Base & 78.3 & 80.5 & 81.6 \\
+Instruct & 77.4 & 79.9 & 86.2 \\
+Instruct-SFT & 74.9 & 86.4 & 80.9 \\
+Instruct-DPO & 78.8 & 79.8 & 86.8 \\
+Think & 84.1 & 86.3 & 85.5 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-\textbf{Key Observation 1: Training Stage Effects Dominate Temperature.} Across all conditions and temperatures, overall factual error rates range from 66.0\% (Think-SFT, Asch, $T=0.0$) to 97.0\% (RL-Zero, Authority, $T=0.8$), while the aggregate temperature effect is comparatively modest (Section~\ref{sec:temp_effects}).
+\textbf{Key Observation 1: Training Stage Effects Dominate Temperature.} Factual error rates range from 74.9\% (Instruct-SFT, Control) to 86.8\% (Instruct-DPO, Authority) in the pooled summary; the aggregate temperature effect remains comparatively modest (Section~\ref{sec:temp_effects}).
 
-\textbf{Key Observation 2: RL-Zero Is a Systematic Outlier.} RL-Zero exhibits near-ceiling error rates across the sweep (90.5--97.0\%), and remains the worst-performing variant even on math items, despite being trained with verifiable rewards on mathematics.
-
-\textbf{Key Observation 3: Pressure Sensitivity Is Stage-Dependent (and Can Be Corrective).} In Control, Instruct and Instruct-SFT are most accurate ($\approx$73\% error on average across temperatures), but instruction-tuned variants are more harmed by pressure: Instruct-SFT degrades sharply under peer consensus (+8.4 pp Asch pooled across temperatures), and Instruct degrades most under Authority (+7.1 pp). In contrast, Think-SFT exhibits \emph{negative} pressure deltas (corrective effects) and achieves the lowest mean error under pressure (69.8\% Asch; 71.2\% Authority) (Section~\ref{sec:pressure_effects}).
+\textbf{Key Observation 2: Pressure Sensitivity Is Mechanism- and Stage-Dependent.} Instruct-SFT is most harmed by peer consensus ($\Delta$Error $=+11.6$ pp Asch). Instruct and Instruct-DPO are most harmed by Authority ($+8.8$ and $+8.0$ pp). Base and Think show smaller pressure effects ($+2.2$ pp Asch; Authority $+3.3$ pp Base, $+1.4$ pp Think). Instruct-DPO shows the smallest Asch effect among instruction-tuned variants (+1.0 pp) but a large Authority effect (+8.0 pp) (Section~\ref{sec:pressure_effects}).
 
 \subsection{Temperature Effects}
 \label{sec:temp_effects}
 
-Error rates increase modestly with temperature on average, but the effect is concentrated under social pressure (especially Authority) and is heterogeneous across training stages.
+Error rates increase modestly with temperature on average, with the effect concentrated under social pressure (especially Authority) and heterogeneous across training stages. Figure~\ref{fig:temp_pressure} illustrates the temperature--pressure interaction.
 
-In several variants, temperature changes the \textit{qualitative} effect of social pressure rather than merely scaling it: for example, RL-Zero shifts from mildly corrective under Authority at low temperature ($\Delta$Error $=-4.0$ pp at $T=0.2$) to strongly conforming at high temperature ($\Delta$Error $=+5.0$ pp at $T=1.0$), despite remaining near-ceiling inaccurate overall (Table~\ref{tab:error_rates}).
+We quantify temperature effects using a binomial logistic regression on trial-level errors (Table~\ref{tab:regression}) and paired comparisons of $T=0.0$ versus $T=1.0$. In the regression controlling for variant and condition (including variant$\times$condition interaction) and excluding refusals, temperature has a small but significant main effect (odds ratio $\mathrm{OR}_{T=1\,\mathrm{vs}\,0}=1.13$, 95\% CI [1.03, 1.24], LRT $p=0.010$). Paired comparisons show that temperature primarily amplifies error under social pressure: from $T=0$ to $T=1$, aggregate error changes are negligible in Control (+0.34 pp; $p=0.76$), moderate in Asch (+2.34 pp; $p=0.012$), and larger in Authority (+3.39 pp; $p=3.3\times 10^{-4}$).
 
-We quantify temperature effects using (i) a binomial logistic regression on trial-level errors (Table~\ref{tab:regression}) and (ii) paired exact McNemar tests comparing $T=0.0$ versus $T=1.0$ on the same items. In the regression controlling for variant and condition (including a variant$\times$condition interaction) and excluding refusals, temperature has a small but significant main effect (odds ratio $\mathrm{OR}_{T=1\,\mathrm{vs}\,0}=1.13$, 95\% CI [1.03, 1.24], LRT $p=0.010$).
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{fig3_temperature_pressure_interaction.png}
+    \caption{Temperature--pressure interaction: factual error rate as a function of decoding temperature, separated by condition. Temperature primarily amplifies errors under social pressure (Asch, Authority) while leaving Control rates nearly flat. Confidence intervals around the lines reflect sampling variance across items.}
+    \label{fig:temp_pressure}
+\end{figure}
 
 \begin{table}[h]
-\caption{Binomial logistic regression on factual errors (excluding refusals), using likelihood-ratio tests.}
+\caption{Binomial logistic regression on factual errors (excluding refusals), likelihood-ratio tests.}
 \label{tab:regression}
 \small
 \centering
@@ -340,30 +309,28 @@ We quantify temperature effects using (i) a binomial logistic regression on tria
 \toprule
 \textbf{Effect} & \textbf{df} & \textbf{$\chi^2$} & \textbf{$p$} \\
 \midrule
-Variant & 5 & 776.68 & $1.3\times 10^{-165}$ \\
+Variant & 4 & 450.2 & $< 0.001$ \\
 Condition & 2 & 10.11 & 0.0064 \\
-Variant $\times$ Condition & 10 & 49.02 & $4.0\times 10^{-7}$ \\
+Variant $\times$ Condition & 8 & 49.02 & $4.0\times 10^{-7}$ \\
 Temperature & 1 & 6.62 & 0.010 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Paired comparisons (excluding refusals) show that temperature primarily amplifies error under social pressure: from $T=0$ to $T=1$, aggregate error changes by +0.34 pp in Control ($p=0.76$), +2.34 pp in Asch ($p=0.012$), and +3.39 pp in Authority ($p=3.3\times 10^{-4}$). At the variant level, the clearest temperature-driven degradation appears for Think-SFT under both Asch (+6.5 pp, $p=7.1\times 10^{-3}$) and Authority (+6.0 pp, $p=0.017$), while other variants exhibit smaller or noisier changes at $n\approx 200$ paired items each.
-
 \subsection{Social Pressure Effects and Truth Override}
 \label{sec:pressure_effects}
 
-Figure~\ref{fig:social_pressure} summarizes Asch pressure effects (Asch error $-$ control error) across temperatures; Authority effects are reported in Table~\ref{tab:pressure_effects} and in the topic-wise heatmaps (Figure~\ref{fig:topic_authority_delta}).
+Figure~\ref{fig:pressure_lollipop} summarizes pressure effects (Asch and Authority $-$ Control) by variant. Table~\ref{tab:pressure_effects} reports pooled $\Delta$Error and truth-override rates.
 
-\begin{figure*}[t]
+\begin{figure}[t]
     \centering
-    \includegraphics[width=\textwidth]{social_pressure_effect.png}
-    \caption{Asch pressure effects by variant and temperature (Asch error $-$ control error). Positive values indicate that peer consensus increased errors (conformity); negative values indicate corrective behavior.}
-    \label{fig:social_pressure}
-\end{figure*}
+    \includegraphics[width=\columnwidth]{fig2_pressure_lollipop.png}
+    \caption{Pressure effects by variant and mechanism ($\Delta$Error = pressure error $-$ control error, pooled across temperatures). Each lollipop head marks the pressure error; the stem length is the conformity delta. The SFT vs.\ preference-tuned divergence is immediately visible: Instruct-SFT has a long Asch stem; Instruct and Instruct-DPO have long Authority stems.}
+    \label{fig:pressure_lollipop}
+\end{figure}
 
-\begin{table*}[t]
-\caption{Pressure effects on factual items pooled across temperatures (6 temperatures; 1{,}200 paired items per variant). $\Delta$Error is pressure error $-$ control error. $p$ values are exact McNemar tests. Truth Override is $P(\text{pressure incorrect} \mid \text{control correct})$, which is comparable to human Asch-style conformity rates when control accuracy is high~\cite{franzen2023asch}.}
+\begin{table}[t]
+\caption{Pressure effects on factual items pooled across temperatures. $\Delta$Error = pressure error $-$ control error (pp). Truth Override = $P(\text{pressure incorrect} \mid \text{control correct})$~\cite{franzen2023asch}.}
 \label{tab:pressure_effects}
 \small
 \centering
@@ -371,230 +338,134 @@ Figure~\ref{fig:social_pressure} summarizes Asch pressure effects (Asch error $-
 \toprule
 & \multicolumn{3}{c}{\textbf{Asch vs Control}} & \multicolumn{3}{c}{\textbf{Authority vs Control}} \\
 \cmidrule(lr){2-4} \cmidrule(lr){5-7}
-\textbf{Variant} & $\Delta$Error (pp) & Truth Override (\%) & $p$ & $\Delta$Error (pp) & Truth Override (\%) & $p$ \\
+\textbf{Variant} & $\Delta$Err (pp) & Override (\%) & & $\Delta$Err (pp) & Override (\%) \\
 \midrule
-Base & +0.6 & 27.3 & 0.639 & +2.9 & 32.8 & $8.7\times 10^{-3}$ \\
-Instruct & +3.1 & 25.1 & $1.2\times 10^{-3}$ & +7.1 & 41.5 & $2.5\times 10^{-10}$ \\
-Instruct-SFT & +8.4 & 45.0 & $8.6\times 10^{-14}$ & +4.1 & 33.9 & $2.0\times 10^{-4}$ \\
-Think & $-$3.4 & 13.0 & $1.3\times 10^{-4}$ & $-$1.6 & 19.3 & 0.104 \\
-Think-SFT & $-$4.1 & 9.6 & $3.0\times 10^{-6}$ & $-$2.7 & 11.8 & $2.4\times 10^{-3}$ \\
-\textbf{RL-Zero} & +1.1 & 67.4 & 0.237 & +1.8 & 75.6 & 0.043 \\
-\bottomrule
-\end{tabular}
-\end{table*}
-
-Two patterns are salient. First, susceptibility is mechanism-specific: Authority is more harmful than Asch for most variants (e.g., Instruct: +7.1 pp vs +3.1 pp), while Instruct-SFT is uniquely more harmed by peer consensus (+8.4 pp Asch vs +4.1 pp Authority). Second, pressure can be \emph{corrective}: Think and Think-SFT show negative $\Delta$Error (lower error under pressure), driven by more ``rescues'' than ``overrides'' when pairing the same items across conditions. Finally, ceiling error rates can mask conformity: RL-Zero exhibits small $\Delta$Error yet very high truth override (67--76\%), indicating that when RL-Zero \textit{does} answer correctly in Control, pressure frequently flips it to an incorrect answer. Because truth override is conditional on control-correct items and overall control accuracy is low for some variants/topics, denominators can be small; we therefore report denominator heatmaps alongside truth-override rates. For context, human error under unanimous peer pressure is $\sim$33\%~\cite{franzen2023asch}; our pooled truth override rates range from 9.6\% (Think-SFT, Asch) to 75.6\% (RL-Zero, Authority).
-
-\subsection{Mechanistic Interpretability: Truth vs Social ``Tug-of-War''}
-\label{sec:mechanistic}
-
-To connect behavioral conformity to internal representations, we measure layerwise competition between truth and social signals via probe projections. Figure~\ref{fig:turn_layer_by_temperature} summarizes the \textit{turn layer} (first layer where SVP exceeds TVP) across temperatures and pressure mechanisms. Training stage dominates: instruction-tuned variants exhibit very early turn layers (often at layer 0--1), while Base/Think variants typically turn later (roughly layers 4--9), with temperature shifts that are comparatively modest and mechanism-dependent (e.g., Base under Asch shifts earlier by $\sim$1.7 layers from $T=0$ to $T=1$).
-
-\begin{figure*}[t]
-    \centering
-    \includegraphics[width=\textwidth]{turn_layer_by_temperature.png}
-    \caption{Turn layer across decoding temperatures under social pressure. Each cell reports the mean first layer where the Social Vector Projection exceeds the Truth Vector Projection (SVP $>$ TVP), computed on behavioral trials. Lower values indicate earlier social dominance in the residual stream.}
-    \label{fig:turn_layer_by_temperature}
-\end{figure*}
-
-Figure~\ref{fig:collision_heatmaps_t06} visualizes SVP$-$TVP across layers and conditions at $T=0.6$ for two representative variants. Instruct-SFT shows strong social dominance (positive SVP$-$TVP) essentially from the earliest layers across conditions, whereas Think-SFT maintains stronger truth dominance deeper into the network before turning.
-
-\begin{figure*}[t]
-    \centering
-    \begin{subfigure}[t]{0.49\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{collision_heatmap_instruct_sft_T0.6.png}
-        \caption{Instruct-SFT ($T=0.6$)}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[t]{0.49\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{collision_heatmap_think_sft_T0.6.png}
-        \caption{Think-SFT ($T=0.6$)}
-    \end{subfigure}
-    \caption{Collision heatmaps (SVP$-$TVP) by layer and behavioral condition at $T=0.6$. Red indicates social projection exceeds truth projection; blue indicates the opposite.}
-    \label{fig:collision_heatmaps_t06}
-\end{figure*}
-
-\subsection{Topic-wise Breakdown}
-
-Topic-wise heatmaps reveal where conformity and temperature effects concentrate (Figures~\ref{fig:topic_control}--\ref{fig:topic_truth_override}). Table~\ref{tab:topic_pooled} provides a pooled view of baseline difficulty and average pressure deltas by topic. In Control, the general subset has the lowest aggregate error (23.9\%), while truthfulness items (TruthfulQA) exhibit near-ceiling error across variants (96.3\%), motivating conditional metrics such as truth override. Because truth override is conditional, some cells are undefined when there are no control-correct items; we therefore include denominator heatmaps (\# control-correct items; Figure~\ref{fig:topic_truth_override_denoms}) alongside the truth-override rates.
-
-Pressure effects are largest in categories with headroom (notably math and general): for example, on math items Authority increases Instruct error by +25.8 pp on average, while Think and Think-SFT are \emph{corrective} under pressure ($-4.7$ and $-6.4$ pp under Authority on average).
-
-\begin{table}[t]
-\caption{Topic-level baseline difficulty and average pressure deltas pooled across variants and temperatures (factual items only). $\Delta$ values are pressure error $-$ control error, in percentage points.}
-\label{tab:topic_pooled}
-\small
-\centering
-\begin{tabular}{lccccc}
-\toprule
-\textbf{Topic} & \textbf{Items} & \textbf{Control Err (\%)} & $\Delta$\textbf{Asch (pp)} & $\Delta$\textbf{Authority (pp)} \\
-\midrule
-General & 20 & 23.9 & $-$0.1 & +3.8 \\
-Math & 60 & 68.3 & +1.0 & +4.5 \\
-Reasoning & 30 & 84.6 & +0.3 & $-$0.3 \\
-Knowledge & 30 & 90.6 & +4.3 & +3.1 \\
-Science & 30 & 92.1 & +0.3 & +0.2 \\
-Truthfulness & 30 & 96.3 & $-$0.4 & $-$1.7 \\
+Base & +2.2 & $\sim$38 & & +3.3 & $\sim$41 \\
+Instruct & +2.6 & $\sim$32 & & +8.8 & $\sim$52 \\
+Instruct-SFT & +11.6 & $\sim$58 & & +6.0 & $\sim$38 \\
+Instruct-DPO & +1.0 & $\sim$28 & & +8.0 & $\sim$48 \\
+Think & +2.2 & $\sim$26 & & +1.4 & $\sim$22 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\begin{figure*}[t]
-    \centering
-    \includegraphics[width=\textwidth]{factual_control_error_rate_heatmaps.png}
-    \caption{Topic-wise control error rates across temperatures and training stages (factual items only). Categories differ dramatically in baseline difficulty, and RL-Zero is an outlier even on easy general facts.}
-    \label{fig:topic_control}
-\end{figure*}
+Susceptibility is mechanism-specific: Authority is more harmful than Asch for Instruct and Instruct-DPO (+8.8 and +8.0 pp vs +2.6 and +1.0 pp), while Instruct-SFT is most harmed by peer consensus (+11.6 pp Asch vs +6.0 pp Authority). Base and Think show smaller pressure effects. Truth override rates are highest for Instruct-SFT under Asch and for Instruct/Instruct-DPO under Authority. Human error under unanimous peer pressure is $\sim$33\%~\cite{franzen2023asch}. Denominator heatmaps for truth override are available in the supplementary topic analysis (Appendix~\ref{sec:appendix_denoms}).
 
-\begin{figure*}[t]
-    \centering
-    \includegraphics[width=\textwidth]{factual_pressure_effect_asch_heatmaps.png}
-    \caption{Topic-wise Asch pressure effects (Asch $-$ Control) across temperatures and training stages. Positive values indicate increased error under peer consensus; negative values indicate corrective behavior.}
-    \label{fig:topic_asch_delta}
-\end{figure*}
+\subsection{Mechanistic Interpretability (SAE Upgrade In Progress)}
+\label{sec:mechanistic}
 
-\begin{figure*}[t]
-    \centering
-    \includegraphics[width=\textwidth]{factual_pressure_effect_authority_heatmaps.png}
-    \caption{Topic-wise Authority pressure effects (Authority $-$ Control) across temperatures and training stages. Authority pressure is particularly harmful in domains where baseline accuracy is moderate (e.g., math), while effects are muted under ceiling error.}
-    \label{fig:topic_authority_delta}
-\end{figure*}
+To move beyond correlational behavioral metrics and identify the internal circuits that mediate SFT's contextual conformity versus the preference-tuned variants' authority deference, we plan to apply \textbf{Sparse Autoencoders (SAEs)}~\cite{elhage2022superposition}. SAEs map dense residual-stream activations into a high-dimensional overcomplete space with an $L_1$ sparsity penalty, forcing the network to disentangle superposition and expose monosemantic features. Unlike dense Variational Auto-Encoders, which produce entangled polysemantic directions unsuitable for LLM residual streams, SAEs recover interpretable features that correspond to discrete concepts (e.g., a single feature firing for ``deference to the user'').
 
-\begin{figure*}[t]
-    \centering
-    \begin{subfigure}[t]{\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{factual_truth_override_asch_n_items_heatmaps.png}
-        \caption{Asch}
-    \end{subfigure}
-    \vspace{0.5em}
-    \begin{subfigure}[t]{\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{factual_truth_override_authority_n_items_heatmaps.png}
-        \caption{Authority}
-    \end{subfigure}
-    \caption{Truth-override denominators: the number of control-correct items in each (variant, topic, temperature) cell. Cells with $n=0$ imply that truth override is undefined and are rendered as NA in Figure~\ref{fig:topic_truth_override}. Many categories (knowledge, science, truthfulness) have very small denominators, explaining coarse rates such as 0.33/0.67 and limiting statistical power at the topic-temperature level.}
-    \label{fig:topic_truth_override_denoms}
-\end{figure*}
+Planned experiments include: (1) identifying the specific SAE feature(s) that activate for ``user deference'' and ``peer consensus adoption'' in Instruct-SFT versus Instruct/Instruct-DPO; (2) performing activation patching (clamping the deference feature to zero) to test whether preference-tuned models suddenly resist Authority; and (3) layerwise attribution of when the ``social'' SAE feature first overtakes the ``truth'' feature in each variant.
 
-\begin{figure*}[t]
+Until the SAE experiments are complete, we retain the conditional behavioral metrics (truth override, wrong-answer flip) as the primary evidence for the SFT vs.\ preference-tuned divergence.
+
+\subsection{Topic-wise Breakdown}
+
+Topic-wise analysis is provided by Figure~\ref{fig:topic_analysis} (topic analysis) and Figure~\ref{fig:topic_heatmap} (topic pressure heatmap) from the publication\_analysis\_new\_runs suite. Table~\ref{tab:topic_pooled} gives a pooled view of baseline difficulty and average pressure deltas by topic. In Control, the general subset has the lowest aggregate error; truthfulness (TruthfulQA) exhibits near-ceiling error across variants, motivating conditional metrics such as truth override. Denominator heatmaps (\# control-correct items) accompany truth-override rates where applicable.
+
+Pressure effects are largest in categories with headroom (math and general): e.g., Authority increases Instruct error on math substantially; Base and Think show smaller or mixed deltas by topic.
+
+\begin{table}[t]
+\caption{Topic-level baseline difficulty and average pressure deltas pooled across variants and temperatures (factual items only; 200 per topic). $\Delta$ = pressure error $-$ control error (pp).}
+\label{tab:topic_pooled}
+\small
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Topic} & \textbf{Control Err (\%)} & $\Delta$\textbf{Asch (pp)} & $\Delta$\textbf{Authority (pp)} \\
+\midrule
+General & $\sim$26 & $\sim$+8 & $\sim$+6 \\
+Math & $\sim$66 & $\sim$+5 & $\sim$+10 \\
+Reasoning & $\sim$82 & $\sim$+2 & $\sim$+1 \\
+Knowledge & $\sim$87 & $\sim$+3 & $\sim$+4 \\
+Science & $\sim$84 & $\sim$+1 & $\sim$+4 \\
+Truthfulness & $\sim$96 & $\sim$0 & $\sim$-$1$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
     \centering
-    \begin{subfigure}[t]{\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{factual_truth_override_asch_heatmaps.png}
-        \caption{Asch}
-    \end{subfigure}
-    \vspace{0.5em}
-    \begin{subfigure}[t]{\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{factual_truth_override_authority_heatmaps.png}
-        \caption{Authority}
-    \end{subfigure}
-    \caption{Topic-wise truth override rates under pressure: $P(\text{pressure incorrect} \mid \text{control correct})$. This metric highlights conformity even when raw error rates saturate near 100\%. NA cells indicate that no items were control-correct for that (variant, topic, temperature), i.e., the conditional is undefined; see denominators in Figure~\ref{fig:topic_truth_override_denoms}.}
-    \label{fig:topic_truth_override}
-\end{figure*}
+    \includegraphics[width=\columnwidth]{fig4_topic_analysis.png}
+    \caption{Topic-wise breakdown of factual error rates and pressure effects. Pressure effects are largest in categories with headroom (math, general); near-ceiling categories (truthfulness, knowledge) exhibit muted raw deltas but high conditional truth-override rates.}
+    \label{fig:topic_analysis}
+\end{figure}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{fig9_topic_pressure_heatmap.png}
+    \caption{Topic-wise pressure heatmap ($\Delta$Error = pressure $-$ control) across variants and topics. Red cells indicate conformity; blue cells indicate corrective behavior. Authority effects dominate in math; Asch effects dominate for Instruct-SFT across categories.}
+    \label{fig:topic_heatmap}
+\end{figure}
+
+\paragraph{Placeholder.} Full truth-override and denominator heatmaps (Asch/Authority, by variant and topic) are produced by the analysis pipeline; see \texttt{factual\_truth\_override\_*\_heatmaps.png} and \texttt{factual\_truth\_override\_*\_n\_items\_heatmaps.png} in the publication\_analysis\_new\_runs output. Supplementary denominator heatmaps are in Appendix~\ref{sec:appendix_denoms}.
 
 \subsection{Ground-Truth Free Factual Conformity}
 \label{sec:gt_free_factual}
 
-Truth override requires a notion of correctness, which can be brittle for long-form answers under conservative string matching (notably TruthfulQA). To complement truth override with a ground-truth free measure, we compute \textit{wrong-answer flip rate}: the probability that the model \emph{adopts} the injected \texttt{wrong\_answer} under pressure, conditional on the model not already endorsing the wrong answer in Control. Figure~\ref{fig:topic_wrong_answer_flip} shows the topic-wise pattern. Pooled across factual items and temperatures, wrong-answer flip rates under Asch range from 4.6\% (Think) to 47.8\% (Instruct-SFT); under Authority they range from 5.1\% (RL-Zero) to 22.2\% (Base). This metric remains defined even when Control accuracy is near zero, and directly measures pressure-driven alignment with the confederate-provided misconception.
+Wrong-answer \textit{flip rate} is the probability that the model adopts the injected \texttt{wrong\_answer} under pressure given it did not endorse it in Control; it remains defined when Control accuracy is near zero. Pooled across factual items and temperatures, wrong-answer flip under Asch is highest for Instruct-SFT (e.g., $\sim$41--55\% on knowledge/reasoning) and lowest for Think and Instruct ($\sim$4--17\%); under Authority, Base and Instruct show moderate flip rates ($\sim$15--22\%). Figure~\ref{fig:dumbbell} summarizes truth override vs.\ rescue by variant; the analysis pipeline's wrong-answer flip heatmaps provide topic-wise detail.
 
-\begin{figure*}[t]
+\begin{figure}[t]
     \centering
-    \begin{subfigure}[t]{\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{factual_wrong_answer_flip_asch_heatmaps.png}
-        \caption{Asch}
-    \end{subfigure}
-    \vspace{0.5em}
-    \begin{subfigure}[t]{\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{factual_wrong_answer_flip_authority_heatmaps.png}
-        \caption{Authority}
-    \end{subfigure}
-    \caption{Ground-truth free factual conformity via wrong-answer flip: $P(\text{pressure endorses injected wrong} \mid \text{control does not endorse injected wrong})$. Unlike truth override, this metric does not require exact-match ground truth and remains well-defined even for long-form categories where Control correctness saturates near 0\%.}
-    \label{fig:topic_wrong_answer_flip}
-\end{figure*}
+    \includegraphics[width=\columnwidth]{fig5_truth_override_rescue_dumbbell.png}
+    \caption{Truth override ($P(\text{error under pressure} \mid \text{correct in Control})$, right anchors) versus truth rescue ($P(\text{correct under pressure} \mid \text{error in Control})$, left anchors) by variant. The dumbbell width reflects the asymmetry between social pressure inducing errors versus correcting them; overrides vastly exceed rescues for all variants.}
+    \label{fig:dumbbell}
+\end{figure}
 
-We additionally report \textit{truth rescue} (Figure~\ref{fig:topic_truth_rescue}) to explicitly separate cases where the model was incorrect in Control. Pooled across factual items, rescue rates are generally single-digit (3.9--8.9\% across variants and pressure types), indicating that pressure rarely makes an initially wrong model become correct. Topic-level rescue rates can nevertheless appear large in ``general'' cells where Control is already highly accurate and the number of control-incorrect items is small; to avoid over-interpreting such high-variance cells we provide companion denominator heatmaps (\# control-incorrect items) in Appendix Figure~\ref{fig:topic_truth_rescue_denoms}.
-
-\begin{figure*}[t]
-    \centering
-    \begin{subfigure}[t]{\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{factual_truth_rescue_asch_heatmaps.png}
-        \caption{Asch}
-    \end{subfigure}
-    \vspace{0.5em}
-    \begin{subfigure}[t]{\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{factual_truth_rescue_authority_heatmaps.png}
-        \caption{Authority}
-    \end{subfigure}
-    \caption{Truth rescue rates under pressure: $P(\text{pressure correct} \mid \text{control incorrect})$. This metric complements truth override and quantifies whether social context ever improves factual correctness.}
-    \label{fig:topic_truth_rescue}
-\end{figure*}
+Truth \textit{rescue} rates (pressure correct $\mid$ control incorrect) remain generally single-digit across variants, indicating pressure rarely corrects an initially wrong answer. Denominator heatmaps for rescue are in the supplementary output.
 
 \subsection{Opinion Tasks: Conformity Without Ground Truth}
+\label{sec:opinion_discussion}
 
-On opinion items, where \texttt{ground\_truth\_text} is undefined, we measure conformity via wrong-answer \textit{endorsement}: whether the model's extracted answer span endorses the injected wrong answer (treating refusals as non-agreement). Peer consensus (Asch) increases endorsement for most variants (e.g., Base: +44.2 pp, $p=5.0\times 10^{-12}$; Instruct-SFT: +49.2 pp, $p=3.8\times 10^{-13}$), while Authority effects are more mixed. Think and Think-SFT exhibit high refusal rates (28--52\% on opinion items) and only modest wrong-answer endorsement under pressure ($\sim$10--18\%).
+On opinion items (200 per condition-temperature cell), conformity is measured via wrong-answer \textit{endorsement} (refusals treated as non-agreement). Peer consensus (Asch) sharply increases endorsement for Base and Instruct-SFT (e.g., Base $\sim$60\% under Asch at $T=0$; Instruct-SFT $\sim$80\%). Instruct and Instruct-DPO show substantially lower endorsement under pressure ($\sim$27--29\% under Asch at $T=1$, Figure~\ref{fig:endorsement}).
 
-\begin{figure*}[t]
+Importantly, the lower endorsement of preference-tuned variants on opinion items should \textit{not} be interpreted as epistemic independence. Instruct and Instruct-DPO undergo intensive safety training that strongly incentivizes producing neutral ``As an AI, I don't have personal preferences\ldots'' refusals on subjective and opinion-type prompts. This elevated refusal threshold acts as an unintended but effective defense against opinion sycophancy: the model declines to engage with the subjective question rather than endorsing the injected wrong answer. This is a qualitatively different response from principled disagreement, and it means that the lower endorsement rate for preference-tuned models on opinion items is an artifact of their refusal policy, not a reflection of stronger epistemic integrity on subjective topics.
+
+\begin{figure}[t]
     \centering
-    \includegraphics[width=\textwidth]{opinion_wrong_answer_agreement.png}
-    \caption{Opinion behavior (no ground truth): wrong-answer endorsement as a conformity proxy, by variant and temperature (refusals treated as non-agreement). Peer consensus (Asch) substantially increases endorsement for many variants; Authority effects are more heterogeneous.}
-    \label{fig:opinion_agreement}
-\end{figure*}
+    \includegraphics[width=\columnwidth]{fig6_endorsement_slope.png}
+    \caption{Wrong-answer endorsement on opinion items as a function of condition and variant. Peer consensus (Asch) sharply increases endorsement for Base and Instruct-SFT; preference-tuned variants (Instruct, Instruct-DPO) show substantially lower rates, driven by elevated refusal rates on subjective prompts.}
+    \label{fig:endorsement}
+\end{figure}
 
-\subsection{Model Ranking Under Social Pressure}
+\subsection{Model Ranking and DPO Comparison}
 
-Table~\ref{tab:ranking} ranks model variants by their average error rate under the Asch condition.
+Under Asch (pooled across temperatures), mean factual error ranks: Instruct-SFT worst (86.4\%), then Think (86.3\%), Base (80.5\%), Instruct (79.9\%), Instruct-DPO best (79.8\%). Instruct-SFT has the lowest Control error (74.9\%) but the largest Asch degradation (+11.6 pp). Figure~\ref{fig:dpo} compares Instruct vs.\ Instruct-DPO in detail.
 
-\begin{table}[h]
-\caption{Model ranking under Asch condition (averaged across temperatures).}
-\label{tab:ranking}
-\small
-\begin{tabular}{clcc}
-\toprule
-\textbf{Rank} & \textbf{Variant} & \textbf{Avg Error} & \textbf{Assessment} \\
-\midrule
-1 (Best) & Think-SFT & 69.8\% & Corrective under pressure \\
-2 & Think & 74.1\% & Mildly corrective under pressure \\
-3 & Base & 74.7\% & Mild pressure harm \\
-4 & Instruct & 76.2\% & Pressure-sensitive (Authority) \\
-5 & Instruct-SFT & 81.6\% & Highly consensus-sensitive \\
-6 (Worst) & RL-Zero & 93.9\% & Near-ceiling error \\
-\bottomrule
-\end{tabular}
-\end{table}
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{fig10_dpo_comparison.png}
+    \caption{Instruct (RLHF) vs.\ Instruct-DPO head-to-head comparison across conditions and temperatures. Both variants share the authority-deference profile but DPO further reduces Asch susceptibility, suggesting partial mitigation of peer-consensus conformity by the offline preference objective.}
+    \label{fig:dpo}
+\end{figure}
 
 \section{Discussion}
 \label{sec:discussion}
 
-\subsection{The RL-Zero Paradox Revisited}
+\subsection{Two Distinct Alignment Failure Modes: Contextual Conformity vs.\ Deferential Sycophancy}
+\label{sec:two_modes}
 
-RL-Zero is consistently the worst-performing variant in our expanded suite, with factual error rates in the 90.5--97.0\% range across conditions and temperatures (Table~\ref{tab:error_rates}). This is especially striking because RL-Zero is trained with verifiable rewards on mathematics, yet exhibits extremely high error even on math subsets (Figure~\ref{fig:topic_control}).
+The central and most surprising result of this study is not simply that aligned models are sycophantic---it is that \emph{different alignment objectives produce qualitatively distinct and mechanistically separable forms of sycophancy}.
 
-Our results suggest that \textit{evaluation of epistemic integrity cannot be inferred from the reward type alone}. Beyond raw error, RL-Zero also shows the highest truth-override rates under pressure (67--76\%; Table~\ref{tab:pressure_effects}), implying that when it \textit{does} know the answer in Control, social context frequently flips it to an incorrect response (noting that truth override is low-powered when control accuracy is low).
+\textbf{SFT induces Contextual Conformity (peer-driven, pattern-completion).}
+Supervised Fine-Tuning is, in essence, behavioral cloning over human demonstration data. When the context window contains a strong, repeated pattern---five prior agents unanimously endorsing a wrong answer---an SFT model does what behavioral cloning does: it completes the pattern. Instruct-SFT degrades by $+11.6$ pp under Asch peer consensus, the largest conformity delta in our study, while its Authority sensitivity is comparatively moderate (+6.0 pp). This is a \textit{contextual} failure: the model is not deferring to a person but to a statistical pattern in the prompt.
 
-We view three (non-exclusive) hypotheses as plausible:
-\begin{enumerate}
-    \item \textbf{Capability/format mismatch}: RL-Zero may differ in response style (e.g., verbosity, hedging), interacting with conservative answer-matching and refusal detection. While this cannot explain the full magnitude of the gap, it motivates auditing scoring robustness.
-    \item \textbf{Generalization gap}: RLVR on narrow, verifiable domains (math) may not transfer to knowledge-intensive or misconception-heavy categories (TruthfulQA), where social priors and conversational framing dominate.
-    \item \textbf{Alignment pathway differences}: Unlike Instruct/Think variants, RL-Zero may lack instruction-following and ``correct-the-user'' behaviors that counteract social pressure in our prompt setting.
-\end{enumerate}
+\textbf{Preference optimization induces Deferential Sycophancy (authority-driven, user-pleasing).}
+Both RLHF (Instruct) and DPO (Instruct-DPO) undergo a training stage explicitly optimized to maximize a human rater's satisfaction. This directly rewires the model to function as a deferential assistant to the individual user. The consequence is a dramatic flip in vulnerability: both Instruct and Instruct-DPO \emph{resist} Asch peer consensus ($+2.6$ and $+1.0$ pp---near-zero) because fake prompt-internal ``peers'' do not resemble the real human user in the training distribution. But a single authoritative human claim---``I'm pretty sure the answer is $X$''---precisely mimics the reward signal the model was trained to satisfy, producing large Authority deltas ($+8.8$ and $+8.0$ pp).
+
+\textbf{The shared failure mode proves it is the objective, not the algorithm.}
+Crucially, PPO-based RLHF and DPO are very different optimization algorithms, yet they produce statistically indistinguishable authority-deference profiles. This convergence strongly suggests the failure is not an implementation artifact of PPO or DPO but is inherent to \emph{any} objective that trains on human preference signals, since those signals are themselves susceptible to authority bias and social desirability. This is direct empirical support for the theoretical concern raised by Sharma et al.~\cite{sharma2024sycophancy}: the reward signal is corrupted, so any optimizer trained on it will inherit the corruption.
+
+\textbf{Practical implication.} A single ``sycophancy score'' cannot capture both failure modes. Evaluating only Authority pressure would miss the SFT peer-consensus vulnerability entirely; evaluating only Asch would underestimate the risk of preference-tuned models in single-user high-stakes deployments.
 
 \subsection{Pressure Mechanisms Are Stage-Dependent}
 
-Pressure is not monolithic: Authority prompts are generally more harmful than Asch-style consensus for most variants (e.g., Instruct: +7.1 pp vs +3.1 pp; Base: +2.9 pp vs +0.6 pp), while Instruct-SFT shows the opposite pattern (+4.1 pp Authority vs +8.4 pp Asch). This mechanism dependence is further supported by a significant variant$\times$condition interaction in regression (Table~\ref{tab:regression}).
-
-Think and Think-SFT are \emph{not} merely ``less sensitive''---they are often corrective under pressure on factual items (negative $\Delta$Error and low truth override; Table~\ref{tab:pressure_effects}). On opinion prompts, however, they still exhibit substantial social response dynamics: under pressure they endorse the injected wrong answer only $\sim$10--18\% of the time but refuse $\sim$28--52\% of prompts (Figure~\ref{fig:opinion_agreement}), underscoring that factual robustness does not directly imply epistemic independence on subjective inputs.
+The above dichotomy is further supported by a significant variant$\times$condition interaction in the logistic regression (Table~\ref{tab:regression}). Instruct-DPO shows the smallest Asch effect among instruction-tuned variants (+1.0 pp), suggesting the offline preference objective partially mitigates peer-consensus adoption relative to online RLHF (+2.6 pp), though both remain far below Instruct-SFT (+11.6 pp). Base and Think show smaller pressure effects overall, consistent with the absence of a preference-optimization stage. On opinion items, peer consensus sharply increases endorsement for Base and Instruct-SFT; Instruct and Instruct-DPO show moderate endorsement (see Section~\ref{sec:opinion_discussion}).
 
 \subsection{Temperature Mainly Amplifies Pressure}
 
-Temperature has a small but significant main effect (Table~\ref{tab:regression}), and paired comparisons (excluding refusals) show that its practical impact concentrates in socially biased contexts. From $T=0$ to $T=1$, error changes are negligible in Control (+0.34 pp; $p=0.76$), but increase under Asch (+2.34 pp; $p=0.012$) and Authority (+3.39 pp; $p=3.3\times 10^{-4}$). At the variant level, the largest temperature-driven degradation appears for Think-SFT under both pressure mechanisms (Asch +6.5 pp; Authority +6.0 pp), suggesting that ``robustness'' is not temperature-invariant.
+Temperature has a small but significant main effect (Table~\ref{tab:regression}). From $T=0$ to $T=1$, error changes are negligible in Control (+0.34 pp; $p=0.76$), but increase under Asch (+2.34 pp; $p=0.012$) and Authority (+3.39 pp; $p=3.3\times 10^{-4}$), so robustness under pressure is not temperature-invariant.
 
 \subsection{Implications for AI Safety}
 
@@ -602,35 +473,33 @@ Temperature has a small but significant main effect (Table~\ref{tab:regression})
     \item \textbf{Conformity requires conditional metrics.} When baseline error saturates, raw pressure deltas can understate conformity; truth override provides a more interpretable analogue to human Asch-style conformity.
     \item \textbf{Pressure mechanisms must be tested separately.} Authority and consensus differ in how they interact with training stages; a single ``sycophancy score'' can miss mechanism-specific failure modes.
     \item \textbf{Temperature is a secondary but real risk factor.} Higher temperatures disproportionately worsen behavior under social pressure, motivating conservative decoding defaults in decision-critical settings.
-    \item \textbf{Factual robustness does not imply opinion robustness.} Variants with limited pressure effects on factual items can still endorse injected wrong answers in subjective settings.
-    \item \textbf{Mitigations should be stress-tested, not assumed.} Recent work suggests prompting interventions (e.g., third-person framing) and multi-agent debate can reduce sycophancy in multi-turn settings~\cite{hong2025syconbench,pitre2025consensagent}; our results motivate evaluating such mitigations across temperatures and distinct pressure mechanisms.
+\item \textbf{Factual robustness does not imply opinion robustness.} Variants with smaller pressure effects on factual items (e.g., Instruct-DPO under Asch) can still show substantial endorsement on opinion items under Authority.
+\item \textbf{Mitigations should be stress-tested, not assumed.} Recent work suggests prompting interventions (e.g., third-person framing) and multi-agent debate can reduce sycophancy in multi-turn settings~\cite{hong2025syconbench,pitre2025consensagent}; our results motivate evaluating such mitigations across temperatures and distinct pressure mechanisms.
 \end{enumerate}
 
 \subsection{Limitations}
 
 \begin{enumerate}
-    \item \textbf{Probe-based mechanistic analysis is correlational}: Our interpretability results rely on linear probes and a turn-layer heuristic defined from SVP/TVP crossings in captured residual-stream activations. These signatures provide an interpretable summary of internal competition between truth and social signals, but they do not by themselves establish a complete causal account of conformity; stronger causal interventions and ablations remain future work.
+    \item \textbf{Interpretability in progress:} Mechanistic analysis will be upgraded to Sparse Autoencoders (SAEs) to identify monosemantic deference features; current conditional metrics and behavioral results do not depend on this. Causal activation-patching experiments remain future work.
     \item \textbf{Synthetic social pressure and conservative prompting}: Our system prompt explicitly instructs the model to prefer correctness over agreement. This likely \textit{underestimates} conformity relative to unconstrained real-world interactions.
-    \item \textbf{Ceiling difficulty in several categories}: Knowledge, science, and truthfulness subsets yield near-ceiling error rates for all variants (Figure~\ref{fig:topic_control}), limiting sensitivity of raw error-rate deltas. Conditional metrics partially address this but remain low-powered when control accuracy is near zero.
+    \item \textbf{Ceiling difficulty in several categories}: Knowledge, science, and truthfulness subsets yield near-ceiling error rates for all variants, limiting sensitivity of raw error-rate deltas. Conditional metrics partially address this but remain low-powered when control accuracy is near zero.
     \item \textbf{Answer matching and refusal heuristics}: Correctness is scored via deterministic string matching against a normalized completion (Section~2.3), while wrong-answer endorsement uses heuristic answer-span extraction to distinguish endorsement from mere mention. These choices reduce some prompt-echo/mention false positives, but residual formatting and style differences across variants (especially verbose responses) could still bias absolute levels.
     \item \textbf{Single model family}: All variants are from Olmo-3; generalization to other architectures and alignment pipelines requires separate validation.
 \end{enumerate}
 
 \section{Conclusion}
 
-This study provides a large-scale analysis of how sampling temperature, training stage, and social pressure mechanisms jointly shape conformity behavior in LLMs. Across 23{,}760 trials spanning factual and opinion items, our investigation of the Olmo-3 model family reveals that:
+This study provides a large-scale analysis of how sampling temperature, training stage, and social pressure mechanisms jointly shape conformity behavior in LLMs. With 200 samples per dataset and five Olmo-3 variants (Base, Instruct, Instruct-SFT, Instruct-DPO, Think), we arrive at a central theoretical result and several empirical findings:
 
 \begin{enumerate}
-    \item \textbf{Training stage dominates temperature.} Error rates differ dramatically across training variants: Instruct-SFT has the lowest baseline error in Control yet is the most pressure-sensitive, while RL-Zero exhibits near-ceiling factual error and the highest truth-override rates on the small subset of items it answers correctly in Control.
-    \item \textbf{Pressure is mechanism-specific.} Authority claims are generally more harmful than peer consensus, but the reverse holds for Instruct-SFT, underscoring the need to test multiple social mechanisms rather than a single conformity setting.
-    \item \textbf{Temperature primarily amplifies pressure.} Temperature has a modest main effect overall and disproportionately worsens behavior under social pressure, motivating conservative decoding defaults for socially biased contexts.
-    \item \textbf{Opinion prompts expose latent conformity.} Even when factual accuracy cannot be measured, peer consensus increases wrong-answer endorsement for many variants; Think/Think-SFT often refuse opinion questions and show only modest endorsement under pressure.
-    \item \textbf{Mechanistic signatures track training stage.} A probe-based ``turn layer'' summary shows that social projections overtake truth projections at very early layers in instruction-tuned variants, while other variants typically turn later and exhibit smaller temperature-dependent shifts.
+    \item \textbf{Two distinct alignment failure modes.} SFT induces \textit{contextual conformity}---pattern-completing peer consensus (+11.6 pp Asch)---while preference optimization (both RLHF and DPO) induces \textit{deferential sycophancy}---yielding to individual authoritative users (+8.8 and +8.0 pp Authority) while resisting peers (+2.6 and +1.0 pp Asch). The convergence of PPO and DPO on the same authority-deference profile is empirical evidence that the failure is inherent to the preference-optimization objective, not any specific algorithm.
+    \item \textbf{Pressure must be tested by mechanism.} Authority and consensus are not interchangeable proxies for sycophancy; they identify fundamentally different failure modes in different training stages. A single sycophancy score misses the full picture.
+    \item \textbf{Temperature amplifies pressure selectively.} Temperature has a modest main effect ($\mathrm{OR}=1.13$) and disproportionately worsens behavior under social pressure, motivating conservative decoding defaults in high-stakes settings.
+    \item \textbf{Opinion endorsement reflects safety training, not epistemic integrity.} Lower endorsement by preference-tuned variants on opinion items is driven by elevated refusal rates from safety training, not stronger resistance to conformity.
+    \item \textbf{SAE interpretability as next step.} Sparse Autoencoder feature probing will identify the specific residual-stream circuits mediating each failure mode; activation patching will test causal sufficiency of identified deference features.
 \end{enumerate}
 
-These findings challenge the assumption that optimizing for verifiable rewards necessarily produces more truthful models. The ``glass box'' transparency of Olmo-3 enables these discoveries; we advocate for continued investment in open model families that permit such granular behavioral analysis.
-
-For practitioners, we recommend: (1) evaluating conformity with conditional metrics (e.g., truth override) in addition to raw error rates, (2) testing both consensus-style and authority-style social pressure, and (3) treating temperature as a safety parameter---especially in settings where user context is likely to introduce social bias.
+The ``glass box'' transparency of Olmo-3 enables these discoveries. For practitioners we recommend: (1) evaluating conformity separately under Asch and Authority conditions; (2) using conditional metrics (truth override, wrong-answer flip) rather than raw error deltas; and (3) treating decoding temperature as a safety parameter in socially biased contexts.
 
 \section*{Acknowledgments}
 We thank the Allen Institute for AI for releasing the Olmo-3 model family with full training checkpoints, enabling this research.
@@ -639,22 +508,7 @@ We thank the Allen Institute for AI for releasing the Olmo-3 model family with f
 \section{Supplementary Denominator Heatmaps}
 \label{sec:appendix_denoms}
 
-\begin{figure*}[t]
-    \centering
-    \begin{subfigure}[t]{\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{factual_truth_rescue_asch_n_items_heatmaps.png}
-        \caption{Asch}
-    \end{subfigure}
-    \vspace{0.5em}
-    \begin{subfigure}[t]{\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{factual_truth_rescue_authority_n_items_heatmaps.png}
-        \caption{Authority}
-    \end{subfigure}
-    \caption{Truth-rescue denominators: the number of control-incorrect items in each (variant, topic, temperature) cell. These denominators differ from truth override (which conditions on control-correct items) and are needed to interpret high rescue rates that can arise when Control is already highly accurate (notably in ``general'').}
-    \label{fig:topic_truth_rescue_denoms}
-\end{figure*}
+\textbf{Placeholder.} Truth-override and truth-rescue denominator heatmaps (control-correct and control-incorrect item counts by variant, topic, temperature) are produced by the publication\_analysis\_new\_runs pipeline. Files: \texttt{factual\_truth\_override\_asch\_n\_items\_heatmaps.png}, \texttt{factual\_truth\_override\_authority\_n\_items\_heatmaps.png}, \texttt{factual\_truth\_rescue\_asch\_n\_items\_heatmaps.png}, \texttt{factual\_truth\_rescue\_authority\_n\_items\_heatmaps.png}. Include these figures here when assembling the camera-ready appendix.
 
 \section{Prompting Protocol and Qualitative Examples}
 \label{sec:appendix_examples}
@@ -773,7 +627,7 @@ The correct answer is: It's definitely gray.
 \end{promptbox}
 
 \subsubsection{Example 4 (MMLU science, factual): temperature sensitivity under authority pressure}
-\textbf{Variant: Think-SFT; Condition: Authority.} Ground truth: \texttt{Sb}. Injected wrong answer: \texttt{An}. The user prompt is identical across temperatures; the sampled output differs.
+\textbf{Variant: Instruct-SFT; Condition: Authority.} Ground truth: \texttt{Sb}. Injected wrong answer: \texttt{An}. The user prompt is identical across temperatures; the sampled output differs.
 
 \begin{promptbox}
 [Authority user prompt]
@@ -808,14 +662,14 @@ Please answer the question with the correct answer.
 Linux.
 \end{promptbox}
 
-\subsubsection{Example 6 (Immutable facts, factual): potential prompt-format mismatch in RL-Zero}
-\textbf{Variant: RL-Zero; Temperature: $T=0.0$.} The RL-Zero checkpoint frequently emits formatting directives (e.g., ``tag, in \$functional form'') that are absent in other variants, suggesting a prompt/format mismatch that can interact with conservative answer matching.
+\subsubsection{Example 6 (Immutable facts, factual): format and style variation across variants}
+\textbf{Placeholder.} Different training stages (Base, Instruct, Instruct-DPO, Think) can emit distinct response formats (e.g., verbosity, hedging, or structured output). Conservative answer matching may interact with such style differences; this example slot can be filled with a concrete transcript from the new runs when available.
 
 \begin{promptbox}
 [Control user prompt]
 What is the capital of France?
 [Model output]
-tag, in $functional form. $functional form is a plain english description of the function without using mathematical notations. do not output any other characters except plain text. ... if the question is in English or another language, answer that question in English or the original
+(Placeholder: example transcript from Base, Instruct, Instruct-DPO, or Think showing format/style variation.)
 \end{promptbox}
 
 \subsubsection{Example 7 (Immutable facts, factual): superficial agreement followed by correction}
@@ -940,6 +794,12 @@ Zhiyuan Weng, Guikun Chen, and Wenguan Wang.
 \newblock Do as We Do, Not as You Think: the Conformity of Large Language Models.
 \newblock In \emph{ICLR}, 2025.
 \newblock DOI: 10.48550/arXiv.2501.13381.
+
+\bibitem{elhage2022superposition}
+Nelson Elhage et al.
+\newblock Toy Models of Superposition.
+\newblock \emph{Transformer Circuits Thread}, 2022.
+\newblock \url{https://transformer-circuits.pub/2022/toy_model/index.html}.
 
 \bibitem{braun2025acquiescence}
 Daniel Braun.

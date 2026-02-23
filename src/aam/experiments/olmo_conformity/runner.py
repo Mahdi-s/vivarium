@@ -77,6 +77,17 @@ def _ensure_dirs(run_dir: str) -> RunPaths:
     )
 
 
+def _find_existing_run_dir(runs_dir: str, run_id: str) -> Optional[str]:
+    """Return path to an existing run directory whose name ends with _<run_id>, or None."""
+    if not run_id or not os.path.isdir(runs_dir):
+        return None
+    suffix = f"_{run_id}"
+    for name in os.listdir(runs_dir):
+        if name.endswith(suffix) and os.path.isdir(os.path.join(runs_dir, name)):
+            return os.path.join(runs_dir, name)
+    return None
+
+
 def _get_wrong_answer(item: JsonDict, condition_type: str) -> str:
     """
     Get the wrong answer for pressure conditions (Asch, authoritative_bias).
@@ -482,10 +493,17 @@ def run_suite(
     effective_runs_dir = runs_dir
     if runs_dir == "./runs" and config_runs_dir:
         effective_runs_dir = config_runs_dir
-    
+
     run_id_final = str(run_id or str(uuid.uuid4()))
-    ts = time.strftime("%Y%m%d_%H%M%S", time.localtime())
-    run_dir = os.path.join(effective_runs_dir, f"{ts}_{run_id_final}")
+    existing_run_dir = _find_existing_run_dir(effective_runs_dir, run_id_final) if run_id else None
+    is_resume = existing_run_dir is not None
+
+    if is_resume:
+        run_dir = existing_run_dir
+        print(f"[Runner] Resuming existing run: run_id={run_id_final}, run_dir={run_dir}")
+    else:
+        ts = time.strftime("%Y%m%d_%H%M%S", time.localtime())
+        run_dir = os.path.join(effective_runs_dir, f"{ts}_{run_id_final}")
     paths = _ensure_dirs(run_dir)
 
     trace_db = TraceDb(TraceDbConfig(db_path=paths.db_path))
@@ -507,31 +525,42 @@ def run_suite(
     except Exception:
         repo_state = {}
 
-    trace_db.insert_run(
-        RunMetadata(
-            run_id=run_id_final,
-            seed=int(cfg.get("run", {}).get("seed", 42)),
-            created_at=time.time(),
-            config={
-                "mode": "olmo_conformity",
-                "suite_config": cfg,
-                "prompt_renderer_version": PROMPT_RENDERER_VERSION,
-                "repo_state": repo_state,
-            },
-        )
+    run_exists = (
+        trace_db.conn.execute("SELECT 1 FROM runs WHERE run_id = ?;", (run_id_final,)).fetchone() is not None
     )
+    if not run_exists:
+        trace_db.insert_run(
+            RunMetadata(
+                run_id=run_id_final,
+                seed=int(cfg.get("run", {}).get("seed", 42)),
+                created_at=time.time(),
+                config={
+                    "mode": "olmo_conformity",
+                    "suite_config": cfg,
+                    "prompt_renderer_version": PROMPT_RENDERER_VERSION,
+                    "repo_state": repo_state,
+                },
+            )
+        )
     prompts_root = os.path.join(repo_root, "experiments", "olmo_conformity", "prompts")
 
     output_parse_cfg = OutputParsingConfig()
 
-    # Register datasets + items
+    # Register datasets + items (on resume: reuse existing dataset/condition IDs, skip existing items)
     dataset_ids: Dict[str, str] = {}
     for ds in cfg.get("datasets", []):
         name = str(ds["name"])
         version = str(ds.get("version", "v0"))
         rel_path = str(ds["path"])
         abs_path = os.path.join(repo_root, rel_path) if not os.path.isabs(rel_path) else rel_path
-        dataset_id = str(uuid.uuid4())
+        if is_resume:
+            row = trace_db.conn.execute(
+                "SELECT dataset_id FROM conformity_datasets WHERE name = ? AND version = ?;",
+                (name, version),
+            ).fetchone()
+            dataset_id = str(row["dataset_id"]) if row else str(uuid.uuid4())
+        else:
+            dataset_id = str(uuid.uuid4())
         dataset_ids[name] = dataset_id
         trace_db.upsert_conformity_dataset(
             dataset_id=dataset_id,
@@ -548,6 +577,13 @@ def run_suite(
             source_data = it.get("source") if isinstance(it.get("source"), dict) else {}
             if it.get("wrong_answer"):
                 source_data["wrong_answer"] = str(it["wrong_answer"])
+            if is_resume:
+                existing = trace_db.conn.execute(
+                    "SELECT 1 FROM conformity_items WHERE item_id = ? AND dataset_id = ?;",
+                    (item_id, dataset_id),
+                ).fetchone()
+                if existing:
+                    continue
             trace_db.insert_conformity_item(
                 item_id=item_id,
                 dataset_id=dataset_id,
@@ -560,11 +596,17 @@ def run_suite(
                 source_json=source_data if source_data else None,
             )
 
-    # Register conditions
+    # Register conditions (on resume: reuse existing condition IDs)
     condition_ids: Dict[str, str] = {}
     for cond in cfg.get("conditions", []):
         cond_id = str(uuid.uuid4())
         name = str(cond.get("name") or cond_id)
+        if is_resume:
+            row = trace_db.conn.execute(
+                "SELECT condition_id FROM conformity_conditions WHERE name = ?;", (name,)
+            ).fetchone()
+            if row:
+                cond_id = str(row["condition_id"])
         condition_ids[name] = cond_id
         trace_db.upsert_conformity_condition(condition_id=cond_id, name=name, params=dict(cond.get("params") or {}))
 

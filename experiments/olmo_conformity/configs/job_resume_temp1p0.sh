@@ -12,8 +12,8 @@
 
 set -euo pipefail
 
-# RESUME run for T=1.0
-# Original run_id: f95d2542-172c-4249-9ca2-b35caed3fa3d
+# RESUME run for T=1.0 (run_v2: runs-hpc-full/run_v2/runs)
+# run_id: f95d2542-172c-4249-9ca2-b35caed3fa3d
 # Models to complete: think, think_sft, think_dpo, rl_zero
 # (instruct_dpo already complete at this temperature)
 
@@ -30,4 +30,5 @@ mkdir -p "${MPLCONFIGDIR}"
 
 python -m aam olmo-conformity \
     --suite-config experiments/olmo_conformity/configs/suite_resume_temp1.0.json \
-    --runs-dir /scratch1/mahdisae/olmo_experiments/runs
+    --runs-dir runs-hpc-full/run_v2/runs \
+    --run-id f95d2542-172c-4249-9ca2-b35caed3fa3d

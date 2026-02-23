@@ -1,0 +1,75 @@
+{
+  "filename": "fig6_endorsement_slope.png",
+  "title": "Wrong-Answer Endorsement: Flip and Opinion Trajectory",
+  "description": "(a) Lollipop: factual wrong-answer flip rate per variant. (b) Slope chart: opinion agreement Control \u2192 Asch \u2192 Authority.",
+  "x_axis": "(a) Flip Rate, (b) Condition",
+  "y_axis": "(a) Variant, (b) Agreement Rate",
+  "data_summary": {
+    "factual_flip": {
+      "Asch": {
+        "Base": "0.3051",
+        "Instruct": "0.1285",
+        "Instruct-SFT": "0.5634",
+        "Think": "0.1107",
+        "Think-SFT": "NA"
+      },
+      "Authority": {
+        "Base": "0.2842",
+        "Instruct": "0.1656",
+        "Instruct-SFT": "0.2296",
+        "Think": "0.0476",
+        "Think-SFT": "NA"
+      }
+    },
+    "opinion_trajectory": {
+      "Base": {
+        "Control": "0.0100",
+        "Asch (Peer)": "0.5017",
+        "Authority": "0.5133"
+      },
+      "Instruct": {
+        "Control": "0.0167",
+        "Asch (Peer)": "0.2517",
+        "Authority": "0.3208"
+      },
+      "Instruct-SFT": {
+        "Control": "0.0067",
+        "Asch (Peer)": "0.7633",
+        "Authority": "0.4708"
+      },
+      "Think": {
+        "Control": "NA",
+        "Asch (Peer)": "NA",
+        "Authority": "NA"
+      },
+      "Think-SFT": {
+        "Control": "NA",
+        "Asch (Peer)": "NA",
+        "Authority": "NA"
+      }
+    }
+  },
+  "key_observations": [],
+  "statistical_notes": [],
+  "variants_included": [
+    "Base",
+    "Instruct",
+    "Instruct-SFT",
+    "Think",
+    "Think-SFT"
+  ],
+  "temperatures": [
+    0.0,
+    0.2,
+    0.4,
+    0.6,
+    0.8,
+    1.0
+  ],
+  "conditions": [
+    "Control",
+    "Asch (Peer)",
+    "Authority"
+  ],
+  "categories": []
+}

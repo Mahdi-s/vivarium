@@ -1,0 +1,125 @@
+{
+  "filename": "fig7_variant_temperature_profiles.png",
+  "title": "Error Rate vs Temperature: Variant Profiles",
+  "description": "Multi-panel line plot (one per variant) showing factual error rate vs temperature under each condition.",
+  "x_axis": "Temperature",
+  "y_axis": "Factual Error Rate",
+  "data_summary": {
+    "Base": {
+      "Control": {
+        "T=0.0": "0.781",
+        "T=0.2": "0.778",
+        "T=0.4": "0.787",
+        "T=0.6": "0.787",
+        "T=0.8": "0.800",
+        "T=1.0": "0.839"
+      },
+      "Asch (Peer)": {
+        "T=0.0": "0.819",
+        "T=0.2": "0.821",
+        "T=0.4": "0.802",
+        "T=0.6": "0.820",
+        "T=0.8": "0.844",
+        "T=1.0": "0.849"
+      },
+      "Authority": {
+        "T=0.0": "0.814",
+        "T=0.2": "0.809",
+        "T=0.4": "0.818",
+        "T=0.6": "0.834",
+        "T=0.8": "0.826",
+        "T=1.0": "0.839"
+      }
+    },
+    "Instruct": {
+      "Control": {
+        "T=0.0": "0.802",
+        "T=0.2": "0.796",
+        "T=0.4": "0.797",
+        "T=0.6": "0.797",
+        "T=0.8": "0.789",
+        "T=1.0": "0.800"
+      },
+      "Asch (Peer)": {
+        "T=0.0": "0.824",
+        "T=0.2": "0.823",
+        "T=0.4": "0.821",
+        "T=0.6": "0.818",
+        "T=0.8": "0.814",
+        "T=1.0": "0.818"
+      },
+      "Authority": {
+        "T=0.0": "0.864",
+        "T=0.2": "0.854",
+        "T=0.4": "0.860",
+        "T=0.6": "0.860",
+        "T=0.8": "0.862",
+        "T=1.0": "0.884"
+      }
+    },
+    "Instruct-SFT": {
+      "Control": {
+        "T=0.0": "0.758",
+        "T=0.2": "0.761",
+        "T=0.4": "0.750",
+        "T=0.6": "0.753",
+        "T=0.8": "0.752",
+        "T=1.0": "0.767"
+      },
+      "Asch (Peer)": {
+        "T=0.0": "0.873",
+        "T=0.2": "0.865",
+        "T=0.4": "0.865",
+        "T=0.6": "0.856",
+        "T=0.8": "0.856",
+        "T=1.0": "0.859"
+      },
+      "Authority": {
+        "T=0.0": "0.819",
+        "T=0.2": "0.814",
+        "T=0.4": "0.816",
+        "T=0.6": "0.807",
+        "T=0.8": "0.804",
+        "T=1.0": "0.820"
+      }
+    },
+    "Think": {
+      "Control": {
+        "T=0.8": "0.916",
+        "T=1.0": "0.776"
+      },
+      "Asch (Peer)": {
+        "T=0.8": "0.929",
+        "T=1.0": "0.767"
+      },
+      "Authority": {
+        "T=0.8": "0.942",
+        "T=1.0": "0.783"
+      }
+    },
+    "Think-SFT": {}
+  },
+  "key_observations": [],
+  "statistical_notes": [],
+  "variants_included": [
+    "Base",
+    "Instruct",
+    "Instruct-SFT",
+    "Think",
+    "Think-SFT"
+  ],
+  "temperatures": [
+    0.0,
+    0.2,
+    0.4,
+    0.6,
+    0.8,
+    1.0
+  ],
+  "conditions": [
+    "Control",
+    "Asch (Peer)",
+    "Authority"
+  ],
+  "categories": []
+}

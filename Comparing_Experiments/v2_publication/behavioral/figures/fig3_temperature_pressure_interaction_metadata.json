@@ -1,0 +1,93 @@
+{
+  "filename": "fig3_temperature_pressure_interaction.png",
+  "title": "Temperature \u00d7 Social Pressure Interaction",
+  "description": "Two-panel line plot: pressure delta vs temperature for each variant. Left: Asch. Right: Authority.",
+  "x_axis": "Sampling Temperature",
+  "y_axis": "\u0394 Error Rate",
+  "data_summary": {
+    "asch": {
+      "Base": {
+        "T=0.0": "+0.0381",
+        "T=0.2": "+0.0431",
+        "T=0.4": "+0.0156",
+        "T=0.6": "+0.0325",
+        "T=0.8": "+0.0437",
+        "T=1.0": "+0.0100"
+      },
+      "Instruct": {
+        "T=0.0": "+0.0219",
+        "T=0.2": "+0.0275",
+        "T=0.4": "+0.0231",
+        "T=0.6": "+0.0206",
+        "T=0.8": "+0.0250",
+        "T=1.0": "+0.0175"
+      },
+      "Instruct-SFT": {
+        "T=0.0": "+0.1150",
+        "T=0.2": "+0.1038",
+        "T=0.4": "+0.1150",
+        "T=0.6": "+0.1025",
+        "T=0.8": "+0.1031",
+        "T=1.0": "+0.0919"
+      },
+      "Think": {
+        "T=0.8": "+0.0129",
+        "T=1.0": "-0.0086"
+      },
+      "Think-SFT": {}
+    },
+    "authority": {
+      "Base": {
+        "T=0.0": "+0.0325",
+        "T=0.2": "+0.0306",
+        "T=0.4": "+0.0312",
+        "T=0.6": "+0.0469",
+        "T=0.8": "+0.0256",
+        "T=1.0": "+0.0000"
+      },
+      "Instruct": {
+        "T=0.0": "+0.0625",
+        "T=0.2": "+0.0587",
+        "T=0.4": "+0.0625",
+        "T=0.6": "+0.0631",
+        "T=0.8": "+0.0725",
+        "T=1.0": "+0.0837"
+      },
+      "Instruct-SFT": {
+        "T=0.0": "+0.0606",
+        "T=0.2": "+0.0525",
+        "T=0.4": "+0.0663",
+        "T=0.6": "+0.0544",
+        "T=0.8": "+0.0513",
+        "T=1.0": "+0.0531"
+      },
+      "Think": {
+        "T=0.8": "+0.0254",
+        "T=1.0": "+0.0067"
+      },
+      "Think-SFT": {}
+    }
+  },
+  "key_observations": [],
+  "statistical_notes": [],
+  "variants_included": [
+    "Base",
+    "Instruct",
+    "Instruct-SFT",
+    "Think",
+    "Think-SFT"
+  ],
+  "temperatures": [
+    0.0,
+    0.2,
+    0.4,
+    0.6,
+    0.8,
+    1.0
+  ],
+  "conditions": [
+    "Asch (Peer)",
+    "Authority"
+  ],
+  "categories": []
+}

@@ -1,0 +1,72 @@
+{
+  "filename": "fig1_error_rate_dot_plot.png",
+  "title": "Factual Error Rate by Training Stage and Condition",
+  "description": "Cleveland dot plot showing factual error rates pooled across all 6 temperatures. Each row is a model variant. Circle = Control, Square = Asch (peer), Diamond = Authority. Connecting lines show the shift from Control.",
+  "x_axis": "Factual Error Rate",
+  "y_axis": "Model Training Stage",
+  "data_summary": {
+    "Base": {
+      "Control": "0.7954",
+      "Asch (Peer)": "0.8259",
+      "Authority": "0.8232",
+      "delta_asch": "+0.0305",
+      "delta_authority": "+0.0278"
+    },
+    "Instruct": {
+      "Control": "0.7969",
+      "Asch (Peer)": "0.8195",
+      "Authority": "0.8641",
+      "delta_asch": "+0.0226",
+      "delta_authority": "+0.0672"
+    },
+    "Instruct-SFT": {
+      "Control": "0.7570",
+      "Asch (Peer)": "0.8622",
+      "Authority": "0.8133",
+      "delta_asch": "+0.1052",
+      "delta_authority": "+0.0564"
+    },
+    "Think": {
+      "Control": "0.8561",
+      "Asch (Peer)": "0.8598",
+      "Authority": "0.8736",
+      "delta_asch": "+0.0037",
+      "delta_authority": "+0.0175"
+    },
+    "Think-SFT": {
+      "Control": "nan",
+      "Asch (Peer)": "nan",
+      "Authority": "nan",
+      "delta_asch": "+nan",
+      "delta_authority": "+nan"
+    }
+  },
+  "key_observations": [
+    "Base: susceptible to Asch (+3.0%)",
+    "Instruct: susceptible to Authority (+6.7%)",
+    "Instruct-SFT: susceptible to Asch (+10.5%)",
+    "Instruct-SFT: susceptible to Authority (+5.6%)"
+  ],
+  "statistical_notes": [],
+  "variants_included": [
+    "Base",
+    "Instruct",
+    "Instruct-SFT",
+    "Think",
+    "Think-SFT"
+  ],
+  "temperatures": [
+    0.0,
+    0.2,
+    0.4,
+    0.6,
+    0.8,
+    1.0
+  ],
+  "conditions": [
+    "Control",
+    "Asch (Peer)",
+    "Authority"
+  ],
+  "categories": []
+}

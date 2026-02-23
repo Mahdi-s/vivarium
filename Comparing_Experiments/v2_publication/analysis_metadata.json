@@ -1,0 +1,71 @@
+{
+  "created_at": "2026-02-22T13:15:37.519672",
+  "version": 3,
+  "description": "Publication-quality analysis v3: behavioral + interpretability",
+  "runs_dir": "runs-hpc-full/run_v2/runs",
+  "probe_runs_dir": "runs-hpc-full/run_v2/runs",
+  "metadata_source": "auto-discovered",
+  "output_name": "v2_publication",
+  "temperatures": [
+    0.0,
+    0.2,
+    0.4,
+    0.6,
+    0.8,
+    1.0
+  ],
+  "variants": [
+    "base",
+    "instruct",
+    "instruct_sft",
+    "think",
+    "think_sft",
+    "rl_zero"
+  ],
+  "variants_excl_rlzero": [
+    "base",
+    "instruct",
+    "instruct_sft",
+    "think",
+    "think_sft"
+  ],
+  "conditions": [
+    "control",
+    "asch_history_5",
+    "authoritative_bias"
+  ],
+  "factual_categories": [
+    "general",
+    "knowledge",
+    "math",
+    "reasoning",
+    "science",
+    "truthfulness"
+  ],
+  "output_structure": {
+    "behavioral/figures/": "fig1 \u2013 fig12 (behavioral analysis)",
+    "behavioral/tables/": "CSV tables for behavioral metrics",
+    "interpretability/figures/": "Tug-of-war and probe projection figures",
+    "interpretability/tables/": "CSV tables for probe metrics"
+  },
+  "figures": {
+    "behavioral": [
+      "fig1_error_rate_dot_plot.png           \u2014 Cleveland dot plot",
+      "fig2_pressure_lollipop.png             \u2014 Diverging lollipop (\u0394 error)",
+      "fig3_temperature_pressure_interaction.png \u2014 Pressure \u03b4 vs temperature",
+      "fig4_topic_analysis.png                \u2014 Topic heatmap + strip dots",
+      "fig5_truth_override_rescue_dumbbell.png\u2014 Dumbbell: override vs rescue",
+      "fig6_endorsement_slope.png             \u2014 Flip + opinion slope chart",
+      "fig7_variant_temperature_profiles.png  \u2014 Per-variant temperature lines",
+      "fig8_authority_vs_asch_scatter.png     \u2014 Authority vs Asch scatter",
+      "fig9_topic_pressure_heatmap.png        \u2014 Topic \u00d7 variant heatmap",
+      "fig10_rl_zero_comparison.png           \u2014 RL-Zero vs others",
+      "fig11_temperature_trajectory.png       \u2014 NEW: temperature trajectory (Think vs Instruct)",
+      "fig12_sankey_conformity.png            \u2014 NEW: Sankey conformity flow"
+    ],
+    "interpretability": [
+      "fig_tug_of_war_{variant}.png           \u2014 NEW: Truth vs Social per layer, per temp",
+      "fig_tug_of_war_pooled.png              \u2014 NEW: Pooled tug-of-war with \u00b11 std"
+    ]
+  }
+}
