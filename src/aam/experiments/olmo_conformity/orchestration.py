@@ -124,6 +124,7 @@ def run_full_experiment(config: ExperimentConfig) -> Dict[str, Any]:
     trace_db = TraceDb(TraceDbConfig(db_path=paths.db_path))
     trace_db.connect()
     trace_db.init_schema()
+    trace_db.init_conformity_schema()
     
     trial_count = trace_db.conn.execute(
         "SELECT COUNT(*) FROM conformity_trials WHERE run_id = ?;",

@@ -6,8 +6,10 @@ environment variables with fallbacks to sensible defaults.
 
 Environment Variables:
     AAM_MODEL_DIR: Directory for storing large model weights (GGUF, Safetensors)
+    AAM_MODELS_DIR: Alias for AAM_MODEL_DIR (back-compat)
     AAM_LLAMA_CPP_ROOT: Path to llama.cpp repository
     AAM_ARTIFACTS_DIR: Root directory for simulation outputs (.db, activations)
+    AAM_RUNS_DIR: Alias for AAM_ARTIFACTS_DIR (back-compat)
     AAM_HF_CACHE: HuggingFace downloader cache location
 
 Usage:
@@ -62,7 +64,7 @@ class AAMSettings:
     @property
     def MODEL_DIR(self) -> Path:
         """Directory for model weights. Override with AAM_MODEL_DIR env var."""
-        env_val = os.environ.get("AAM_MODEL_DIR")
+        env_val = os.environ.get("AAM_MODEL_DIR") or os.environ.get("AAM_MODELS_DIR")
         if env_val:
             return Path(env_val)
         return self.PROJECT_ROOT / "models"
@@ -94,7 +96,7 @@ class AAMSettings:
     @property
     def ARTIFACTS_DIR(self) -> Path:
         """Root directory for run artifacts. Override with AAM_ARTIFACTS_DIR env var."""
-        env_val = os.environ.get("AAM_ARTIFACTS_DIR")
+        env_val = os.environ.get("AAM_ARTIFACTS_DIR") or os.environ.get("AAM_RUNS_DIR")
         if env_val:
             return Path(env_val)
         return self.PROJECT_ROOT / "runs"
@@ -190,4 +192,3 @@ class AAMSettings:
 
 # Singleton instance - import this in other modules
 settings = AAMSettings()
-

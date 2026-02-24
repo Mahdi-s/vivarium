@@ -43,6 +43,12 @@ class TraceDb:
         return self._conn
 
     def init_schema(self) -> None:
+        """
+        Initialize the core Vivarium schema.
+
+        This MUST remain experiment-agnostic. Experiment-specific tables should be
+        created by separate init_*_schema() methods (e.g. init_conformity_schema()).
+        """
         self.conn.execute(
             """
             CREATE TABLE IF NOT EXISTS runs (
@@ -139,9 +145,13 @@ class TraceDb:
         )
         self.conn.execute("CREATE INDEX IF NOT EXISTS idx_merkle_run_step_agent ON merkle_log(run_id, time_step, agent_id);")
 
-        # -----------------------------
-        # Olmo Conformity Experiments
-        # -----------------------------
+    def init_conformity_schema(self) -> None:
+        """
+        Initialize the Olmo conformity experiment schema (conformity_* tables).
+
+        This is intentionally separated from init_schema() so the simulation kernel
+        can run without coupling to any particular experiment.
+        """
         # Shared datasets (immutable facts, social conventions, probe training sets)
         self.conn.execute(
             """
@@ -372,12 +382,6 @@ class TraceDb:
         )
 
         # Answer-level logprob probes (posthoc): compare probability of correct vs conforming answers.
-        #
-        # One row per (trial_id, context_kind, candidate_kind):
-        # - context_kind enables multiple evaluation contexts (e.g., assistant_start vs observed_think_prefix)
-        # - candidate_kind enables multiple candidates (e.g., ground_truth vs wrong_answer vs alternate_answer)
-        #
-        # candidate_text is stored for traceability; metadata_json stores tokenization + prefix hashing.
         self.conn.execute(
             """
             CREATE TABLE IF NOT EXISTS conformity_answer_logprobs (

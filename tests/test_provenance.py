@@ -7,6 +7,7 @@ import time
 import unittest
 from pathlib import Path
 from unittest.mock import patch
+import subprocess
 
 
 # Ensure local imports work when running `python -m unittest` from repo root.
@@ -17,6 +18,22 @@ if SRC_ROOT not in sys.path:
 
 
 class ProvenanceTests(unittest.TestCase):
+    def _torch_import_works(self) -> bool:
+        """
+        Torch can hard-abort the interpreter in some broken environments (SIGABRT),
+        which is not catchable in-process. Probe it in a subprocess first.
+        """
+        try:
+            r = subprocess.run(
+                [sys.executable, "-c", "import torch; print(torch.__version__)"],
+                capture_output=True,
+                text=True,
+                timeout=20,
+            )
+            return r.returncode == 0
+        except Exception:
+            return False
+
     def test_merkle_logger_deterministic(self) -> None:
         from aam.provenance import MerkleLogger
 
@@ -40,6 +57,9 @@ class ProvenanceTests(unittest.TestCase):
         self.assertEqual(root2b, root2)
 
     def test_capture_context_flush_writes_metadata_and_merkle(self) -> None:
+        if not self._torch_import_works():
+            self.skipTest("torch import fails/aborts in this environment")
+
         import torch
         from safetensors import safe_open
 
@@ -112,4 +132,3 @@ class ProvenanceTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

@@ -473,7 +473,8 @@ SECTION 4: PERSISTENCE MECHANISMS
 1. TraceDb Class (src/aam/persistence.py):
    - SQLite database wrapper for trace events and metadata
    - Methods:
-     * init_schema(): Creates all tables and indexes
+     * init_schema(): Creates core (experiment-agnostic) tables and indexes
+     * init_conformity_schema(): Creates Olmo conformity (conformity_*) tables and indexes
      * insert_run(meta): Inserts run metadata
      * append_trace(event): Appends trace event
      * insert_message(...): Inserts message

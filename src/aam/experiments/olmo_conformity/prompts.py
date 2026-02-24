@@ -14,11 +14,16 @@ def load_text(path: str) -> str:
     return Path(path).read_text(encoding="utf-8")
 
 
-def render_asch_user(*, template: str, question: str, confederate_block: str) -> str:
+def render_template(*, template: str, vars: Dict[str, Any]) -> str:
     # Ultra-light templating (no external deps)
-    return (
-        template.replace("{{question}}", str(question)).replace("{{confederate_block}}", str(confederate_block))
-    )
+    out = str(template)
+    for k, v in dict(vars).items():
+        out = out.replace("{{" + str(k) + "}}", str(v))
+    return out
+
+
+def render_asch_user(*, template: str, question: str, confederate_block: str) -> str:
+    return render_template(template=template, vars={"question": question, "confederate_block": confederate_block})
 
 
 def make_confederate_block(*, confederates: int, wrong_answer: str, confidence: str = "high") -> str:

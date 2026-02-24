@@ -579,6 +579,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     trace_db = TraceDb(TraceDbConfig(db_path=str(resolved.db_path)))
     trace_db.connect()
     trace_db.init_schema()
+    trace_db.init_conformity_schema()
 
     # 0) Ensure trial_steps exist
     trial_steps_inserted = _ensure_trial_steps(trace_db=trace_db, run_id=resolved.run_id)

@@ -13,6 +13,7 @@ from importlib import metadata as importlib_metadata
 from pathlib import Path
 from shutil import copy2
 from subprocess import DEVNULL, CalledProcessError, check_output
+from typing import Any
 
 from aam.agent_langgraph import default_cognitive_policy
 from aam.channel import InMemoryChannel
@@ -20,23 +21,12 @@ from aam.export import export_messages_to_parquet, export_trace_to_parquet
 from aam.experiment_config import load_experiment_config
 from aam.interpretability import CaptureConfig, CaptureContext
 from aam.llama_cpp import LlamaServerConfig, run_llama_server
-from aam.llm_gateway import LiteLLMGateway, MockLLMGateway, RateLimitConfig, TransformerLensGateway
 from aam.model_discovery import discover_all_models, export_models
 from aam.persistence import TraceDb, TraceDbConfig
 from aam.policy import RandomAgentPolicy, stable_agent_seed
 from aam.scheduler import BarrierScheduler, BarrierSchedulerConfig
 from aam.types import RunMetadata
 from aam.world_engine import WorldEngine, WorldEngineConfig
-from aam.experiments.olmo_conformity.runner import run_suite as run_olmo_conformity_suite
-from aam.experiments.olmo_conformity.probes import (
-    ProbeCaptureSpec,
-    capture_probe_dataset_to_db,
-    train_probe_from_captured_activations,
-    compute_and_store_probe_projections_for_trials,
-)
-from aam.experiments.olmo_conformity.analysis import generate_core_figures
-from aam.experiments.olmo_conformity.logit_lens import compute_logit_lens_topk_for_trial, parse_and_store_think_tokens
-from aam.experiments.olmo_conformity.intervention import run_intervention_sweep
 
 
 def _validate_db(*, db_path: str, run_id: str, steps: int, num_agents: int) -> None:
@@ -67,6 +57,15 @@ def _validate_db(*, db_path: str, run_id: str, steps: int, num_agents: int) -> N
         conn.close()
 
 
+def _import_llm_gateways() -> tuple[Any, Any, Any, Any]:
+    """
+    Lazy import LLM gateways to avoid importing optional heavy deps at CLI import time.
+    """
+    from aam.llm_gateway import LiteLLMGateway, MockLLMGateway, RateLimitConfig, TransformerLensGateway
+
+    return LiteLLMGateway, MockLLMGateway, RateLimitConfig, TransformerLensGateway
+
+
 def main(argv: list[str] | None = None) -> int:
     # Load .env file if python-dotenv is available
     # This allows users to configure environment variables (AAM_MODEL_DIR, etc.)
@@ -89,6 +88,7 @@ def main(argv: list[str] | None = None) -> int:
     p1.add_argument("--run-id", type=str, default=None)
     p1.add_argument("--no-validate", action="store_true")
     p1.add_argument("--nondeterministic-timestamps", action="store_true")
+    p1.add_argument("--deterministic-ids", action="store_true", help="Use deterministic IDs for trace/message rows")
 
     # Phase 2: cognitive agents + basic tools via LiteLLM (or mock)
     p2 = sub.add_parser("phase2", help="Phase 2 cognitive simulation (LangGraph + LiteLLM)")
@@ -103,6 +103,7 @@ def main(argv: list[str] | None = None) -> int:
     p2.add_argument("--api-key", type=str, default=None, help="API key for the provider (optional for local servers)")
     p2.add_argument("--no-validate", action="store_true")
     p2.add_argument("--nondeterministic-timestamps", action="store_true")
+    p2.add_argument("--deterministic-ids", action="store_true", help="Use deterministic IDs for trace/message rows")
     p2.add_argument("--message-history", type=int, default=20)
     p2.add_argument("--temperature", type=float, default=0.2, help="Sampling temperature (0=greedy)")
     p2.add_argument("--top-k", "--top-n", dest="top_k", type=int, default=None, help="Top-k sampling cutoff (aka top_n)")
@@ -128,6 +129,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     p3.add_argument("--no-validate", action="store_true")
     p3.add_argument("--nondeterministic-timestamps", action="store_true")
+    p3.add_argument("--deterministic-ids", action="store_true", help="Use deterministic IDs for trace/message rows")
     p3.add_argument("--message-history", type=int, default=20)
     p3.add_argument("--list-hooks", action="store_true", help="Print available TransformerLens hook names and exit")
     p3.add_argument("--hooks-head", type=int, default=200, help="When listing hooks, print first N hook names")
@@ -532,6 +534,8 @@ def main(argv: list[str] | None = None) -> int:
         )
         trace_db.insert_run(meta)
 
+        LiteLLMGateway, MockLLMGateway, RateLimitConfig, TransformerLensGateway = _import_llm_gateways()
+
         # Build async-capable agent policies.
         agents = {}
         for i in range(int(cfg.run.agents)):
@@ -588,6 +592,7 @@ def main(argv: list[str] | None = None) -> int:
             config=WorldEngineConfig(
                 run_id=run_id,
                 deterministic_timestamps=bool(cfg.run.deterministic_timestamps),
+                deterministic_ids=bool(cfg.run.deterministic_ids),
                 message_history_limit=(int(cfg.policy.message_history) if cfg.policy.kind != "random" else 0),
             ),
             agents={},  # unused by scheduler path; kept for backwards compatibility
@@ -633,6 +638,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if mode == "olmo-conformity":
+        from aam.experiments.olmo_conformity.runner import run_suite as run_olmo_conformity_suite
+
         capture_layers = None
         capture_components = None
         if args.capture_activations:
@@ -664,9 +671,17 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if mode == "olmo-conformity-probe":
+        from aam.experiments.olmo_conformity.probes import (
+            ProbeCaptureSpec,
+            capture_probe_dataset_to_db,
+            compute_and_store_probe_projections_for_trials,
+            train_probe_from_captured_activations,
+        )
+
         trace_db = TraceDb(TraceDbConfig(db_path=str(args.db)))
         trace_db.connect()
         trace_db.init_schema()
+        trace_db.init_conformity_schema()
 
         layers = [int(x) for x in str(args.layers).split(",") if str(x).strip() != ""]
         cap = ProbeCaptureSpec(
@@ -724,9 +739,12 @@ def main(argv: list[str] | None = None) -> int:
 
     # Render plots/tables from conformity_* tables for a run
     if mode == "olmo-conformity-report":
+        from aam.experiments.olmo_conformity.analysis import generate_core_figures
+
         trace_db = TraceDb(TraceDbConfig(db_path=str(args.db)))
         trace_db.connect()
         trace_db.init_schema()
+        trace_db.init_conformity_schema()
         out = generate_core_figures(trace_db=trace_db, run_id=str(args.run_id), run_dir=str(args.run_dir))
         trace_db.close()
         for k, v in out.items():
@@ -745,6 +763,7 @@ def main(argv: list[str] | None = None) -> int:
         trace_db = TraceDb(TraceDbConfig(db_path=str(args.db)))
         trace_db.connect()
         trace_db.init_schema()
+        trace_db.init_conformity_schema()
 
         # First prompt + first output per trial (stable; avoids accidentally judging later intervention outputs).
         where = "t.run_id = ?"
@@ -913,6 +932,7 @@ def main(argv: list[str] | None = None) -> int:
         trace_db = TraceDb(TraceDbConfig(db_path=str(args.db)))
         trace_db.connect()
         trace_db.init_schema()
+        trace_db.init_conformity_schema()
         layers = [int(x) for x in str(args.layers).split(",") if str(x).strip() != ""]
         if str(args.trial_scope) == "behavioral-only":
             trials = trace_db.conn.execute(
@@ -987,6 +1007,7 @@ def main(argv: list[str] | None = None) -> int:
         trace_db = TraceDb(TraceDbConfig(db_path=str(db_path)))
         trace_db.connect()
         trace_db.init_schema()
+        trace_db.init_conformity_schema()
 
         # Resolve model_id if not provided.
         model_id = str(args.model_id) if args.model_id else None
@@ -1106,6 +1127,8 @@ def main(argv: list[str] | None = None) -> int:
         # Interventions
         intervention_inserted = 0
         if not bool(args.no_interventions):
+            from aam.experiments.olmo_conformity.intervention import run_intervention_sweep
+
             # Find latest social probe for this run.
             sp = trace_db.conn.execute(
                 """
@@ -1149,6 +1172,8 @@ def main(argv: list[str] | None = None) -> int:
 
         # Reporting refresh
         if not bool(args.no_report):
+            from aam.experiments.olmo_conformity.analysis import generate_core_figures
+
             try:
                 _ = generate_core_figures(trace_db=trace_db, run_id=run_id, run_dir=run_dir)
             except Exception as e:
@@ -1172,9 +1197,12 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if mode == "olmo-conformity-intervene":
+        from aam.experiments.olmo_conformity.intervention import run_intervention_sweep
+
         trace_db = TraceDb(TraceDbConfig(db_path=str(args.db)))
         trace_db.connect()
         trace_db.init_schema()
+        trace_db.init_conformity_schema()
         layers = [int(x) for x in str(args.layers).split(",") if str(x).strip() != ""]
         alphas = [float(x) for x in str(args.alpha).split(",") if str(x).strip() != ""]
         inserted = run_intervention_sweep(
@@ -1198,6 +1226,7 @@ def main(argv: list[str] | None = None) -> int:
         trace_db = TraceDb(TraceDbConfig(db_path=str(args.db)))
         trace_db.connect()
         trace_db.init_schema()
+        trace_db.init_conformity_schema()
         
         layers = [int(x) for x in str(args.layers).split(",") if str(x).strip() != ""]
         
@@ -1233,6 +1262,7 @@ def main(argv: list[str] | None = None) -> int:
         trace_db = TraceDb(TraceDbConfig(db_path=str(args.db)))
         trace_db.connect()
         trace_db.init_schema()
+        trace_db.init_conformity_schema()
 
         run_dir = str(args.run_dir) if args.run_dir else os.path.dirname(str(args.db))
         layers = [int(x) for x in str(args.layers).split(",") if str(x).strip() != ""]
@@ -1326,6 +1356,7 @@ def main(argv: list[str] | None = None) -> int:
         "steps": args.steps,
         "agents": args.agents,
         "deterministic_timestamps": (not args.nondeterministic_timestamps),
+        "deterministic_ids": bool(getattr(args, "deterministic_ids", False)),
     }
     if mode == "phase2":
         config.update(
@@ -1373,6 +1404,10 @@ def main(argv: list[str] | None = None) -> int:
             output_dir=str(activations_dir), config=cap_cfg, dtype=str(args.dtype), trace_db=trace_db
         )
 
+    LiteLLMGateway = MockLLMGateway = RateLimitConfig = TransformerLensGateway = None
+    if mode in ("phase2", "phase3"):
+        LiteLLMGateway, MockLLMGateway, RateLimitConfig, TransformerLensGateway = _import_llm_gateways()
+
     agents = {}
     for i in range(args.agents):
         agent_id = f"agent_{i:03d}"
@@ -1418,6 +1453,7 @@ def main(argv: list[str] | None = None) -> int:
         config=WorldEngineConfig(
             run_id=run_id,
             deterministic_timestamps=(not args.nondeterministic_timestamps),
+            deterministic_ids=bool(getattr(args, "deterministic_ids", False)),
             message_history_limit=(args.message_history if mode in ("phase2", "phase3") else 0),
         ),
         agents=agents,

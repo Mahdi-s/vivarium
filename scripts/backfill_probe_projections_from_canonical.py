@@ -474,6 +474,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         trace_db = TraceDb(TraceDbConfig(db_path=str(db_path)))
         trace_db.connect()
         trace_db.init_schema()
+        trace_db.init_conformity_schema()
 
         # Insert datasets used as provenance for imported probes
         truth_dataset_id = str(uuid.uuid4())

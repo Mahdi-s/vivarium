@@ -23,6 +23,7 @@ if TYPE_CHECKING:  # pragma: no cover
 class WorldEngineConfig:
     run_id: str
     deterministic_timestamps: bool = True
+    deterministic_ids: bool = False
     message_history_limit: int = 20
 
 
@@ -45,6 +46,7 @@ class WorldEngine:
         self._capture = capture_context
         self._memory = memory_manager
         self._domain_state = domain_state
+        self._state_hash = hashlib.sha256(f"vivarium|run_id={self._config.run_id}".encode("utf-8")).hexdigest()
 
     @property
     def agent_ids(self) -> List[str]:
@@ -76,37 +78,27 @@ class WorldEngine:
         # Deterministic logical timestamp: stable across reruns.
         return float(time_step) + (agent_index / 1000.0)
 
-    def _compute_state_hash(self, *, time_step: int) -> str:
-        """
-        Compute Merkle root / hash of environment state for integrity checking.
-        
-        Includes:
-        - All messages up to time_step
-        - All trace events up to time_step
-        """
-        # Collect state components
-        messages = self._trace_db.fetch_recent_messages(
-            run_id=self._config.run_id, up_to_time_step=time_step, limit=10000
-        )
-        
-        trace_events = self._trace_db.fetch_trace_events(
-            run_id=self._config.run_id, from_time_step=0, to_time_step=time_step
-        )
-        
-        # Create deterministic JSON representation
-        state_data = {
-            "time_step": time_step,
-            "messages": sorted(messages, key=lambda m: (m.get("time_step", 0), m.get("created_at", 0))),
-            "trace_count": len(trace_events),
-            "trace_ids": sorted([e.trace_id for e in trace_events]),
-        }
-        
-        # Compute SHA256 hash
-        state_json = json.dumps(state_data, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
-        return hashlib.sha256(state_json.encode("utf-8")).hexdigest()
+    def _stable_json(self, obj: object) -> str:
+        return json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
-    def execute(self, req: ActionRequest, *, timestamp: float) -> Tuple[ActionResult, TraceEvent]:
-        trace_id = str(uuid.uuid4())
+    def _det_uuid(self, name: str) -> str:
+        return str(uuid.uuid5(uuid.NAMESPACE_URL, str(name)))
+
+    def _step_state_hash(self, *, time_step: int, events: List[TraceEvent]) -> str:
+        """
+        Incremental integrity hash of committed environment state.
+
+        This is intentionally O(new_events) rather than re-reading all prior rows.
+        """
+        payload = {
+            "time_step": int(time_step),
+            "events": [e.json_dict() for e in events],
+        }
+        material = f"{self._state_hash}\n{self._stable_json(payload)}".encode("utf-8")
+        return hashlib.sha256(material).hexdigest()
+
+    def execute(self, req: ActionRequest, *, timestamp: float, trace_id: Optional[str] = None) -> Tuple[ActionResult, TraceEvent]:
+        trace_id = str(trace_id or uuid.uuid4())
         if req.action_name == "noop":
             outcome = {"ok": True}
             res = ActionResult(success=True, data=outcome, error=None, trace_id=trace_id)
@@ -123,7 +115,10 @@ class WorldEngine:
                     trace_id=trace_id,
                 )
             else:
-                message_id = str(uuid.uuid4())
+                if self._config.deterministic_ids:
+                    message_id = self._det_uuid(f"{trace_id}|message")
+                else:
+                    message_id = str(uuid.uuid4())
                 self._trace_db.insert_message(
                     message_id=message_id,
                     run_id=req.run_id,
@@ -201,7 +196,12 @@ class WorldEngine:
         events = []
         for idx, req in enumerate(reqs):
             ts = self._now(time_step=time_step, agent_index=idx)
-            _, event = self.execute(req, timestamp=ts)
+            trace_id = None
+            if self._config.deterministic_ids:
+                trace_id = self._det_uuid(
+                    f"{self._config.run_id}|{int(time_step)}|{int(idx)}|{req.agent_id}|{req.action_name}"
+                )
+            _, event = self.execute(req, timestamp=ts, trace_id=trace_id)
             events.append(event)
             
             # Store action in memory if available (FR-05)
@@ -213,8 +213,9 @@ class WorldEngine:
                     arguments=req.arguments,
                 )
 
-        # Compute state hash after all actions are committed
-        state_hash = self._compute_state_hash(time_step=time_step)
+        # Compute incremental state hash after all actions are committed
+        state_hash = self._step_state_hash(time_step=time_step, events=events)
+        self._state_hash = state_hash
         
         # Update events with state hash and append to trace
         for event in events:
@@ -254,5 +255,4 @@ class WorldEngine:
             raise ValueError("steps must be >= 0")
         for t in range(steps):
             self.step(time_step=t)
-
 

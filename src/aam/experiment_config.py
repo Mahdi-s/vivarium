@@ -15,6 +15,7 @@ class ExperimentRunSection(BaseModel):
     seed: int = 42
     run_id: Optional[str] = None
     deterministic_timestamps: bool = True
+    deterministic_ids: bool = False
     runs_dir: str = "./runs"
 
 

@@ -9,39 +9,41 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Protocol, Tuple, TYPE_CHECKING
 
-# Mock torch.library.register_fake if missing (to fix torchvision/torch mismatch)
-try:
-    import torch
-    if hasattr(torch, "library") and not hasattr(torch.library, "register_fake"):
-        def _register_fake(name):
-            def decorator(fn): return fn
-            return decorator
-        torch.library.register_fake = _register_fake
-except ImportError:
-    pass
-
-# Mock warn_once in torch._dynamo.utils if missing (to fix torchao/torch mismatch)
-try:
-    import torch._dynamo.utils as _du
-    if not hasattr(_du, "warn_once"):
-        def _warn_once(msg): pass
-        _du.warn_once = _warn_once
-except (ImportError, AttributeError):
-    pass
-
 from aam.tools import ToolSpec
-
-# For HuggingFaceTransformersGateway
-try:
-    import torch  # noqa: F401
-except ImportError:
-    pass  # Will raise error when gateway is used
-
 
 JsonDict = Dict[str, Any]
 
 if TYPE_CHECKING:  # pragma: no cover
     from aam.interpretability import CaptureContext
+
+
+def _apply_torch_compat_patches(*, torch: Any) -> None:
+    """
+    Apply small compatibility shims for known PyTorch ecosystem mismatches.
+
+    IMPORTANT: This must only be called AFTER torch is imported by a concrete gateway.
+    """
+    # Fix torchvision/torch mismatches that expect torch.library.register_fake
+    try:
+        if hasattr(torch, "library") and not hasattr(torch.library, "register_fake"):
+            def _register_fake(name):  # type: ignore[no-untyped-def]
+                def decorator(fn):  # type: ignore[no-untyped-def]
+                    return fn
+                return decorator
+            torch.library.register_fake = _register_fake  # type: ignore[attr-defined]
+    except Exception:
+        pass
+
+    # Fix torchao/torch mismatches that expect torch._dynamo.utils.warn_once
+    try:
+        import torch._dynamo.utils as _du  # type: ignore
+
+        if not hasattr(_du, "warn_once"):
+            def _warn_once(msg):  # type: ignore[no-untyped-def]
+                return None
+            _du.warn_once = _warn_once  # type: ignore[attr-defined]
+    except Exception:
+        pass
 
 
 @dataclass
@@ -716,6 +718,8 @@ class TransformerLensGateway:
             try:
                 import torch  # type: ignore
 
+                _apply_torch_compat_patches(torch=torch)
+
                 if getattr(torch.cuda, "is_available", lambda: False)():
                     self.device = "cuda"
                 elif getattr(getattr(torch.backends, "mps", None), "is_available", lambda: False)():
@@ -973,6 +977,8 @@ class HuggingFaceHookedGateway:
             raise RuntimeError(
                 "HF gateway requires `transformers` + `torch` installed."
             ) from e
+
+        _apply_torch_compat_patches(torch=torch)
 
         # Choose best device if not explicitly provided.
         if not self.device:
@@ -1295,25 +1301,29 @@ class HuggingFaceHookedGateway:
             pass
         print(f"      [HF Gateway] Tokenization complete, input shape: {inputs['input_ids'].shape}")
 
+        import torch  # type: ignore
+        from transformers import GenerationConfig  # type: ignore
+
         do_sample = float(temperature) > 0.0
-        gen_kwargs: Dict[str, Any] = {
-            "max_new_tokens": int(self.max_new_tokens),
-            "do_sample": do_sample,
-            "pad_token_id": getattr(self._tokenizer, "eos_token_id", None),
-        }
+        pad_token_id = getattr(self._tokenizer, "eos_token_id", None)
+        # Build an explicit GenerationConfig so temperature/top_p are applied and Transformers
+        # does not warn "The following generation flags are not valid and may be ignored".
+        generation_config = GenerationConfig(
+            max_new_tokens=int(self.max_new_tokens),
+            do_sample=do_sample,
+            pad_token_id=pad_token_id,
+        )
         if do_sample:
-            gen_kwargs["temperature"] = float(temperature)
+            generation_config.temperature = float(temperature)
             if top_k is not None and int(top_k) > 0:
-                gen_kwargs["top_k"] = int(top_k)
+                generation_config.top_k = int(top_k)
             if top_p is not None:
                 try:
                     top_p_f = float(top_p)
                     if 0.0 < top_p_f <= 1.0:
-                        gen_kwargs["top_p"] = top_p_f
+                        generation_config.top_p = top_p_f
                 except Exception:
                     pass
-
-        import torch  # type: ignore
 
         # Set seed for reproducibility if provided
         if seed is not None:
@@ -1323,7 +1333,10 @@ class HuggingFaceHookedGateway:
 
         print(f"      [HF Gateway] Starting generation (max_new_tokens={self.max_new_tokens}, seed={seed})...")
         with torch.no_grad():
-            out = self._model.generate(**inputs, **gen_kwargs)
+            out = self._model.generate(
+                **inputs,
+                generation_config=generation_config,
+            )
         print(f"      [HF Gateway] Generation complete, output shape: {out.shape}")
 
         print(f"      [HF Gateway] Decoding tokens...")

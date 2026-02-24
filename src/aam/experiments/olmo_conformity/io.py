@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
+from .suite_config import SuiteConfig
 
 JsonDict = Dict[str, Any]
 
@@ -60,7 +61,9 @@ class ModelSpec:
 
 
 def load_suite_config(path: str) -> JsonDict:
-    return json.loads(Path(path).read_text(encoding="utf-8"))
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    cfg = SuiteConfig.model_validate(data)
+    return cfg.model_dump(mode="json")
 
 
 def load_paths_config(suite_config_path: str, suite_config: JsonDict) -> JsonDict:
@@ -94,5 +97,4 @@ def clamp_items(items: List[JsonDict], limit: Optional[int]) -> List[JsonDict]:
     if n <= 0:
         return []
     return items[:n]
-
 
