@@ -326,9 +326,20 @@ def generate_behavioral_graphs(
     
     figures = {}
     
-    # Load data for plotting - include raw_text for empty response detection
+    # Load data for plotting - use first output per trial (matches compute_behavioral_metrics)
     df = pd.read_sql_query(
         """
+        WITH first_outputs AS (
+            SELECT trial_id, MIN(created_at) AS min_created_at
+            FROM conformity_outputs
+            GROUP BY trial_id
+        ),
+        first_output_ids AS (
+            SELECT MIN(o.output_id) AS output_id, o.trial_id
+            FROM conformity_outputs o
+            JOIN first_outputs fo ON fo.trial_id = o.trial_id AND fo.min_created_at = o.created_at
+            GROUP BY o.trial_id
+        )
         SELECT 
             t.variant,
             t.item_id,
@@ -338,7 +349,8 @@ def generate_behavioral_graphs(
             o.raw_text
         FROM conformity_trials t
         JOIN conformity_conditions c ON c.condition_id = t.condition_id
-        JOIN conformity_outputs o ON o.trial_id = t.trial_id
+        JOIN first_output_ids foi ON foi.trial_id = t.trial_id
+        JOIN conformity_outputs o ON o.output_id = foi.output_id
         WHERE t.run_id = ? AND o.is_correct IS NOT NULL
         """,
         trace_db.conn,

@@ -34,7 +34,6 @@ from aam.analytics import (
     generate_intervention_graphs,
     export_intervention_logs,
     compute_judgeval_metrics,
-    generate_judgeval_graphs,
     export_judgeval_logs,
     compute_think_metrics,
     generate_think_graphs,
@@ -142,13 +141,10 @@ def main():
     print("=" * 80)
     try:
         judgeval_metrics = compute_judgeval_metrics(db, run_id, run_dir)
-        if judgeval_metrics.get("statistics", {}).get("n_scores", 0) > 0:
-            judgeval_figures = generate_judgeval_graphs(db, run_id, run_dir, judgeval_metrics)
+        if judgeval_metrics.get("statistics", {}).get("n_judged", 0) > 0:
             judgeval_logs = export_judgeval_logs(db, run_id, run_dir, judgeval_metrics)
-            all_figures.update(judgeval_figures)
             all_logs.update(judgeval_logs)
-            print(f"  Generated {len(judgeval_figures)} figures")
-            print(f"  Exported {len(judgeval_logs)} log files")
+            print(f"  Exported {len(judgeval_logs)} log files (agreement table)")
         else:
             print("  No Judge Eval scores found, skipping")
     except Exception as e:

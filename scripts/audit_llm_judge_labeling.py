@@ -9,7 +9,7 @@ This script is designed to answer:
 Key conventions:
 - We operate on the *first output per trial* (matching `olmo-conformity-judgeval`).
 - Judge labels are expected in `conformity_outputs.parsed_answer_json` with keys:
-    truthfulness, conformity, rationalization, notes, _llm_judge.{prompt_version, judge_model}
+    is_correct, refusal_flag, wrong_answer_endorsed, notes, _llm_judge.{prompt_version, judge_model}
 
 Default output:
   - `paper/JUDGE_REPORT.md`
@@ -286,9 +286,9 @@ def _read_first_outputs_df(*, db_path: Path, run_id: str) -> pd.DataFrame:
                 WHEN o.parsed_answer_json IS NOT NULL AND trim(o.parsed_answer_json) != '' THEN 1
                 ELSE 0
               END AS has_judge_json,
-              json_extract(o.parsed_answer_json, '$.truthfulness') AS judge_truthfulness,
-              json_extract(o.parsed_answer_json, '$.conformity') AS judge_conformity,
-              json_extract(o.parsed_answer_json, '$.rationalization') AS judge_rationalization,
+              json_extract(o.parsed_answer_json, '$.is_correct') AS judge_is_correct,
+              json_extract(o.parsed_answer_json, '$.refusal_flag') AS judge_refusal_flag,
+              json_extract(o.parsed_answer_json, '$.wrong_answer_endorsed') AS judge_wrong_answer_endorsed,
               json_extract(o.parsed_answer_json, '$._llm_judge.prompt_version') AS judge_prompt_version,
               json_extract(o.parsed_answer_json, '$._llm_judge.judge_model') AS judge_model
             FROM conformity_trials t
@@ -310,7 +310,7 @@ def _read_first_outputs_df(*, db_path: Path, run_id: str) -> pd.DataFrame:
 
     for col in ["is_correct", "refusal_flag", "has_judge_json"]:
         df[col] = pd.to_numeric(df[col], errors="coerce")
-    for col in ["judge_truthfulness", "judge_conformity", "judge_rationalization"]:
+    for col in ["judge_is_correct", "judge_refusal_flag", "judge_wrong_answer_endorsed"]:
         df[col] = pd.to_numeric(df[col], errors="coerce")
 
     df["variant"] = pd.Categorical(df["variant"], categories=VARIANT_ORDER, ordered=True)
@@ -451,6 +451,22 @@ def _baseline_tables(df: pd.DataFrame) -> dict[str, pd.DataFrame]:
     return out
 
 
+def _cohens_kappa(y1: np.ndarray, y2: np.ndarray) -> float:
+    """Compute Cohen's kappa for two binary label arrays of equal length."""
+    if len(y1) == 0:
+        return float("nan")
+    y1 = np.asarray(y1, dtype=int)
+    y2 = np.asarray(y2, dtype=int)
+    n = len(y1)
+    po = float((y1 == y2).sum()) / n
+    p1 = float(y1.sum()) / n
+    p2 = float(y2.sum()) / n
+    pe = p1 * p2 + (1 - p1) * (1 - p2)
+    if pe >= 1.0:
+        return 1.0 if po >= 1.0 else 0.0
+    return (po - pe) / (1 - pe)
+
+
 def _judge_tables(df: pd.DataFrame, *, truth_thresholds: list[float], conformity_threshold: float) -> dict[str, Any]:
     has = df[df["has_judge_json"].astype(int) == 1].copy()
     if has.empty:
@@ -460,66 +476,90 @@ def _judge_tables(df: pd.DataFrame, *, truth_thresholds: list[float], conformity
     out["judge_prompt_versions"] = sorted({str(x) for x in has["judge_prompt_version"].dropna().unique().tolist()})
     out["judge_models"] = sorted({str(x) for x in has["judge_model"].dropna().unique().tolist()})
 
-    out["mean_scores_by_cell"] = (
-        has.groupby(["temperature", "variant", "condition_name"], as_index=False, observed=False)
-        .agg(
-            n_trials=("trial_id", "count"),
-            truthfulness_mean=("judge_truthfulness", "mean"),
-            conformity_mean=("judge_conformity", "mean"),
-            rationalization_mean=("judge_rationalization", "mean"),
-        )
-        .sort_values(["temperature", "variant", "condition_name"])
-    )
+    # --- is_correct agreement (judge binary vs manual binary) ---
+    ic = has[has["is_correct"].notna() & has["judge_is_correct"].notna()].copy()
+    if not ic.empty:
+        m = ic["is_correct"].astype(int).values
+        j = ic["judge_is_correct"].astype(int).values
+        tp = int(((m == 1) & (j == 1)).sum())
+        tn = int(((m == 0) & (j == 0)).sum())
+        fp = int(((m == 0) & (j == 1)).sum())
+        fn = int(((m == 1) & (j == 0)).sum())
+        agree = float((m == j).mean())
+        kappa = _cohens_kappa(m, j)
+        out["is_correct_overall"] = {
+            "agreement_rate": agree,
+            "cohens_kappa": kappa,
+            "n": int(len(ic)),
+            "confusion": {"tp": tp, "tn": tn, "fp": fp, "fn": fn},
+        }
 
-    factual = has[has["is_correct"].notna()].copy()
-    judge_acc: dict[float, pd.DataFrame] = {}
-    judge_tor: dict[float, pd.DataFrame] = {}
-    judge_paired_temp: dict[float, pd.DataFrame] = {}
-    for tau in truth_thresholds:
-        col = f"judge_is_correct_t{tau:.2f}"
-        factual[col] = (factual["judge_truthfulness"] >= float(tau)).astype(float)
-        factual["judge_error"] = 1.0 - factual[col]
-        judge_acc[tau] = (
-            factual.groupby(["temperature", "variant", "condition_name"], as_index=False, observed=False)
-            .agg(n_trials=("trial_id", "count"), error_rate=("judge_error", "mean"), accuracy=(col, "mean"))
-            .sort_values(["temperature", "variant", "condition_name"])
-        )
+        rows: list[dict[str, Any]] = []
+        for (temp, var, cond), g in ic.groupby(["temperature", "variant", "condition_name"], observed=False):
+            gm = g["is_correct"].astype(int).values
+            gj = g["judge_is_correct"].astype(int).values
+            rows.append({
+                "temperature": temp,
+                "variant": var,
+                "condition_name": cond,
+                "n": int(len(g)),
+                "agreement_rate": float((gm == gj).mean()),
+                "cohens_kappa": _cohens_kappa(gm, gj),
+            })
+        out["is_correct_by_cell"] = pd.DataFrame(rows).sort_values(["temperature", "variant", "condition_name"])
 
-        piv2 = (
-            factual.pivot_table(
-                index=["temperature", "variant", "model_id", "item_id"],
-                columns="condition_name",
-                values=col,
-                aggfunc="first",
-                observed=False,
+    # --- refusal_flag agreement ---
+    rf = has[has["refusal_flag"].notna() & has["judge_refusal_flag"].notna()].copy()
+    if not rf.empty:
+        m_rf = rf["refusal_flag"].astype(int).values
+        j_rf = rf["judge_refusal_flag"].astype(int).values
+        out["refusal_flag_overall"] = {
+            "agreement_rate": float((m_rf == j_rf).mean()),
+            "cohens_kappa": _cohens_kappa(m_rf, j_rf),
+            "n": int(len(rf)),
+        }
+
+    # --- wrong_answer_endorsed (judge label) ---
+    wa = has[has["judge_wrong_answer_endorsed"].notna()].copy()
+    if not wa.empty:
+        has_rule_endorse = "wrong_answer" in wa.columns and wa["wrong_answer"].notna().any()
+        if has_rule_endorse:
+            wa["rule_endorse"] = wa.apply(
+                lambda r: int(agrees_wrong_answer_endorsement(
+                    parsed_answer_text=str(r.get("parsed_answer_text", "") or ""),
+                    wrong_answer=r.get("wrong_answer"),
+                    refusal_flag=int(r.get("refusal_flag", 0)),
+                )),
+                axis=1,
             )
-            .reset_index()
-        )
-        tor_rows: list[dict[str, Any]] = []
-        for variant in VARIANT_ORDER:
-            sub = piv2[piv2["variant"] == variant]
-            for cond in ["asch_history_5", "authoritative_bias"]:
-                cc = sub.dropna(subset=["control", cond]).copy()
-                cc = cc[cc["control"].astype(float) >= 0.5]
-                if cc.empty:
-                    tor_rows.append({"variant": variant, "pressure_condition": cond, "n_items": 0, "truth_override_rate": np.nan})
-                    continue
-                tor_rows.append(
-                    {
-                        "variant": variant,
-                        "pressure_condition": cond,
-                        "n_items": int(len(cc)),
-                        "truth_override_rate": float((cc[cond].astype(float) < 0.5).mean()),
-                    }
-                )
-        judge_tor[tau] = pd.DataFrame(tor_rows)
+            valid_wa = wa[wa["rule_endorse"].notna()].copy()
+            if not valid_wa.empty:
+                m_wa = valid_wa["rule_endorse"].astype(int).values
+                j_wa = valid_wa["judge_wrong_answer_endorsed"].astype(int).values
+                out["wrong_answer_endorsed_overall"] = {
+                    "agreement_rate": float((m_wa == j_wa).mean()),
+                    "cohens_kappa": _cohens_kappa(m_wa, j_wa),
+                    "n": int(len(valid_wa)),
+                }
 
-        # Paired temperature deltas under judge correctness (Tmax-Tmin), excluding refusals
-        tmin = float(factual["temperature"].min())
-        tmax = float(factual["temperature"].max())
+        wa_rows: list[dict[str, Any]] = []
+        for (temp, var, cond), g in wa.groupby(["temperature", "variant", "condition_name"], observed=False):
+            wa_rows.append({
+                "temperature": temp,
+                "variant": var,
+                "condition_name": cond,
+                "n": int(len(g)),
+                "judge_endorse_rate": float(g["judge_wrong_answer_endorsed"].mean()),
+            })
+        out["wrong_answer_endorsed_by_cell"] = pd.DataFrame(wa_rows).sort_values(["temperature", "variant", "condition_name"])
+
+    # --- Paired temperature deltas using judge is_correct ---
+    if not ic.empty:
+        tmin = float(ic["temperature"].min())
+        tmax = float(ic["temperature"].max())
         temp_rows: list[dict[str, Any]] = []
         for cond in CONDITION_ORDER:
-            sub = factual[factual["condition_name"] == cond].copy()
+            sub = ic[ic["condition_name"] == cond].copy()
             a = sub[sub["temperature"] == tmin]
             b = sub[sub["temperature"] == tmax]
             merged = a.merge(
@@ -530,54 +570,26 @@ def _judge_tables(df: pd.DataFrame, *, truth_thresholds: list[float], conformity
             )
             merged = merged[(merged["refusal_flag_0"] == 0) & (merged["refusal_flag_1"] == 0)]
             if merged.empty:
-                temp_rows.append(
-                    {
-                        "condition": cond,
-                        "delta_error_pp": np.nan,
-                        "p_mcnemar": np.nan,
-                        "n_pairs": 0,
-                        "b_1to0": 0,
-                        "c_0to1": 0,
-                    }
-                )
+                temp_rows.append({
+                    "condition": cond, "delta_error_pp": np.nan,
+                    "p_mcnemar": np.nan, "n_pairs": 0, "b_1to0": 0, "c_0to1": 0,
+                })
                 continue
-            y0 = merged[col + "_0"].astype(int)
-            y1 = merged[col + "_1"].astype(int)
+            y0 = merged["judge_is_correct_0"].astype(int)
+            y1 = merged["judge_is_correct_1"].astype(int)
             err0 = 1.0 - float(y0.mean())
             err1 = 1.0 - float(y1.mean())
             disc_b = int(((y0 == 1) & (y1 == 0)).sum())
             disc_c = int(((y0 == 0) & (y1 == 1)).sum())
-            temp_rows.append(
-                {
-                    "condition": cond,
-                    "delta_error_pp": (err1 - err0) * 100.0,
-                    "p_mcnemar": mcnemar_exact_p(disc_b, disc_c),
-                    "n_pairs": int(len(merged)),
-                    "b_1to0": disc_b,
-                    "c_0to1": disc_c,
-                }
-            )
-        judge_paired_temp[tau] = pd.DataFrame(temp_rows)
-
-    out["judge_accuracy_by_cell"] = judge_acc
-    out["judge_truth_override"] = judge_tor
-    out["judge_paired_temp_deltas"] = judge_paired_temp
-
-    opinion = has[has["dataset_category"] == "opinion"].copy()
-    if not opinion.empty:
-        opinion["judge_endorse_wrong"] = (opinion["judge_conformity"] >= float(conformity_threshold)).astype(float)
-        out["opinion_judge"] = (
-            opinion.groupby(["temperature", "variant", "condition_name"], as_index=False, observed=False)
-            .agg(
-                n_trials=("trial_id", "count"),
-                endorse_rate=("judge_endorse_wrong", "mean"),
-                conformity_mean=("judge_conformity", "mean"),
-                refusal_rate=("refusal_flag", "mean"),
-            )
-            .sort_values(["temperature", "variant", "condition_name"])
-        )
-    else:
-        out["opinion_judge"] = pd.DataFrame()
+            temp_rows.append({
+                "condition": cond,
+                "delta_error_pp": (err1 - err0) * 100.0,
+                "p_mcnemar": mcnemar_exact_p(disc_b, disc_c),
+                "n_pairs": int(len(merged)),
+                "b_1to0": disc_b,
+                "c_0to1": disc_c,
+            })
+        out["judge_paired_temp_deltas"] = pd.DataFrame(temp_rows)
 
     return out
 
@@ -611,8 +623,10 @@ def _render_report(
         lines.append("- Paper numbers based on `conformity_outputs.is_correct` are unaffected (judge is supplementary validation).")
     else:
         lines.append(f"- Judge coverage: **{total_judged}/{total_first}** (**{(100.0*total_judged/total_first):.1f}%**).")
-        lines.append(f"- Judge correctness uses thresholds τ in {truth_thresholds}.")
-        lines.append(f"- Judge endorsement on opinion items uses `conformity ≥ {conformity_threshold}`.")
+        lines.append("- Judge produces **binary labels** (`is_correct`, `refusal_flag`, `wrong_answer_endorsed`) directly comparable to the rule-based system.")
+        ic_overall = judge.get("is_correct_overall")
+        if ic_overall:
+            lines.append(f"- Overall `is_correct` agreement: **{ic_overall['agreement_rate']:.1%}** (Cohen's κ = {ic_overall['cohens_kappa']:.3f}, n={ic_overall['n']}).")
     lines.append("")
 
     lines.append("## 1) Judge-Label Availability")
@@ -701,7 +715,7 @@ def _render_report(
     lines.append("")
     lines.append("Expected schema (per first output):")
     lines.append("```json")
-    lines.append('{ "truthfulness": 0.0, "conformity": 0.0, "rationalization": null, "notes": "...", "_llm_judge": {"prompt_version":"...","judge_model":"..."} }')
+    lines.append('{ "is_correct": 0|1, "refusal_flag": 0|1, "wrong_answer_endorsed": 0|1, "notes": "...", "_llm_judge": {"prompt_version":"...","judge_model":"..."} }')
     lines.append("```")
     lines.append("")
 
@@ -733,59 +747,66 @@ def _render_report(
     lines.append(f"Judge models observed: {', '.join(judge.get('judge_models', [])) or 'NA'}")
     lines.append("")
 
-    ms = judge.get("mean_scores_by_cell")
-    if isinstance(ms, pd.DataFrame) and not ms.empty:
-        t = ms.copy()
-        for c in ["truthfulness_mean", "conformity_mean", "rationalization_mean"]:
-            t[c] = t[c].map(lambda x: "NA" if pd.isna(x) else f"{float(x):.3f}")
-        lines.append("### 3.2 Mean judge scores by cell")
+    # --- 3.2 is_correct agreement ---
+    ic_overall = judge.get("is_correct_overall")
+    if ic_overall:
+        cm = ic_overall["confusion"]
+        lines.append("### 3.2 Judge vs Manual: `is_correct` agreement")
+        lines.append("")
+        lines.append(f"- **Overall agreement:** {ic_overall['agreement_rate']:.1%}")
+        lines.append(f"- **Cohen's κ:** {ic_overall['cohens_kappa']:.3f}")
+        lines.append(f"- **n:** {ic_overall['n']}")
+        lines.append(f"- Confusion matrix: TP={cm['tp']}, TN={cm['tn']}, FP={cm['fp']}, FN={cm['fn']}")
+        lines.append("")
+
+    ic_cell = judge.get("is_correct_by_cell")
+    if isinstance(ic_cell, pd.DataFrame) and not ic_cell.empty:
+        t = ic_cell.copy()
+        t["agreement_rate"] = t["agreement_rate"].map(_fmt_pct)
+        t["cohens_kappa"] = t["cohens_kappa"].map(lambda x: "NA" if pd.isna(x) else f"{float(x):.3f}")
+        lines.append("#### Per-cell breakdown")
         lines.append("")
         lines.append(_to_markdown_table(t))
         lines.append("")
 
-    lines.append("### 3.3 Judge-derived correctness and truth override (factual)")
-    lines.append("")
-    for tau, tab in sorted((judge.get("judge_accuracy_by_cell") or {}).items(), key=lambda kv: kv[0]):
-        if not isinstance(tab, pd.DataFrame) or tab.empty:
-            continue
-        t = tab.copy()
-        t["error_rate"] = t["error_rate"].map(_fmt_pct)
-        t["accuracy"] = t["accuracy"].map(_fmt_pct)
-        lines.append(f"#### Threshold τ={tau:.2f}  (judge_is_correct = 1[truthfulness ≥ τ])")
+    # --- 3.3 refusal_flag agreement ---
+    rf_overall = judge.get("refusal_flag_overall")
+    if rf_overall:
+        lines.append("### 3.3 Judge vs Manual: `refusal_flag` agreement")
+        lines.append("")
+        lines.append(f"- **Overall agreement:** {rf_overall['agreement_rate']:.1%}")
+        lines.append(f"- **Cohen's κ:** {rf_overall['cohens_kappa']:.3f}")
+        lines.append(f"- **n:** {rf_overall['n']}")
+        lines.append("")
+
+    # --- 3.4 wrong_answer_endorsed ---
+    wa_overall = judge.get("wrong_answer_endorsed_overall")
+    if wa_overall:
+        lines.append("### 3.4 Judge vs Rule-based: `wrong_answer_endorsed` agreement")
+        lines.append("")
+        lines.append(f"- **Overall agreement:** {wa_overall['agreement_rate']:.1%}")
+        lines.append(f"- **Cohen's κ:** {wa_overall['cohens_kappa']:.3f}")
+        lines.append(f"- **n:** {wa_overall['n']}")
+        lines.append("")
+
+    wa_cell = judge.get("wrong_answer_endorsed_by_cell")
+    if isinstance(wa_cell, pd.DataFrame) and not wa_cell.empty:
+        t = wa_cell.copy()
+        t["judge_endorse_rate"] = t["judge_endorse_rate"].map(_fmt_pct)
+        lines.append("#### Judge endorsement rate by cell")
         lines.append("")
         lines.append(_to_markdown_table(t))
         lines.append("")
 
-        tor = (judge.get("judge_truth_override") or {}).get(tau)
-        if isinstance(tor, pd.DataFrame) and not tor.empty:
-            tt = tor.copy()
-            tt["truth_override_rate"] = tt["truth_override_rate"].map(lambda x: "NA" if pd.isna(x) else f"{float(x):.3f}")
-            lines.append(f"#### Truth override under τ={tau:.2f}")
-            lines.append("")
-            lines.append(_to_markdown_table(tt))
-            lines.append("")
-
-        td = (judge.get("judge_paired_temp_deltas") or {}).get(tau)
-        if isinstance(td, pd.DataFrame) and not td.empty:
-            tt = td.copy()
-            tt["delta_error_pp"] = tt["delta_error_pp"].map(lambda x: "NA" if pd.isna(x) else f"{float(x):+.2f}")
-            tt["p_mcnemar"] = tt["p_mcnemar"].map(lambda x: "NA" if pd.isna(x) else f"{float(x):.3g}")
-            lines.append(f"#### Paired temperature deltas under τ={tau:.2f}")
-            lines.append("")
-            lines.append(_to_markdown_table(tt))
-            lines.append("")
-
-    op = judge.get("opinion_judge")
-    if isinstance(op, pd.DataFrame) and not op.empty:
-        t = op.copy()
-        t["endorse_rate"] = t["endorse_rate"].map(_fmt_pct)
-        t["refusal_rate"] = t["refusal_rate"].map(_fmt_pct)
-        t["conformity_mean"] = t["conformity_mean"].map(lambda x: "NA" if pd.isna(x) else f"{float(x):.3f}")
-        lines.append("### 3.4 Opinion items: judge endorsement + conformity")
+    # --- 3.5 Paired temperature deltas (judge is_correct) ---
+    td = judge.get("judge_paired_temp_deltas")
+    if isinstance(td, pd.DataFrame) and not td.empty:
+        tt = td.copy()
+        tt["delta_error_pp"] = tt["delta_error_pp"].map(lambda x: "NA" if pd.isna(x) else f"{float(x):+.2f}")
+        tt["p_mcnemar"] = tt["p_mcnemar"].map(lambda x: "NA" if pd.isna(x) else f"{float(x):.3g}")
+        lines.append("### 3.5 Paired temperature deltas (judge `is_correct`)")
         lines.append("")
-        lines.append(f"Endorsement definition: `judge_endorse_wrong = 1[conformity ≥ {conformity_threshold}]`.")
-        lines.append("")
-        lines.append(_to_markdown_table(t))
+        lines.append(_to_markdown_table(tt))
         lines.append("")
 
     return "\n".join(lines) + "\n"

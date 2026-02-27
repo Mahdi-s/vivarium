@@ -19,6 +19,9 @@ export AAM_ARTIFACTS_DIR="${AAM_ARTIFACTS_DIR:-${RUNS_DIR}}"
 MANIFEST="${SCRIPT_DIR}/runs_manifest.tsv"
 mkdir -p "${SCRIPT_DIR}/logs"
 
+# Truncate manifest at start so re-runs don't append duplicates
+: > "${MANIFEST}"
+
 echo "runs_dir=${RUNS_DIR}"
 echo "manifest=${MANIFEST}"
 if [[ -n "${API_BASE}" ]]; then
@@ -51,7 +54,8 @@ for suite_cfg in "${SCRIPT_DIR}"/suite_expanded_localtest_temp*.json; do
 
   run_dir="$(grep -E '^run_dir=' "${log_file}" | tail -n 1 | cut -d= -f2-)"
   db_path="$(grep -E '^db=' "${log_file}" | tail -n 1 | cut -d= -f2-)"
-  temp="$(basename "${suite_cfg}" | sed -n 's/.*temp\\([0-9]\\.[0-9]\\)\\.json/\\1/p')"
+  temp="$(basename "${suite_cfg}" | grep -oE 'temp[0-9]+\.[0-9]+' | grep -oE '[0-9]+\.[0-9]+' | head -1)"
+  [[ -z "${temp}" ]] && temp="unknown"
 
   if [[ -z "${run_dir}" || -z "${db_path}" ]]; then
     echo "ERROR: failed to parse run_dir/db from output; log=${log_file}"

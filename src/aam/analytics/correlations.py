@@ -117,27 +117,22 @@ def compute_probe_judgeval_correlations(
     run_id: str,
 ) -> Dict[str, Any]:
     """
-    Compute correlations between probe projections and judge eval scores.
-    
-    Args:
-        trace_db: TraceDb instance
-        run_id: Run ID
-        
-    Returns:
-        Dict with correlation results
+    Compute correlations between probe projections and judge binary labels.
+
+    Uses the binary labels (is_correct, wrong_answer_endorsed) from
+    parsed_answer_json to correlate with probe projection values.
     """
-    # Load probe projections with judge eval scores
     df = pd.read_sql_query(
         """
-        SELECT 
+        SELECT
             p.layer_index,
             p.value_float,
+            p.trial_id,
             pr.probe_kind,
             t.variant,
             c.name AS condition_name,
-            json_extract(o.parsed_answer_json, '$.conformity') AS conformity_score,
-            json_extract(o.parsed_answer_json, '$.truthfulness') AS truthfulness_score,
-            json_extract(o.parsed_answer_json, '$.rationalization') AS rationalization_score
+            json_extract(o.parsed_answer_json, '$.is_correct') AS judge_is_correct,
+            json_extract(o.parsed_answer_json, '$.wrong_answer_endorsed') AS judge_wrong_answer_endorsed
         FROM conformity_probe_projections p
         JOIN conformity_probes pr ON pr.probe_id = p.probe_id
         JOIN conformity_trials t ON t.trial_id = p.trial_id
@@ -148,53 +143,36 @@ def compute_probe_judgeval_correlations(
         trace_db.conn,
         params=(run_id,),
     )
-    
+
     if df.empty:
         return {"correlations": [], "message": "No judge eval data available"}
-    
-    # Convert judge eval scores to numeric
-    for col in ["conformity_score", "truthfulness_score", "rationalization_score"]:
+
+    for col in ["judge_is_correct", "judge_wrong_answer_endorsed"]:
         df[col] = pd.to_numeric(df[col], errors="coerce")
-    
+
     results = []
-    
-    # Correlations by probe kind
+
     for probe_kind in df["probe_kind"].unique():
         probe_data = df[df["probe_kind"] == probe_kind].copy()
-        
-        # Average projection per trial across layers
-        trial_avg = probe_data.groupby(["trial_id"])["value_float"].mean().reset_index()
-        trial_avg = trial_avg.merge(
-            probe_data[["trial_id", "conformity_score", "truthfulness_score", "rationalization_score"]].drop_duplicates(),
-            on="trial_id",
-        )
-        
-        # Correlation with conformity score
-        if trial_avg["conformity_score"].notna().sum() >= 2:
-            corr_conv = compute_correlation(
-                trial_avg["value_float"].tolist(),
-                trial_avg["conformity_score"].dropna().tolist(),
-            )
-            if corr_conv["correlation"] is not None:
-                results.append({
-                    "probe_kind": probe_kind,
-                    "judge_metric": "conformity",
-                    **corr_conv,
-                })
-        
-        # Correlation with truthfulness score
-        if trial_avg["truthfulness_score"].notna().sum() >= 2:
-            corr_truth = compute_correlation(
-                trial_avg["value_float"].tolist(),
-                trial_avg["truthfulness_score"].dropna().tolist(),
-            )
-            if corr_truth["correlation"] is not None:
-                results.append({
-                    "probe_kind": probe_kind,
-                    "judge_metric": "truthfulness",
-                    **corr_truth,
-                })
-    
+
+        trial_avg = probe_data.groupby("trial_id")["value_float"].mean().reset_index()
+        judge_cols = probe_data[["trial_id", "judge_is_correct", "judge_wrong_answer_endorsed"]].drop_duplicates()
+        trial_avg = trial_avg.merge(judge_cols, on="trial_id")
+
+        for judge_metric in ["judge_is_correct", "judge_wrong_answer_endorsed"]:
+            valid = trial_avg[trial_avg[judge_metric].notna()]
+            if len(valid) >= 2:
+                corr = compute_correlation(
+                    valid["value_float"].tolist(),
+                    valid[judge_metric].tolist(),
+                )
+                if corr["correlation"] is not None:
+                    results.append({
+                        "probe_kind": probe_kind,
+                        "judge_metric": judge_metric.replace("judge_", ""),
+                        **corr,
+                    })
+
     return {"correlations": results}
 
 

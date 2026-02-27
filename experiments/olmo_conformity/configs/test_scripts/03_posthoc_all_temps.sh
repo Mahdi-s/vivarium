@@ -25,11 +25,23 @@ fi
 
 mkdir -p "${SCRIPT_DIR}/logs"
 
-while IFS=$'\t' read -r temp run_dir db_path; do
-  [[ -z "${temp}" ]] && continue
-  log_file="${SCRIPT_DIR}/logs/posthoc_temp${temp}_$(date +%Y%m%d_%H%M%S).log"
+while IFS=$'\t' read -r col1 col2 col3; do
+  # Support both 3-column (temp, run_dir, db_path) and 2-column (run_dir, db_path) manifest
+  if [[ -n "${col3}" ]]; then
+    temp="${col1}"
+    run_dir="${col2}"
+    db_path="${col3}"
+  else
+    temp=""
+    run_dir="${col1}"
+    db_path="${col2}"
+  fi
+  [[ -z "${run_dir}" ]] && continue
+  run_id="${run_dir##*/}"
+  run_id="${run_id##*_}"
+  log_file="${SCRIPT_DIR}/logs/posthoc_${run_id}_$(date +%Y%m%d_%H%M%S).log"
   echo "============================================================"
-  echo "temp=${temp} run_dir=${run_dir}"
+  echo "temp=${temp:-n/a} run_dir=${run_dir}"
 
   cmd=( "${PYTHON_BIN}" -m aam olmo-conformity-posthoc
         --run-dir "${run_dir}"

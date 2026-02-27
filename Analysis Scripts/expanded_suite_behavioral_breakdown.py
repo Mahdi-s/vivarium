@@ -53,9 +53,37 @@ DATASET_TO_CATEGORY = {
 FACTUAL_CATEGORIES = [c for c in sorted(set(DATASET_TO_CATEGORY.values())) if c != "opinion"]
 ALL_CATEGORIES = sorted(set(DATASET_TO_CATEGORY.values()))
 
-VARIANT_ORDER = ["base", "instruct", "instruct_sft", "think", "think_sft", "rl_zero"]
+VARIANT_ORDER = ["base", "instruct", "instruct_sft", "instruct_dpo", "think", "think_sft", "think_dpo", "rl_zero"]
+
+VARIANT_LABELS = {
+    "base": "Base",
+    "instruct": "Instruct",
+    "instruct_sft": "Instruct-SFT",
+    "instruct_dpo": "Instruct-DPO",
+    "think": "Think",
+    "think_sft": "Think-SFT",
+    "think_dpo": "Think-DPO",
+    "rl_zero": "RL-Zero",
+}
+
+VARIANT_COLORS = {
+    "base": "#5B8BD6",
+    "instruct": "#E2725B",
+    "instruct_sft": "#F5A623",
+    "instruct_dpo": "#D4A017",
+    "think": "#2CA25F",
+    "think_sft": "#9B59B6",
+    "think_dpo": "#8E44AD",
+    "rl_zero": "#7F8C8D",
+}
 
 ANSWER_SPAN_CHARS = 400  # how much of the completion tail we treat as the "answer region"
+
+
+def _present_variants(df: pd.DataFrame) -> List[str]:
+    """Return VARIANT_ORDER filtered to only variants present in the data."""
+    present = set(df["variant"].unique())
+    return [v for v in VARIANT_ORDER if v in present]
 
 
 def _normalize_text_for_matching(text: Optional[str]) -> str:
@@ -982,6 +1010,527 @@ def plot_opinion_agreement(opinion: pd.DataFrame, *, out_path_png: Path, out_pat
     plt.close(fig)
 
 
+# ============================================================================
+# Publication-quality figures (--publication flag)
+# ============================================================================
+
+def _pub_style() -> None:
+    plt.rcParams.update({
+        "font.size": 11,
+        "axes.titlesize": 13,
+        "axes.labelsize": 11,
+        "xtick.labelsize": 10,
+        "ytick.labelsize": 10,
+        "legend.fontsize": 10,
+        "figure.dpi": 150,
+        "savefig.dpi": 300,
+        "savefig.bbox": "tight",
+        "axes.spines.top": False,
+        "axes.spines.right": False,
+    })
+
+
+def plot_pub_error_rate_dot(factual_rates: pd.DataFrame, out_path: Path) -> None:
+    """Fig 1: Cleveland dot plot -- factual error rate by variant and condition."""
+    _pub_style()
+    variants = _present_variants(factual_rates)
+    if not variants:
+        return
+
+    pooled = (
+        factual_rates[factual_rates["dataset_category"] != "opinion"]
+        .groupby(["variant", "condition_name"], as_index=False, observed=True)
+        .agg(n=("n_trials", "sum"), n_correct=("n_correct", "sum"))
+    )
+    pooled["error_rate"] = 1.0 - pooled["n_correct"] / pooled["n"]
+
+    cond_style = {
+        "control": ("o", "#4A90D9", "Control"),
+        "asch_history_5": ("s", "#E2725B", "Asch (Peer)"),
+        "authoritative_bias": ("D", "#F5A623", "Authority"),
+    }
+
+    fig, ax = plt.subplots(figsize=(8, 0.9 * len(variants) + 1.2))
+    y_positions = {v: i for i, v in enumerate(reversed(variants))}
+
+    for v in variants:
+        y = y_positions[v]
+        ctrl_row = pooled[(pooled["variant"] == v) & (pooled["condition_name"] == "control")]
+        ctrl_er = ctrl_row["error_rate"].iloc[0] if not ctrl_row.empty else np.nan
+        for cond in ["asch_history_5", "authoritative_bias"]:
+            row = pooled[(pooled["variant"] == v) & (pooled["condition_name"] == cond)]
+            if row.empty:
+                continue
+            er = row["error_rate"].iloc[0]
+            if not np.isnan(ctrl_er):
+                ax.plot([ctrl_er, er], [y, y], color=cond_style[cond][1], alpha=0.4, linewidth=2, zorder=1)
+
+    for cond, (marker, color, label) in cond_style.items():
+        for v in variants:
+            y = y_positions[v]
+            row = pooled[(pooled["variant"] == v) & (pooled["condition_name"] == cond)]
+            if row.empty:
+                continue
+            er = row["error_rate"].iloc[0]
+            ax.scatter(er, y, marker=marker, color=color, s=100, zorder=3,
+                       label=label if v == variants[0] else None)
+            if cond == "control":
+                ax.annotate(f"{er:.1%}", (er, y), textcoords="offset points",
+                            xytext=(0, 10), ha="center", fontsize=9, color="#333")
+
+    ax.set_yticks(list(y_positions.values()))
+    ax.set_yticklabels([VARIANT_LABELS.get(v, v) for v in reversed(variants)])
+    ax.set_xlabel("Factual Error Rate")
+    ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"{x:.0%}"))
+    ax.set_title("Factual Error Rate by Training Stage and Condition", fontweight="bold")
+    handles, labels = ax.get_legend_handles_labels()
+    by_label = dict(zip(labels, handles))
+    ax.legend(by_label.values(), by_label.keys(), loc="lower right")
+    fig.tight_layout()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=300)
+    plt.close(fig)
+
+
+def plot_pub_pressure_lollipop(effects: pd.DataFrame, out_path: Path) -> None:
+    """Fig 2: Diverging lollipop -- pressure delta by variant."""
+    _pub_style()
+    variants = _present_variants(effects)
+    if not variants:
+        return
+
+    pooled = effects.groupby("variant", as_index=False, observed=True).agg(
+        delta_asch=("delta_asch", "mean"),
+        delta_authority=("delta_authority", "mean"),
+    )
+
+    fig, ax = plt.subplots(figsize=(8, 0.9 * len(variants) + 1.2))
+    y_map = {v: i for i, v in enumerate(reversed(variants))}
+    offset = 0.15
+
+    for v in variants:
+        row = pooled[pooled["variant"] == v]
+        if row.empty:
+            continue
+        y = y_map[v]
+        da = row["delta_asch"].iloc[0]
+        dau = row["delta_authority"].iloc[0]
+        if not np.isnan(da):
+            ax.plot([0, da], [y + offset, y + offset], color="#E2725B", linewidth=2.5, zorder=2)
+            ax.scatter(da, y + offset, marker="o", color="#E2725B", s=80, zorder=3,
+                       label="Asch (Peer)" if v == variants[0] else None)
+            ax.annotate(f"+{da:.1%}", (da, y + offset), textcoords="offset points",
+                        xytext=(6, 0), va="center", fontsize=9, color="#E2725B")
+        if not np.isnan(dau):
+            ax.plot([0, dau], [y - offset, y - offset], color="#F5A623", linewidth=2.5, zorder=2)
+            ax.scatter(dau, y - offset, marker="D", color="#F5A623", s=70, zorder=3,
+                       label="Authority" if v == variants[0] else None)
+            ax.annotate(f"+{dau:.1%}", (dau, y - offset), textcoords="offset points",
+                        xytext=(6, 0), va="center", fontsize=9, color="#F5A623")
+
+    ax.axvline(0, color="black", linewidth=0.8, zorder=1)
+    ax.set_yticks(list(y_map.values()))
+    ax.set_yticklabels([VARIANT_LABELS.get(v, v) for v in reversed(variants)])
+    ax.set_xlabel("Pressure Effect (\u0394 Error Rate)")
+    ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"{x:.0%}"))
+    ax.set_title("Social Pressure Effect on Error Rate", fontweight="bold")
+    handles, labels = ax.get_legend_handles_labels()
+    by_label = dict(zip(labels, handles))
+    ax.legend(by_label.values(), by_label.keys(), loc="lower right")
+    fig.tight_layout()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=300)
+    plt.close(fig)
+
+
+def plot_pub_topic_analysis(factual_rates: pd.DataFrame, effects: pd.DataFrame, out_path: Path) -> None:
+    """Fig 4: (a) control error heatmap by topic x variant, (b) Asch delta strip dots."""
+    _pub_style()
+    variants = _present_variants(factual_rates)
+    categories = [c for c in FACTUAL_CATEGORIES if c in factual_rates["dataset_category"].unique()]
+    if not variants or not categories:
+        return
+
+    control = (
+        factual_rates[
+            (factual_rates["condition_name"] == "control")
+            & (factual_rates["dataset_category"] != "opinion")
+        ]
+        .groupby(["variant", "dataset_category"], as_index=False, observed=True)
+        .agg(n=("n_trials", "sum"), n_correct=("n_correct", "sum"))
+    )
+    control["error_rate"] = 1.0 - control["n_correct"] / control["n"]
+    ctrl_pivot = control.pivot_table(index="dataset_category", columns="variant", values="error_rate")
+    ctrl_pivot = ctrl_pivot.reindex(index=categories, columns=variants)
+
+    asch_pooled = effects.groupby(["variant", "dataset_category"], as_index=False, observed=True).agg(
+        delta_asch=("delta_asch", "mean"),
+    )
+
+    fig, (ax_heat, ax_strip) = plt.subplots(1, 2, figsize=(12, 0.65 * len(categories) + 2.0),
+                                             gridspec_kw={"width_ratios": [1, 1.3]})
+    fig.suptitle("Topic-Level Analysis", fontweight="bold", fontsize=14)
+
+    cmap = sns.color_palette("Reds", as_cmap=True)
+    sns.heatmap(ctrl_pivot, ax=ax_heat, cmap=cmap, vmin=0.4, vmax=1.0, annot=True, fmt=".0%",
+                linewidths=0.5, linecolor="white", cbar_kws={"label": "Error Rate", "shrink": 0.8})
+    ax_heat.set_title("(a) Baseline Error Rate (Control)")
+    ax_heat.set_xticklabels([VARIANT_LABELS.get(v, v) for v in variants], rotation=30, ha="right")
+    ax_heat.set_ylabel("Topic")
+
+    cat_y = {c: i for i, c in enumerate(reversed(categories))}
+    for v in variants:
+        sub = asch_pooled[asch_pooled["variant"] == v]
+        for _, r in sub.iterrows():
+            cat = r["dataset_category"]
+            if cat not in cat_y:
+                continue
+            ax_strip.scatter(r["delta_asch"], cat_y[cat], color=VARIANT_COLORS.get(v, "#333"),
+                             s=70, zorder=3, label=VARIANT_LABELS.get(v, v))
+
+    ax_strip.axvline(0, color="gray", linestyle="--", linewidth=0.8, alpha=0.7)
+    ax_strip.set_yticks(list(cat_y.values()))
+    ax_strip.set_yticklabels([c.title() for c in reversed(categories)])
+    ax_strip.set_xlabel("Asch Pressure Effect (\u0394 Error Rate)")
+    ax_strip.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"{x:.0%}"))
+    ax_strip.set_title("(b) Asch Pressure Effect by Topic")
+    handles, labels = ax_strip.get_legend_handles_labels()
+    by_label = dict(zip(labels, handles))
+    ax_strip.legend(by_label.values(), by_label.keys(), fontsize=8, loc="lower right")
+
+    fig.tight_layout()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=300)
+    plt.close(fig)
+
+
+def plot_pub_truth_override_rescue(
+    truth_override: pd.DataFrame, truth_rescue: pd.DataFrame, out_path: Path
+) -> None:
+    """Fig 5: Dumbbell chart -- truth override vs rescue, two panels (Asch / Authority)."""
+    _pub_style()
+    if truth_override.empty and truth_rescue.empty:
+        return
+
+    combined = pd.concat([truth_override, truth_rescue], ignore_index=True) if not truth_override.empty else truth_rescue
+    variants = _present_variants(combined)
+    if not variants:
+        return
+
+    def _pool(df: pd.DataFrame, rate_col: str) -> pd.DataFrame:
+        if df.empty:
+            return pd.DataFrame()
+        return df.groupby(["variant", "pressure_condition"], as_index=False, observed=True).agg(
+            n=("n_items", "sum"), rate_sum=(rate_col, lambda s: (s * df.loc[s.index, "n_items"]).sum()),
+        ).assign(rate=lambda d: d["rate_sum"] / d["n"].replace(0, np.nan))
+
+    ov = _pool(truth_override, "truth_override_rate") if not truth_override.empty else pd.DataFrame()
+    rc = _pool(truth_rescue, "truth_rescue_rate") if not truth_rescue.empty else pd.DataFrame()
+
+    fig, axes = plt.subplots(1, 2, figsize=(12, 0.8 * len(variants) + 1.5), sharey=True)
+    fig.suptitle("Truth Override vs. Truth Rescue", fontweight="bold", fontsize=14)
+
+    for ax, (cond, title) in zip(axes, [("asch_history_5", "Asch (Peer)"), ("authoritative_bias", "Authority")]):
+        y_map = {v: i for i, v in enumerate(reversed(variants))}
+        for v in variants:
+            y = y_map[v]
+            ov_row = ov[(ov["variant"] == v) & (ov["pressure_condition"] == cond)] if not ov.empty else pd.DataFrame()
+            rc_row = rc[(rc["variant"] == v) & (rc["pressure_condition"] == cond)] if not rc.empty else pd.DataFrame()
+            ov_val = ov_row["rate"].iloc[0] if not ov_row.empty else np.nan
+            rc_val = rc_row["rate"].iloc[0] if not rc_row.empty else np.nan
+            if not np.isnan(ov_val) and not np.isnan(rc_val):
+                ax.plot([rc_val, ov_val], [y, y], color="gray", linewidth=1.5, zorder=1)
+            if not np.isnan(ov_val):
+                ax.scatter(ov_val, y, marker="^", color="#D9534F", s=90, zorder=3)
+                ax.annotate(f"{ov_val:.1%}", (ov_val, y), textcoords="offset points",
+                            xytext=(5, -10), fontsize=8, color="#D9534F")
+            if not np.isnan(rc_val):
+                ax.scatter(rc_val, y, marker="v", color="#5B8BD6", s=90, zorder=3)
+                ax.annotate(f"{rc_val:.1%}", (rc_val, y), textcoords="offset points",
+                            xytext=(-5, 10), fontsize=8, color="#5B8BD6", ha="right")
+
+        ax.set_yticks(list(y_map.values()))
+        ax.set_yticklabels([VARIANT_LABELS.get(v, v) for v in reversed(variants)])
+        ax.set_xlabel("Rate")
+        ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"{x:.0%}"))
+        ax.set_title(title, fontweight="bold")
+
+    from matplotlib.lines import Line2D
+    legend_elems = [
+        Line2D([0], [0], marker="^", color="w", markerfacecolor="#D9534F", markersize=9, label="Truth Override"),
+        Line2D([0], [0], marker="v", color="w", markerfacecolor="#5B8BD6", markersize=9, label="Truth Rescue"),
+        Line2D([0], [0], color="gray", linewidth=1.5, label="Gap"),
+    ]
+    axes[0].legend(handles=legend_elems, loc="center right", fontsize=9)
+    fig.tight_layout()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=300)
+    plt.close(fig)
+
+
+def plot_pub_endorsement_slope(
+    wrong_answer_flip: pd.DataFrame, opinion: pd.DataFrame, out_path: Path
+) -> None:
+    """Fig 6: (a) Wrong-answer flip lollipop, (b) Opinion agreement trajectory."""
+    _pub_style()
+
+    fig, (ax_flip, ax_slope) = plt.subplots(1, 2, figsize=(13, 4.5),
+                                             gridspec_kw={"width_ratios": [1, 1.2]})
+    fig.suptitle("Wrong-Answer Endorsement Metrics", fontweight="bold", fontsize=14)
+
+    # Panel (a): flip lollipop
+    if not wrong_answer_flip.empty:
+        flip_pooled = wrong_answer_flip.groupby(["variant", "pressure_condition"], as_index=False, observed=True).agg(
+            n=("n_items", "sum"),
+            rate_sum=("wrong_answer_flip_rate", lambda s: (s * wrong_answer_flip.loc[s.index, "n_items"]).sum()),
+        )
+        flip_pooled["rate"] = flip_pooled["rate_sum"] / flip_pooled["n"].replace(0, np.nan)
+        variants_flip = _present_variants(flip_pooled)
+        y_map = {v: i for i, v in enumerate(reversed(variants_flip))}
+        offset = 0.15
+        for v in variants_flip:
+            y = y_map[v]
+            for cond, marker, color, label in [
+                ("asch_history_5", "o", "#E2725B", "Asch"),
+                ("authoritative_bias", "D", "#F5A623", "Authority"),
+            ]:
+                row = flip_pooled[(flip_pooled["variant"] == v) & (flip_pooled["pressure_condition"] == cond)]
+                if row.empty:
+                    continue
+                r = row["rate"].iloc[0]
+                yo = y + offset if cond == "asch_history_5" else y - offset
+                ax_flip.plot([0, r], [yo, yo], color=color, linewidth=2.5, zorder=2)
+                ax_flip.scatter(r, yo, marker=marker, color=color, s=70, zorder=3,
+                                label=label if v == variants_flip[0] else None)
+                ax_flip.annotate(f"{r:.1%}", (r, yo), textcoords="offset points",
+                                 xytext=(6, 0), va="center", fontsize=8, color=color)
+        ax_flip.axvline(0, color="black", linewidth=0.8, zorder=1)
+        ax_flip.set_yticks(list(y_map.values()))
+        ax_flip.set_yticklabels([VARIANT_LABELS.get(v, v) for v in reversed(variants_flip)])
+        handles, labels = ax_flip.get_legend_handles_labels()
+        by_label = dict(zip(labels, handles))
+        ax_flip.legend(by_label.values(), by_label.keys(), fontsize=9, loc="lower right")
+    ax_flip.set_xlabel("Wrong-Answer Flip Rate")
+    ax_flip.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"{x:.0%}"))
+    ax_flip.set_title("(a) Factual: Wrong-Answer Flip")
+
+    # Panel (b): opinion slope
+    if not opinion.empty:
+        op_pooled = opinion.groupby(["variant", "condition_name"], as_index=False, observed=True).agg(
+            n=("n_trials", "sum"),
+            rate_sum=("wrong_answer_agreement_rate", lambda s: (s * opinion.loc[s.index, "n_trials"]).sum()),
+        )
+        op_pooled["rate"] = op_pooled["rate_sum"] / op_pooled["n"].replace(0, np.nan)
+        variants_op = _present_variants(op_pooled)
+        cond_x = {"control": 0, "asch_history_5": 1, "authoritative_bias": 2}
+        for v in variants_op:
+            xs, ys = [], []
+            for c in ["control", "asch_history_5", "authoritative_bias"]:
+                row = op_pooled[(op_pooled["variant"] == v) & (op_pooled["condition_name"] == c)]
+                if not row.empty:
+                    xs.append(cond_x[c])
+                    ys.append(row["rate"].iloc[0])
+            if xs:
+                ax_slope.plot(xs, ys, marker="o", linewidth=2, color=VARIANT_COLORS.get(v, "#333"),
+                              label=VARIANT_LABELS.get(v, v))
+                if len(ys) > 0:
+                    ax_slope.annotate(f"{ys[-1]:.0%}", (xs[-1], ys[-1]),
+                                      textcoords="offset points", xytext=(8, 0),
+                                      fontsize=8, color=VARIANT_COLORS.get(v, "#333"))
+        ax_slope.set_xticks([0, 1, 2])
+        ax_slope.set_xticklabels(["Control", "Asch\n(Peer)", "Authority"])
+        ax_slope.legend(fontsize=8, loc="upper left")
+    ax_slope.set_ylabel("Wrong-Answer Agreement")
+    ax_slope.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"{x:.0%}"))
+    ax_slope.set_title("(b) Opinion: Agreement Trajectory")
+
+    fig.tight_layout()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=300)
+    plt.close(fig)
+
+
+def plot_pub_topic_pressure_heatmap(effects: pd.DataFrame, out_path: Path) -> None:
+    """Fig 9: Side-by-side heatmaps of Asch and Authority pressure deltas (topic x variant)."""
+    _pub_style()
+    variants = _present_variants(effects)
+    categories = [c for c in FACTUAL_CATEGORIES if c in effects["dataset_category"].unique()]
+    if not variants or not categories:
+        return
+
+    pooled = effects.groupby(["variant", "dataset_category"], as_index=False, observed=True).agg(
+        delta_asch=("delta_asch", "mean"),
+        delta_authority=("delta_authority", "mean"),
+    )
+
+    fig, (ax_a, ax_b) = plt.subplots(1, 2, figsize=(5.0 * len(variants) / 3 + 4, 0.6 * len(categories) + 2),
+                                      sharey=True)
+    fig.suptitle("Topic \u00d7 Variant Pressure Effect Heatmap", fontweight="bold", fontsize=14)
+
+    for ax, col, title in [(ax_a, "delta_asch", "Asch (Peer) Pressure Effect"),
+                            (ax_b, "delta_authority", "Authority Pressure Effect")]:
+        pivot = pooled.pivot_table(index="dataset_category", columns="variant", values=col)
+        pivot = pivot.reindex(index=categories, columns=variants)
+        vals = pivot.values[~np.isnan(pivot.values)] if pivot.values.size else [0]
+        m = max(abs(vals.min()), abs(vals.max())) if len(vals) else 0.15
+        m = max(m, 0.01)
+        sns.heatmap(pivot, ax=ax, cmap="RdBu_r", vmin=-m, vmax=m, annot=True, fmt="+.1%",
+                    linewidths=0.5, linecolor="white", cbar_kws={"label": "\u0394 Error Rate", "shrink": 0.8})
+        ax.set_xticklabels([VARIANT_LABELS.get(v, v) for v in variants], rotation=30, ha="right")
+        ax.set_ylabel("Topic" if ax is ax_a else "")
+        ax.set_title(title)
+
+    fig.tight_layout()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=300)
+    plt.close(fig)
+
+
+def plot_pub_sankey_conformity(df_all: pd.DataFrame, out_path: Path) -> None:
+    """Fig 12: 2xN Sankey-style conformity flow diagrams grouped by variant family."""
+    from matplotlib.patches import FancyArrowPatch, Rectangle as MplRect
+    _pub_style()
+
+    factual = df_all[df_all["is_factual"] & (~df_all["is_empty"])].copy()
+    if factual.empty:
+        return
+
+    present = set(factual["variant"].unique())
+    families: List[Tuple[str, List[str]]] = []
+    instruct_fam = [v for v in ["instruct", "instruct_sft", "instruct_dpo"] if v in present]
+    think_fam = [v for v in ["think", "think_sft", "think_dpo"] if v in present]
+    base_fam = [v for v in ["base"] if v in present]
+    if instruct_fam:
+        families.append(("Instruct Family", instruct_fam))
+    if think_fam:
+        families.append(("Think Family", think_fam))
+    if base_fam and not instruct_fam and not think_fam:
+        families.append(("Base", base_fam))
+    if not families:
+        return
+
+    pressure_conds = [("asch_history_5", "Asch (Peer Pressure)"), ("authoritative_bias", "Authority Pressure")]
+    nrows = len(families)
+    ncols = len(pressure_conds)
+
+    fig, axes = plt.subplots(nrows, ncols, figsize=(6 * ncols, 5 * nrows + 1.5))
+    if nrows == 1 and ncols == 1:
+        axes = np.array([[axes]])
+    elif nrows == 1:
+        axes = axes[np.newaxis, :]
+    elif ncols == 1:
+        axes = axes[:, np.newaxis]
+
+    flow_colors = {"held_firm": "#4CAF50", "truth_override": "#E57373",
+                   "rescue": "#5C8DB8", "still_wrong": "#BDBDBD"}
+
+    for ri, (fam_name, fam_variants) in enumerate(families):
+        fam_data = factual[factual["variant"].isin(fam_variants)]
+        for ci, (cond, cond_label) in enumerate(pressure_conds):
+            ax = axes[ri, ci]
+            ctrl = fam_data[fam_data["condition_name"] == "control"][
+                ["variant", "model_id", "item_id", "is_correct"]
+            ].rename(columns={"is_correct": "ctrl_correct"})
+            pres = fam_data[fam_data["condition_name"] == cond][
+                ["variant", "model_id", "item_id", "is_correct"]
+            ].rename(columns={"is_correct": "pres_correct"})
+            merged = ctrl.merge(pres, on=["variant", "model_id", "item_id"], how="inner")
+            if merged.empty:
+                ax.text(0.5, 0.5, "No paired data", ha="center", va="center",
+                        transform=ax.transAxes, fontsize=12, alpha=0.5)
+                ax.set_title(f"{fam_name}\n{cond_label}")
+                ax.axis("off")
+                continue
+
+            cc = int(((merged["ctrl_correct"] == 1) & (merged["pres_correct"] == 1)).sum())
+            ci_count = int(((merged["ctrl_correct"] == 1) & (merged["pres_correct"] == 0)).sum())
+            ic = int(((merged["ctrl_correct"] == 0) & (merged["pres_correct"] == 1)).sum())
+            ii = int(((merged["ctrl_correct"] == 0) & (merged["pres_correct"] == 0)).sum())
+            total = cc + ci_count + ic + ii
+            if total == 0:
+                ax.text(0.5, 0.5, "n=0", ha="center", va="center",
+                        transform=ax.transAxes, fontsize=12, alpha=0.5)
+                ax.set_title(f"{fam_name}\n{cond_label}")
+                ax.axis("off")
+                continue
+
+            ctrl_correct = cc + ci_count
+            ctrl_incorrect = ic + ii
+
+            bar_w = 0.12
+            gap = 0.76
+            left_x = 0.0
+            right_x = left_x + gap
+
+            def _draw_bar(ax_ref, x, y_start, height, color, label_text):
+                rect = MplRect((x, y_start), bar_w, height, facecolor=color, edgecolor="white", linewidth=0.5)
+                ax_ref.add_patch(rect)
+                if height / total > 0.04:
+                    ax_ref.text(x + bar_w / 2, y_start + height / 2, label_text,
+                                ha="center", va="center", fontsize=7, color="white", fontweight="bold")
+
+            def _draw_flow(ax_ref, y_l_start, y_l_end, y_r_start, y_r_end, color, alpha=0.35):
+                from matplotlib.patches import Polygon
+                xs = [left_x + bar_w, left_x + bar_w + 0.02,
+                      right_x - 0.02, right_x,
+                      right_x, right_x - 0.02,
+                      left_x + bar_w + 0.02, left_x + bar_w]
+                ys = [y_l_start, y_l_start, y_r_start, y_r_start,
+                      y_r_end, y_r_end, y_l_end, y_l_end]
+                poly = Polygon(list(zip(xs, ys)), closed=True, facecolor=color, alpha=alpha, edgecolor="none")
+                ax_ref.add_patch(poly)
+
+            _draw_bar(ax, left_x, 0, ctrl_incorrect, "#78909C",
+                      f"Ctrl\nIncorrect\n{ctrl_incorrect / total:.0%}")
+            _draw_bar(ax, left_x, ctrl_incorrect, ctrl_correct, "#42A5F5",
+                      f"Ctrl\nCorrect\n{ctrl_correct / total:.0%}")
+
+            r_y = 0
+            _draw_bar(ax, right_x, r_y, ii, flow_colors["still_wrong"],
+                      f"Still Wrong\n{ii / total:.0%}")
+            r_y += ii
+            _draw_bar(ax, right_x, r_y, ic, flow_colors["rescue"],
+                      f"Rescue\n{ic / total:.0%}")
+            r_y += ic
+            _draw_bar(ax, right_x, r_y, ci_count, flow_colors["truth_override"],
+                      f"Truth\nOverride\n{ci_count / total:.0%}")
+            r_y += ci_count
+            _draw_bar(ax, right_x, r_y, cc, flow_colors["held_firm"],
+                      f"Held Firm\n{cc / total:.0%}")
+
+            _draw_flow(ax, ctrl_incorrect, ctrl_incorrect + ctrl_correct,
+                       ii + ic + ci_count, ii + ic + ci_count + cc, flow_colors["held_firm"])
+            _draw_flow(ax, ctrl_incorrect, ctrl_incorrect + ctrl_correct,
+                       ii + ic, ii + ic + ci_count, flow_colors["truth_override"])
+            _draw_flow(ax, 0, ctrl_incorrect, ii, ii + ic, flow_colors["rescue"])
+            _draw_flow(ax, 0, ctrl_incorrect, 0, ii, flow_colors["still_wrong"])
+
+            ax.set_xlim(-0.05, right_x + bar_w + 0.05)
+            ax.set_ylim(-total * 0.02, total * 1.02)
+            ax.set_title(f"{fam_name}\n{cond_label}", fontweight="bold", fontsize=11)
+            ax.text(left_x + bar_w / 2, -total * 0.04, "Under\nControl", ha="center", fontsize=8)
+            ax.text(right_x + bar_w / 2, -total * 0.04, "Under\nPressure", ha="center", fontsize=8)
+            ax.text((left_x + right_x + bar_w) / 2, -total * 0.08,
+                    f"n = {total:,} paired items", ha="center", fontsize=8, style="italic")
+            ax.axis("off")
+
+    from matplotlib.patches import Patch
+    legend_patches = [
+        Patch(facecolor=flow_colors["held_firm"], label="Held Firm  (Correct \u2192 Correct)"),
+        Patch(facecolor=flow_colors["truth_override"], label="Truth Override  (Correct \u2192 Incorrect)"),
+        Patch(facecolor=flow_colors["rescue"], label="Rescue  (Incorrect \u2192 Correct)"),
+        Patch(facecolor=flow_colors["still_wrong"], label="Still Wrong  (Incorrect \u2192 Incorrect)"),
+    ]
+    fig.legend(handles=legend_patches, loc="lower center", ncol=4, fontsize=9,
+               bbox_to_anchor=(0.5, -0.02))
+    fig.suptitle("Conformity Flow: Control Outcome to Under-Pressure Outcome",
+                 fontweight="bold", fontsize=14)
+    fig.tight_layout(rect=[0, 0.04, 1, 0.96])
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=300)
+    plt.close(fig)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--runs-dir", type=str, default="runs-hpc", help="Runs directory containing <timestamp>_<run_id>/ folders")
@@ -1011,6 +1560,26 @@ def main() -> int:
             "runner's correctness scoring but want a more faithful conformity proxy."
         ),
     )
+    ap.add_argument(
+        "--fixed-temperature",
+        type=float,
+        default=None,
+        help=(
+            "Override all temperature values to a single fixed value. Useful when the actual sampling "
+            "temperature was constant (e.g., due to a gateway bug) regardless of the configured value."
+        ),
+    )
+    ap.add_argument(
+        "--exclude-variants",
+        nargs="+",
+        default=None,
+        help="Variant names to exclude from analysis (e.g., rl_zero).",
+    )
+    ap.add_argument(
+        "--publication",
+        action="store_true",
+        help="Generate publication-quality figures in behavioral/figures/ subdirectory.",
+    )
     args = ap.parse_args()
 
     runs_dir = Path(args.runs_dir)
@@ -1038,6 +1607,13 @@ def main() -> int:
         dfs.append(df)
 
     df_all = pd.concat(dfs, ignore_index=True)
+
+    if args.fixed_temperature is not None:
+        df_all["temperature"] = float(args.fixed_temperature)
+        temps = [float(args.fixed_temperature)]
+
+    if args.exclude_variants:
+        df_all = df_all[~df_all["variant"].isin(args.exclude_variants)].copy()
 
     if args.use_strict_scoring:
         # Replace the scoring columns used by downstream aggregations.
@@ -1217,6 +1793,37 @@ def main() -> int:
                 cmap_name="Blues",
                 vmin=0.0,
             )
+
+    # --- Publication figures ---
+    if args.publication:
+        pub_figs = out_dir / "behavioral" / "figures"
+        pub_tables = out_dir / "behavioral" / "tables"
+        pub_figs.mkdir(parents=True, exist_ok=True)
+        pub_tables.mkdir(parents=True, exist_ok=True)
+
+        plot_pub_error_rate_dot(factual_rates, pub_figs / "fig1_error_rate_dot_plot.png")
+        plot_pub_pressure_lollipop(effects, pub_figs / "fig2_pressure_lollipop.png")
+        plot_pub_topic_analysis(factual_rates, effects, pub_figs / "fig4_topic_analysis.png")
+        plot_pub_truth_override_rescue(truth_override, truth_rescue,
+                                       pub_figs / "fig5_truth_override_rescue_dumbbell.png")
+        plot_pub_endorsement_slope(wrong_answer_flip, opinion,
+                                   pub_figs / "fig6_endorsement_slope.png")
+        plot_pub_topic_pressure_heatmap(effects, pub_figs / "fig9_topic_pressure_heatmap.png")
+        plot_pub_sankey_conformity(df_all, pub_figs / "fig12_sankey_conformity.png")
+
+        factual_rates.to_csv(pub_tables / "factual_rates_by_temp_variant_condition_category.csv", index=False)
+        effects.to_csv(pub_tables / "factual_pressure_deltas.csv", index=False)
+        if not truth_override.empty:
+            truth_override.to_csv(pub_tables / "truth_override.csv", index=False)
+        if not truth_rescue.empty:
+            truth_rescue.to_csv(pub_tables / "truth_rescue.csv", index=False)
+        if not opinion.empty:
+            opinion.to_csv(pub_tables / "opinion_agreement.csv", index=False)
+        if not wrong_answer_flip.empty:
+            wrong_answer_flip.to_csv(pub_tables / "wrong_answer_flip.csv", index=False)
+
+        print(f"  Publication figures -> {pub_figs}")
+        print(f"  Publication tables  -> {pub_tables}")
 
     # Write a lightweight index.md for convenience
     idx = [

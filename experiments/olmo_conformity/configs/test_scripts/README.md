@@ -8,6 +8,9 @@ This folder contains small local smoke-test configs and shell scripts.
 
 Suggested usage:
 - `bash 01_run_trials_all_temps.sh`
-- `bash 02_judgeval_all_temps.sh` (optional)
+- `bash 02_judgeval_all_temps.sh` (optional; requires JUDGE_MODEL and Ollama)
 - `bash 03_posthoc_all_temps.sh` (optional; requires local HF/torch tooling)
 - `bash 04_report_all_temps.sh`
+
+To re-run judgeval and overwrite existing `parsed_answer_json` (e.g. after judge schema changes):
+- `FORCE_JUDGEVAL=1 bash 02_judgeval_all_temps.sh`
