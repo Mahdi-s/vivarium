@@ -1,7 +1,7 @@
 {
   "_comment": "Judge config for local Ollama inference on M4 Ultra. All fields are optional — omit any field to fall back to the in-code default. Set prompt_version to a new string whenever you change the prompts so every saved label is traceable. use_json_format=false: qwen3:0.6b returns empty with format=json; set true for larger models.",
 
-  "judge_model": "gpt-oss:20b",
+  "judge_model": "gemma3:12b",
   "use_json_format": true,
   "ollama_base": "http://localhost:11434/v1",
   "prompt_version": "2026-03-03_local_v3",
