@@ -138,7 +138,7 @@
     "temperature": 1.0,
     "top_k": 50,
     "top_p": 0.9,
-    "max_items_per_dataset": 200,
+    "max_items_per_dataset": 50,
     "notes": "temperature=1.0 for full stochastic exploration; top_k=50/top_p=0.9 locked; seed=42 for reproducibility"
   },
   "scientific_notes": {
@@ -148,6 +148,7 @@
       "Category analysis: Results should be analyzed by dataset category to test domain effects",
       "Temperature sensitivity: Compare with lower temperatures to identify temperature-sensitive behaviors"
     ],
-    "categories": ["general", "opinion", "math", "science", "knowledge", "truthfulness", "reasoning"]
+    "categories": ["general", "opinion", "math", "science", "knowledge", "truthfulness", "reasoning"],
+    "v6_publication": "max_items_per_dataset=50 is the V6 publication cap (same for all temperatures, all 12 conditions, all 8 models). Same 50 items per dataset are used across every (condition x model) cell."
   }
 }

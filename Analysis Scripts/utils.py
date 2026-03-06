@@ -79,7 +79,7 @@ def build_arg_parser(*, description: str) -> argparse.ArgumentParser:
 
 
 def load_db_for_run(run_ref: RunRef):
-    from aam.analytics.utils import load_simulation_db
+    from vivarium.analytics.utils import load_simulation_db
 
     return load_simulation_db(run_ref.run_dir)
 

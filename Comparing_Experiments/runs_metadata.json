@@ -1,6 +1,6 @@
 {
   "created_at": "2026-01-31T20:11:08.136100",
-  "updated_at": "2026-02-04T00:30:31.787934",
+  "updated_at": "2026-02-26T22:51:53.891725",
   "experiments": {
     "0.0": {
       "temperature": 0.0,
@@ -67,6 +67,102 @@
       "error_message": null,
       "started_at": null,
       "completed_at": null
+    },
+    "base_0.6": {
+      "temperature": 0.6,
+      "run_id": "4be0bc8c-6efe-4a98-a387-b08763feb667",
+      "run_dir": "/Users/mahdi/repos/abstractAgentMachine/runs/20260226_204055_4be0bc8c-6efe-4a98-a387-b08763feb667",
+      "db_path": "/Users/mahdi/repos/abstractAgentMachine/runs/20260226_204055_4be0bc8c-6efe-4a98-a387-b08763feb667/simulation.db",
+      "config_file": "suite_expanded_localtest_by_model.json (base, T=0.6)",
+      "status": "completed",
+      "error_message": null,
+      "started_at": "2026-02-26T20:40:55.094217",
+      "completed_at": "2026-02-26T20:50:54.699266",
+      "model_variant": "base"
+    },
+    "instruct_0.6": {
+      "temperature": 0.6,
+      "run_id": "5e7197ce-88f1-46b0-8f94-61f9bd4dd888",
+      "run_dir": "/Users/mahdi/repos/abstractAgentMachine/runs/20260226_205054_5e7197ce-88f1-46b0-8f94-61f9bd4dd888",
+      "db_path": "/Users/mahdi/repos/abstractAgentMachine/runs/20260226_205054_5e7197ce-88f1-46b0-8f94-61f9bd4dd888/simulation.db",
+      "config_file": "suite_expanded_localtest_by_model.json (instruct, T=0.6)",
+      "status": "completed",
+      "error_message": null,
+      "started_at": "2026-02-26T20:50:54.704506",
+      "completed_at": "2026-02-26T20:55:01.734809",
+      "model_variant": "instruct"
+    },
+    "instruct_sft_0.6": {
+      "temperature": 0.6,
+      "run_id": "89037b43-6344-4851-bfc4-344e4e6c474d",
+      "run_dir": "/Users/mahdi/repos/abstractAgentMachine/runs/20260226_205501_89037b43-6344-4851-bfc4-344e4e6c474d",
+      "db_path": "/Users/mahdi/repos/abstractAgentMachine/runs/20260226_205501_89037b43-6344-4851-bfc4-344e4e6c474d/simulation.db",
+      "config_file": "suite_expanded_localtest_by_model.json (instruct_sft, T=0.6)",
+      "status": "completed",
+      "error_message": null,
+      "started_at": "2026-02-26T20:55:01.737601",
+      "completed_at": "2026-02-26T20:57:56.939021",
+      "model_variant": "instruct_sft"
+    },
+    "instruct_dpo_0.6": {
+      "temperature": 0.6,
+      "run_id": "35ad8445-1be7-4b17-8c81-39b3f1e76fb5",
+      "run_dir": "/Users/mahdi/repos/abstractAgentMachine/runs/20260226_205757_35ad8445-1be7-4b17-8c81-39b3f1e76fb5",
+      "db_path": "/Users/mahdi/repos/abstractAgentMachine/runs/20260226_205757_35ad8445-1be7-4b17-8c81-39b3f1e76fb5/simulation.db",
+      "config_file": "suite_expanded_localtest_by_model.json (instruct_dpo, T=0.6)",
+      "status": "completed",
+      "error_message": null,
+      "started_at": "2026-02-26T20:57:56.942208",
+      "completed_at": "2026-02-26T21:04:07.251061",
+      "model_variant": "instruct_dpo"
+    },
+    "think_0.6": {
+      "temperature": 0.6,
+      "run_id": "27647719-9c32-469b-8ea8-49e5cb1dfce5",
+      "run_dir": "/Users/mahdi/repos/abstractAgentMachine/runs/20260226_210407_27647719-9c32-469b-8ea8-49e5cb1dfce5",
+      "db_path": "/Users/mahdi/repos/abstractAgentMachine/runs/20260226_210407_27647719-9c32-469b-8ea8-49e5cb1dfce5/simulation.db",
+      "config_file": "suite_expanded_localtest_by_model.json (think, T=0.6)",
+      "status": "completed",
+      "error_message": null,
+      "started_at": "2026-02-26T21:04:07.254139",
+      "completed_at": "2026-02-26T21:29:43.792690",
+      "model_variant": "think"
+    },
+    "think_sft_0.6": {
+      "temperature": 0.6,
+      "run_id": "453b5b2a-9f74-4114-bdef-71bc8f4bd2cd",
+      "run_dir": "/Users/mahdi/repos/abstractAgentMachine/runs/20260226_212943_453b5b2a-9f74-4114-bdef-71bc8f4bd2cd",
+      "db_path": "/Users/mahdi/repos/abstractAgentMachine/runs/20260226_212943_453b5b2a-9f74-4114-bdef-71bc8f4bd2cd/simulation.db",
+      "config_file": "suite_expanded_localtest_by_model.json (think_sft, T=0.6)",
+      "status": "completed",
+      "error_message": null,
+      "started_at": "2026-02-26T21:29:43.797207",
+      "completed_at": "2026-02-26T22:04:00.898445",
+      "model_variant": "think_sft"
+    },
+    "think_dpo_0.6": {
+      "temperature": 0.6,
+      "run_id": "a7b3f903-d0d2-42d6-9afc-f037b50f4b59",
+      "run_dir": "/Users/mahdi/repos/abstractAgentMachine/runs/20260226_220401_a7b3f903-d0d2-42d6-9afc-f037b50f4b59",
+      "db_path": "/Users/mahdi/repos/abstractAgentMachine/runs/20260226_220401_a7b3f903-d0d2-42d6-9afc-f037b50f4b59/simulation.db",
+      "config_file": "suite_expanded_localtest_by_model.json (think_dpo, T=0.6)",
+      "status": "completed",
+      "error_message": null,
+      "started_at": "2026-02-26T22:04:00.902583",
+      "completed_at": "2026-02-26T22:38:29.103365",
+      "model_variant": "think_dpo"
+    },
+    "rl_zero_0.6": {
+      "temperature": 0.6,
+      "run_id": "5b335082-6715-4fec-a0ea-e2f7e04e1fa9",
+      "run_dir": "/Users/mahdi/repos/abstractAgentMachine/runs/20260226_223829_5b335082-6715-4fec-a0ea-e2f7e04e1fa9",
+      "db_path": "/Users/mahdi/repos/abstractAgentMachine/runs/20260226_223829_5b335082-6715-4fec-a0ea-e2f7e04e1fa9/simulation.db",
+      "config_file": "suite_expanded_localtest_by_model.json (rl_zero, T=0.6)",
+      "status": "completed",
+      "error_message": null,
+      "started_at": "2026-02-26T22:38:29.107799",
+      "completed_at": "2026-02-26T22:51:53.891365",
+      "model_variant": "rl_zero"
     }
   }
 }

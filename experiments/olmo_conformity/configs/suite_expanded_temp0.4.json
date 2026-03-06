@@ -138,7 +138,7 @@
     "temperature": 0.4,
     "top_k": 50,
     "top_p": 0.9,
-    "max_items_per_dataset": 200,
+    "max_items_per_dataset": 50,
     "notes": "temperature=0.4 for moderate-low sampling variance; top_k=50/top_p=0.9 locked; seed=42 for reproducibility"
   },
   "scientific_notes": {
@@ -147,6 +147,7 @@
       "Temperature 0.4: Moderate-low variance sampling",
       "Category analysis: Results should be analyzed by dataset category to test domain effects"
     ],
-    "categories": ["general", "opinion", "math", "science", "knowledge", "truthfulness", "reasoning"]
+    "categories": ["general", "opinion", "math", "science", "knowledge", "truthfulness", "reasoning"],
+    "v6_publication": "max_items_per_dataset=50 is the V6 publication cap (same for all temperatures, all 12 conditions, all 8 models). Same 50 items per dataset are used across every (condition x model) cell."
   }
 }

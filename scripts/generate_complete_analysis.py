@@ -23,7 +23,7 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from aam.analytics import (
+from vivarium.analytics import (
     compute_behavioral_metrics,
     generate_behavioral_graphs,
     export_behavioral_logs,
@@ -43,7 +43,7 @@ from aam.analytics import (
     export_token_logs,
     compute_all_correlations,
 )
-from aam.analytics.utils import load_simulation_db, get_run_metadata, check_missing_prerequisites, save_metrics_json, save_table_csv, ensure_logs_dir
+from vivarium.analytics.utils import load_simulation_db, get_run_metadata, check_missing_prerequisites, save_metrics_json, save_table_csv, ensure_logs_dir
 
 
 def extract_run_id(run_dir: str) -> str:

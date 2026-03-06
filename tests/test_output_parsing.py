@@ -12,7 +12,7 @@ if SRC_ROOT not in sys.path:
     sys.path.insert(0, SRC_ROOT)
 
 
-from aam.output_parsing import OutputParsingConfig, OutputQualityLabel, classify_output  # noqa: E402
+from vivarium.output_parsing import OutputParsingConfig, OutputQualityLabel, classify_output  # noqa: E402
 
 
 class OutputParsingTests(unittest.TestCase):

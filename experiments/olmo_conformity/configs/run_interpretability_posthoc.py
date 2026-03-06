@@ -42,21 +42,32 @@ SRC_DIR = REPO_ROOT / "src"
 sys.path.insert(0, str(SRC_DIR))
 
 
-from aam.analytics.reporting import ScientificReportGenerator  # noqa: E402
-from aam.experiments.olmo_conformity.analysis import generate_core_figures  # noqa: E402
-from aam.experiments.olmo_conformity.answer_logprobs import (  # noqa: E402
+from vivarium.analytics.reporting import ScientificReportGenerator  # noqa: E402
+from vivarium.experiments.olmo_conformity.activation_patching import (  # noqa: E402
+    plot_activation_patching_heatmap,
+    run_activation_patching,
+)
+from vivarium.experiments.olmo_conformity.analysis import generate_core_figures  # noqa: E402
+from vivarium.experiments.olmo_conformity.answer_logprobs import (  # noqa: E402
     compute_and_store_answer_logprobs_for_run,
 )
-from aam.experiments.olmo_conformity.intervention import run_intervention_sweep  # noqa: E402
-from aam.experiments.olmo_conformity.logit_lens import (  # noqa: E402
-    compute_logit_lens_topk_for_trials,
+from vivarium.experiments.olmo_conformity.contrastive_steering import (  # noqa: E402
+    compute_deference_vector,
+    plot_contrastive_steering_results,
+    run_contrastive_steering_test,
 )
-from aam.experiments.olmo_conformity.olmo_utils import get_olmo_model_config  # noqa: E402
-from aam.experiments.olmo_conformity.prompts import build_messages  # noqa: E402
-from aam.experiments.olmo_conformity.vector_analysis import run_truth_social_vector_analysis  # noqa: E402
-from aam.interpretability import CaptureConfig, CaptureContext  # noqa: E402
-from aam.llm_gateway import select_local_gateway  # noqa: E402
-from aam.persistence import TraceDb, TraceDbConfig  # noqa: E402
+from vivarium.experiments.olmo_conformity.intervention import run_intervention_sweep  # noqa: E402
+from vivarium.experiments.olmo_conformity.logit_lens import (  # noqa: E402
+    compute_logit_lens_topk_for_trials,
+    compute_logit_lens_tug_of_war_for_run,
+    plot_logit_lens_tug_of_war,
+)
+from vivarium.experiments.olmo_conformity.olmo_utils import get_olmo_model_config  # noqa: E402
+from vivarium.experiments.olmo_conformity.prompts import build_messages  # noqa: E402
+from vivarium.experiments.olmo_conformity.vector_analysis import run_truth_social_vector_analysis  # noqa: E402
+from vivarium.interpretability import CaptureConfig, CaptureContext  # noqa: E402
+from vivarium.llm_gateway import select_local_gateway  # noqa: E402
+from vivarium.persistence import TraceDb, TraceDbConfig  # noqa: E402
 
 
 PATHS_CONFIG_FILE = SCRIPT_DIR / "paths.json"
@@ -536,6 +547,24 @@ def main(argv: Optional[List[str]] = None) -> int:
     p.add_argument("--intervention-alphas", type=str, default="0.5,1.0,2.0")
     p.add_argument("--intervention-component-hook", type=str, default="hook_resid_post")
 
+    # New interpretability analyses
+    p.add_argument("--skip-logit-lens-tug-of-war", action="store_true", help="Skip logit lens tug-of-war analysis.")
+    p.add_argument("--skip-contrastive-steering", action="store_true", help="Skip contrastive vector steering (RepE / CAA).")
+    p.add_argument("--skip-activation-patching", action="store_true", help="Skip activation patching (causal tracing).")
+    p.add_argument(
+        "--steering-alphas", type=str, default="-2.0,-1.0,0.5,1.0,2.0,4.0",
+        help="Comma-separated alpha values for contrastive steering.",
+    )
+    p.add_argument(
+        "--steering-layers", type=str, default="10,11,12,13,14,15,16,17,18,19,20",
+        help="Comma-separated layers for steering vector computation.",
+    )
+    p.add_argument("--steering-min-pairs", type=int, default=50, help="Minimum Control/Authority pairs for steering.")
+    p.add_argument(
+        "--patching-layers", type=str, default=None,
+        help="Comma-separated layers for activation patching (defaults to --capture-layers).",
+    )
+
     # Reporting
     p.add_argument("--skip-reports", action="store_true")
 
@@ -569,7 +598,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     )
 
     print("=" * 70)
-    print("AAM | Olmo Conformity | Posthoc Interpretability Pipeline")
+    print("Vivarium | Olmo Conformity | Posthoc Interpretability Pipeline")
     print("=" * 70)
     print(f"run_id={resolved.run_id}")
     print(f"run_dir={resolved.run_dir}")
@@ -689,6 +718,133 @@ def main(argv: Optional[List[str]] = None) -> int:
         vector_results = {"skipped": True, "by_variant": {}}
         print("\n[Step 3/5] Skipping vector analysis (--skip-vector-analysis)")
 
+    # 3a) Logit Lens Tug-of-War
+    tow_stats: Dict[str, Any] = {"skipped": True}
+    if bool(args.skip_logit_lens_tug_of_war):
+        print("\n[Step 3a] Skipping logit lens tug-of-war (--skip-logit-lens-tug-of-war)")
+    else:
+        print("\n[Step 3a] Computing logit lens tug-of-war (P(truth) vs P(sycophantic))...")
+        model_rows = trace_db.conn.execute(
+            "SELECT DISTINCT model_id FROM conformity_trials WHERE run_id = ? ORDER BY model_id ASC;",
+            (str(resolved.run_id),),
+        ).fetchall()
+        for mr in model_rows:
+            mid = str(mr["model_id"])
+            try:
+                res = compute_logit_lens_tug_of_war_for_run(
+                    trace_db=trace_db,
+                    run_id=resolved.run_id,
+                    model_id=mid,
+                    layers=capture_layers,
+                    skip_existing=True,
+                )
+                tow_stats[mid] = res
+                print(f"  model={mid}: {res}")
+            except Exception as e:
+                print(f"  WARNING: tug-of-war failed for {mid}: {e}")
+        try:
+            for mr in model_rows:
+                plot_logit_lens_tug_of_war(
+                    trace_db=trace_db,
+                    run_id=resolved.run_id,
+                    output_dir=str(resolved.run_dir),
+                    model_id=str(mr["model_id"]),
+                )
+        except Exception as e:
+            print(f"  WARNING: tug-of-war plotting failed: {e}")
+        tow_stats["skipped"] = False
+        print("[OK] Logit lens tug-of-war complete")
+
+    # 3b) Contrastive Vector Steering
+    steering_stats: Dict[str, Any] = {"skipped": True}
+    if bool(args.skip_contrastive_steering):
+        print("\n[Step 3b] Skipping contrastive steering (--skip-contrastive-steering)")
+    else:
+        print("\n[Step 3b] Running contrastive vector steering (RepE / CAA)...")
+        steering_layers = _parse_csv_ints(str(args.steering_layers))
+        steering_alphas = _parse_csv_floats(str(args.steering_alphas))
+        steering_min_pairs = int(args.steering_min_pairs)
+        model_rows = trace_db.conn.execute(
+            "SELECT DISTINCT model_id FROM conformity_trials WHERE run_id = ? ORDER BY model_id ASC;",
+            (str(resolved.run_id),),
+        ).fetchall()
+        total_steering = 0
+        for mr in model_rows:
+            mid = str(mr["model_id"])
+            try:
+                interp_steering_dir = str(resolved.artifacts_dir / "interpretability" / "contrastive_steering")
+                vec_result = compute_deference_vector(
+                    trace_db=trace_db,
+                    run_id=resolved.run_id,
+                    model_id=mid,
+                    layers=steering_layers,
+                    output_dir=interp_steering_dir,
+                    min_pairs=steering_min_pairs,
+                )
+                if not vec_result.get("skipped"):
+                    n_inserted = run_contrastive_steering_test(
+                        trace_db=trace_db,
+                        run_id=resolved.run_id,
+                        model_id=mid,
+                        vector_paths=vec_result["vector_paths"],
+                        alpha_values=steering_alphas,
+                        max_new_tokens=64,
+                    )
+                    total_steering += n_inserted
+                    print(f"  model={mid}: inserted={n_inserted}")
+                else:
+                    print(f"  model={mid}: skipped ({vec_result.get('reason')})")
+            except Exception as e:
+                print(f"  WARNING: contrastive steering failed for {mid}: {e}")
+        try:
+            plot_contrastive_steering_results(
+                trace_db=trace_db,
+                run_id=resolved.run_id,
+                output_dir=str(resolved.run_dir),
+            )
+        except Exception as e:
+            print(f"  WARNING: contrastive steering plotting failed: {e}")
+        steering_stats = {"skipped": False, "total_inserted": total_steering}
+        print("[OK] Contrastive steering complete")
+
+    # 3c) Activation Patching (Causal Tracing)
+    patching_stats: Dict[str, Any] = {"skipped": True}
+    if bool(args.skip_activation_patching):
+        print("\n[Step 3c] Skipping activation patching (--skip-activation-patching)")
+    else:
+        print("\n[Step 3c] Running activation patching (causal tracing)...")
+        patching_layers_str = str(args.patching_layers) if args.patching_layers else str(args.capture_layers)
+        patching_layers = _parse_csv_ints(patching_layers_str)
+        model_rows = trace_db.conn.execute(
+            "SELECT DISTINCT model_id FROM conformity_trials WHERE run_id = ? ORDER BY model_id ASC;",
+            (str(resolved.run_id),),
+        ).fetchall()
+        total_patching = 0
+        for mr in model_rows:
+            mid = str(mr["model_id"])
+            try:
+                n_inserted = run_activation_patching(
+                    trace_db=trace_db,
+                    run_id=resolved.run_id,
+                    model_id=mid,
+                    layers=patching_layers,
+                    max_new_tokens=64,
+                )
+                total_patching += n_inserted
+                print(f"  model={mid}: inserted={n_inserted}")
+            except Exception as e:
+                print(f"  WARNING: activation patching failed for {mid}: {e}")
+        try:
+            plot_activation_patching_heatmap(
+                trace_db=trace_db,
+                run_id=resolved.run_id,
+                output_dir=str(resolved.run_dir),
+            )
+        except Exception as e:
+            print(f"  WARNING: activation patching plotting failed: {e}")
+        patching_stats = {"skipped": False, "total_inserted": total_patching}
+        print("[OK] Activation patching complete")
+
     # 4) Interventions (targeted battery)
     if bool(args.skip_interventions) or str(args.intervention_battery) == "none":
         intervention_results = {"skipped": True}
@@ -750,6 +906,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         "logit_lens": logit_lens_stats,
         "answer_logprobs": answer_logprob_stats,
         "vector_analysis": vector_results,
+        "logit_lens_tug_of_war": tow_stats,
+        "contrastive_steering": steering_stats,
+        "activation_patching": patching_stats,
         "interventions": intervention_results,
         "report_paths": report_paths,
         "scientific_report_path": scientific_report_path,

@@ -16,8 +16,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import pandas as pd
 import json
-from aam.persistence import TraceDb, TraceDbConfig
-from aam.analytics import (
+from vivarium.persistence import TraceDb, TraceDbConfig
+from vivarium.analytics import (
     compute_behavioral_metrics,
     generate_behavioral_graphs,
     export_behavioral_logs,
@@ -36,7 +36,7 @@ from aam.analytics import (
     compute_activation_stats,
     export_activation_logs,
 )
-from aam.analytics.utils import (
+from vivarium.analytics.utils import (
     load_simulation_db,
     get_run_metadata,
     check_missing_prerequisites,

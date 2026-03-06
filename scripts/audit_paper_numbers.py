@@ -51,7 +51,7 @@ def _normalize_text_for_matching(text: Optional[str]) -> str:
 
 def evaluate_correctness(parsed_answer_text: str, ground_truth_text: Optional[str]) -> Optional[bool]:
     """
-    Copy of src/aam/experiments/olmo_conformity/runner.py::_evaluate_correctness
+    Copy of src/vivarium/experiments/olmo_conformity/runner.py::_evaluate_correctness
     evaluated on the already-parsed answer text.
     """
     if ground_truth_text is None:

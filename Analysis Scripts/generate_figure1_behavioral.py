@@ -8,7 +8,7 @@ def main() -> int:
     args = p.parse_args()
 
     ref = resolve_run_ref(run_id=args.run_id, run_dir=args.run_dir, runs_dir=args.runs_dir)
-    from aam.analytics import compute_behavioral_metrics, export_behavioral_logs, generate_behavioral_graphs
+    from vivarium.analytics import compute_behavioral_metrics, export_behavioral_logs, generate_behavioral_graphs
 
     db = load_db_for_run(ref)
     try:

@@ -35,7 +35,7 @@ class ProvenanceTests(unittest.TestCase):
             return False
 
     def test_merkle_logger_deterministic(self) -> None:
-        from aam.provenance import MerkleLogger
+        from vivarium.provenance import MerkleLogger
 
         ml = MerkleLogger()
         leaf1, root1 = ml.add_step(step_id="0", agent_id="a", prompt_hash="p", activation_hash="x")
@@ -63,9 +63,9 @@ class ProvenanceTests(unittest.TestCase):
         import torch
         from safetensors import safe_open
 
-        from aam.interpretability import CaptureConfig, CaptureContext
-        from aam.persistence import TraceDb, TraceDbConfig
-        from aam.types import RunMetadata
+        from vivarium.interpretability import CaptureConfig, CaptureContext
+        from vivarium.persistence import TraceDb, TraceDbConfig
+        from vivarium.types import RunMetadata
 
         with tempfile.TemporaryDirectory() as td:
             tmp_path = Path(td)
@@ -110,7 +110,7 @@ class ProvenanceTests(unittest.TestCase):
 
     def test_select_local_gateway_routes_olmo(self) -> None:
         # Avoid actually loading a HF model by patching the gateway classes.
-        import aam.llm_gateway as g
+        import vivarium.llm_gateway as g
 
         calls = {"hf": 0, "tl": 0}
 

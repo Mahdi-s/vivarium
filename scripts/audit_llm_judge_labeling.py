@@ -739,7 +739,7 @@ def _render_report(
         lines.append("```")
         lines.append("")
         lines.append("Notes:")
-        lines.append("- Requires Ollama + an installed judge model (see `src/aam/experiments/olmo_conformity/ollama_judge.py`).")
+        lines.append("- Requires Ollama + an installed judge model (see `src/vivarium/experiments/olmo_conformity/ollama_judge.py`).")
         lines.append("- `olmo-conformity-judgeval` writes into `conformity_outputs.parsed_answer_json`.")
         return "\n".join(lines) + "\n"
 

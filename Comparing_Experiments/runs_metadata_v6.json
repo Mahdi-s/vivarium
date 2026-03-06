@@ -1,0 +1,77 @@
+{
+  "created_at": "2026-03-03",
+  "description": "V6 Publication Updates - same runs as v5 but analysis uses the balanced publication item set (item_set.csv) covering all 12 suite conditions and max_items_per_dataset=50 uniformly. Run temp1.0 had max_items_per_dataset accidentally set to 200 during execution; the item-set intersection corrects for this.",
+  "publication_notes": {
+    "max_items_per_dataset": 50,
+    "n_conditions": 12,
+    "n_models": 8,
+    "conditions": {
+      "behavioral": ["control", "asch_history_5", "authoritative_bias"],
+      "tone": ["asch_zhu_unbiased_unanimous_plain", "asch_zhu_unbiased_unanimous_neutral", "asch_zhu_unbiased_unanimous_confident", "asch_zhu_unbiased_unanimous_uncertain"],
+      "mitigation": ["asch_zhu_unbiased_da", "asch_zhu_unbiased_qd"],
+      "format": ["asch_zhu_unbiased_diverse_plain"],
+      "authority": ["authority_zhu_unbiased_trust", "authority_zhu_unbiased_trust_da"]
+    },
+    "models": ["base", "instruct", "instruct_sft", "instruct_dpo", "think", "think_sft", "think_dpo", "rl_zero"],
+    "item_set_manifest": "Comparing_Experiments/v6_publication/item_set.csv",
+    "missing_outputs_note": "Comparing_Experiments/v6_publication/missing_outputs_note.csv",
+    "analysis_command": "python 'Analysis Scripts/expanded_suite_behavioral_breakdown.py' --runs-dir runs_latest/runs --metadata Comparing_Experiments/runs_metadata_v6.json --publication-item-set Comparing_Experiments/v6_publication/item_set.csv --out-dir Comparing_Experiments/v6_publication --include-extra-conditions --use-judge-labels"
+  },
+  "experiments": {
+    "0.0": {
+      "temperature": 0.0,
+      "run_id": "9f240f89-e58e-423a-ae68-f990b31c84cd",
+      "run_dir": "20260224_225304_9f240f89-e58e-423a-ae68-f990b31c84cd",
+      "status": "completed",
+      "n_trials": 34794,
+      "n_with_output": 34794,
+      "n_missing_output": 0
+    },
+    "0.2": {
+      "temperature": 0.2,
+      "run_id": "46f0762a-210a-459a-8709-d24a0f194eb0",
+      "run_dir": "20260225_010113_46f0762a-210a-459a-8709-d24a0f194eb0",
+      "status": "completed",
+      "n_trials": 34746,
+      "n_with_output": 34746,
+      "n_missing_output": 0
+    },
+    "0.4": {
+      "temperature": 0.4,
+      "run_id": "bbd05985-d185-460a-b0aa-dd356d27ec94",
+      "run_dir": "20260225_041802_bbd05985-d185-460a-b0aa-dd356d27ec94",
+      "status": "completed",
+      "n_trials": 37978,
+      "n_with_output": 37978,
+      "n_missing_output": 0
+    },
+    "0.6": {
+      "temperature": 0.6,
+      "run_id": "86c72262-d1aa-41b5-9c22-d7b2e0570215",
+      "run_dir": "20260225_085516_86c72262-d1aa-41b5-9c22-d7b2e0570215",
+      "status": "completed",
+      "n_trials": 38170,
+      "n_with_output": 38170,
+      "n_missing_output": 0
+    },
+    "0.8": {
+      "temperature": 0.8,
+      "run_id": "9369442d-d825-4cd0-81a1-8ed276c37814",
+      "run_dir": "20260225_124244_9369442d-d825-4cd0-81a1-8ed276c37814",
+      "status": "completed",
+      "n_trials": 32925,
+      "n_with_output": 32925,
+      "n_missing_output": 0
+    },
+    "1.0": {
+      "temperature": 1.0,
+      "run_id": "9173bfae-4e8a-464f-8c9c-7ee91caa8b6e",
+      "run_dir": "20260225_130444_9173bfae-4e8a-464f-8c9c-7ee91caa8b6e",
+      "status": "completed",
+      "n_trials": 63315,
+      "n_with_output": 38608,
+      "n_missing_output": 24707,
+      "note": "Accidentally run with max_items_per_dataset=200 instead of 50; 24707 trials missing LLM output. Publication analysis uses item_set.csv intersection to exclude extra/missing items."
+    }
+  }
+}

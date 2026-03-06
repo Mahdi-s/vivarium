@@ -1,3 +1,4 @@
+#TODO fix from aam to vvm 
 #!/bin/bash
 echo "=== Verifying New Features ==="
 

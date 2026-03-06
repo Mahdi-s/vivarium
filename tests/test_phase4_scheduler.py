@@ -12,13 +12,13 @@ if SRC_ROOT not in sys.path:
     sys.path.insert(0, SRC_ROOT)
 
 
-from aam.agent_langgraph import SimpleCognitivePolicy  # noqa: E402
-from aam.llm_gateway import MockLLMGateway  # noqa: E402
-from aam.persistence import TraceDb, TraceDbConfig  # noqa: E402
-from aam.scheduler import BarrierScheduler, BarrierSchedulerConfig  # noqa: E402
-from aam.tools import default_tools  # noqa: E402
-from aam.types import ActionRequest, RunMetadata  # noqa: E402
-from aam.world_engine import WorldEngine, WorldEngineConfig  # noqa: E402
+from vivarium.agent_langgraph import SimpleCognitivePolicy  # noqa: E402
+from vivarium.llm_gateway import MockLLMGateway  # noqa: E402
+from vivarium.persistence import TraceDb, TraceDbConfig  # noqa: E402
+from vivarium.scheduler import BarrierScheduler, BarrierSchedulerConfig  # noqa: E402
+from vivarium.tools import default_tools  # noqa: E402
+from vivarium.types import ActionRequest, RunMetadata  # noqa: E402
+from vivarium.world_engine import WorldEngine, WorldEngineConfig  # noqa: E402
 
 
 class _DelayedEmitEventPolicy:

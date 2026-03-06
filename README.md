@@ -6,8 +6,6 @@ A deterministic, traceable multi-agent simulation platform with deep mechanistic
 
 Vivarium provides a **deterministic simulation kernel** that separates agent policy from platform execution, ensuring reproducible experiments. It integrates **TransformerLens** for activation capture, enabling researchers to correlate high-level social outcomes with low-level neural activations.
 
-The core engine that implements this logic is called **Abstract Agent Machine** (AAM); the Python package and imports use the short name `aam`, so you will see `aam` in the codebase and in `from aam.*` imports.
-
 ### Key Features
 
 - **Deterministic Execution**: Reproducible simulations via master seed and deterministic action ordering

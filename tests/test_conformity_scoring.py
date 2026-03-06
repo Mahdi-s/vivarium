@@ -12,7 +12,7 @@ if SRC_ROOT not in sys.path:
     sys.path.insert(0, SRC_ROOT)
 
 
-from aam.experiments.olmo_conformity.scoring import (  # noqa: E402
+from vivarium.experiments.olmo_conformity.scoring import (  # noqa: E402
     evaluate_correctness,
     normalize_text_for_matching,
     parse_answer_text,

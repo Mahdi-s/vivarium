@@ -37,7 +37,7 @@ SRC_DIR = REPO_ROOT / "src"
 sys.path.insert(0, str(SRC_DIR))
 
 
-from aam.persistence import TraceDb, TraceDbConfig  # noqa: E402
+from vivarium.persistence import TraceDb, TraceDbConfig  # noqa: E402
 
 
 BEHAVIORAL_CONDITIONS = ("control", "asch_history_5", "authoritative_bias")

@@ -3,7 +3,7 @@
 Post-hoc LLM judge scoring for an existing OLMo conformity run.
 
 This is a thin wrapper around:
-  python -m aam.run olmo-conformity-judgeval ...
+  python -m vivarium olmo-conformity-judgeval ...
 
 Why this wrapper exists:
 - On HPC we resolve run_dir under a scratch `runs_dir` (from paths.json) using run_id.
@@ -168,7 +168,7 @@ def main() -> int:
         if bool(args.hpc):
             ollama_proc = _ensure_ollama_serving(paths=paths, ollama_base=str(ollama_base), judge_model=str(judge_model))
 
-        from aam.run import main as aam_main  # imported after sys.path setup
+        from vivarium.run import main as aam_main  # imported after sys.path setup
 
         argv = [
             "olmo-conformity-judgeval",

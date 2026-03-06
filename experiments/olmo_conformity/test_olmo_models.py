@@ -12,13 +12,13 @@ Note: OLMo-3 is NOT supported by TransformerLens (no weight converter for Olmo3F
       We use HuggingFaceHookedGateway which provides equivalent activation capture functionality.
 
 Requirements:
-    pip install -e . from repository root (installs the aam package)
+    pip install -e . from repository root (installs the vivarium package)
     pip install -e .[interpretability] for torch/transformers support
 """
 
 from __future__ import annotations
 
-from aam.llm_gateway import HuggingFaceHookedGateway
+from vivarium.llm_gateway import HuggingFaceHookedGateway
 
 
 def test_model_loading(model_id: str) -> bool:

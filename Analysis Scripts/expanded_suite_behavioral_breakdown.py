@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
@@ -37,6 +38,35 @@ import seaborn as sns
 
 
 BEHAVIORAL_CONDITIONS = ("control", "asch_history_5", "authoritative_bias")
+
+TONE_CONDITIONS: Tuple[str, ...] = (
+    "asch_zhu_unbiased_unanimous_plain",
+    "asch_zhu_unbiased_unanimous_neutral",
+    "asch_zhu_unbiased_unanimous_confident",
+    "asch_zhu_unbiased_unanimous_uncertain",
+)
+MITIGATION_CONDITIONS: Tuple[str, ...] = ("asch_zhu_unbiased_da", "asch_zhu_unbiased_qd")
+FORMAT_CONTROL_CONDITIONS: Tuple[str, ...] = ("asch_zhu_unbiased_diverse_plain",)
+# Authority (Zhu et al.) conditions — part of the full 12-condition suite
+AUTHORITY_CONDITIONS: Tuple[str, ...] = (
+    "authority_zhu_unbiased_trust",
+    "authority_zhu_unbiased_trust_da",
+)
+ALL_EXTRA_CONDITIONS: Tuple[str, ...] = (
+    TONE_CONDITIONS + MITIGATION_CONDITIONS + FORMAT_CONTROL_CONDITIONS + AUTHORITY_CONDITIONS
+)
+
+EXTRA_CONDITION_LABELS: Dict[str, str] = {
+    "asch_zhu_unbiased_unanimous_plain": "Tone: Plain",
+    "asch_zhu_unbiased_unanimous_neutral": "Tone: Neutral",
+    "asch_zhu_unbiased_unanimous_confident": "Tone: Confident",
+    "asch_zhu_unbiased_unanimous_uncertain": "Tone: Uncertain",
+    "asch_zhu_unbiased_da": "Mitigation: DA",
+    "asch_zhu_unbiased_qd": "Mitigation: QD",
+    "asch_zhu_unbiased_diverse_plain": "Format: Diverse Plain",
+    "authority_zhu_unbiased_trust": "Authority: Trust",
+    "authority_zhu_unbiased_trust_da": "Authority: Trust+DA",
+}
 
 # Dataset categories (topic-level bins) for the expanded suite
 DATASET_TO_CATEGORY = {
@@ -67,15 +97,29 @@ VARIANT_LABELS = {
 }
 
 VARIANT_COLORS = {
-    "base": "#5B8BD6",
-    "instruct": "#E2725B",
-    "instruct_sft": "#F5A623",
-    "instruct_dpo": "#D4A017",
-    "think": "#2CA25F",
-    "think_sft": "#9B59B6",
-    "think_dpo": "#8E44AD",
-    "rl_zero": "#7F8C8D",
+    "base": "#7F8C8D",        # Grey (base)
+    "instruct": "#2980B9",    # Blue (Instruct family)
+    "instruct_sft": "#1F618D",  # Deep blue
+    "instruct_dpo": "#6C3483",  # Purple
+    "think": "#E67E22",       # Orange (Think family)
+    "think_sft": "#D35400",   # Deep orange
+    "think_dpo": "#A93226",   # Red
+    "rl_zero": "#566573",     # Dark grey
 }
+
+# Stage positions for training-trajectory plot
+_STAGE_X: Dict[str, float] = {
+    "base": 0.0,
+    "instruct": 1.0, "think": 1.0,
+    "instruct_sft": 2.0, "think_sft": 2.0,
+    "instruct_dpo": 3.0, "think_dpo": 3.0,
+    "rl_zero": 4.0,
+}
+
+_TRAINING_BRANCHES: List[Tuple[str, List[str]]] = [
+    ("Instruct Branch", ["base", "instruct", "instruct_sft", "instruct_dpo"]),
+    ("Think Branch", ["base", "think", "think_sft", "think_dpo"]),
+]
 
 ANSWER_SPAN_CHARS = 400  # how much of the completion tail we treat as the "answer region"
 
@@ -493,10 +537,19 @@ def _compute_agrees_wrong_answer_final(*, final_answer_text: str, wrong_answer: 
     return True
 
 
-def load_behavioral_df(db_path: Path, run_id: str, *, score_on_final_answer: bool = False) -> pd.DataFrame:
+def load_behavioral_df(
+    db_path: Path,
+    run_id: str,
+    *,
+    score_on_final_answer: bool = False,
+    use_judge_labels: bool = False,
+    extra_conditions: Tuple[str, ...] = (),
+) -> pd.DataFrame:
+    all_conditions = BEHAVIORAL_CONDITIONS + tuple(extra_conditions)
+    placeholders = ", ".join("?" * len(all_conditions))
     conn = sqlite3.connect(str(db_path))
     try:
-        query = """
+        query = f"""
         WITH first_outputs AS (
             SELECT trial_id, MIN(created_at) AS min_created_at
             FROM conformity_outputs
@@ -524,6 +577,7 @@ def load_behavioral_df(db_path: Path, run_id: str, *, score_on_final_answer: boo
             o.parsed_answer_text,
             o.is_correct,
             o.refusal_flag,
+            o.parsed_answer_json,
             o.latency_ms
         FROM conformity_trials t
         JOIN conformity_conditions c ON c.condition_id = t.condition_id
@@ -532,10 +586,10 @@ def load_behavioral_df(db_path: Path, run_id: str, *, score_on_final_answer: boo
         JOIN first_output_ids foi ON foi.trial_id = t.trial_id
         JOIN conformity_outputs o ON o.output_id = foi.output_id
         WHERE t.run_id = ?
-          AND c.name IN (?, ?, ?)
+          AND c.name IN ({placeholders})
         ;
         """
-        df = pd.read_sql_query(query, conn, params=[run_id, *BEHAVIORAL_CONDITIONS])
+        df = pd.read_sql_query(query, conn, params=[run_id, *all_conditions])
     finally:
         conn.close()
 
@@ -547,47 +601,107 @@ def load_behavioral_df(db_path: Path, run_id: str, *, score_on_final_answer: boo
     # Keep DB-provided flags for audit/debugging.
     df["is_correct_db"] = df["is_correct"]
 
-    # Always compute a strict post-hoc score for audit purposes.
-    df["is_correct_strict"] = [
-        _compute_is_correct_strict(parsed_answer_text=pa, ground_truth_text=gt)
-        for pa, gt in zip(df["parsed_answer_text"].tolist(), df["ground_truth_text"].tolist())
-    ]
-
-    # Answer-span used for endorsement scoring and debugging.
-    df["answer_span_text"] = df["parsed_answer_text"].map(_extract_answer_span)
-
-    # Final-answer extraction used for more reliable scoring on verbose variants.
-    df["final_answer_text"] = df["parsed_answer_text"].map(_extract_final_answer_text)
-
-    if score_on_final_answer:
-        # Re-score correctness and wrong-answer agreement on the extracted final answer.
-        df["is_correct"] = [
-            _compute_is_correct_final(final_answer_text=fa, ground_truth_text=gt, wrong_answer=wa)
-            for fa, gt, wa in zip(df["final_answer_text"].tolist(), df["ground_truth_text"].tolist(), df["wrong_answer"].tolist())
-        ]
-        df["agrees_wrong_answer"] = [
-            _compute_agrees_wrong_answer_final(final_answer_text=fa, wrong_answer=wa)
-            for fa, wa in zip(df["final_answer_text"].tolist(), df["wrong_answer"].tolist())
-        ]
+    if use_judge_labels:
+        # Use LLM judge labels from parsed_answer_json; ignore manual labels.
+        import json
+        judge_ic = []
+        judge_agree = []
+        judge_refusal = []
+        keep_mask = []
+        for _, row in df.iterrows():
+            pj = row.get("parsed_answer_json")
+            if pj is None or (isinstance(pj, str) and (pj.strip() == "" or "[parse_error]" in pj)):
+                keep_mask.append(False)
+                judge_ic.append(None)
+                judge_agree.append(False)
+                judge_refusal.append(0)
+                continue
+            try:
+                d = json.loads(pj) if isinstance(pj, str) else (pj or {})
+            except Exception:
+                keep_mask.append(False)
+                judge_ic.append(None)
+                judge_agree.append(False)
+                judge_refusal.append(0)
+                continue
+            ic_raw = d.get("is_correct")
+            ic = None
+            if ic_raw is not None:
+                if ic_raw in (1, "1", True):
+                    ic = 1
+                elif ic_raw in (0, "0", False):
+                    ic = 0
+            wa_raw = d.get("wrong_answer_endorsed")
+            agree = False
+            if wa_raw is not None and wa_raw in (1, "1", True):
+                agree = True
+            rf_raw = d.get("refusal_flag")
+            rf = 0
+            if rf_raw in (1, "1", True):
+                rf = 1
+            # Keep row if we have valid judge data for what we need
+            is_factual = pd.notna(row.get("ground_truth_text"))
+            has_pressure = row.get("wrong_answer") is not None and str(row.get("wrong_answer", "")).strip() != ""
+            ok = True
+            if is_factual and ic is None:
+                ok = False
+            if has_pressure and wa_raw is None:
+                ok = False
+            keep_mask.append(ok)
+            judge_ic.append(ic)
+            judge_agree.append(agree)
+            judge_refusal.append(rf)
+        df["is_correct"] = judge_ic
+        df["agrees_wrong_answer"] = judge_agree
+        df["agrees_wrong_answer_endorse"] = judge_agree  # judge provides endorsement directly
+        df["refusal_flag"] = judge_refusal
+        df["is_correct_strict"] = judge_ic  # align with is_correct for downstream compatibility
+        df["answer_span_text"] = df["parsed_answer_text"].map(_extract_answer_span)
+        df["final_answer_text"] = df["parsed_answer_text"].map(_extract_final_answer_text)
+        df = df.loc[keep_mask].copy()
     else:
-        # Default: preserve prior behavior for reproducibility (match anywhere in parsed text).
-        agree = []
-        for parsed, wrong in zip(df["parsed_answer_text"].tolist(), df["wrong_answer"].tolist()):
-            if wrong is None:
-                agree.append(False)
-            else:
-                agree.append(_match_answer(str(parsed or ""), str(wrong)))
-        df["agrees_wrong_answer"] = agree
+        # Always compute a strict post-hoc score for audit purposes.
+        df["is_correct_strict"] = [
+            _compute_is_correct_strict(parsed_answer_text=pa, ground_truth_text=gt)
+            for pa, gt in zip(df["parsed_answer_text"].tolist(), df["ground_truth_text"].tolist())
+        ]
 
-    # Always compute an endorsement-style wrong-answer agreement for audit purposes.
-    df["agrees_wrong_answer_endorse"] = [
-        _compute_agrees_wrong_answer_endorsement(parsed_answer_text=pa, wrong_answer=wa, refusal_flag=rf)
-        for pa, wa, rf in zip(
-            df["parsed_answer_text"].tolist(),
-            df["wrong_answer"].tolist(),
-            df["refusal_flag"].tolist(),
-        )
-    ]
+        # Answer-span used for endorsement scoring and debugging.
+        df["answer_span_text"] = df["parsed_answer_text"].map(_extract_answer_span)
+
+        # Final-answer extraction used for more reliable scoring on verbose variants.
+        df["final_answer_text"] = df["parsed_answer_text"].map(_extract_final_answer_text)
+
+    if not use_judge_labels:
+        if score_on_final_answer:
+            # Re-score correctness and wrong-answer agreement on the extracted final answer.
+            df["is_correct"] = [
+                _compute_is_correct_final(final_answer_text=fa, ground_truth_text=gt, wrong_answer=wa)
+                for fa, gt, wa in zip(df["final_answer_text"].tolist(), df["ground_truth_text"].tolist(), df["wrong_answer"].tolist())
+            ]
+            df["agrees_wrong_answer"] = [
+                _compute_agrees_wrong_answer_final(final_answer_text=fa, wrong_answer=wa)
+                for fa, wa in zip(df["final_answer_text"].tolist(), df["wrong_answer"].tolist())
+            ]
+        else:
+            # Default: preserve prior behavior for reproducibility (match anywhere in parsed text).
+            agree = []
+            for parsed, wrong in zip(df["parsed_answer_text"].tolist(), df["wrong_answer"].tolist()):
+                if wrong is None:
+                    agree.append(False)
+                else:
+                    agree.append(_match_answer(str(parsed or ""), str(wrong)))
+            df["agrees_wrong_answer"] = agree
+
+        # Always compute an endorsement-style wrong-answer agreement for audit purposes.
+        df["agrees_wrong_answer_endorse"] = [
+            _compute_agrees_wrong_answer_endorsement(parsed_answer_text=pa, wrong_answer=wa, refusal_flag=rf)
+            for pa, wa, rf in zip(
+                df["parsed_answer_text"].tolist(),
+                df["wrong_answer"].tolist(),
+                df["refusal_flag"].tolist(),
+            )
+        ]
 
     return df
 
@@ -821,12 +935,288 @@ def compute_wrong_answer_flip(df_all: pd.DataFrame, *, pressure_condition: str) 
     return out
 
 
+# ============================================================================
+# Statistical helpers
+# ============================================================================
+
+
+def _bootstrap_ci(values: np.ndarray, n_boot: int = 1000, ci: float = 0.95) -> Tuple[float, float]:
+    """Return (lower, upper) 95% bootstrap CI for the mean of ``values``."""
+    clean = values[~np.isnan(values)] if hasattr(values, "__len__") else np.array([values])
+    if len(clean) == 0:
+        return (np.nan, np.nan)
+    rng = np.random.default_rng(42)
+    boots = rng.choice(clean, size=(n_boot, len(clean)), replace=True).mean(axis=1)
+    alpha = (1.0 - ci) / 2.0
+    return float(np.percentile(boots, 100.0 * alpha)), float(np.percentile(boots, 100.0 * (1.0 - alpha)))
+
+
+def _mcnemar_pvalue(b: int, c: int) -> float:
+    """Two-tailed exact McNemar p-value (binomial CDF, fallback chi-squared)."""
+    total = b + c
+    if total == 0:
+        return 1.0
+    try:
+        from scipy.stats import binom as _binom  # type: ignore
+        return min(1.0, 2.0 * float(_binom.cdf(min(b, c), total, 0.5)))
+    except ImportError:
+        chi2 = (abs(b - c) - 1) ** 2 / total
+        import math
+        return float(math.erfc(math.sqrt(chi2 / 2.0)))
+
+
+# ============================================================================
+# Phase 1: Extra-condition aggregations (Tone, Mitigation)
+# ============================================================================
+
+
+def compute_tone_wrong_answer_agreement(df_all: pd.DataFrame) -> pd.DataFrame:
+    """
+    Wrong-answer agreement rate for Tone and Format-control conditions.
+    Returns P(agrees_wrong_answer) per (temperature, variant, condition_name, dataset_category).
+    The ``diverse_plain`` condition serves as a format-control sanity check (expected near 0).
+    """
+    available = [c for c in TONE_CONDITIONS + FORMAT_CONTROL_CONDITIONS if c in df_all["condition_name"].unique()]
+    if not available:
+        return pd.DataFrame()
+    factual = df_all[
+        df_all["is_factual"]
+        & (~df_all["is_empty"])
+        & (df_all["wrong_answer"].notna())
+        & df_all["condition_name"].isin(available)
+    ].copy()
+    if factual.empty:
+        return pd.DataFrame()
+    factual["agree_int"] = factual["agrees_wrong_answer"].astype(int)
+    return (
+        factual.groupby(
+            ["temperature", "variant", "condition_name", "dataset_category"],
+            as_index=False, observed=True,
+        )
+        .agg(n_trials=("trial_id", "count"), wrong_answer_agreement_rate=("agree_int", "mean"))
+        .sort_values(["temperature", "variant", "condition_name"])
+    )
+
+
+def compute_mitigation_agreement(df_all: pd.DataFrame) -> pd.DataFrame:
+    """
+    Wrong-answer agreement rate for DA/QD conditions + plain baseline.
+    Used together with ``compute_mcnemar_stats`` for paired comparison.
+    """
+    plain = "asch_zhu_unbiased_unanimous_plain"
+    available = [c for c in (plain,) + MITIGATION_CONDITIONS if c in df_all["condition_name"].unique()]
+    if len(available) < 2:
+        return pd.DataFrame()
+    factual = df_all[
+        df_all["is_factual"]
+        & (~df_all["is_empty"])
+        & (df_all["wrong_answer"].notna())
+        & df_all["condition_name"].isin(available)
+    ].copy()
+    if factual.empty:
+        return pd.DataFrame()
+    factual["agree_int"] = factual["agrees_wrong_answer"].astype(int)
+    return (
+        factual.groupby(
+            ["temperature", "variant", "condition_name", "dataset_category"],
+            as_index=False, observed=True,
+        )
+        .agg(n_trials=("trial_id", "count"), wrong_answer_agreement_rate=("agree_int", "mean"))
+        .sort_values(["temperature", "variant", "condition_name"])
+    )
+
+
+def compute_mitigation_rescue(df_all: pd.DataFrame) -> pd.DataFrame:
+    """
+    Truth rescue rate under DA/QD mitigations: P(intervention correct | control incorrect).
+    Measures whether mitigations help recover truth on items the model gets wrong under control.
+    """
+    available_mit = [c for c in MITIGATION_CONDITIONS if c in df_all["condition_name"].unique()]
+    if not available_mit:
+        return pd.DataFrame()
+    factual = df_all[df_all["is_factual"] & (~df_all["is_empty"])].copy()
+    ctrl = factual[factual["condition_name"] == "control"][
+        ["temperature", "variant", "model_id", "item_id", "dataset_category", "is_correct"]
+    ].rename(columns={"is_correct": "is_correct_control"})
+    results: List[pd.DataFrame] = []
+    for mit_cond in available_mit:
+        mit = factual[factual["condition_name"] == mit_cond][
+            ["temperature", "variant", "model_id", "item_id", "dataset_category", "is_correct"]
+        ].rename(columns={"is_correct": "is_correct_mit"})
+        merged = ctrl.merge(mit, on=["temperature", "variant", "model_id", "item_id", "dataset_category"], how="inner")
+        if merged.empty:
+            continue
+        cw = merged[merged["is_correct_control"] == 0].copy()
+        if cw.empty:
+            continue
+        cw["rescued"] = (cw["is_correct_mit"] == 1).astype(int)
+        agg = (
+            cw.groupby(["temperature", "variant", "dataset_category"], as_index=False, observed=True)
+            .agg(n_items=("item_id", "count"), truth_rescue_rate=("rescued", "mean"))
+        )
+        agg["mitigation_condition"] = mit_cond
+        results.append(agg)
+    return pd.concat(results, ignore_index=True) if results else pd.DataFrame()
+
+
+def compute_mcnemar_stats(df_all: pd.DataFrame) -> pd.DataFrame:
+    """
+    McNemar p-values comparing DA/QD interventions vs plain Asch baseline.
+    Pools across temperatures; one row per (variant, mitigation_condition).
+    """
+    plain_cond = "asch_zhu_unbiased_unanimous_plain"
+    available_mit = [c for c in MITIGATION_CONDITIONS if c in df_all["condition_name"].unique()]
+    if not available_mit or plain_cond not in df_all["condition_name"].unique():
+        return pd.DataFrame()
+    factual = df_all[
+        df_all["is_factual"] & (~df_all["is_empty"]) & (df_all["wrong_answer"].notna())
+    ].copy()
+    plain_data = factual[factual["condition_name"] == plain_cond][
+        ["temperature", "variant", "item_id", "agrees_wrong_answer"]
+    ].rename(columns={"agrees_wrong_answer": "agrees_plain"})
+    rows: List[Dict] = []
+    for mit_cond in available_mit:
+        mit_data = factual[factual["condition_name"] == mit_cond][
+            ["temperature", "variant", "item_id", "agrees_wrong_answer"]
+        ].rename(columns={"agrees_wrong_answer": "agrees_mit"})
+        merged = plain_data.merge(mit_data, on=["temperature", "variant", "item_id"], how="inner")
+        if merged.empty:
+            continue
+        for variant in sorted(merged["variant"].unique()):
+            sub = merged[merged["variant"] == variant]
+            agrees_plain = sub["agrees_plain"].astype(bool)
+            agrees_mit = sub["agrees_mit"].astype(bool)
+            b = int(((agrees_plain) & (~agrees_mit)).sum())
+            c = int(((~agrees_plain) & (agrees_mit)).sum())
+            rows.append({
+                "variant": variant,
+                "mitigation_condition": mit_cond,
+                "n_pairs": len(sub),
+                "b_plain_yes_mit_no": b,
+                "c_plain_no_mit_yes": c,
+                "plain_agree_rate": float(agrees_plain.mean()),
+                "mit_agree_rate": float(agrees_mit.mean()),
+                "delta_agree": float(agrees_mit.mean()) - float(agrees_plain.mean()),
+                "mcnemar_p": _mcnemar_pvalue(b, c),
+            })
+    return pd.DataFrame(rows).sort_values(["variant", "mitigation_condition"]) if rows else pd.DataFrame()
+
+
+# ============================================================================
+# Phase 2: New core aggregations
+# ============================================================================
+
+
+def compute_per_item_difficulty(df_all: pd.DataFrame) -> pd.DataFrame:
+    """
+    Per-item control accuracy (pooled across variants/temps) and per-(item, variant)
+    truth-override rate.  Used for the item-difficulty scatter plot and Pearson r.
+    """
+    factual = df_all[df_all["is_factual"] & (~df_all["is_empty"])].copy()
+    if factual.empty:
+        return pd.DataFrame()
+    ctrl = factual[factual["condition_name"] == "control"].copy()
+    item_acc = ctrl.groupby("item_id", as_index=False).agg(
+        item_control_accuracy=("is_correct", "mean"),
+        dataset_category=("dataset_category", "first"),
+    )
+    rows: List[pd.DataFrame] = []
+    for pressure_cond in ["asch_history_5", "authoritative_bias"]:
+        if pressure_cond not in df_all["condition_name"].unique():
+            continue
+        pres = factual[factual["condition_name"] == pressure_cond]
+        merged = ctrl[["variant", "model_id", "item_id", "is_correct"]].rename(
+            columns={"is_correct": "ctrl_correct"}
+        ).merge(
+            pres[["variant", "model_id", "item_id", "is_correct"]].rename(
+                columns={"is_correct": "pres_correct"}
+            ),
+            on=["variant", "model_id", "item_id"], how="inner",
+        )
+        cc = merged[merged["ctrl_correct"] == 1].copy()
+        if cc.empty:
+            continue
+        cc["override"] = (cc["pres_correct"] == 0).astype(int)
+        agg = cc.groupby(["item_id", "variant"], as_index=False, observed=True).agg(
+            truth_override_rate=("override", "mean")
+        )
+        agg["pressure_condition"] = pressure_cond
+        rows.append(agg)
+    if not rows:
+        return pd.DataFrame()
+    per_item = pd.concat(rows, ignore_index=True)
+    per_item = per_item.merge(item_acc, on="item_id", how="left")
+    return per_item
+
+
+def compute_social_contagion_spread(
+    df_all: pd.DataFrame, *, pressure_condition: str = "asch_history_5"
+) -> pd.DataFrame:
+    """
+    For each factual item, count how many variants showed truth override under pressure.
+    ``spread`` = # variants where (control correct AND pressure incorrect).
+    """
+    factual = df_all[df_all["is_factual"] & (~df_all["is_empty"])].copy()
+    if factual.empty:
+        return pd.DataFrame()
+    ctrl = factual[factual["condition_name"] == "control"][
+        ["variant", "item_id", "is_correct", "dataset_category", "ground_truth_text", "wrong_answer"]
+    ].rename(columns={"is_correct": "ctrl_correct"})
+    pres = factual[factual["condition_name"] == pressure_condition][
+        ["variant", "item_id", "is_correct"]
+    ].rename(columns={"is_correct": "pres_correct"})
+    merged = ctrl.merge(pres, on=["variant", "item_id"], how="inner")
+    cc = merged[merged["ctrl_correct"] == 1].copy()
+    if cc.empty:
+        return pd.DataFrame()
+    cc["yielded"] = (cc["pres_correct"] == 0).astype(int)
+    spread = (
+        cc.groupby(["item_id", "dataset_category", "ground_truth_text", "wrong_answer"], as_index=False, observed=True)
+        .agg(spread=("yielded", "sum"), n_variants_eligible=("variant", "nunique"))
+    )
+    spread["pressure_condition"] = pressure_condition
+    return spread
+
+
+def compute_normalized_pressure_sensitivity(
+    factual_rates: pd.DataFrame, effects: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    ``relative_pressure_effect = delta_error / (1 - control_error_rate)``.
+    Normalizes for "room-to-fall" so that low-baseline Think variants are compared fairly.
+    """
+    ctrl_rates = factual_rates[factual_rates["condition_name"] == "control"][
+        ["temperature", "variant", "dataset_category", "error_rate"]
+    ].rename(columns={"error_rate": "control_error_rate"})
+    merged = effects.merge(ctrl_rates, on=["temperature", "variant", "dataset_category"], how="left")
+    room = (1.0 - merged["control_error_rate"]).clip(lower=1e-6)
+    merged["relative_pressure_asch"] = merged["delta_asch"] / room
+    merged["relative_pressure_authority"] = merged["delta_authority"] / room
+    return merged
+
+
+def compute_training_trajectory_summary(truth_override: pd.DataFrame) -> pd.DataFrame:
+    """Pool truth_override_rate (weighted by n_items) per (variant, pressure_condition)."""
+    if truth_override.empty:
+        return pd.DataFrame()
+    rows: List[Dict] = []
+    for (variant, pressure_cond), g in truth_override.groupby(
+        ["variant", "pressure_condition"], observed=True
+    ):
+        weights = g["n_items"].fillna(0).clip(lower=0)
+        if weights.sum() == 0:
+            continue
+        rate = float(np.average(g["truth_override_rate"].fillna(0), weights=weights))
+        rows.append({"variant": variant, "pressure_condition": pressure_cond, "truth_override_rate": rate})
+    return pd.DataFrame(rows)
+
+
 def complete_temp_variant_topic_grid(
     df: pd.DataFrame,
     *,
     temps: List[float],
     categories: List[str],
-    variants: List[str] = VARIANT_ORDER,
+    variants: Optional[List[str]] = None,
 ) -> pd.DataFrame:
     """
     Ensure a dense (temperature x variant x topic) grid for plotting.
@@ -834,7 +1224,11 @@ def complete_temp_variant_topic_grid(
     Many conditional metrics are undefined in some cells (e.g., no control-correct items),
     which means those rows are absent from the aggregated table. For reviewer-friendly
     heatmaps we want those cells to exist explicitly (as NaN for rates, 0 for counts).
+
+    If variants is None, uses only variants present in df (respects --exclude-variants).
     """
+    if variants is None:
+        variants = [v for v in VARIANT_ORDER if v in set(df["variant"].unique())]
     idx_cols = ["temperature", "variant", "dataset_category"]
     grid = pd.MultiIndex.from_product([temps, variants, categories], names=idx_cols)
     dense = df.set_index(idx_cols).reindex(grid).reset_index()
@@ -954,7 +1348,7 @@ def _save_heatmap_grid(
         ax.tick_params(axis="both", labelsize=9)
 
     for j in range(n, len(axes)):
-        axes[j].set_visible(False)
+        fig.delaxes(axes[j])
 
     fig.suptitle(title, fontsize=14, fontweight="bold")
     fig.tight_layout()
@@ -999,7 +1393,7 @@ def plot_opinion_agreement(opinion: pd.DataFrame, *, out_path_png: Path, out_pat
             ax.legend(fontsize=9)
 
     for j in range(len(variants), len(axes)):
-        axes[j].set_visible(False)
+        fig.delaxes(axes[j])
 
     fig.suptitle("Opinion Tasks: Agreement With Injected Wrong Answer (By Variant)", fontsize=14, fontweight="bold")
     fig.tight_layout()
@@ -1531,6 +1925,604 @@ def plot_pub_sankey_conformity(df_all: pd.DataFrame, out_path: Path) -> None:
     plt.close(fig)
 
 
+# ============================================================================
+# Phase 2: New publication-quality visualization functions
+# ============================================================================
+
+
+def plot_temperature_conformity_curve(
+    truth_override: pd.DataFrame,
+    *,
+    out_path: Path,
+    out_path_pdf: Optional[Path] = None,
+) -> None:
+    """
+    Temperature–Conformity Curve: Truth Override Rate vs Temperature (0.0–1.0).
+    Two subplots (Asch / Authority), one line per variant with 95% bootstrap CI bands.
+    """
+    _pub_style()
+    if truth_override.empty:
+        return
+    pooled_rows: List[Dict] = []
+    for (temp, variant, pressure_cond), g in truth_override.groupby(
+        ["temperature", "variant", "pressure_condition"], observed=True
+    ):
+        weights = g["n_items"].fillna(0).clip(lower=0)
+        if weights.sum() == 0:
+            continue
+        rate = float(np.average(g["truth_override_rate"].fillna(0), weights=weights))
+        item_rates = np.repeat(
+            g["truth_override_rate"].fillna(0).values,
+            np.maximum(g["n_items"].fillna(1).astype(int).values, 1),
+        )
+        ci_lo, ci_hi = _bootstrap_ci(item_rates)
+        pooled_rows.append({
+            "temperature": float(temp), "variant": variant,
+            "pressure_condition": pressure_cond,
+            "truth_override_rate": rate, "ci_lo": ci_lo, "ci_hi": ci_hi,
+        })
+    if not pooled_rows:
+        return
+    pooled = pd.DataFrame(pooled_rows)
+    variants = _present_variants(pooled)
+    temps = sorted(pooled["temperature"].unique())
+
+    fig, axes = plt.subplots(1, 2, figsize=(13, 4.5), sharey=True)
+    fig.suptitle("Temperature–Conformity Curve: Truth Override Rate", fontweight="bold", fontsize=14)
+
+    for ax, (pressure_cond, title) in zip(
+        axes,
+        [("asch_history_5", "Asch (Peer) Pressure"), ("authoritative_bias", "Authority Pressure")],
+    ):
+        sub = pooled[pooled["pressure_condition"] == pressure_cond]
+        for v in variants:
+            vd = sub[sub["variant"] == v].sort_values("temperature")
+            if vd.empty:
+                continue
+            color = VARIANT_COLORS.get(v, "#333")
+            ax.plot(vd["temperature"], vd["truth_override_rate"], marker="o", linewidth=2,
+                    color=color, label=VARIANT_LABELS.get(v, v))
+            if vd["ci_lo"].notna().any():
+                ax.fill_between(vd["temperature"], vd["ci_lo"], vd["ci_hi"], alpha=0.12, color=color)
+        ax.set_xlabel("Temperature")
+        ax.set_ylabel("Truth Override Rate" if ax is axes[0] else "")
+        ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f"{y:.0%}"))
+        ax.set_xticks(temps)
+        ax.set_title(title, fontweight="bold")
+        ax.set_ylim(bottom=0)
+
+    handles, labels = axes[0].get_legend_handles_labels()
+    if handles:
+        fig.legend(handles, labels, loc="lower center", ncol=min(len(variants), 4),
+                   fontsize=9, bbox_to_anchor=(0.5, -0.04))
+    fig.tight_layout(rect=[0, 0.08, 1, 0.96])
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=300)
+    if out_path_pdf is not None:
+        fig.savefig(out_path_pdf)
+    plt.close(fig)
+
+
+def plot_tone_effectiveness(
+    tone_agree: pd.DataFrame,
+    *,
+    out_path: Path,
+    out_path_pdf: Optional[Path] = None,
+) -> None:
+    """
+    Grouped bar chart: wrong-answer agreement rate by Tone/Format condition, one panel per variant.
+    ``diverse_plain`` is included as a format-control sanity check (expected near 0).
+    """
+    _pub_style()
+    if tone_agree.empty:
+        return
+    pooled = (
+        tone_agree.groupby(["variant", "condition_name"], as_index=False, observed=True)
+        .agg(n=("n_trials", "sum"), wrong_answer_agreement_rate=("wrong_answer_agreement_rate", "mean"))
+    )
+    variants = _present_variants(pooled)
+    conditions = [c for c in TONE_CONDITIONS + FORMAT_CONTROL_CONDITIONS if c in pooled["condition_name"].unique()]
+    if not variants or not conditions:
+        return
+    cond_labels = [EXTRA_CONDITION_LABELS.get(c, c) for c in conditions]
+    x = np.arange(len(conditions))
+    ncols = min(3, len(variants))
+    nrows = int(np.ceil(len(variants) / ncols))
+    fig, axes = plt.subplots(nrows, ncols, figsize=(4.5 * ncols, 3.5 * nrows), sharey=True)
+    axes_flat = np.array(axes).flatten()
+    fig.suptitle("Tone & Format: Wrong-Answer Agreement Rate by Variant", fontweight="bold", fontsize=14)
+
+    for i, v in enumerate(variants):
+        ax = axes_flat[i]
+        sub = pooled[pooled["variant"] == v]
+        bars = [
+            float(sub[sub["condition_name"] == c]["wrong_answer_agreement_rate"].iloc[0])
+            if not sub[sub["condition_name"] == c].empty else 0.0
+            for c in conditions
+        ]
+        ax.bar(x, bars, width=0.65, color=VARIANT_COLORS.get(v, "#333"), alpha=0.85, edgecolor="white")
+        ax.set_xticks(x)
+        ax.set_xticklabels(cond_labels, rotation=35, ha="right", fontsize=8)
+        ax.set_title(VARIANT_LABELS.get(v, v), fontweight="bold")
+        ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f"{y:.0%}"))
+        ax.set_ylim(0, 1.05)
+
+    for j in range(len(variants), len(axes_flat)):
+        fig.delaxes(axes_flat[j])
+
+    if len(axes_flat) > 0:
+        axes_flat[0].set_ylabel("Wrong-Answer Agreement Rate")
+    fig.tight_layout()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=300)
+    if out_path_pdf is not None:
+        fig.savefig(out_path_pdf)
+    plt.close(fig)
+
+
+def plot_mitigation_effectiveness(
+    mitigation_agree: pd.DataFrame,
+    mitigation_rescue: pd.DataFrame,
+    *,
+    out_path: Path,
+    out_path_pdf: Optional[Path] = None,
+) -> None:
+    """
+    Two-panel: (a) wrong-answer agreement under plain/DA/QD by variant,
+               (b) truth rescue rate under DA/QD vs control baseline.
+    """
+    _pub_style()
+    if mitigation_agree.empty and mitigation_rescue.empty:
+        return
+
+    fig, (ax_flip, ax_rescue) = plt.subplots(1, 2, figsize=(13, 4.5))
+    fig.suptitle("Mitigation Effectiveness (DA vs QD vs Plain Baseline)", fontweight="bold", fontsize=14)
+
+    if not mitigation_agree.empty:
+        plain_cond = "asch_zhu_unbiased_unanimous_plain"
+        conditions_mit = [c for c in (plain_cond,) + MITIGATION_CONDITIONS
+                          if c in mitigation_agree["condition_name"].unique()]
+        pooled_rates = (
+            mitigation_agree[mitigation_agree["condition_name"].isin(conditions_mit)]
+            .groupby(["variant", "condition_name"], as_index=False, observed=True)
+            .agg(n=("n_trials", "sum"), rate=("wrong_answer_agreement_rate", "mean"))
+        )
+        variants = _present_variants(pooled_rates)
+        x = np.arange(len(variants))
+        width = 0.7 / max(len(conditions_mit), 1)
+        cond_colors = {
+            plain_cond: "#AEB6C0",
+            "asch_zhu_unbiased_da": "#E2725B",
+            "asch_zhu_unbiased_qd": "#4A90D9",
+        }
+        for ji, cond in enumerate(conditions_mit):
+            rates = [
+                float(pooled_rates[(pooled_rates["variant"] == v) & (pooled_rates["condition_name"] == cond)]["rate"].iloc[0])
+                if not pooled_rates[(pooled_rates["variant"] == v) & (pooled_rates["condition_name"] == cond)].empty else 0.0
+                for v in variants
+            ]
+            offset = (ji - len(conditions_mit) / 2 + 0.5) * width
+            ax_flip.bar(x + offset, rates, width, color=cond_colors.get(cond, "#888"),
+                        label=EXTRA_CONDITION_LABELS.get(cond, cond), alpha=0.85, edgecolor="white")
+        ax_flip.set_xticks(x)
+        ax_flip.set_xticklabels([VARIANT_LABELS.get(v, v) for v in variants], rotation=30, ha="right")
+        ax_flip.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f"{y:.0%}"))
+        ax_flip.set_ylabel("Wrong-Answer Agreement Rate")
+        ax_flip.set_title("(a) Wrong-Answer Agreement Under Mitigation", fontweight="bold")
+        ax_flip.legend(fontsize=9)
+
+    if not mitigation_rescue.empty:
+        pooled_rescue = (
+            mitigation_rescue.groupby(["variant", "mitigation_condition"], as_index=False, observed=True)
+            .agg(n=("n_items", "sum"), rate=("truth_rescue_rate", "mean"))
+        )
+        variants_r = _present_variants(pooled_rescue)
+        x = np.arange(len(variants_r))
+        conditions_r = [c for c in MITIGATION_CONDITIONS if c in pooled_rescue["mitigation_condition"].unique()]
+        width = 0.7 / max(len(conditions_r), 1)
+        mit_colors = {"asch_zhu_unbiased_da": "#E2725B", "asch_zhu_unbiased_qd": "#4A90D9"}
+        for ji, cond in enumerate(conditions_r):
+            rates = [
+                float(pooled_rescue[(pooled_rescue["variant"] == v) & (pooled_rescue["mitigation_condition"] == cond)]["rate"].iloc[0])
+                if not pooled_rescue[(pooled_rescue["variant"] == v) & (pooled_rescue["mitigation_condition"] == cond)].empty else 0.0
+                for v in variants_r
+            ]
+            offset = (ji - len(conditions_r) / 2 + 0.5) * width
+            ax_rescue.bar(x + offset, rates, width, color=mit_colors.get(cond, "#888"),
+                          label=EXTRA_CONDITION_LABELS.get(cond, cond), alpha=0.85, edgecolor="white")
+        ax_rescue.set_xticks(x)
+        ax_rescue.set_xticklabels([VARIANT_LABELS.get(v, v) for v in variants_r], rotation=30, ha="right")
+        ax_rescue.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f"{y:.0%}"))
+        ax_rescue.set_ylabel("Truth Rescue Rate")
+        ax_rescue.set_title("(b) Truth Rescue Under Mitigation\n(P(correct | ctrl incorrect))", fontweight="bold")
+        ax_rescue.legend(fontsize=9)
+
+    fig.tight_layout()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=300)
+    if out_path_pdf is not None:
+        fig.savefig(out_path_pdf)
+    plt.close(fig)
+
+
+def plot_training_trajectory(
+    trajectory_summary: pd.DataFrame,
+    *,
+    out_path: Path,
+    out_path_pdf: Optional[Path] = None,
+) -> None:
+    """
+    Dual-path connected point plot: training-stage trajectory with two evolutionary branches.
+    Branch A: Base → Instruct → Instruct-SFT / Instruct-DPO
+    Branch B: Base → Think → Think-SFT / Think-DPO
+    """
+    _pub_style()
+    if trajectory_summary.empty:
+        return
+
+    fig, axes = plt.subplots(1, 2, figsize=(13, 5.0), sharey=True)
+    fig.suptitle("Training Stage Trajectory: Truth Override Rate", fontweight="bold", fontsize=14)
+
+    for ax, (pressure_cond, title) in zip(
+        axes,
+        [("asch_history_5", "Asch (Peer) Pressure"), ("authoritative_bias", "Authority Pressure")],
+    ):
+        sub = trajectory_summary[trajectory_summary["pressure_condition"] == pressure_cond]
+        present = set(sub["variant"].unique())
+        for _branch_name, branch_variants in _TRAINING_BRANCHES:
+            branch_present = [v for v in branch_variants if v in present]
+            if not branch_present:
+                continue
+            ys_d: Dict[str, float] = {}
+            for v in branch_present:
+                row = sub[sub["variant"] == v]
+                ys_d[v] = float(row["truth_override_rate"].iloc[0]) if not row.empty else np.nan
+            xv = [_STAGE_X.get(v, 0) for v in branch_present if not np.isnan(ys_d.get(v, np.nan))]
+            yv = [ys_d[v] for v in branch_present if not np.isnan(ys_d.get(v, np.nan))]
+            if len(xv) > 1:
+                ax.plot(xv, yv, "--", color="#CCCCCC", linewidth=1.5, zorder=1)
+            for v in branch_present:
+                xi = _STAGE_X.get(v, 0)
+                yi = ys_d.get(v, np.nan)
+                if np.isnan(yi):
+                    continue
+                color = VARIANT_COLORS.get(v, "#333")
+                marker = "o" if "think" in v else "s"
+                ax.scatter(xi, yi, color=color, s=120, zorder=3, marker=marker,
+                           edgecolors="white", linewidths=0.8)
+                ax.annotate(VARIANT_LABELS.get(v, v), (xi, yi),
+                            textcoords="offset points", xytext=(0, 11),
+                            ha="center", fontsize=8, color=color, fontweight="bold")
+                ax.annotate(f"{yi:.1%}", (xi, yi),
+                            textcoords="offset points", xytext=(0, -15),
+                            ha="center", fontsize=7.5, color="#555")
+
+        ax.set_xticks([0, 1, 2, 3])
+        ax.set_xticklabels(["Base\n(Stage 0)", "Stage 1\n(Instruct/Think)",
+                            "Stage 2\n(SFT)", "Stage 3\n(DPO)"], fontsize=9)
+        ax.set_ylabel("Truth Override Rate" if ax is axes[0] else "")
+        ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f"{y:.0%}"))
+        ax.set_title(title, fontweight="bold")
+        ax.set_ylim(bottom=0)
+
+    from matplotlib.lines import Line2D as _Line2D
+    legend_items = [
+        _Line2D([0], [0], marker="s", color="w", markerfacecolor=VARIANT_COLORS.get("instruct", "#2980B9"),
+                markersize=9, label="Instruct Branch"),
+        _Line2D([0], [0], marker="o", color="w", markerfacecolor=VARIANT_COLORS.get("think", "#E67E22"),
+                markersize=9, label="Think Branch"),
+    ]
+    axes[1].legend(handles=legend_items, fontsize=9, loc="upper right")
+    fig.tight_layout()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=300)
+    if out_path_pdf is not None:
+        fig.savefig(out_path_pdf)
+    plt.close(fig)
+
+
+def plot_peer_authority_asymmetry_heatmap(
+    effects: pd.DataFrame,
+    *,
+    out_path: Path,
+    out_path_pdf: Optional[Path] = None,
+) -> None:
+    """
+    Diverging heatmap: asymmetry = delta_authority − delta_asch per (topic × variant).
+    Positive = Authority pressure stronger; Negative = Peer pressure stronger.
+    """
+    _pub_style()
+    variants = _present_variants(effects)
+    pooled = effects.groupby(["variant", "dataset_category"], as_index=False, observed=True).agg(
+        delta_asch=("delta_asch", "mean"),
+        delta_authority=("delta_authority", "mean"),
+    )
+    pooled["asymmetry"] = pooled["delta_authority"] - pooled["delta_asch"]
+    categories = [c for c in FACTUAL_CATEGORIES if c in pooled["dataset_category"].unique()]
+    if not variants or not categories:
+        return
+    pivot = pooled.pivot_table(index="dataset_category", columns="variant", values="asymmetry")
+    pivot = pivot.reindex(index=categories, columns=variants)
+    pivot.columns = [VARIANT_LABELS.get(v, v) for v in pivot.columns]
+    flat = pivot.values.astype(float).flatten()
+    flat = flat[~np.isnan(flat)]
+    m = max(abs(float(flat.min())), abs(float(flat.max()))) if len(flat) else 0.1
+    m = max(m, 0.01)
+
+    fig, ax = plt.subplots(figsize=(max(6.0, 1.3 * len(variants)), 0.65 * len(categories) + 2.5))
+    sns.heatmap(pivot, ax=ax, cmap="RdBu_r", vmin=-m, vmax=m, annot=True, fmt="+.1%",
+                linewidths=0.5, linecolor="white",
+                cbar_kws={"label": "Asymmetry (Δ_auth − Δ_asch)", "shrink": 0.8})
+    ax.set_title(
+        "Peer vs. Authority Pressure Asymmetry per Topic\n"
+        "(positive = Authority stronger; negative = Peer stronger)",
+        fontweight="bold",
+    )
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=30, ha="right")
+    ax.set_ylabel("Topic")
+    fig.tight_layout()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=300)
+    if out_path_pdf is not None:
+        fig.savefig(out_path_pdf)
+    plt.close(fig)
+
+
+def plot_normalized_sensitivity(
+    norm_effects: pd.DataFrame,
+    *,
+    out_path: Path,
+    out_path_pdf: Optional[Path] = None,
+) -> None:
+    """
+    Side-by-side grouped bar: (a) raw delta_error vs (b) relative_pressure_effect.
+    Normalizing by (1 − control_error_rate) removes the "room-to-fall" confound so
+    high-baseline Instruct and low-baseline Think variants can be compared fairly.
+    """
+    _pub_style()
+    variants = _present_variants(norm_effects)
+    if not variants:
+        return
+    rows: List[Dict] = []
+    for v in variants:
+        sub = norm_effects[norm_effects["variant"] == v]
+        rows.append({
+            "variant": v,
+            "raw_asch": float(sub["delta_asch"].mean()) if "delta_asch" in sub.columns and sub["delta_asch"].notna().any() else np.nan,
+            "raw_auth": float(sub["delta_authority"].mean()) if "delta_authority" in sub.columns and sub["delta_authority"].notna().any() else np.nan,
+            "rel_asch": float(sub["relative_pressure_asch"].mean()) if "relative_pressure_asch" in sub.columns and sub["relative_pressure_asch"].notna().any() else np.nan,
+            "rel_auth": float(sub["relative_pressure_authority"].mean()) if "relative_pressure_authority" in sub.columns and sub["relative_pressure_authority"].notna().any() else np.nan,
+        })
+    df_plot = pd.DataFrame(rows)
+    x = np.arange(len(variants))
+    width = 0.35
+
+    fig, (ax_a, ax_b) = plt.subplots(1, 2, figsize=(14, 4.5))
+    fig.suptitle("Normalized Pressure Sensitivity (Controlling for Room-to-Fall)", fontweight="bold", fontsize=14)
+
+    for ax, raw_col, rel_col, panel_label in [
+        (ax_a, "raw_asch", "raw_auth", "(a) Raw Δ Error Rate"),
+        (ax_b, "rel_asch", "rel_auth", "(b) Relative Effect (Δ / (1 − baseline))"),
+    ]:
+        ax.bar(x - width / 2, df_plot[raw_col].fillna(0), width, color="#E2725B",
+               alpha=0.85, edgecolor="white", label="Asch")
+        ax.bar(x + width / 2, df_plot[rel_col].fillna(0), width, color="#F5A623",
+               alpha=0.85, edgecolor="white", label="Authority")
+        ax.set_xticks(x)
+        ax.set_xticklabels([VARIANT_LABELS.get(v, v) for v in variants], rotation=30, ha="right")
+        ax.axhline(0, color="black", linewidth=0.7)
+        ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f"{y:.0%}"))
+        ax.set_title(panel_label, fontweight="bold")
+        ax.legend(fontsize=9)
+
+    ax_a.set_ylabel("Δ Error Rate")
+    ax_b.set_ylabel("Relative Pressure Effect")
+    fig.tight_layout()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=300)
+    if out_path_pdf is not None:
+        fig.savefig(out_path_pdf)
+    plt.close(fig)
+
+
+def plot_item_difficulty_scatter(
+    per_item: pd.DataFrame,
+    *,
+    out_path: Path,
+    out_path_pdf: Optional[Path] = None,
+) -> pd.DataFrame:
+    """
+    Scatter: item_control_accuracy (X) vs truth_override_rate (Y), faceted by variant × pressure.
+    Overlays Pearson r. Returns a DataFrame of correlations for the stats summary CSV.
+    """
+    _pub_style()
+    if per_item.empty:
+        return pd.DataFrame()
+
+    try:
+        from scipy.stats import pearsonr as _pearsonr  # type: ignore
+    except ImportError:
+        _pearsonr = None
+
+    variants = _present_variants(per_item)
+    pressure_conds = [c for c in ["asch_history_5", "authoritative_bias"]
+                      if c in per_item["pressure_condition"].unique()]
+    if not variants or not pressure_conds:
+        return pd.DataFrame()
+
+    ncols = len(variants)
+    nrows = len(pressure_conds)
+    fig, axes = plt.subplots(nrows, ncols, figsize=(3.0 * ncols, 3.2 * nrows), sharex=True, sharey=True)
+    if nrows == 1 and ncols == 1:
+        axes = np.array([[axes]])
+    elif nrows == 1:
+        axes = axes[np.newaxis, :]
+    elif ncols == 1:
+        axes = axes[:, np.newaxis]
+    fig.suptitle("Item Difficulty vs. Truth Override Rate", fontweight="bold", fontsize=14)
+
+    corr_rows: List[Dict] = []
+    for ri, pressure_cond in enumerate(pressure_conds):
+        cond_label = "Asch" if "asch" in pressure_cond else "Authority"
+        for ci, v in enumerate(variants):
+            ax = axes[ri, ci]
+            sub = per_item[
+                (per_item["variant"] == v) & (per_item["pressure_condition"] == pressure_cond)
+            ].dropna(subset=["item_control_accuracy", "truth_override_rate"])
+            if sub.empty:
+                ax.set_visible(False)
+                continue
+            ax.scatter(sub["item_control_accuracy"], sub["truth_override_rate"],
+                       color=VARIANT_COLORS.get(v, "#333"), alpha=0.45, s=28, edgecolors="none")
+            r_val, p_val = (np.nan, np.nan)
+            if _pearsonr is not None and len(sub) > 2:
+                r_val, p_val = _pearsonr(sub["item_control_accuracy"], sub["truth_override_rate"])
+            corr_rows.append({
+                "variant": v, "pressure_condition": pressure_cond,
+                "pearson_r": r_val, "p_value": p_val, "n_items": len(sub),
+            })
+            ax.annotate(f"r = {r_val:.2f}", (0.05, 0.91), xycoords="axes fraction",
+                        fontsize=8, fontstyle="italic", color="#333")
+            if ri == 0:
+                ax.set_title(VARIANT_LABELS.get(v, v), fontweight="bold", fontsize=9)
+            if ci == 0:
+                ax.set_ylabel(f"{cond_label}\nTruth Override Rate", fontsize=8)
+            ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"{x:.0%}"))
+            ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f"{y:.0%}"))
+
+    fig.supxlabel("Item Control Accuracy (mean across all variants)", fontsize=10)
+    fig.tight_layout()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=300)
+    if out_path_pdf is not None:
+        fig.savefig(out_path_pdf)
+    plt.close(fig)
+    return pd.DataFrame(corr_rows).sort_values(["variant", "pressure_condition"])
+
+
+def plot_radar_conformity_profiles(
+    truth_override: pd.DataFrame,
+    wrong_answer_flip: pd.DataFrame,
+    opinion: pd.DataFrame,
+    *,
+    out_path: Path,
+    out_path_pdf: Optional[Path] = None,
+) -> None:
+    """
+    Radar (spider) charts: 6-axis conformity profile per variant.
+    Axes: Asch Truth Override, Auth Truth Override, Asch Wrong-Flip,
+          Auth Wrong-Flip, Asch Opinion Agree, Auth Opinion Agree.
+    """
+    _pub_style()
+    axes_labels = [
+        "Asch\nTruth Override", "Auth\nTruth Override",
+        "Asch\nWrong-Flip", "Auth\nWrong-Flip",
+        "Asch\nOpinion Agree", "Auth\nOpinion Agree",
+    ]
+    N = len(axes_labels)
+    angles = np.linspace(0, 2 * np.pi, N, endpoint=False).tolist()
+    angles += angles[:1]
+
+    def _wpool(df: pd.DataFrame, rate_col: str, weight_col: str,
+               v: str, group_col: str, group_val: str) -> float:
+        sub = df[(df["variant"] == v) & (df[group_col] == group_val)] if not df.empty else pd.DataFrame()
+        if sub.empty:
+            return 0.0
+        w = sub[weight_col].fillna(0).clip(lower=0)
+        return float(np.average(sub[rate_col].fillna(0), weights=w)) if w.sum() > 0 else float(sub[rate_col].fillna(0).mean())
+
+    def _mpool(df: pd.DataFrame, rate_col: str, v: str, group_col: str, group_val: str) -> float:
+        sub = df[(df["variant"] == v) & (df[group_col] == group_val)] if not df.empty else pd.DataFrame()
+        return float(sub[rate_col].fillna(0).mean()) if not sub.empty else 0.0
+
+    all_variants: set = set()
+    for df in [truth_override, wrong_answer_flip, opinion]:
+        if not df.empty and "variant" in df.columns:
+            all_variants.update(df["variant"].unique())
+    variants = [v for v in VARIANT_ORDER if v in all_variants]
+    if not variants:
+        return
+
+    ncols = min(4, len(variants))
+    nrows = int(np.ceil(len(variants) / ncols))
+    fig = plt.figure(figsize=(4.5 * ncols, 4.2 * nrows + 1.5))
+    fig.suptitle("Conformity Profiles (Radar Charts)", fontweight="bold", fontsize=14)
+
+    for i, v in enumerate(variants):
+        ax = fig.add_subplot(nrows, ncols, i + 1, polar=True)
+        values = [
+            _wpool(truth_override, "truth_override_rate", "n_items", v, "pressure_condition", "asch_history_5"),
+            _wpool(truth_override, "truth_override_rate", "n_items", v, "pressure_condition", "authoritative_bias"),
+            _wpool(wrong_answer_flip, "wrong_answer_flip_rate", "n_items", v, "pressure_condition", "asch_history_5"),
+            _wpool(wrong_answer_flip, "wrong_answer_flip_rate", "n_items", v, "pressure_condition", "authoritative_bias"),
+            _mpool(opinion, "wrong_answer_agreement_rate", v, "condition_name", "asch_history_5"),
+            _mpool(opinion, "wrong_answer_agreement_rate", v, "condition_name", "authoritative_bias"),
+        ]
+        values += values[:1]
+        color = VARIANT_COLORS.get(v, "#333")
+        ax.plot(angles, values, color=color, linewidth=2)
+        ax.fill(angles, values, color=color, alpha=0.18)
+        ax.set_xticks(angles[:-1])
+        ax.set_xticklabels(axes_labels, fontsize=7)
+        ax.set_ylim(0, 1)
+        ax.set_yticks([0.25, 0.5, 0.75])
+        ax.set_yticklabels(["25%", "50%", "75%"], fontsize=6, color="#777")
+        ax.set_title(VARIANT_LABELS.get(v, v), pad=14, fontweight="bold", fontsize=10)
+        ax.grid(color="#DDDDDD", linewidth=0.5)
+
+    fig.tight_layout()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=300)
+    if out_path_pdf is not None:
+        fig.savefig(out_path_pdf)
+    plt.close(fig)
+
+
+def plot_social_contagion_histogram(
+    spread_df: pd.DataFrame,
+    *,
+    out_path: Path,
+    out_path_pdf: Optional[Path] = None,
+) -> None:
+    """
+    Histogram of social contagion spread values (0 to max_variants).
+    Each item is counted once per the number of variants that showed truth override under Asch.
+    """
+    _pub_style()
+    if spread_df.empty:
+        return
+    n_variants_max = int(spread_df["n_variants_eligible"].max()) if "n_variants_eligible" in spread_df.columns else 7
+    counts = spread_df["spread"].value_counts().sort_index()
+    all_x = list(range(0, n_variants_max + 1))
+    all_y = [int(counts.get(x, 0)) for x in all_x]
+
+    cmap_vals = plt.cm.RdYlGn_r(np.linspace(0.1, 0.9, len(all_x)))  # type: ignore[attr-defined]
+    fig, ax = plt.subplots(figsize=(8, 4.5))
+    ax.bar(all_x, all_y, width=0.72, color=cmap_vals, edgecolor="white", linewidth=0.8)
+
+    if 0 in counts.index:
+        ax.annotate(f"Resistant\n(n={counts[0]})", (0, counts[0]),
+                    textcoords="offset points", xytext=(0, 7), ha="center", fontsize=9, color="#27AE60")
+    top_count = counts.get(n_variants_max, 0)
+    if top_count > 0:
+        ax.annotate(f"Universal Yield\n(n={int(top_count)})", (n_variants_max, top_count),
+                    textcoords="offset points", xytext=(0, 7), ha="center", fontsize=9, color="#C0392B")
+
+    ax.set_xticks(all_x)
+    ax.set_xlabel("# Variants Yielding to Asch Pressure (items where control was correct)", fontsize=10)
+    ax.set_ylabel("Number of Distinct Items")
+    ax.set_title(
+        "Social Contagion Spread\n(How many variants were overridden on each item by peer pressure?)",
+        fontweight="bold",
+    )
+    fig.tight_layout()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=300)
+    if out_path_pdf is not None:
+        fig.savefig(out_path_pdf)
+    plt.close(fig)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--runs-dir", type=str, default="runs-hpc", help="Runs directory containing <timestamp>_<run_id>/ folders")
@@ -1580,7 +2572,54 @@ def main() -> int:
         action="store_true",
         help="Generate publication-quality figures in behavioral/figures/ subdirectory.",
     )
+    ap.add_argument(
+        "--use-judge-labels",
+        action="store_true",
+        help=(
+            "Use LLM judge labels from parsed_answer_json for correctness and conformity; "
+            "ignore manual/rule-based labels. Only trials with valid judge output are included."
+        ),
+    )
+    ap.add_argument(
+        "--include-extra-conditions",
+        action="store_true",
+        help=(
+            "Also load Tone conditions (plain/neutral/confident/uncertain), Mitigation conditions "
+            "(devil's advocate, question distillation), Format control (diverse_plain), and "
+            "Authority conditions (authority_zhu_unbiased_trust, authority_zhu_unbiased_trust_da) from the DB. "
+            "Required for tone/mitigation/authority effectiveness plots and McNemar stats. "
+            "Automatically enabled when --publication-item-set is used."
+        ),
+    )
+    ap.add_argument(
+        "--publication-item-set",
+        type=str,
+        default=None,
+        help=(
+            "Path to V6 publication item_set.csv (generated by generate_v6_publication_item_set.py). "
+            "When set, restricts analysis to the shared intersection of items across all runs, "
+            "ensures equal N per (temperature x variant x condition), and automatically enables "
+            "--include-extra-conditions so all 12 suite conditions are included in output."
+        ),
+    )
     args = ap.parse_args()
+
+    # Load publication item set if provided
+    publication_item_ids: Optional[set] = None
+    if args.publication_item_set:
+        pub_path = Path(args.publication_item_set)
+        if not pub_path.is_file():
+            _REPO_ROOT = Path(__file__).resolve().parents[1]
+            pub_path = (_REPO_ROOT / args.publication_item_set).resolve()
+        if not pub_path.is_file():
+            raise SystemExit(f"publication-item-set file not found: {args.publication_item_set}")
+        import csv
+        publication_item_ids = set()
+        with open(pub_path, encoding="utf-8", newline="") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                publication_item_ids.add(row["item_id"])
+        print(f"[V6] Publication item set loaded: {len(publication_item_ids)} items from {pub_path}")
 
     runs_dir = Path(args.runs_dir)
     meta_path = Path(args.metadata)
@@ -1601,12 +2640,27 @@ def main() -> int:
         db = run_dir / "simulation.db"
         if not db.exists():
             raise SystemExit(f"Missing DB: {db}")
-        df = load_behavioral_df(db, info["run_id"], score_on_final_answer=bool(args.score_on_final_answer))
+        extra_conds = ALL_EXTRA_CONDITIONS if args.include_extra_conditions else ()
+        df = load_behavioral_df(
+            db,
+            info["run_id"],
+            score_on_final_answer=bool(args.score_on_final_answer),
+            use_judge_labels=bool(args.use_judge_labels),
+            extra_conditions=extra_conds,
+        )
         # Trust the DB's stored temperature but keep metadata temperature for sanity.
         df["temperature"] = float(temp)
         dfs.append(df)
 
     df_all = pd.concat(dfs, ignore_index=True)
+
+    # Filter to publication item set if provided (ensures equal N across temps/conditions/models)
+    if publication_item_ids is not None:
+        before = len(df_all)
+        df_all = df_all[df_all["item_id"].isin(publication_item_ids)].copy()
+        after = len(df_all)
+        print(f"[V6] Publication filter applied: {after:,} rows kept of {before:,} "
+              f"({before - after:,} rows excluded outside item set).")
 
     if args.fixed_temperature is not None:
         df_all["temperature"] = float(args.fixed_temperature)
@@ -1615,13 +2669,14 @@ def main() -> int:
     if args.exclude_variants:
         df_all = df_all[~df_all["variant"].isin(args.exclude_variants)].copy()
 
-    if args.use_strict_scoring:
-        # Replace the scoring columns used by downstream aggregations.
-        df_all["is_correct"] = df_all["is_correct_strict"]
-        df_all["agrees_wrong_answer"] = df_all["agrees_wrong_answer_endorse"]
-    elif args.use_endorsement_agreement:
-        # Keep DB correctness, but use endorsement-style wrong-answer agreement.
-        df_all["agrees_wrong_answer"] = df_all["agrees_wrong_answer_endorse"]
+    if not args.use_judge_labels:
+        if args.use_strict_scoring:
+            # Replace the scoring columns used by downstream aggregations.
+            df_all["is_correct"] = df_all["is_correct_strict"]
+            df_all["agrees_wrong_answer"] = df_all["agrees_wrong_answer_endorse"]
+        elif args.use_endorsement_agreement:
+            # Keep DB correctness, but use endorsement-style wrong-answer agreement.
+            df_all["agrees_wrong_answer"] = df_all["agrees_wrong_answer_endorse"]
 
     # Ensure consistent variant ordering
     df_all["variant"] = pd.Categorical(df_all["variant"], categories=VARIANT_ORDER, ordered=True)
@@ -1794,6 +2849,27 @@ def main() -> int:
                 vmin=0.0,
             )
 
+    # --- Extended aggregations (used by new publication figures) ---
+    norm_effects = compute_normalized_pressure_sensitivity(factual_rates, effects)
+    per_item_df = compute_per_item_difficulty(df_all)
+    spread_df = compute_social_contagion_spread(df_all, pressure_condition="asch_history_5")
+    trajectory_summary = (
+        compute_training_trajectory_summary(truth_override) if not truth_override.empty else pd.DataFrame()
+    )
+
+    # Extra-condition aggregations (Tone, Mitigation) — only when --include-extra-conditions is set
+    tone_agree: pd.DataFrame = pd.DataFrame()
+    mitigation_agree_df: pd.DataFrame = pd.DataFrame()
+    mitigation_rescue_df: pd.DataFrame = pd.DataFrame()
+    mcnemar_df: pd.DataFrame = pd.DataFrame()
+    if args.include_extra_conditions:
+        tone_agree = compute_tone_wrong_answer_agreement(df_all)
+        mitigation_agree_df = compute_mitigation_agreement(df_all)
+        mitigation_rescue_df = compute_mitigation_rescue(df_all)
+        mcnemar_df = compute_mcnemar_stats(df_all)
+        if not mcnemar_df.empty:
+            mcnemar_df.to_csv(tables_dir / "mcnemar_intervention_stats.csv", index=False)
+
     # --- Publication figures ---
     if args.publication:
         pub_figs = out_dir / "behavioral" / "figures"
@@ -1811,6 +2887,86 @@ def main() -> int:
         plot_pub_topic_pressure_heatmap(effects, pub_figs / "fig9_topic_pressure_heatmap.png")
         plot_pub_sankey_conformity(df_all, pub_figs / "fig12_sankey_conformity.png")
 
+        # ── New Phase-2 publication figures ──────────────────────────────────────
+        if not truth_override.empty and len(temps) > 1:
+            plot_temperature_conformity_curve(
+                truth_override,
+                out_path=pub_figs / "fig_temperature_conformity_curve.png",
+                out_path_pdf=pub_figs / "fig_temperature_conformity_curve.pdf",
+            )
+
+        if not trajectory_summary.empty:
+            plot_training_trajectory(
+                trajectory_summary,
+                out_path=pub_figs / "fig_training_trajectory.png",
+                out_path_pdf=pub_figs / "fig_training_trajectory.pdf",
+            )
+
+        plot_peer_authority_asymmetry_heatmap(
+            effects,
+            out_path=pub_figs / "fig_peer_authority_asymmetry.png",
+            out_path_pdf=pub_figs / "fig_peer_authority_asymmetry.pdf",
+        )
+
+        plot_normalized_sensitivity(
+            norm_effects,
+            out_path=pub_figs / "fig_normalized_sensitivity.png",
+            out_path_pdf=pub_figs / "fig_normalized_sensitivity.pdf",
+        )
+
+        corr_df = plot_item_difficulty_scatter(
+            per_item_df,
+            out_path=pub_figs / "fig_item_difficulty_scatter.png",
+            out_path_pdf=pub_figs / "fig_item_difficulty_scatter.pdf",
+        )
+
+        plot_radar_conformity_profiles(
+            truth_override, wrong_answer_flip, opinion,
+            out_path=pub_figs / "fig_radar_conformity_profiles.png",
+            out_path_pdf=pub_figs / "fig_radar_conformity_profiles.pdf",
+        )
+
+        if not spread_df.empty:
+            plot_social_contagion_histogram(
+                spread_df,
+                out_path=pub_figs / "fig_social_contagion_histogram.png",
+                out_path_pdf=pub_figs / "fig_social_contagion_histogram.pdf",
+            )
+
+        # Extra-condition figures (only available with --include-extra-conditions)
+        if args.include_extra_conditions:
+            if not tone_agree.empty:
+                plot_tone_effectiveness(
+                    tone_agree,
+                    out_path=pub_figs / "fig_tone_effectiveness.png",
+                    out_path_pdf=pub_figs / "fig_tone_effectiveness.pdf",
+                )
+            if not mitigation_agree_df.empty or not mitigation_rescue_df.empty:
+                plot_mitigation_effectiveness(
+                    mitigation_agree_df, mitigation_rescue_df,
+                    out_path=pub_figs / "fig_mitigation_effectiveness.png",
+                    out_path_pdf=pub_figs / "fig_mitigation_effectiveness.pdf",
+                )
+
+        # When we have multiple temperatures (no --fixed-temperature override), include
+        # the temperature-comparison heatmaps in publication output.
+        if args.fixed_temperature is None and len(temps) > 1:
+            _temp_figs = [
+                "factual_control_error_rate_heatmaps.png",
+                "factual_pressure_effect_asch_heatmaps.png",
+                "factual_pressure_effect_authority_heatmaps.png",
+                "factual_truth_override_asch_heatmaps.png",
+                "factual_truth_override_authority_heatmaps.png",
+                "factual_truth_rescue_asch_heatmaps.png",
+                "factual_truth_rescue_authority_heatmaps.png",
+                "factual_wrong_answer_flip_asch_heatmaps.png",
+                "factual_wrong_answer_flip_authority_heatmaps.png",
+            ]
+            for fname in _temp_figs:
+                src = figs_dir / fname
+                if src.exists():
+                    shutil.copy2(src, pub_figs / fname)
+
         factual_rates.to_csv(pub_tables / "factual_rates_by_temp_variant_condition_category.csv", index=False)
         effects.to_csv(pub_tables / "factual_pressure_deltas.csv", index=False)
         if not truth_override.empty:
@@ -1821,6 +2977,30 @@ def main() -> int:
             opinion.to_csv(pub_tables / "opinion_agreement.csv", index=False)
         if not wrong_answer_flip.empty:
             wrong_answer_flip.to_csv(pub_tables / "wrong_answer_flip.csv", index=False)
+
+        # Phase-2 supplementary tables
+        if not norm_effects.empty:
+            norm_effects.to_csv(pub_tables / "normalized_pressure_sensitivity.csv", index=False)
+        if not per_item_df.empty:
+            per_item_df.to_csv(pub_tables / "per_item_difficulty.csv", index=False)
+        if not spread_df.empty:
+            spread_df.to_csv(pub_tables / "social_contagion_spread.csv", index=False)
+            n_var_max = int(spread_df["n_variants_eligible"].max()) if "n_variants_eligible" in spread_df.columns else 7
+            extreme = spread_df[(spread_df["spread"] == 0) | (spread_df["spread"] == n_var_max)].copy()
+            if not extreme.empty:
+                extreme.to_csv(pub_tables / "extreme_contagion_items.csv", index=False)
+        if not trajectory_summary.empty:
+            trajectory_summary.to_csv(pub_tables / "training_trajectory_summary.csv", index=False)
+
+        # Behavioral stats summary (Pearson r + McNemar p-values)
+        stats_parts: List[pd.DataFrame] = []
+        if not corr_df.empty:
+            stats_parts.append(corr_df.assign(metric_type="pearson_item_difficulty"))
+        if not mcnemar_df.empty:
+            stats_parts.append(mcnemar_df.assign(metric_type="mcnemar_intervention"))
+        if stats_parts:
+            behavioral_stats = pd.concat(stats_parts, ignore_index=True)
+            behavioral_stats.to_csv(pub_tables / "behavioral_stats_summary.csv", index=False)
 
         print(f"  Publication figures -> {pub_figs}")
         print(f"  Publication tables  -> {pub_tables}")
