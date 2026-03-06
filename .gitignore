@@ -50,6 +50,10 @@ smoke*.db
 
 # Run artifacts (Phase 3+)
 runs/
+!runs_latest/runs/
+!runs_latest/runs/**
+!runs_latest/mpl_cache/
+!runs_latest/mpl_cache/**
 
 # Model files (large, should be managed separately)
 # Uncomment if you don't want to track models in git
@@ -94,6 +98,7 @@ uv.lock
 *.tmp
 *.temp
 *.bak
+.fuse_hidden*
 
 *.gguf
 
