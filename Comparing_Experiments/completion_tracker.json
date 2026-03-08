@@ -1,0 +1,121 @@
+{
+  "created_at": "2026-03-08",
+  "updated_at": "2026-03-08",
+  "description": "Tracks which database cells (variant × condition × temperature) are complete and which need completion. Enables surgical in-place completion without re-running everything.",
+
+  "completion_status": {
+    "0.0": {
+      "temperature": 0.0,
+      "run_id": "9f240f89-e58e-423a-ae68-f990b31c84cd",
+      "run_dir": "20260224_225304_9f240f89-e58e-423a-ae68-f990b31c84cd",
+      "total_cells": 84,
+      "complete_cells": 75,
+      "gap_variants": ["rl_zero"],
+      "gap_conditions": [
+        "asch_zhu_unbiased_da",
+        "asch_zhu_unbiased_diverse_plain",
+        "asch_zhu_unbiased_qd",
+        "asch_zhu_unbiased_unanimous_confident",
+        "asch_zhu_unbiased_unanimous_neutral",
+        "asch_zhu_unbiased_unanimous_plain",
+        "asch_zhu_unbiased_unanimous_uncertain",
+        "authority_zhu_unbiased_trust",
+        "authority_zhu_unbiased_trust_da"
+      ],
+      "n_gaps": 9,
+      "gap_trials": 72,
+      "judge_status": "complete",
+      "notes": "rl_zero × Zhu-style conditions only. rl_zero excluded from publication analysis."
+    },
+    "0.2": {
+      "temperature": 0.2,
+      "run_id": "46f0762a-210a-459a-8709-d24a0f194eb0",
+      "run_dir": "20260225_010113_46f0762a-210a-459a-8709-d24a0f194eb0",
+      "total_cells": 84,
+      "complete_cells": 75,
+      "gap_variants": ["rl_zero"],
+      "n_gaps": 9,
+      "gap_trials": 72,
+      "judge_status": "complete",
+      "notes": "rl_zero × Zhu-style conditions only."
+    },
+    "0.4": {
+      "temperature": 0.4,
+      "run_id": "bbd05985-d185-460a-b0aa-dd356d27ec94",
+      "run_dir": "20260225_041802_bbd05985-d185-460a-b0aa-dd356d27ec94",
+      "total_cells": 84,
+      "complete_cells": 84,
+      "gap_variants": [],
+      "n_gaps": 0,
+      "judge_status": "complete",
+      "notes": "Fully complete."
+    },
+    "0.6": {
+      "temperature": 0.6,
+      "run_id": "86c72262-d1aa-41b5-9c22-d7b2e0570215",
+      "run_dir": "20260225_085516_86c72262-d1aa-41b5-9c22-d7b2e0570215",
+      "total_cells": 84,
+      "complete_cells": 84,
+      "gap_variants": [],
+      "n_gaps": 0,
+      "judge_status": "complete",
+      "notes": "Fully complete."
+    },
+    "0.8": {
+      "temperature": 0.8,
+      "run_id": "9369442d-d825-4cd0-81a1-8ed276c37814",
+      "run_dir": "20260225_124244_9369442d-d825-4cd0-81a1-8ed276c37814",
+      "total_cells": 84,
+      "complete_cells": 75,
+      "gap_variants": ["rl_zero"],
+      "n_gaps": 9,
+      "gap_trials": 72,
+      "judge_status": "complete",
+      "notes": "rl_zero × Zhu-style conditions only."
+    },
+    "1.0": {
+      "temperature": 1.0,
+      "run_id": "9173bfae-4e8a-464f-8c9c-7ee91caa8b6e",
+      "run_dir": "20260225_130444_9173bfae-4e8a-464f-8c9c-7ee91caa8b6e",
+      "total_cells": 84,
+      "complete_cells": 75,
+      "gap_variants": ["rl_zero"],
+      "n_gaps": 9,
+      "gap_trials": 72,
+      "judge_status": "complete",
+      "missing_outputs": 24707,
+      "notes": "rl_zero × Zhu-style conditions only. Run accidentally used max_items_per_dataset=200 instead of 50 (see runs_metadata_v6.json)."
+    }
+  },
+
+  "summary": {
+    "total_temperatures": 6,
+    "complete_temperatures": 2,
+    "partial_temperatures": 4,
+    "total_cells": 504,
+    "complete_cells": 468,
+    "total_gaps": 36,
+    "excluded_variants": ["rl_zero"],
+    "notes": "36 gaps are all rl_zero × Zhu-style conditions, which are intentionally excluded from publication analysis. Database is functionally complete for research purposes."
+  },
+
+  "publication_analysis_readiness": {
+    "status": "READY",
+    "reason": "All non-excluded variants are complete across all conditions and temperatures",
+    "excluded_from_analysis": ["rl_zero"],
+    "publication_variants": 7,
+    "publication_items": 400,
+    "publication_conditions": 12,
+    "publication_temperatures": 6,
+    "generated_figures": 7,
+    "notes": "generate_publication_item_set.py successfully produces publication-quality analysis with no gaps in included data."
+  },
+
+  "optional_schema_completion": {
+    "status": "NOT_REQUIRED",
+    "cost": "36 gap cells × 8 datasets = ~72 minimal trials (negligible compute)",
+    "benefit": "Complete database schema for archival",
+    "method": "Run suite_surgical_gap_fill_t{T}.json configs with --phase trials --runs-only",
+    "recovery": "If performed, query with: SELECT variant, condition_id, COUNT(*) FROM conformity_trials WHERE variant='rl_zero' GROUP BY variant, condition_id"
+  }
+}

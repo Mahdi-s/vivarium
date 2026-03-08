@@ -1,0 +1,26 @@
+# Cochran's Q tests across condition families per variant
+# Generated: 2026-03-08T02:29:16.102675
+# Rows: 21
+# Script: generate_publication_item_set.py
+variant,family,k_conditions,n_subjects,conditions,Q_stat,df,p_value,sig
+base,tone,4,2389,Tone: Plain; Tone: Neutral; Tone: Confident; Tone: Uncertain,10.996,3,0.011749088264353502,*
+base,mitigation_vs_plain,4,2386,Tone: Plain; Mitigation: Devil's Advocate; Mitigation: Question Distillation; Format: Diverse Peers,13.147,3,0.004330136228268944,**
+base,authority_all,3,2310,Authoritative Bias; Authority: Trust; Authority: Trust+DA,60.482,2,7.360778653264788e-14,***
+instruct,tone,4,2383,Tone: Plain; Tone: Neutral; Tone: Confident; Tone: Uncertain,26.06,3,9.265427021398764e-06,***
+instruct,mitigation_vs_plain,4,2389,Tone: Plain; Mitigation: Devil's Advocate; Mitigation: Question Distillation; Format: Diverse Peers,14.002,3,0.0029020461571656053,**
+instruct,authority_all,3,2212,Authoritative Bias; Authority: Trust; Authority: Trust+DA,122.677,2,0.0,***
+instruct_dpo,tone,4,2375,Tone: Plain; Tone: Neutral; Tone: Confident; Tone: Uncertain,23.526,3,3.136650226553961e-05,***
+instruct_dpo,mitigation_vs_plain,4,2382,Tone: Plain; Mitigation: Devil's Advocate; Mitigation: Question Distillation; Format: Diverse Peers,9.264,3,0.025978437181664482,*
+instruct_dpo,authority_all,3,2218,Authoritative Bias; Authority: Trust; Authority: Trust+DA,122.982,2,0.0,***
+instruct_sft,tone,4,2388,Tone: Plain; Tone: Neutral; Tone: Confident; Tone: Uncertain,77.191,3,1.1102230246251565e-16,***
+instruct_sft,mitigation_vs_plain,4,2392,Tone: Plain; Mitigation: Devil's Advocate; Mitigation: Question Distillation; Format: Diverse Peers,15.163,3,0.0016825620567805233,**
+instruct_sft,authority_all,3,2244,Authoritative Bias; Authority: Trust; Authority: Trust+DA,298.663,2,0.0,***
+think,tone,4,2360,Tone: Plain; Tone: Neutral; Tone: Confident; Tone: Uncertain,4.589,3,0.20452512201055328,ns
+think,mitigation_vs_plain,4,2364,Tone: Plain; Mitigation: Devil's Advocate; Mitigation: Question Distillation; Format: Diverse Peers,18.681,3,0.000318293730214414,***
+think,authority_all,3,2228,Authoritative Bias; Authority: Trust; Authority: Trust+DA,41.056,2,1.2159042661608055e-09,***
+think_dpo,tone,4,2113,Tone: Plain; Tone: Neutral; Tone: Confident; Tone: Uncertain,0.983,3,0.8052679755449549,ns
+think_dpo,mitigation_vs_plain,4,2123,Tone: Plain; Mitigation: Devil's Advocate; Mitigation: Question Distillation; Format: Diverse Peers,12.284,3,0.006472201498590957,**
+think_dpo,authority_all,3,1996,Authoritative Bias; Authority: Trust; Authority: Trust+DA,49.007,2,2.2821633471892255e-11,***
+think_sft,tone,4,2345,Tone: Plain; Tone: Neutral; Tone: Confident; Tone: Uncertain,1.877,3,0.5983641714140433,ns
+think_sft,mitigation_vs_plain,4,2346,Tone: Plain; Mitigation: Devil's Advocate; Mitigation: Question Distillation; Format: Diverse Peers,13.935,3,0.00299518204201199,**
+think_sft,authority_all,3,2248,Authoritative Bias; Authority: Trust; Authority: Trust+DA,15.742,2,0.00038160866446335096,***

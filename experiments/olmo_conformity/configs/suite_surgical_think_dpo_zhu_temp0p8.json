@@ -1,0 +1,129 @@
+{
+  "paths_config": "paths.json",
+  "suite_name": "olmo_conformity_surgical_think_dpo_zhu_temp0.8",
+  "suite_version": "v1_surgical",
+  "description": "SURGICAL COMPLETION: think_dpo only × Zhu-style conditions (9 conditions: 4 tones, 2 mitigations, diverse, 2 authority) at T=0.8. Appends to existing simulation.db to fill gaps (191→400 items on Zhu conditions).",
+  "datasets": [
+    {
+      "name": "immutable_facts_minimal",
+      "version": "v2",
+      "path": "experiments/olmo_conformity/datasets/immutable_facts/minimal_items_wrong.jsonl",
+      "category": "general",
+      "notes": "Curated factual questions (geography, science, math)"
+    },
+    {
+      "name": "social_conventions_minimal",
+      "version": "v2",
+      "path": "experiments/olmo_conformity/datasets/social_conventions/minimal_items_wrong.jsonl",
+      "category": "opinion",
+      "notes": "Opinion/preference questions"
+    },
+    {
+      "name": "gsm8k",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/math/gsm8k_items_wrong.jsonl",
+      "category": "math",
+      "notes": "Grade school math word problems - tests RL-Zero's training domain"
+    },
+    {
+      "name": "mmlu_math",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/math/mmlu_math_items_wrong.jsonl",
+      "category": "math",
+      "notes": "MMLU math subsets (high school, elementary, college)"
+    },
+    {
+      "name": "mmlu_science",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/science/mmlu_science_items_wrong.jsonl",
+      "category": "science",
+      "notes": "MMLU science subsets (physics, chemistry, biology)"
+    },
+    {
+      "name": "mmlu_knowledge",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/knowledge/mmlu_knowledge_items_wrong.jsonl",
+      "category": "knowledge",
+      "notes": "MMLU knowledge subsets (geography, history, world religions)"
+    },
+    {
+      "name": "truthfulqa",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/truthfulness/truthfulqa_items_wrong.jsonl",
+      "category": "truthfulness",
+      "notes": "TruthfulQA - tests tendency to reproduce common misconceptions"
+    },
+    {
+      "name": "arc",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/reasoning/arc_items_wrong.jsonl",
+      "category": "reasoning",
+      "notes": "ARC Challenge + Easy - science reasoning questions"
+    }
+  ],
+  "conditions": [
+    {
+      "name": "asch_zhu_unbiased_unanimous_plain",
+      "params": { "type": "asch_peer_pressure", "system_style": "control", "prompt_style": "conversation", "confederates": 5, "consensus": "unanimous", "tone": "plain" },
+      "notes": "Zhu et al.-style Asch: unbiased system + unanimous-plain confederates"
+    },
+    {
+      "name": "asch_zhu_unbiased_unanimous_neutral",
+      "params": { "type": "asch_peer_pressure", "system_style": "control", "prompt_style": "conversation", "confederates": 5, "consensus": "unanimous", "tone": "neutral" },
+      "notes": "Zhu et al.-style Asch: unbiased system + unanimous-neutral (more natural) confederates"
+    },
+    {
+      "name": "asch_zhu_unbiased_unanimous_confident",
+      "params": { "type": "asch_peer_pressure", "system_style": "control", "prompt_style": "conversation", "confederates": 5, "consensus": "unanimous", "tone": "confident" },
+      "notes": "Zhu et al.-style Asch: unbiased system + unanimous-confident confederates"
+    },
+    {
+      "name": "asch_zhu_unbiased_unanimous_uncertain",
+      "params": { "type": "asch_peer_pressure", "system_style": "control", "prompt_style": "conversation", "confederates": 5, "consensus": "unanimous", "tone": "uncertain" },
+      "notes": "Zhu et al.-style Asch: unbiased system + unanimous-uncertain confederates"
+    },
+    {
+      "name": "asch_zhu_unbiased_diverse_plain",
+      "params": { "type": "asch_peer_pressure", "system_style": "control", "prompt_style": "conversation", "confederates": 5, "consensus": "diverse", "tone": "plain" },
+      "notes": "Zhu et al.-style control: Diverse answers (no majority) with same dialogue format"
+    },
+    {
+      "name": "asch_zhu_unbiased_qd",
+      "params": { "type": "asch_peer_pressure", "system_style": "control", "prompt_style": "conversation", "confederates": 5, "consensus": "unanimous", "tone": "plain", "distillation": true },
+      "notes": "Zhu et al.-style intervention: Question Distillation (summarize unanimous answer, reduce repetition)"
+    },
+    {
+      "name": "asch_zhu_unbiased_da",
+      "params": { "type": "asch_peer_pressure", "system_style": "control", "prompt_style": "conversation", "confederates": 5, "consensus": "unanimous", "tone": "plain", "devils_advocate": true },
+      "notes": "Zhu et al.-style intervention: Devil's Advocate (one dissenter breaks unanimity)"
+    },
+    {
+      "name": "authority_zhu_unbiased_trust",
+      "params": { "type": "authority_claim", "system_style": "control", "claim_style": "trust" },
+      "notes": "Zhu et al. appendix sycophancy-style authority claim: 'I trust that the answer must be ...' (unbiased system)"
+    },
+    {
+      "name": "authority_zhu_unbiased_trust_da",
+      "params": { "type": "authority_claim", "system_style": "control", "claim_style": "trust", "devils_advocate": true },
+      "notes": "Zhu et al. appendix mitigation: add an alternate (incorrect) option to reduce sycophancy (DA)"
+    }
+  ],
+  "models": [
+    { "variant": "think_dpo", "model_id": "allenai/Olmo-3-7B-Think-DPO" }
+  ],
+  "run": {
+    "seed": 42,
+    "temperature": 0.8,
+    "top_k": 50,
+    "top_p": 0.9,
+    "max_items_per_dataset": 50,
+    "notes": "Surgical fill for think_dpo gaps at T=0.8. Will append to existing simulation.db at runs_latest/runs/20260225_124244_9369442d-d825-4cd0-81a1-8ed276c37814/"
+  },
+  "surgical_notes": {
+    "purpose": "Complete think_dpo coverage on Zhu-style conditions from 191→400 items",
+    "only_variants": ["think_dpo"],
+    "only_conditions": "Zhu-style (9 conditions: 4 tone variants, 2 mitigations, diverse format, 2 authority extensions)",
+    "exclude": ["control", "asch_history_5", "authoritative_bias", "rl_zero"],
+    "expected_new_items": "~209 items (400 total - 191 current)"
+  }
+}

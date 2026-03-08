@@ -1,0 +1,82 @@
+# McNemar tests: each (variant, condition) vs control, Holm-Bonferroni corrected
+# Generated: 2026-03-08T02:29:15.647211
+# Rows: 77
+# Script: generate_publication_item_set.py
+variant,condition_name,condition_label,condition_family,n_pairs,b_override,c_rescue,error_ctrl,error_pressure,delta_error,odds_ratio,cohens_h,p_raw,p_adjusted,sig_raw,sig_adjusted
+base,authoritative_bias,Authoritative Bias,authority_core,1594,274,205,0.7196,0.7629,0.0433,1.336,0.0989,0.0018600670351138207,0.013020469245796744,**,*
+base,authority_zhu_unbiased_trust,Authority: Trust,authority_extended,1629,364,177,0.7225,0.8373,0.1148,2.054,0.2792,6.593532026447051e-16,9.23094483702587e-15,***,***
+base,authority_zhu_unbiased_trust_da,Authority: Trust+DA,authority_extended,1633,402,84,0.7226,0.9173,0.1947,4.763,0.5261,8.870778578495835e-51,3.548311431398334e-49,***,***
+base,asch_zhu_unbiased_diverse_plain,Format: Diverse Peers,format_control,1635,404,90,0.7217,0.9138,0.192,4.47,0.5153,1.6186036182610667e-48,5.665112663913734e-47,***,***
+base,asch_zhu_unbiased_da,Mitigation: Devil's Advocate,mitigation,1634,412,110,0.7222,0.907,0.1848,3.733,0.4905,4.5881569720236526e-42,1.3764470916070958e-40,***,***
+base,asch_zhu_unbiased_qd,Mitigation: Question Distillation,mitigation,1633,401,84,0.722,0.9161,0.1941,4.751,0.5231,1.468463770001791e-50,5.727008703006985e-49,***,***
+base,asch_history_5,Asch (5 Confederates),peer_core,1607,276,196,0.7218,0.7716,0.0498,1.407,0.1146,0.00026822820098153455,0.0021458256078522764,***,**
+base,asch_zhu_unbiased_unanimous_confident,Tone: Confident,tone,1634,417,88,0.7215,0.9229,0.2013,4.718,0.549,3.190664754495292e-52,1.3081725493430697e-50,***,***
+base,asch_zhu_unbiased_unanimous_neutral,Tone: Neutral,tone,1634,407,87,0.7222,0.918,0.1958,4.657,0.5295,1.6854921624811324e-50,6.404870217428304e-49,***,***
+base,asch_zhu_unbiased_unanimous_plain,Tone: Plain,tone,1634,405,111,0.7215,0.9015,0.1799,3.637,0.4732,2.6012025813303412e-40,6.763126711458887e-39,***,***
+base,asch_zhu_unbiased_unanimous_uncertain,Tone: Uncertain,tone,1634,420,59,0.7222,0.9431,0.2209,7.067,0.6286,3.565811990359907e-68,1.7472478752763545e-66,***,***
+instruct,authoritative_bias,Authoritative Bias,authority_core,1324,232,195,0.6715,0.6994,0.0279,1.189,0.0602,0.08135894953577803,0.4067947476788902,ns,ns
+instruct,authority_zhu_unbiased_trust,Authority: Trust,authority_extended,1361,349,208,0.6679,0.7715,0.1036,1.676,0.2315,2.475766630599973e-09,2.7233432936599702e-08,***,***
+instruct,authority_zhu_unbiased_trust_da,Authority: Trust+DA,authority_extended,1367,362,184,0.6693,0.7996,0.1302,1.965,0.2969,2.1272799401027026e-14,2.552735928123243e-13,***,***
+instruct,asch_zhu_unbiased_diverse_plain,Format: Diverse Peers,format_control,1365,385,72,0.6681,0.8974,0.2293,5.317,0.5758,9.548721470236847e-53,4.010463017499476e-51,***,***
+instruct,asch_zhu_unbiased_da,Mitigation: Devil's Advocate,mitigation,1367,398,106,0.6686,0.8822,0.2136,3.742,0.5262,8.782662296284759e-41,2.371318819996885e-39,***,***
+instruct,asch_zhu_unbiased_qd,Mitigation: Question Distillation,mitigation,1367,407,77,0.6686,0.91,0.2414,5.258,0.6175,3.077773612861634e-55,1.3234426535305027e-53,***,***
+instruct,asch_history_5,Asch (5 Confederates),peer_core,1338,218,208,0.6734,0.6809,0.0075,1.048,0.016,0.6628497510893478,1.0,ns,ns
+instruct,asch_zhu_unbiased_unanimous_confident,Tone: Confident,tone,1368,415,69,0.6689,0.9218,0.2529,5.978,0.6594,3.089896984977928e-61,1.4213526130898468e-59,***,***
+instruct,asch_zhu_unbiased_unanimous_neutral,Tone: Neutral,tone,1365,404,98,0.6689,0.893,0.2242,4.107,0.5599,3.898045301104176e-45,1.2083940433422945e-43,***,***
+instruct,asch_zhu_unbiased_unanimous_plain,Tone: Plain,tone,1367,399,94,0.6686,0.8917,0.2231,4.228,0.5562,9.55561585877878e-46,3.0577970748092097e-44,***,***
+instruct,asch_zhu_unbiased_unanimous_uncertain,Tone: Uncertain,tone,1365,378,111,0.6696,0.8652,0.1956,3.395,0.4729,4.2668326121524073e-35,9.813715007950537e-34,***,***
+instruct_dpo,authoritative_bias,Authoritative Bias,authority_core,1373,246,212,0.6606,0.6854,0.0248,1.16,0.0528,0.12298241910064564,0.49192967640258256,ns,ns
+instruct_dpo,authority_zhu_unbiased_trust,Authority: Trust,authority_extended,1408,346,268,0.6577,0.7131,0.0554,1.291,0.1194,0.0018636749504634933,0.013020469245796744,**,*
+instruct_dpo,authority_zhu_unbiased_trust_da,Authority: Trust+DA,authority_extended,1405,380,183,0.6584,0.7986,0.1402,2.074,0.3177,7.034629066757304e-17,1.0551943600135955e-15,***,***
+instruct_dpo,asch_zhu_unbiased_diverse_plain,Format: Diverse Peers,format_control,1409,393,90,0.6579,0.873,0.215,4.348,0.5206,3.565871318936489e-46,1.1767375352490414e-44,***,***
+instruct_dpo,asch_zhu_unbiased_da,Mitigation: Devil's Advocate,mitigation,1408,379,114,0.6584,0.8466,0.1882,3.314,0.4436,2.8746931944589574e-34,6.324325027809706e-33,***,***
+instruct_dpo,asch_zhu_unbiased_qd,Mitigation: Question Distillation,mitigation,1405,398,85,0.6591,0.8819,0.2228,4.661,0.5452,1.8937433106078163e-49,6.817475918188139e-48,***,***
+instruct_dpo,asch_history_5,Asch (5 Confederates),peer_core,1382,222,232,0.6606,0.6534,-0.0072,0.957,-0.0152,0.6727863663444503,1.0,ns,ns
+instruct_dpo,asch_zhu_unbiased_unanimous_confident,Tone: Confident,tone,1408,417,97,0.6584,0.8857,0.2273,4.282,0.5586,2.882604945171018e-48,9.80085681358146e-47,***,***
+instruct_dpo,asch_zhu_unbiased_unanimous_neutral,Tone: Neutral,tone,1407,393,102,0.6581,0.865,0.2068,3.839,0.4964,2.648977525156406e-41,7.682034822953577e-40,***,***
+instruct_dpo,asch_zhu_unbiased_unanimous_plain,Tone: Plain,tone,1407,382,102,0.6588,0.8579,0.199,3.732,0.4743,4.204025793795595e-39,1.0510064484488987e-37,***,***
+instruct_dpo,asch_zhu_unbiased_unanimous_uncertain,Tone: Uncertain,tone,1406,356,137,0.6586,0.8144,0.1558,2.593,0.3571,1.7037394425003355e-23,3.407478885000671e-22,***,***
+instruct_sft,authoritative_bias,Authoritative Bias,authority_core,1472,269,169,0.6766,0.7446,0.0679,1.59,0.15,2.0340998561206734e-06,1.8306898705086062e-05,***,***
+instruct_sft,authority_zhu_unbiased_trust,Authority: Trust,authority_extended,1503,350,315,0.6766,0.6999,0.0233,1.111,0.0503,0.18730780675965086,0.5619234202789526,ns,ns
+instruct_sft,authority_zhu_unbiased_trust_da,Authority: Trust+DA,authority_extended,1503,369,233,0.678,0.7685,0.0905,1.582,0.2029,3.296704792790371e-08,3.2967047927903706e-07,***,***
+instruct_sft,asch_zhu_unbiased_diverse_plain,Format: Diverse Peers,format_control,1507,423,72,0.6762,0.9091,0.2329,5.841,0.5982,1.7267639070445125e-61,8.28846675381366e-60,***,***
+instruct_sft,asch_zhu_unbiased_da,Mitigation: Devil's Advocate,mitigation,1506,423,119,0.676,0.8778,0.2019,3.544,0.497,6.270917242451616e-41,1.7558568278864525e-39,***,***
+instruct_sft,asch_zhu_unbiased_qd,Mitigation: Question Distillation,mitigation,1504,412,90,0.6762,0.8903,0.2141,4.558,0.5355,3.092651441721813e-50,1.1442810334370707e-48,***,***
+instruct_sft,asch_history_5,Asch (5 Confederates),peer_core,1474,351,87,0.6784,0.8575,0.1791,4.017,0.4318,1.1912815127172206e-38,2.8590756305213294e-37,***,***
+instruct_sft,asch_zhu_unbiased_unanimous_confident,Tone: Confident,tone,1506,449,58,0.6773,0.9369,0.2596,7.684,0.7006,6.096964706372086e-76,3.048482353186043e-74,***,***
+instruct_sft,asch_zhu_unbiased_unanimous_neutral,Tone: Neutral,tone,1507,452,85,0.6768,0.9204,0.2435,5.292,0.6371,1.923281787584472e-61,9.039424401647019e-60,***,***
+instruct_sft,asch_zhu_unbiased_unanimous_plain,Tone: Plain,tone,1507,428,85,0.6762,0.9038,0.2276,5.012,0.5799,4.7308155899974225e-56,2.0815588595988658e-54,***,***
+instruct_sft,asch_zhu_unbiased_unanimous_uncertain,Tone: Uncertain,tone,1507,446,85,0.6768,0.9164,0.2395,5.222,0.6226,4.367637195495314e-60,1.9654367379728914e-58,***,***
+think,authoritative_bias,Authoritative Bias,authority_core,1165,346,115,0.3931,0.5914,0.1983,3.0,0.3993,6.2793470336274255e-28,1.3186628770617595e-26,***,***
+think,authority_zhu_unbiased_trust,Authority: Trust,authority_extended,1197,658,33,0.3901,0.9123,0.5221,19.657,1.1909,5.4763155922600864e-152,3.77865775865946e-150,***,***
+think,authority_zhu_unbiased_trust_da,Authority: Trust+DA,authority_extended,1200,661,29,0.3908,0.9175,0.5267,22.424,1.2082,5.3790456842756263e-157,3.872912892678451e-155,***,***
+think,asch_zhu_unbiased_diverse_plain,Format: Diverse Peers,format_control,1198,687,26,0.3907,0.9424,0.5518,25.943,1.3066,1.14206880496725e-167,8.679722917751099e-166,***,***
+think,asch_zhu_unbiased_da,Mitigation: Devil's Advocate,mitigation,1199,695,27,0.3912,0.9483,0.5571,25.291,1.3314,8.022081393991397e-169,6.177002673373376e-167,***,***
+think,asch_zhu_unbiased_qd,Mitigation: Question Distillation,mitigation,1201,669,34,0.3897,0.9184,0.5287,19.406,1.2139,4.716591582606794e-154,3.3016141078247557e-152,***,***
+think,asch_history_5,Asch (5 Confederates),peer_core,1166,330,126,0.3962,0.5712,0.175,2.613,0.3519,3.890386086521441e-22,7.391733564390739e-21,***,***
+think,asch_zhu_unbiased_unanimous_confident,Tone: Confident,tone,1199,679,28,0.392,0.9349,0.543,23.842,1.2727,3.5924435527667235e-163,2.6943326645750428e-161,***,***
+think,asch_zhu_unbiased_unanimous_neutral,Tone: Neutral,tone,1194,678,34,0.392,0.9313,0.5394,19.667,1.2583,1.4335561246512982e-156,1.0178248485024217e-154,***,***
+think,asch_zhu_unbiased_unanimous_plain,Tone: Plain,tone,1199,674,27,0.3903,0.9299,0.5396,24.527,1.2562,7.479221986834593e-163,5.534624270257598e-161,***,***
+think,asch_zhu_unbiased_unanimous_uncertain,Tone: Uncertain,tone,1198,676,30,0.3898,0.929,0.5392,22.18,1.2537,3.652496306629304e-160,2.6663223038393923e-158,***,***
+think_dpo,authoritative_bias,Authoritative Bias,authority_core,1209,289,117,0.4814,0.6237,0.1423,2.464,0.2871,6.753660357831653e-18,1.148122260831381e-16,***,***
+think_dpo,authority_zhu_unbiased_trust,Authority: Trust,authority_extended,1009,524,36,0.4133,0.8969,0.4836,14.37,1.0914,4.168709753929874e-112,2.1260419745042356e-110,***,***
+think_dpo,authority_zhu_unbiased_trust_da,Authority: Trust+DA,authority_extended,1012,550,35,0.4121,0.9209,0.5089,15.507,1.1776,4.097129390507791e-120,2.130507283064051e-118,***,***
+think_dpo,asch_zhu_unbiased_diverse_plain,Format: Diverse Peers,format_control,1017,554,24,0.41,0.9312,0.5211,22.633,1.2208,4.0566418691753784e-132,2.433985121505227e-130,***,***
+think_dpo,asch_zhu_unbiased_da,Mitigation: Devil's Advocate,mitigation,1015,567,29,0.4099,0.9399,0.53,19.237,1.2567,1.3957028767819396e-130,7.815936109978862e-129,***,***
+think_dpo,asch_zhu_unbiased_qd,Mitigation: Question Distillation,mitigation,1016,538,31,0.4085,0.9075,0.499,17.095,1.1368,1.4881907369940002e-120,7.887410906068201e-119,***,***
+think_dpo,asch_history_5,Asch (5 Confederates),peer_core,1214,276,112,0.4819,0.617,0.1351,2.458,0.2724,4.337687002744464e-17,6.940299204391143e-16,***,***
+think_dpo,asch_zhu_unbiased_unanimous_confident,Tone: Confident,tone,1012,558,26,0.4091,0.9348,0.5257,21.075,1.2372,3.944449230372324e-131,2.287780553615948e-129,***,***
+think_dpo,asch_zhu_unbiased_unanimous_neutral,Tone: Neutral,tone,1014,549,24,0.4093,0.927,0.5178,22.429,1.2062,1.0497279863624696e-130,5.983449522266076e-129,***,***
+think_dpo,asch_zhu_unbiased_unanimous_plain,Tone: Plain,tone,1021,565,24,0.4094,0.9393,0.5299,23.082,1.255,3.1400467726749613e-135,1.9154285313317265e-133,***,***
+think_dpo,asch_zhu_unbiased_unanimous_uncertain,Tone: Uncertain,tone,1016,549,25,0.4094,0.9252,0.5157,21.549,1.1988,1.207377981371663e-129,6.640578897544146e-128,***,***
+think_sft,authoritative_bias,Authoritative Bias,authority_core,1227,324,131,0.4303,0.5876,0.1573,2.468,0.316,6.111844404489544e-20,1.1001319928081179e-18,***,***
+think_sft,authority_zhu_unbiased_trust,Authority: Trust,authority_extended,1250,648,66,0.428,0.8936,0.4656,9.752,1.0508,4.7180522473868864e-121,2.547748213588919e-119,***,***
+think_sft,authority_zhu_unbiased_trust_da,Authority: Trust+DA,authority_extended,1251,661,48,0.4269,0.9169,0.49,13.639,1.1326,8.58192071899668e-139,5.320790845777942e-137,***,***
+think_sft,asch_zhu_unbiased_diverse_plain,Format: Diverse Peers,format_control,1248,671,44,0.4263,0.9287,0.5024,15.09,1.1781,4.7009119949499046e-145,3.008583676767939e-143,***,***
+think_sft,asch_zhu_unbiased_da,Mitigation: Devil's Advocate,mitigation,1249,666,39,0.4275,0.9295,0.502,16.873,1.1789,2.545537170197064e-148,1.705509904032033e-146,***,***
+think_sft,asch_zhu_unbiased_qd,Mitigation: Question Distillation,mitigation,1251,651,53,0.4285,0.9065,0.478,12.178,1.0928,6.777244918944268e-132,3.998574502177118e-130,***,***
+think_sft,asch_history_5,Asch (5 Confederates),peer_core,1227,291,133,0.4319,0.5607,0.1288,2.184,0.2583,1.2120498440082127e-14,1.5756647972106765e-13,***,***
+think_sft,asch_zhu_unbiased_unanimous_confident,Tone: Confident,tone,1245,664,39,0.4297,0.9317,0.502,16.823,1.1831,9.08770788204384e-148,5.997887202148935e-146,***,***
+think_sft,asch_zhu_unbiased_unanimous_neutral,Tone: Neutral,tone,1251,657,38,0.4285,0.9233,0.4948,17.078,1.153,8.71885302619228e-147,5.667254467024982e-145,***,***
+think_sft,asch_zhu_unbiased_unanimous_plain,Tone: Plain,tone,1253,661,37,0.4254,0.9234,0.498,17.64,1.1597,7.398427707592979e-149,5.030930841163226e-147,***,***
+think_sft,asch_zhu_unbiased_unanimous_uncertain,Tone: Uncertain,tone,1251,663,44,0.4293,0.9241,0.4948,14.91,1.1544,7.227630627863673e-143,4.5534072955541144e-141,***,***
