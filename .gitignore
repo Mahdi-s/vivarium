@@ -126,3 +126,5 @@ Comparing_Experiments/runs_metadata.json.bak
 Comparing_Experiments/expanded_suite_analysis/
 Comparing_Experiments/expanded_suite_analysis_db_endorse/
 Comparing_Experiments/publication_analysis*/
+
+models/*
