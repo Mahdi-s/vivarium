@@ -59,19 +59,20 @@
       "run_id": "9369442d-d825-4cd0-81a1-8ed276c37814",
       "run_dir": "20260225_124244_9369442d-d825-4cd0-81a1-8ed276c37814",
       "status": "completed",
-      "n_trials": 32925,
-      "n_with_output": 32925,
-      "n_missing_output": 0
+      "n_trials": 34800,
+      "n_with_output": 34800,
+      "n_missing_output": 0,
+      "note": "think_dpo variant for 9 Zhu/authority conditions was incomplete (1725 of 3600 trials). Merged complete surgical run b5a2b275 (20260307_230500) on 2026-03-09 via scripts/merge_surgical_runs.py. All 12 conditions now have 400 trials per variant."
     },
     "1.0": {
       "temperature": 1.0,
       "run_id": "9173bfae-4e8a-464f-8c9c-7ee91caa8b6e",
       "run_dir": "20260225_130444_9173bfae-4e8a-464f-8c9c-7ee91caa8b6e",
       "status": "completed",
-      "n_trials": 63315,
-      "n_with_output": 38608,
-      "n_missing_output": 24707,
-      "note": "Accidentally run with max_items_per_dataset=200 instead of 50; 24707 trials missing LLM output. Publication analysis uses item_set.csv intersection to exclude extra/missing items."
+      "n_trials": 34800,
+      "n_with_output": 34800,
+      "n_missing_output": 0,
+      "note": "Originally run with max_items_per_dataset=200 (cleaned to 50). think_dpo variant for 9 Zhu/authority conditions was incomplete (3315 of 3600 trials). Merged complete surgical run fcc469ac (20260308_123628) on 2026-03-09 via scripts/merge_surgical_runs.py. All 12 conditions now have 400 trials per variant."
     }
   }
 }
