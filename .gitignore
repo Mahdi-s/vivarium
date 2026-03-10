@@ -128,3 +128,5 @@ Comparing_Experiments/expanded_suite_analysis_db_endorse/
 Comparing_Experiments/publication_analysis*/
 
 models/*
+
+.claude/*
