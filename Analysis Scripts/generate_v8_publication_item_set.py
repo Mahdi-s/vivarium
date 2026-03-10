@@ -66,7 +66,7 @@ PEER_SUBCONDITIONS: Tuple[str, ...] = (
     "asch_zhu_unbiased_unanimous_confident",
     "asch_zhu_unbiased_unanimous_uncertain",
     "asch_zhu_unbiased_diverse_plain",
-    "asch_zhu_unbiased_ad",
+    "asch_zhu_unbiased_qd",
     "asch_zhu_unbiased_da",
 )
 
@@ -84,7 +84,7 @@ TONE_CONDITIONS: Tuple[str, ...] = (
 
 MITIGATION_CONDITIONS: Tuple[str, ...] = (
     "asch_zhu_unbiased_da",
-    "asch_zhu_unbiased_ad",
+    "asch_zhu_unbiased_qd",
     "asch_zhu_unbiased_diverse_plain",
 )
 
@@ -97,7 +97,7 @@ ALL_CONDITIONS: Tuple[str, ...] = (
     "asch_zhu_unbiased_unanimous_confident",
     "asch_zhu_unbiased_unanimous_uncertain",
     "asch_zhu_unbiased_diverse_plain",
-    "asch_zhu_unbiased_ad",
+    "asch_zhu_unbiased_qd",
     "asch_zhu_unbiased_da",
     "authoritative_bias",
     "authority_zhu_unbiased_trust",
@@ -112,7 +112,7 @@ CONDITION_LABELS: Dict[str, str] = {
     "asch_zhu_unbiased_unanimous_confident": "Unanimous Confident",
     "asch_zhu_unbiased_unanimous_uncertain": "Unanimous Uncertain",
     "asch_zhu_unbiased_diverse_plain": "Diverse Plain",
-    "asch_zhu_unbiased_ad": "Asch: AD",
+    "asch_zhu_unbiased_qd": "Asch: Question Distillation",
     "asch_zhu_unbiased_da": "Asch: Devil's Advocate",
     "authoritative_bias": "Authoritative Bias",
     "authority_zhu_unbiased_trust": "Authority: Trust",
@@ -128,7 +128,7 @@ CONDITION_FAMILY: Dict[str, str] = {
     "asch_zhu_unbiased_unanimous_confident": "peer_tone",
     "asch_zhu_unbiased_unanimous_uncertain": "peer_tone",
     "asch_zhu_unbiased_diverse_plain": "peer_mitigation",
-    "asch_zhu_unbiased_ad": "peer_mitigation",
+    "asch_zhu_unbiased_qd": "peer_mitigation",
     "asch_zhu_unbiased_da": "peer_mitigation",
     "authoritative_bias": "authority",
     "authority_zhu_unbiased_trust": "authority",
@@ -805,7 +805,7 @@ def compute_cochrans_q_families(df: pd.DataFrame) -> pd.DataFrame:
             "asch_zhu_unbiased_unanimous_confident",
             "asch_zhu_unbiased_unanimous_uncertain",
             "asch_zhu_unbiased_diverse_plain",
-            "asch_zhu_unbiased_ad",
+            "asch_zhu_unbiased_qd",
             "asch_zhu_unbiased_da",
         ),
     }
@@ -1112,7 +1112,7 @@ def plot_forest_pressure_effects(
         "asch_zhu_unbiased_unanimous_uncertain",
         "asch_zhu_unbiased_diverse_plain",
         "asch_zhu_unbiased_da",
-        "asch_zhu_unbiased_ad",
+        "asch_zhu_unbiased_qd",
         "authoritative_bias",
         "authority_zhu_unbiased_trust",
         "authority_zhu_unbiased_trust_da",
@@ -1245,7 +1245,7 @@ def plot_heatmap_with_stars(
         "asch_zhu_unbiased_unanimous_uncertain",
         "asch_zhu_unbiased_diverse_plain",
         "asch_zhu_unbiased_da",
-        "asch_zhu_unbiased_ad",
+        "asch_zhu_unbiased_qd",
         "authoritative_bias",
         "authority_zhu_unbiased_trust",
         "authority_zhu_unbiased_trust_da",
@@ -1652,7 +1652,7 @@ def plot_mitigation_effectiveness(
 
     baseline = "asch_zhu_unbiased_unanimous_plain"
     mit_conds = [
-        c for c in ("asch_zhu_unbiased_da", "asch_zhu_unbiased_ad", "asch_zhu_unbiased_diverse_plain")
+        c for c in ("asch_zhu_unbiased_da", "asch_zhu_unbiased_qd", "asch_zhu_unbiased_diverse_plain")
         if c in df["condition_name"].unique()
     ]
     if baseline not in df["condition_name"].unique() or not mit_conds:
@@ -1683,7 +1683,7 @@ def plot_mitigation_effectiveness(
     palette = {
         baseline: "#E74C3C",
         "asch_zhu_unbiased_da": "#27AE60",
-        "asch_zhu_unbiased_ad": "#8E44AD",
+        "asch_zhu_unbiased_qd": "#8E44AD",
         "asch_zhu_unbiased_diverse_plain": "#2980B9",
     }
     x_vals = np.arange(len(compare_conds))
