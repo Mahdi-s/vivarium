@@ -13,9 +13,11 @@
       "authority": ["authority_zhu_unbiased_trust", "authority_zhu_unbiased_trust_da"]
     },
     "models": ["base", "instruct", "instruct_sft", "instruct_dpo", "think", "think_sft", "think_dpo", "rl_zero"],
-    "item_set_manifest": "Comparing_Experiments/v6_publication/item_set.csv",
+    "item_set_manifest": "Comparing_Experiments/publication_V2/item_set.csv",
     "missing_outputs_note": "Comparing_Experiments/v6_publication/missing_outputs_note.csv",
-    "analysis_command": "python 'Analysis Scripts/expanded_suite_behavioral_breakdown.py' --runs-dir runs_latest/runs --metadata Comparing_Experiments/runs_metadata_v6.json --publication-item-set Comparing_Experiments/v6_publication/item_set.csv --out-dir Comparing_Experiments/v6_publication --include-extra-conditions --use-judge-labels"
+    "analysis_command": "python 'Analysis Scripts/generate_v8_publication_item_set.py' --runs-dir runs_latest/runs --metadata Comparing_Experiments/runs_metadata_v6.json --out-dir Comparing_Experiments/publication_V2 --run-analysis --n-boot 10000",
+    "analysis_command_supplementary": "python 'Analysis Scripts/generate_publication_item_set.py' --runs-dir runs_latest/runs --out-dir Comparing_Experiments/publication_V2 --n-boot 10000",
+    "publication_out_dir": "Comparing_Experiments/publication_V2"
   },
   "experiments": {
     "0.0": {
