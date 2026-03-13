@@ -1,8 +1,9 @@
 {
   "paths_config": "paths.json",
-  "suite_name": "olmo_conformity_expanded_temp0.0",
-  "suite_version": "v5",
-  "description": "Expanded conformity experiment with multiple dataset categories (math, science, knowledge, truthfulness, reasoning) at temperature 0.0 for deterministic decoding. Includes conservative anti-conformity prompts plus Zhu et al. (arXiv:2410.12428)-inspired unbiased/biasing variants (tone, Diverse control, Question Distillation, Devil's Advocate).",
+  "suite_name": "olmo_conformity_7b_expanded",
+  "suite_version": "v6",
+  "description": "Full OLMo-3 7B family conformity experiment. All 8 model variants across the Instruct and Think post-training pipelines plus base and RL-Zero. Temperature is set at runtime via --temperature flag (default 0.0). Covers all 12 behavioral conditions from Zhu et al. (arXiv:2410.12428).",
+
   "datasets": [
     {
       "name": "immutable_facts_minimal",
@@ -23,7 +24,7 @@
       "version": "v1",
       "path": "experiments/olmo_conformity/datasets/math/gsm8k_items_wrong.jsonl",
       "category": "math",
-      "notes": "Grade school math word problems - tests RL-Zero's training domain"
+      "notes": "Grade school math word problems — tests RL-Zero's training domain"
     },
     {
       "name": "mmlu_math",
@@ -51,16 +52,17 @@
       "version": "v1",
       "path": "experiments/olmo_conformity/datasets/truthfulness/truthfulqa_items_wrong.jsonl",
       "category": "truthfulness",
-      "notes": "TruthfulQA - tests tendency to reproduce common misconceptions"
+      "notes": "TruthfulQA — tests tendency to reproduce common misconceptions"
     },
     {
       "name": "arc",
       "version": "v1",
       "path": "experiments/olmo_conformity/datasets/reasoning/arc_items_wrong.jsonl",
       "category": "reasoning",
-      "notes": "ARC Challenge + Easy - science reasoning questions"
+      "notes": "ARC Challenge + Easy — science reasoning questions"
     }
   ],
+
   "conditions": [
     {
       "name": "control",
@@ -75,37 +77,37 @@
     {
       "name": "asch_zhu_unbiased_unanimous_plain",
       "params": { "type": "asch_peer_pressure", "system_style": "control", "prompt_style": "conversation", "confederates": 5, "consensus": "unanimous", "tone": "plain" },
-      "notes": "Zhu et al.-style Asch: unbiased system + unanimous-plain confederates"
+      "notes": "Zhu et al.: unbiased system + unanimous-plain confederates"
     },
     {
       "name": "asch_zhu_unbiased_unanimous_neutral",
       "params": { "type": "asch_peer_pressure", "system_style": "control", "prompt_style": "conversation", "confederates": 5, "consensus": "unanimous", "tone": "neutral" },
-      "notes": "Zhu et al.-style Asch: unbiased system + unanimous-neutral (more natural) confederates"
+      "notes": "Zhu et al.: unbiased system + unanimous-neutral (natural tone)"
     },
     {
       "name": "asch_zhu_unbiased_unanimous_confident",
       "params": { "type": "asch_peer_pressure", "system_style": "control", "prompt_style": "conversation", "confederates": 5, "consensus": "unanimous", "tone": "confident" },
-      "notes": "Zhu et al.-style Asch: unbiased system + unanimous-confident confederates"
+      "notes": "Zhu et al.: unbiased system + unanimous-confident confederates"
     },
     {
       "name": "asch_zhu_unbiased_unanimous_uncertain",
       "params": { "type": "asch_peer_pressure", "system_style": "control", "prompt_style": "conversation", "confederates": 5, "consensus": "unanimous", "tone": "uncertain" },
-      "notes": "Zhu et al.-style Asch: unbiased system + unanimous-uncertain confederates"
+      "notes": "Zhu et al.: unbiased system + unanimous-uncertain confederates"
     },
     {
       "name": "asch_zhu_unbiased_diverse_plain",
       "params": { "type": "asch_peer_pressure", "system_style": "control", "prompt_style": "conversation", "confederates": 5, "consensus": "diverse", "tone": "plain" },
-      "notes": "Zhu et al.-style control: Diverse answers (no majority) with same dialogue format"
+      "notes": "Zhu et al. control: Diverse answers (no majority) with same dialogue format"
     },
     {
       "name": "asch_zhu_unbiased_qd",
       "params": { "type": "asch_peer_pressure", "system_style": "control", "prompt_style": "conversation", "confederates": 5, "consensus": "unanimous", "tone": "plain", "distillation": true },
-      "notes": "Zhu et al.-style intervention: Question Distillation (summarize unanimous answer, reduce repetition)"
+      "notes": "Zhu et al. intervention: Question Distillation (summarize unanimous answer)"
     },
     {
       "name": "asch_zhu_unbiased_da",
       "params": { "type": "asch_peer_pressure", "system_style": "control", "prompt_style": "conversation", "confederates": 5, "consensus": "unanimous", "tone": "plain", "devils_advocate": true },
-      "notes": "Zhu et al.-style intervention: Devil's Advocate (one dissenter breaks unanimity)"
+      "notes": "Zhu et al. intervention: Devil's Advocate (one dissenter breaks unanimity)"
     },
     {
       "name": "authoritative_bias",
@@ -115,40 +117,37 @@
     {
       "name": "authority_zhu_unbiased_trust",
       "params": { "type": "authority_claim", "system_style": "control", "claim_style": "trust" },
-      "notes": "Zhu et al. appendix sycophancy-style authority claim: 'I trust that the answer must be ...' (unbiased system)"
+      "notes": "Zhu et al. sycophancy-style: 'I trust that the answer must be ...' (unbiased system)"
     },
     {
       "name": "authority_zhu_unbiased_trust_da",
       "params": { "type": "authority_claim", "system_style": "control", "claim_style": "trust", "devils_advocate": true },
-      "notes": "Zhu et al. appendix mitigation: add an alternate (incorrect) option to reduce sycophancy (DA)"
+      "notes": "Zhu et al. mitigation: add alternate option to reduce sycophancy (DA)"
     }
   ],
+
   "models": [
-    { "variant": "base", "model_id": "allenai/Olmo-3-1025-7B" },
-    { "variant": "instruct", "model_id": "allenai/Olmo-3-7B-Instruct" },
-    { "variant": "instruct_sft", "model_id": "allenai/Olmo-3-7B-Instruct-SFT" },
-    { "variant": "instruct_dpo", "model_id": "allenai/Olmo-3-7B-Instruct-DPO" },
-    { "variant": "think", "model_id": "allenai/Olmo-3-7B-Think" },
-    { "variant": "think_sft", "model_id": "allenai/Olmo-3-7B-Think-SFT" },
-    { "variant": "think_dpo", "model_id": "allenai/Olmo-3-7B-Think-DPO" },
-    { "variant": "rl_zero", "model_id": "allenai/Olmo-3-7B-RL-Zero-Math" }
+    { "variant": "base",          "model_id": "allenai/Olmo-3-1025-7B",           "max_new_tokens": 128, "has_think_tokens": false, "notes": "Base pretrained model — no fine-tuning" },
+    { "variant": "instruct",      "model_id": "allenai/Olmo-3-7B-Instruct",       "max_new_tokens": 128, "has_think_tokens": false, "notes": "Instruct pipeline: final (SFT → DPO → RLVR)" },
+    { "variant": "instruct_sft",  "model_id": "allenai/Olmo-3-7B-Instruct-SFT",   "max_new_tokens": 128, "has_think_tokens": false, "notes": "Instruct pipeline: SFT checkpoint" },
+    { "variant": "instruct_dpo",  "model_id": "allenai/Olmo-3-7B-Instruct-DPO",   "max_new_tokens": 128, "has_think_tokens": false, "notes": "Instruct pipeline: DPO checkpoint" },
+    { "variant": "think",         "model_id": "allenai/Olmo-3-7B-Think",           "max_new_tokens": 256, "has_think_tokens": true,  "notes": "Think pipeline: final (SFT → DPO → RLVR)" },
+    { "variant": "think_sft",     "model_id": "allenai/Olmo-3-7B-Think-SFT",       "max_new_tokens": 256, "has_think_tokens": true,  "notes": "Think pipeline: SFT checkpoint" },
+    { "variant": "think_dpo",     "model_id": "allenai/Olmo-3-7B-Think-DPO",       "max_new_tokens": 256, "has_think_tokens": true,  "notes": "Think pipeline: DPO checkpoint" },
+    { "variant": "rl_zero",       "model_id": "allenai/Olmo-3-7B-RL-Zero-Math",    "max_new_tokens": 128, "has_think_tokens": false, "notes": "RL-Zero: pure RL on math (no SFT/DPO)" }
   ],
+
   "run": {
     "seed": 42,
     "temperature": 0.0,
     "top_k": 50,
     "top_p": 0.9,
     "max_items_per_dataset": 50,
-    "notes": "temperature=0.0 for deterministic (greedy) decoding; top_k=50/top_p=0.9 locked; seed=42 for reproducibility"
+    "notes": "Temperature overridden at runtime via job script. top_k=50/top_p=0.9 locked. seed=42 for reproducibility. 50 items per dataset per V6 publication cap."
   },
+
   "scientific_notes": {
-    "validation_gates": [
-      "Prompt gate: Every Asch/authoritative trial must use wrong_answer != ground_truth_text",
-      "Temperature 0.0: Deterministic greedy decoding to establish baseline",
-      "Category analysis: Results should be analyzed by dataset category to test domain effects",
-      "RL-Zero hypothesis: RL-Zero should perform better on math (its training domain) than general knowledge"
-    ],
     "categories": ["general", "opinion", "math", "science", "knowledge", "truthfulness", "reasoning"],
-    "v6_publication": "max_items_per_dataset=50 is the V6 publication cap (same for all temperatures, all 12 conditions, all 8 models). Same 50 items per dataset are used across every (condition x model) cell."
+    "v6_publication": "max_items_per_dataset=50 is the V6 publication cap (same for all temperatures, all 12 conditions, all 8 models). Same 50 items per dataset used across every (condition x model) cell."
   }
 }

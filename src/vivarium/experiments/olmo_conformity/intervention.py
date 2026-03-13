@@ -9,7 +9,7 @@ from vivarium.persistence import TraceDb
 from vivarium.llm_gateway import HuggingFaceHookedGateway
 from vivarium.output_parsing import OutputParsingConfig, classify_output
 
-from .scoring import evaluate_correctness, is_refusal, parse_answer_text
+from .enhanced_scoring import score_single_output
 
 JsonDict = Dict[str, Any]
 
@@ -204,12 +204,13 @@ def run_intervention_sweep(
                 expected_answer_texts=([ground_truth] if ground_truth is not None else []),
                 token_logprobs=None,
             )
-            parsed_before = parse_answer_text(text_before)
-            refusal_before = is_refusal(text_before)
-            is_correct_before = evaluate_correctness(
-                parsed_answer_text=parsed_before,
-                ground_truth_text=ground_truth,
+            sr_before = score_single_output(
+                raw_text=text_before, ground_truth_text=ground_truth,
+                wrong_answer=None, condition_name="unknown", dataset_name="unknown",
             )
+            parsed_before = sr_before.parsed_answer_text
+            refusal_before = sr_before.refusal_flag
+            is_correct_before = sr_before.is_correct
 
             output_before_id = str(uuid.uuid4())
             trace_db.insert_conformity_output(
@@ -283,12 +284,13 @@ def run_intervention_sweep(
                 expected_answer_texts=([ground_truth] if ground_truth is not None else []),
                 token_logprobs=None,
             )
-            parsed_after = parse_answer_text(text_after)
-            refusal_after = is_refusal(text_after)
-            is_correct_after = evaluate_correctness(
-                parsed_answer_text=parsed_after,
-                ground_truth_text=ground_truth,
+            sr_after = score_single_output(
+                raw_text=text_after, ground_truth_text=ground_truth,
+                wrong_answer=None, condition_name="unknown", dataset_name="unknown",
             )
+            parsed_after = sr_after.parsed_answer_text
+            refusal_after = sr_after.refusal_flag
+            is_correct_after = sr_after.is_correct
 
             output_after_id = str(uuid.uuid4())
             trace_db.insert_conformity_output(

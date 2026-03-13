@@ -22,21 +22,37 @@ from typing import Optional, Tuple
 def detect_olmo_variant(model_id: str) -> str:
     """
     Detect the Olmo-3 variant from model ID.
-    
-    Returns: "base", "instruct", "think", "rl_zero", or "unknown"
+
+    Returns fine-grained variant: "think_sft", "think_dpo", "think",
+    "instruct_sft", "instruct_dpo", "instruct", "rl_zero", "base",
+    or "unknown".
+
+    The "think" return value covers the final RLVR checkpoint
+    (e.g. Olmo-3-32B-Think) as well as any Think model whose
+    sub-stage cannot be determined from the model ID alone.
     """
     model_id_lower = model_id.lower()
-    
+
+    # Think family — check sub-stages before the generic "think" match
     if "think" in model_id_lower:
+        if "think-sft" in model_id_lower:
+            return "think_sft"
+        if "think-dpo" in model_id_lower:
+            return "think_dpo"
         return "think"
+    # Instruct family — check sub-stages before the generic "instruct" match
     elif "instruct" in model_id_lower:
+        if "instruct-sft" in model_id_lower:
+            return "instruct_sft"
+        if "instruct-dpo" in model_id_lower:
+            return "instruct_dpo"
         return "instruct"
     elif "rl-zero" in model_id_lower or "rlzero" in model_id_lower:
         return "rl_zero"
     elif "olmo-3" in model_id_lower or "olmo3" in model_id_lower:
         if "base" in model_id_lower or ("7b" in model_id_lower and "instruct" not in model_id_lower and "think" not in model_id_lower):
             return "base"
-    
+
     return "unknown"
 
 
@@ -61,25 +77,35 @@ def extract_think_tokens(text: str) -> Tuple[Optional[str], str]:
 
 
 def is_think_variant(model_id: str) -> bool:
-    """Check if model ID indicates a Think variant."""
-    return detect_olmo_variant(model_id) == "think"
+    """Check if model ID indicates a Think variant (any sub-stage)."""
+    return detect_olmo_variant(model_id) in ("think", "think_sft", "think_dpo")
 
 
 def get_olmo_model_config(model_id: str) -> dict:
     """
     Get model-specific configuration for Olmo models.
-    
+
     Returns configuration dict with variant-specific settings.
     """
     variant = detect_olmo_variant(model_id)
-    
+    is_think = variant in ("think", "think_sft", "think_dpo")
+    is_32b = "32b" in model_id.lower()
+
+    # Think models need more tokens; 32B Think models need even more for longer reasoning chains
+    if is_think and is_32b:
+        max_new_tokens = 512
+    elif is_think:
+        max_new_tokens = 256
+    else:
+        max_new_tokens = 128
+
     config = {
         "variant": variant,
         "model_id": model_id,
-        "has_think_tokens": variant == "think",
-        "max_new_tokens": 256 if variant == "think" else 128,  # Think models need more tokens
+        "has_think_tokens": is_think,
+        "max_new_tokens": max_new_tokens,
     }
-    
+
     return config
 
 

@@ -31,7 +31,7 @@ from vivarium.persistence import TraceDb
 from vivarium.llm_gateway import HuggingFaceHookedGateway
 from vivarium.output_parsing import OutputParsingConfig, classify_output
 
-from .scoring import evaluate_correctness, is_refusal, parse_answer_text
+from .enhanced_scoring import score_single_output
 
 JsonDict = Dict[str, Any]
 
@@ -234,8 +234,10 @@ def run_activation_patching(
             top_k=top_k, top_p=top_p,
         )
 
-        parsed_corrupt = parse_answer_text(text_corrupt)
-        is_correct_corrupt = evaluate_correctness(parsed_answer_text=parsed_corrupt, ground_truth_text=ground_truth)
+        sr_corrupt = score_single_output(
+            raw_text=text_corrupt, ground_truth_text=ground_truth,
+            wrong_answer=None, condition_name="unknown", dataset_name="unknown",
+        )
         classified_corrupt = classify_output(
             raw_text=text_corrupt, cfg=output_parse_cfg,
             system_prompt=auth_sys, user_prompt=auth_usr,
@@ -245,8 +247,8 @@ def run_activation_patching(
         output_corrupt_id = str(uuid.uuid4())
         trace_db.insert_conformity_output(
             output_id=output_corrupt_id, trial_id=auth_tid, raw_text=text_corrupt,
-            parsed_answer_text=parsed_corrupt, parsed_answer_json=None,
-            is_correct=is_correct_corrupt, refusal_flag=is_refusal(text_corrupt),
+            parsed_answer_text=sr_corrupt.parsed_answer_text, parsed_answer_json=None,
+            is_correct=sr_corrupt.is_correct, refusal_flag=sr_corrupt.refusal_flag,
             latency_ms=0.0,
             token_usage_json={"_output_quality": {"label": classified_corrupt.label.value, "metadata": classified_corrupt.metadata}},
             created_at=now,
@@ -302,8 +304,10 @@ def run_activation_patching(
             except Exception:
                 text_patched = str(resp_patched)
 
-            parsed_patched = parse_answer_text(text_patched)
-            is_correct_patched = evaluate_correctness(parsed_answer_text=parsed_patched, ground_truth_text=ground_truth)
+            sr_patched = score_single_output(
+                raw_text=text_patched, ground_truth_text=ground_truth,
+                wrong_answer=None, condition_name="unknown", dataset_name="unknown",
+            )
             classified_patched = classify_output(
                 raw_text=text_patched, cfg=output_parse_cfg,
                 system_prompt=auth_sys, user_prompt=auth_usr,
@@ -314,16 +318,16 @@ def run_activation_patching(
             output_patched_id = str(uuid.uuid4())
             trace_db.insert_conformity_output(
                 output_id=output_patched_id, trial_id=auth_tid, raw_text=text_patched,
-                parsed_answer_text=parsed_patched, parsed_answer_json=None,
-                is_correct=is_correct_patched, refusal_flag=is_refusal(text_patched),
+                parsed_answer_text=sr_patched.parsed_answer_text, parsed_answer_json=None,
+                is_correct=sr_patched.is_correct, refusal_flag=sr_patched.refusal_flag,
                 latency_ms=0.0,
                 token_usage_json={"_output_quality": {"label": classified_patched.label.value, "metadata": classified_patched.metadata}},
                 created_at=now,
             )
 
             rescued: Optional[bool] = None
-            if is_correct_corrupt is not None and is_correct_patched is not None:
-                rescued = (not bool(is_correct_corrupt)) and bool(is_correct_patched)
+            if sr_corrupt.is_correct is not None and sr_patched.is_correct is not None:
+                rescued = (not bool(sr_corrupt.is_correct)) and bool(sr_patched.is_correct)
 
             # logit_diff_recovery is left as None for now; would require
             # extracting per-token logits which isn't cheap with the HF gateway.

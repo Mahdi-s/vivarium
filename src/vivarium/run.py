@@ -17,8 +17,13 @@ from typing import Any
 
 from vivarium.agent_langgraph import default_cognitive_policy
 from vivarium.channel import InMemoryChannel
-from vivarium.export import export_messages_to_parquet, export_trace_to_parquet
 from vivarium.experiment_config import load_experiment_config
+
+try:
+    from vivarium.export import export_messages_to_parquet, export_trace_to_parquet
+except ImportError:
+    export_messages_to_parquet = None  # type: ignore[assignment]
+    export_trace_to_parquet = None  # type: ignore[assignment]
 from vivarium.interpretability import CaptureConfig, CaptureContext
 from vivarium.llama_cpp import LlamaServerConfig, run_llama_server
 from vivarium.model_discovery import discover_all_models, export_models

@@ -22,7 +22,7 @@ from .olmo_utils import (
     get_ollama_model_name,
 )
 from .prompts import build_messages
-from .scoring import evaluate_correctness, is_refusal, parse_answer_text
+from .enhanced_scoring import score_single_output
 
 
 def _discover_runs(runs_dir: str, run_id_filter: Optional[str] = None) -> List[str]:
@@ -335,11 +335,9 @@ def run_backfill(
                         expected_answer_texts=expected,
                         token_logprobs=None,
                     )
-                    parsed = parse_answer_text(raw_text)
-                    refusal = is_refusal(raw_text)
-                    is_correct = evaluate_correctness(
-                        parsed_answer_text=parsed,
-                        ground_truth_text=gt,
+                    sr = score_single_output(
+                        raw_text=raw_text, ground_truth_text=gt,
+                        wrong_answer=None, condition_name="unknown", dataset_name="unknown",
                     )
 
                     output_id = str(uuid.uuid4())
@@ -347,10 +345,10 @@ def run_backfill(
                         output_id=output_id,
                         trial_id=tid,
                         raw_text=raw_text,
-                        parsed_answer_text=parsed,
+                        parsed_answer_text=sr.parsed_answer_text,
                         parsed_answer_json=None,
-                        is_correct=is_correct,
-                        refusal_flag=refusal,
+                        is_correct=sr.is_correct,
+                        refusal_flag=sr.refusal_flag,
                         latency_ms=latency_ms,
                         token_usage_json={
                             "_output_quality": {

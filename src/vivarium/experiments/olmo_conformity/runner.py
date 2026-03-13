@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import gc
+import json
 import os
 import random
 import time
@@ -10,7 +11,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from vivarium.interpretability import CaptureConfig, CaptureContext
-from vivarium.llm_gateway import HuggingFaceHookedGateway, LiteLLMGateway, MockLLMGateway, RateLimitConfig, TransformerLensGateway
+from vivarium.llm_gateway import RateLimitConfig, create_gateway
 from vivarium.output_parsing import OutputParsingConfig, classify_output
 from vivarium.persistence import TraceDb, TraceDbConfig
 from vivarium.types import RunMetadata
@@ -26,12 +27,7 @@ except ImportError:
     ConformityScorer = None
     RationalizationScorer = None
     TruthfulnessScorer = None
-from .olmo_utils import (
-    detect_olmo_variant,
-    ensure_olmo_model_downloaded,
-    get_olmo_model_config,
-    get_ollama_model_name,
-)
+from .olmo_utils import ensure_olmo_model_downloaded
 from .prompts import (
     PROMPT_RENDERER_VERSION,
     build_messages,
@@ -47,7 +43,7 @@ from .prompts import (
     stable_int_seed,
 )
 
-from .scoring import evaluate_correctness, is_refusal, parse_answer_text
+from .enhanced_scoring import score_single_output
 
 JsonDict = Dict[str, Any]
 
@@ -645,6 +641,9 @@ def run_suite(
                 source_json=source_data if source_data else None,
             )
 
+    # Reverse map: dataset_id -> dataset_name (for enhanced scoring)
+    dataset_name_by_id = {did: dname for dname, did in dataset_ids.items()}
+
     # Register conditions (on resume: reuse existing condition IDs)
     condition_ids: Dict[str, str] = {}
     for cond in cfg.get("conditions", []):
@@ -658,6 +657,17 @@ def run_suite(
                 cond_id = str(row["condition_id"])
         condition_ids[name] = cond_id
         trace_db.upsert_conformity_condition(condition_id=cond_id, name=name, params=dict(cond.get("params") or {}))
+
+    # Pre-load condition params (avoids N×M redundant SQL queries in the trial loop)
+    condition_params: Dict[str, Dict] = {}
+    for cname, cid in condition_ids.items():
+        row = trace_db.conn.execute(
+            "SELECT params_json FROM conformity_conditions WHERE condition_id = ?;", (cid,)
+        ).fetchone()
+        try:
+            condition_params[cname] = json.loads(row["params_json"])
+        except Exception:
+            condition_params[cname] = {}
 
     # Execute trials (behavioral only). Interpretability/probes/interventions are separate steps.
     temperature = float(cfg.get("run", {}).get("temperature", 0.0))
@@ -690,6 +700,27 @@ def run_suite(
             print("Warning: Judge Eval not installed, skipping tracer integration")
             use_judgeval = False
     
+    # Pre-create JudgeVal scorers (reused across all trials)
+    _jv_conformity_scorer = None
+    _jv_truthfulness_scorer = None
+    _jv_rationalization_scorer = None
+    if use_judgeval and JUDGEVAL_AVAILABLE:
+        if ConformityScorer is not None:
+            try:
+                _jv_conformity_scorer = ConformityScorer(judge_model=judgeval_judge_model, ollama_base=judgeval_ollama_base)  # type: ignore
+            except Exception as e:
+                print(f"Warning: Failed to create conformity scorer: {e}")
+        if TruthfulnessScorer is not None:
+            try:
+                _jv_truthfulness_scorer = TruthfulnessScorer(judge_model=judgeval_judge_model, ollama_base=judgeval_ollama_base)  # type: ignore
+            except Exception as e:
+                print(f"Warning: Failed to create truthfulness scorer: {e}")
+        if RationalizationScorer is not None:
+            try:
+                _jv_rationalization_scorer = RationalizationScorer(judge_model=judgeval_judge_model, ollama_base=judgeval_ollama_base)  # type: ignore
+            except Exception as e:
+                print(f"Warning: Failed to create rationalization scorer: {e}")
+
     # Setup activation capture if requested
     activations_dir = os.path.join(run_dir, "activations") if capture_activations else None
     if capture_activations and activations_dir:
@@ -714,137 +745,43 @@ def run_suite(
     for m in cfg.get("models", []):
         variant = str(m.get("variant") or "unknown")
         model_id = str(m.get("model_id") or "mock")
+        max_tokens = int(m.get("max_new_tokens", 128))
+        model_config = {
+            "variant": variant,
+            "model_id": model_id,
+            "max_new_tokens": max_tokens,
+            "has_think_tokens": bool(m.get("has_think_tokens", False)),
+        }
 
-        # Auto-detect Olmo variant if not explicitly set
-        if model_id != "mock" and variant == "unknown":
-            detected = detect_olmo_variant(model_id)
-            if detected != "unknown":
-                variant = detected
-                print(f"Auto-detected Olmo variant: {variant} for model {model_id}")
+        # Pre-flight: verify local HuggingFace models are available (OLMo-specific)
+        if not api_base and model_id.startswith("allenai/"):
+            try:
+                models_dir_for_download = str(Path(str(hf_cache_dir)).parent) if hf_cache_dir else None
+                ensure_olmo_model_downloaded(model_id=model_id, models_dir=models_dir_for_download, import_to_ollama=False)
+            except Exception as e:
+                print(f"ERROR: Failed to verify model {model_id}: {e}")
+                raise
 
-        # Get model-specific config
-        model_config = get_olmo_model_config(model_id) if model_id != "mock" else {}
+        print(f"\n{'='*60}")
+        print(f"Setting up model: {model_id} (variant={variant})")
+        print(f"{'='*60}")
 
-        # Choose gateway: mock vs API vs TransformerLens (for later phases)
-        model_id_for_api = model_id  # Default to original model_id
-        
-        if model_id == "mock":
-            gateway = MockLLMGateway(seed=seed)
-        elif variant == "transformerlens":
-            # Explicitly requested TransformerLens variant (must be in official list)
-            max_tokens = model_config.get("max_new_tokens", 128)
-            gateway = TransformerLensGateway(
-                model_id=model_id,
-                capture_context=cap_ctx if capture_activations else None,
-                max_new_tokens=max_tokens
-            )
-        elif model_id.startswith("allenai/Olmo"):
-            # Olmo models: Prefer local TransformerLens for activation access.
-            print(f"\n{'='*60}")
-            print(f"Setting up Olmo model: {model_id}")
-            print(f"{'='*60}")
-            
-            # Convert to Ollama model name format
-            olmo_model_name = get_ollama_model_name(model_id)
-            
-            # If api_base is provided, use OpenAI-compatible API (e.g. Ollama).
-            if api_base:
-                print(f"\nUsing Ollama API for Olmo model: {olmo_model_name}")
-                print(f"  API base: {api_base}")
-                print(f"  Note: Model must be available in Ollama (use 'ollama pull {olmo_model_name}')")
-                if capture_activations:
-                    print(
-                        "  WARNING: --capture-activations is enabled, but cannot capture activations via remote API. "
-                        "Run without --api-base to use local TransformerLens."
-                    )
-                
-                gateway = LiteLLMGateway(
-                    api_base=api_base,
-                    api_key=api_key,
-                    rate_limit_config=(
-                        None
-                        if not rate_limit_enabled
-                        else RateLimitConfig(
-                            max_concurrent_requests=int(rate_limit_max_concurrent),
-                            requests_per_minute=rate_limit_rpm,
-                            tokens_per_minute=rate_limit_tpm,
-                        )
-                    ),
-                )
-                # Use Ollama model name (without allenai/ prefix)
-                model_id_for_api = olmo_model_name
-            else:
-                # Local run: use HF-hooked gateway for OLMo3 (TL weight conversion isn't available yet),
-                # but keep TL-style hook names so CaptureContext + downstream probes/interventions work.
-                try:
-                    # Use configured models_dir if available, else default
-                    models_dir_for_download = None
-                    if hf_cache_dir:
-                        # ensure_olmo_model_downloaded expects the parent dir (it will add huggingface_cache)
-                        # But paths.json already points to the full cache path, so use parent
-                        models_dir_for_download = str(Path(str(hf_cache_dir)).parent)
-                    
-                    _, _was_downloaded = ensure_olmo_model_downloaded(
-                        model_id=model_id,
-                        models_dir=models_dir_for_download,
-                        import_to_ollama=False,  # Don't try to import to Ollama (requires GGUF conversion)
-                    )
-                except Exception as e:
-                    print(f"ERROR: Failed to verify model: {e}")
-                    print(f"  You may need to:")
-                    print(f"  1. Install transformers: pip install transformers torch")
-                    print(f"  2. Ensure you have enough disk space (~14GB for 7B models)")
-                    print(f"  3. Check your internet connection")
-                    raise
-                
-                print(f"\nUsing local hooked HF gateway for Olmo model: {model_id}")
-                if capture_activations:
-                    print("  Activation capture: ENABLED")
-                else:
-                    print("  Activation capture: disabled (enable with --capture-activations)")
+        rl_cfg = None if not rate_limit_enabled else RateLimitConfig(
+            max_concurrent_requests=int(rate_limit_max_concurrent),
+            requests_per_minute=rate_limit_rpm,
+            tokens_per_minute=rate_limit_tpm,
+        )
 
-                max_tokens = model_config.get("max_new_tokens", 128)
-                # Prefer CUDA on HPC, MPS on Apple Silicon, else CPU. Override via VVM_DEVICE if needed.
-
-                # Ensure HF/Transformers uses the configured cache directory (critical on HPC where home
-                # quotas are small and repeated downloads are expensive). The suite config / paths.json
-                # provides `models_dir` as a cache path (typically .../huggingface_cache).
-                if hf_cache_dir:
-                    try:
-                        hf_cache = Path(hf_cache_dir)
-                        os.environ.setdefault("HF_HOME", str(hf_cache.parent))
-                        os.environ.setdefault("HUGGINGFACE_HUB_CACHE", str(hf_cache))
-                        os.environ.setdefault("TRANSFORMERS_CACHE", str(hf_cache))
-                    except Exception:
-                        pass
-                
-                # Resolve model path: use configured models_dir if available, else default
-                if hf_cache_dir:
-                    model_cache_path = os.path.join(str(hf_cache_dir), model_id.replace("/", "_"))
-                else:
-                    model_cache_path = os.path.join(repo_root, "models", "huggingface_cache", model_id.replace("/", "_"))
-                
-                gateway = HuggingFaceHookedGateway(
-                    model_id_or_path=model_cache_path if os.path.isdir(model_cache_path) else model_id,
-                    device=os.environ.get("VVM_DEVICE"),
-                    capture_context=cap_ctx if capture_activations else None,
-                    max_new_tokens=max_tokens,
-                )
-                model_id_for_api = model_id
-        else:
-            gateway = LiteLLMGateway(
-                api_base=api_base,
-                api_key=api_key,
-                rate_limit_config=(
-                    None
-                    if not rate_limit_enabled
-                    else RateLimitConfig(
-                        max_concurrent_requests=int(rate_limit_max_concurrent),
-                        requests_per_minute=rate_limit_rpm,
-                        tokens_per_minute=rate_limit_tpm,
-                    )
-                ),
-            )
+        gateway, model_id_for_api = create_gateway(
+            model_id=model_id,
+            variant=variant,
+            api_base=api_base,
+            api_key=api_key,
+            hf_cache_dir=hf_cache_dir,
+            capture_context=cap_ctx if capture_activations else None,
+            rate_limit_config=rl_cfg,
+            max_new_tokens=max_tokens,
+        )
 
         # Query items back from DB for this run's datasets
         print(f"\n[Runner] Querying items from database...")
@@ -866,8 +803,7 @@ def run_suite(
             src = r["source_json"]
             if src:
                 try:
-                    import json as _json
-                    src_data = _json.loads(src)
+                    src_data = json.loads(src)
                     wrong = src_data.get("wrong_answer")
                 except Exception:
                     wrong = None
@@ -898,21 +834,13 @@ def run_suite(
             source_json_str = row["source_json"]
             if source_json_str:
                 try:
-                    import json as _json
-                    source_data = _json.loads(source_json_str)
+                    source_data = json.loads(source_json_str)
                     if source_data.get("wrong_answer"):
                         item["wrong_answer"] = source_data["wrong_answer"]
                 except Exception:
                     pass
             for cond_name, cond_id in condition_ids.items():
-                condition = {"name": cond_name, "params": trace_db.conn.execute("SELECT params_json FROM conformity_conditions WHERE condition_id = ?;", (cond_id,)).fetchone()["params_json"]}
-                # params_json is string; rehydrate minimally
-                try:
-                    import json as _json
-
-                    condition["params"] = _json.loads(condition["params"])
-                except Exception:
-                    condition["params"] = {}
+                condition = {"name": cond_name, "params": condition_params.get(cond_name, {})}
 
                 trial_num += 1
                 trial_id = str(uuid.uuid4())
@@ -987,12 +915,8 @@ def run_suite(
 
                 messages = build_messages(system=system, user=user, history=history)
 
-                # Calculate time_step for activation alignment (before trial execution)
-                trial_count = trace_db.conn.execute(
-                    "SELECT COUNT(*) FROM conformity_trials WHERE run_id = ?;",
-                    (run_id_final,)
-                ).fetchone()[0]
-                time_step = trial_count  # Use trial count as time_step
+                # Use trial_num as time_step for activation alignment
+                time_step = trial_num
                 agent_id = f"trial_{trial_id[:8]}"
                 
                 # Register trial step for activation alignment if capturing
@@ -1049,78 +973,64 @@ def run_suite(
                     token_logprobs=None,
                 )
 
-                parsed = parse_answer_text(raw_text)
-                refusal = is_refusal(raw_text)
-                is_correct = evaluate_correctness(
-                    parsed_answer_text=parsed,
+                scoring_result = score_single_output(
+                    raw_text=raw_text,
                     ground_truth_text=item.get("ground_truth_text"),
+                    wrong_answer=item.get("wrong_answer"),
+                    condition_name=cond_name,
+                    dataset_name=dataset_name_by_id.get(item["dataset_id"], "unknown"),
                 )
+                parsed = scoring_result.parsed_answer_text
+                refusal = scoring_result.refusal_flag
+                is_correct = scoring_result.is_correct
 
-                # Judge Eval evaluation (synchronous for now - can be made async later)
+                # Judge Eval evaluation (uses pre-created scorers)
                 judgeval_scores = {}
                 if use_judgeval and judgment_tracer and JUDGEVAL_AVAILABLE and ConformityExample is not None:
                     try:
                         import asyncio
-                        
-                        # Create example for Judge Eval
                         example = ConformityExample(  # type: ignore
                             question=item.get("question", ""),
                             answer=raw_text,
                             ground_truth=item.get("ground_truth_text"),
                             condition=condition.get("name", "unknown"),
                         )
-                        
-                        # Run scorers asynchronously
-                        async def evaluate_with_judgeval():
+                        async def _run_judgeval():
                             scores = {}
-                            if ConformityScorer is not None:
+                            if _jv_conformity_scorer is not None:
                                 try:
-                                    conformity_scorer = ConformityScorer(  # type: ignore
-                                        judge_model=judgeval_judge_model,
-                                        ollama_base=judgeval_ollama_base
-                                    )
-                                    scores["conformity"] = await conformity_scorer.a_score_example(example)
+                                    scores["conformity"] = await _jv_conformity_scorer.a_score_example(example)
                                 except Exception as e:
                                     print(f"Warning: Conformity scorer failed: {e}")
-                            
-                            if TruthfulnessScorer is not None:
+                            if _jv_truthfulness_scorer is not None:
                                 try:
-                                    truthfulness_scorer = TruthfulnessScorer(  # type: ignore
-                                        judge_model=judgeval_judge_model,
-                                        ollama_base=judgeval_ollama_base
-                                    )
-                                    scores["truthfulness"] = await truthfulness_scorer.a_score_example(example)
+                                    scores["truthfulness"] = await _jv_truthfulness_scorer.a_score_example(example)
                                 except Exception as e:
                                     print(f"Warning: Truthfulness scorer failed: {e}")
-                            
-                            # Rationalization scorer only for Think variants
-                            if model_config.get("has_think_tokens", False) and RationalizationScorer is not None:
+                            if model_config.get("has_think_tokens", False) and _jv_rationalization_scorer is not None:
                                 try:
-                                    rationalization_scorer = RationalizationScorer(  # type: ignore
-                                        judge_model=judgeval_judge_model,
-                                        ollama_base=judgeval_ollama_base
-                                    )
-                                    scores["rationalization"] = await rationalization_scorer.a_score_example(example)
+                                    scores["rationalization"] = await _jv_rationalization_scorer.a_score_example(example)
                                 except Exception as e:
                                     print(f"Warning: Rationalization scorer failed: {e}")
-                            
                             return scores
-                        
-                        # Run async evaluation synchronously (blocking)
                         try:
-                            judgeval_scores = asyncio.run(evaluate_with_judgeval())
+                            judgeval_scores = asyncio.run(_run_judgeval())
                         except RuntimeError:
-                            # Event loop already running - skip for now (would need proper async integration)
                             print("Warning: Cannot run async Judge Eval in sync context, skipping")
                     except Exception as e:
                         print(f"Warning: Judge Eval evaluation failed: {e}")
 
                 output_id = str(uuid.uuid4())
                 
-                # Store Judge Eval scores in parsed_answer_json
-                parsed_json = None
+                # Store enhanced scoring + Judge Eval scores in parsed_answer_json
+                parsed_json = {
+                    "endorsement": scoring_result.endorsement,
+                    "endorsement_evidence": scoring_result.endorsement_evidence,
+                    "candidates": scoring_result.candidates,
+                    "winning_candidate": scoring_result.winning_candidate,
+                }
                 if judgeval_scores:
-                    parsed_json = judgeval_scores
+                    parsed_json["judgeval"] = judgeval_scores
 
                 token_usage_json = {
                     "_output_quality": {

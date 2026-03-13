@@ -29,6 +29,9 @@ class SuiteModelSpec(BaseModel):
 
     variant: str
     model_id: str
+    max_new_tokens: int = 128
+    has_think_tokens: bool = False
+    backend: Optional[str] = None  # "huggingface", "litellm", "transformerlens", "mock"
     notes: Optional[str] = None
 
 

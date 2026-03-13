@@ -157,6 +157,76 @@ def select_local_gateway(
     )
 
 
+def create_gateway(
+    *,
+    model_id: str,
+    variant: str = "unknown",
+    api_base: Optional[str] = None,
+    api_key: Optional[str] = None,
+    hf_cache_dir: Optional[str] = None,
+    capture_context: Optional["CaptureContext"] = None,
+    rate_limit_config: Optional["RateLimitConfig"] = None,
+    max_new_tokens: int = 128,
+) -> Tuple[Any, str]:
+    """
+    Create the appropriate LLM gateway for a model. Model-agnostic.
+
+    Returns (gateway, model_id_for_api) where model_id_for_api is the
+    identifier to pass to gateway.chat(model=...).
+
+    Selection logic:
+      1. model_id == "mock"         → MockLLMGateway
+      2. variant == "transformerlens"→ TransformerLensGateway
+      3. api_base is set            → LiteLLMGateway (any model via API)
+      4. otherwise                  → HuggingFaceHookedGateway (local)
+    """
+    if model_id == "mock":
+        return MockLLMGateway(seed=42), model_id
+
+    if variant == "transformerlens":
+        gw = TransformerLensGateway(
+            model_id=model_id,
+            capture_context=capture_context,
+            max_new_tokens=max_new_tokens,
+        )
+        return gw, model_id
+
+    if api_base:
+        gw = LiteLLMGateway(
+            api_base=api_base,
+            api_key=api_key,
+            rate_limit_config=rate_limit_config,
+        )
+        # For Ollama, strip org prefix and lowercase for the API model name
+        model_id_for_api = model_id
+        if "/" in model_id:
+            model_id_for_api = model_id.split("/", 1)[1].lower()
+        return gw, model_id_for_api
+
+    # Local inference: resolve HF cache path if provided
+    import os
+
+    if hf_cache_dir:
+        from pathlib import Path
+
+        hf_cache = Path(hf_cache_dir)
+        os.environ.setdefault("HF_HOME", str(hf_cache.parent))
+        os.environ.setdefault("HUGGINGFACE_HUB_CACHE", str(hf_cache))
+        os.environ.setdefault("TRANSFORMERS_CACHE", str(hf_cache))
+        model_path = os.path.join(str(hf_cache_dir), model_id.replace("/", "_"))
+        resolved = model_path if os.path.isdir(model_path) else model_id
+    else:
+        resolved = model_id
+
+    gw = HuggingFaceHookedGateway(
+        model_id_or_path=resolved,
+        device=os.environ.get("VVM_DEVICE"),
+        capture_context=capture_context,
+        max_new_tokens=max_new_tokens,
+    )
+    return gw, model_id
+
+
 class RateLimiter:
     """
     Rate limiter for LLM gateway with token counting, backpressure, and exponential backoff.

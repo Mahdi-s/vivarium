@@ -10,21 +10,16 @@ import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from vivarium.llm_gateway import HuggingFaceHookedGateway, LiteLLMGateway
+from vivarium.llm_gateway import create_gateway
 from vivarium.output_parsing import OutputParsingConfig, classify_output
 from vivarium.persistence import TraceDb, TraceDbConfig
 from vivarium.settings import settings
 
 from .io import clamp_items, deterministic_prompt_hash, load_paths_config, load_suite_config, read_jsonl, sha256_file
-from .olmo_utils import (
-    detect_olmo_variant,
-    ensure_olmo_model_downloaded,
-    get_olmo_model_config,
-    get_ollama_model_name,
-)
+from .olmo_utils import ensure_olmo_model_downloaded, get_olmo_model_config
 from .prompts import PROMPT_RENDERER_VERSION, build_messages
 from .runner import _build_prompt_for_condition
-from .scoring import evaluate_correctness, is_refusal, parse_answer_text
+from .enhanced_scoring import score_single_output
 
 BEHAVIORAL_CONDITIONS = ("control", "asch_history_5", "authoritative_bias")
 DEFAULT_TEMPERATURES = (0.0, 0.2, 0.4, 0.6, 0.8, 1.0)
@@ -42,54 +37,31 @@ def _discover_run_dir(runs_dir: str, run_id: str) -> Optional[str]:
     return None
 
 
-def _create_gateway(
+def _make_gateway(
     *,
     model_id: str,
     variant: str,
     api_base: Optional[str],
     api_key: Optional[str],
     hf_cache_dir: Optional[str],
-    repo_root: str,
 ) -> Tuple[Any, str]:
-    """Create gateway for model inference. Returns (gateway, model_id_for_api)."""
+    """Create gateway for model inference. Delegates to shared factory."""
     model_config = get_olmo_model_config(model_id) if model_id else {}
     max_tokens = int(model_config.get("max_new_tokens", 128))
 
-    if variant == "unknown" and model_id:
-        variant = detect_olmo_variant(model_id)
+    # Pre-flight: verify local OLMo models
+    if not api_base and model_id.startswith("allenai/"):
+        models_dir = str(Path(str(hf_cache_dir)).parent) if hf_cache_dir else None
+        ensure_olmo_model_downloaded(model_id=model_id, models_dir=models_dir, import_to_ollama=False)
 
-    if api_base and model_id and "allenai/Olmo" in model_id:
-        olmo_model_name = get_ollama_model_name(model_id)
-        gateway = LiteLLMGateway(
-            api_base=api_base,
-            api_key=api_key,
-            rate_limit_config=None,
-        )
-        return gateway, olmo_model_name
-
-    if hf_cache_dir:
-        model_cache_path = os.path.join(str(hf_cache_dir), model_id.replace("/", "_"))
-    else:
-        model_cache_path = os.path.join(
-            repo_root, "models", "huggingface_cache", model_id.replace("/", "_")
-        )
-    if not os.path.isdir(model_cache_path):
-        models_dir_for_download = str(Path(model_cache_path).parent) if hf_cache_dir else None
-        if models_dir_for_download:
-            ensure_olmo_model_downloaded(
-                model_id=model_id,
-                models_dir=models_dir_for_download,
-                import_to_ollama=False,
-            )
-        model_cache_path = model_id
-
-    gateway = HuggingFaceHookedGateway(
-        model_id_or_path=model_cache_path if os.path.isdir(model_cache_path) else model_id,
-        device=os.environ.get("VVM_DEVICE"),
-        capture_context=None,
+    return create_gateway(
+        model_id=model_id,
+        variant=variant,
+        api_base=api_base,
+        api_key=api_key,
+        hf_cache_dir=hf_cache_dir,
         max_new_tokens=max_tokens,
     )
-    return gateway, model_id
 
 
 def _ensure_items_and_get_dataset_ids(
@@ -471,9 +443,13 @@ def complete_single_run(
             tr = trace_db.conn.execute(
                 """
                 SELECT t.trial_id, t.model_id, t.variant, t.temperature, t.seed, t.item_id,
-                       i.ground_truth_text, i.source_json
+                       i.ground_truth_text, i.source_json,
+                       c.name AS condition_name,
+                       d.name AS dataset_name
                 FROM conformity_trials t
                 JOIN conformity_items i ON i.item_id = t.item_id
+                JOIN conformity_conditions c ON c.condition_id = t.condition_id
+                JOIN conformity_datasets d ON d.dataset_id = i.dataset_id
                 WHERE t.trial_id = ?
                 """,
                 (tid,),
@@ -497,6 +473,14 @@ def complete_single_run(
                     history = json.loads(prow["chat_history_json"])
                 except Exception:
                     pass
+            # Extract wrong_answer from source_json
+            wrong_answer = None
+            if tr["source_json"]:
+                try:
+                    src = json.loads(tr["source_json"]) if isinstance(tr["source_json"], str) else tr["source_json"]
+                    wrong_answer = src.get("wrong_answer")
+                except Exception:
+                    pass
             trial_data[tid] = {
                 "model_id": str(tr["model_id"]),
                 "variant": str(tr["variant"]),
@@ -504,6 +488,9 @@ def complete_single_run(
                 "seed": int(tr["seed"]),
                 "ground_truth_text": tr["ground_truth_text"],
                 "source_json": tr["source_json"],
+                "wrong_answer": wrong_answer,
+                "condition_name": str(tr["condition_name"]),
+                "dataset_name": str(tr["dataset_name"]),
                 "system_prompt": str(prow["system_prompt"] or ""),
                 "user_prompt": str(prow["user_prompt"] or ""),
                 "history": history,
@@ -521,13 +508,12 @@ def complete_single_run(
             if mid not in gateway_cache:
                 try:
                     variant = trial_data[tids[0]]["variant"]
-                    gw, api_id = _create_gateway(
+                    gw, api_id = _make_gateway(
                         model_id=mid,
                         variant=variant,
                         api_base=api_base,
                         api_key=api_key,
                         hf_cache_dir=hf_cache_dir,
-                        repo_root=repo_root,
                     )
                     gateway_cache[mid] = (gw, api_id)
                 except Exception as e:
@@ -576,11 +562,12 @@ def complete_single_run(
                     expected_answer_texts=expected_answers,
                     token_logprobs=None,
                 )
-                parsed = parse_answer_text(raw_text)
-                refusal = is_refusal(raw_text)
-                is_correct = evaluate_correctness(
-                    parsed_answer_text=parsed,
+                scoring_result = score_single_output(
+                    raw_text=raw_text,
                     ground_truth_text=gt,
+                    wrong_answer=data.get("wrong_answer"),
+                    condition_name=data.get("condition_name", "unknown"),
+                    dataset_name=data.get("dataset_name", "unknown"),
                 )
 
                 output_id = str(uuid.uuid4())
@@ -588,10 +575,15 @@ def complete_single_run(
                     output_id=output_id,
                     trial_id=tid,
                     raw_text=raw_text,
-                    parsed_answer_text=parsed,
-                    parsed_answer_json=None,
-                    is_correct=is_correct,
-                    refusal_flag=refusal,
+                    parsed_answer_text=scoring_result.parsed_answer_text,
+                    parsed_answer_json={
+                        "endorsement": scoring_result.endorsement,
+                        "endorsement_evidence": scoring_result.endorsement_evidence,
+                        "candidates": scoring_result.candidates,
+                        "winning_candidate": scoring_result.winning_candidate,
+                    },
+                    is_correct=scoring_result.is_correct,
+                    refusal_flag=scoring_result.refusal_flag,
                     latency_ms=latency_ms,
                     token_usage_json={
                         "_output_quality": {"label": classified.label.value, "metadata": classified.metadata}

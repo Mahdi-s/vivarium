@@ -32,7 +32,7 @@ from vivarium.persistence import TraceDb
 from vivarium.llm_gateway import HuggingFaceHookedGateway
 from vivarium.output_parsing import OutputParsingConfig, classify_output
 
-from .scoring import evaluate_correctness, is_refusal, parse_answer_text
+from .enhanced_scoring import score_single_output
 
 JsonDict = Dict[str, Any]
 
@@ -297,14 +297,16 @@ def run_contrastive_steering_test(
                     expected_answer_texts=([ground_truth] if ground_truth else []),
                     token_logprobs=None,
                 )
-                parsed_before = parse_answer_text(text_before)
-                is_correct_before = evaluate_correctness(parsed_answer_text=parsed_before, ground_truth_text=ground_truth)
+                sr_before = score_single_output(
+                    raw_text=text_before, ground_truth_text=ground_truth,
+                    wrong_answer=None, condition_name="unknown", dataset_name="unknown",
+                )
 
                 output_before_id = str(uuid.uuid4())
                 trace_db.insert_conformity_output(
                     output_id=output_before_id, trial_id=trial_id, raw_text=text_before,
-                    parsed_answer_text=parsed_before, parsed_answer_json=None,
-                    is_correct=is_correct_before, refusal_flag=is_refusal(text_before),
+                    parsed_answer_text=sr_before.parsed_answer_text, parsed_answer_json=None,
+                    is_correct=sr_before.is_correct, refusal_flag=sr_before.refusal_flag,
                     latency_ms=0.0,
                     token_usage_json={"_output_quality": {"label": classified_before.label.value, "metadata": classified_before.metadata}},
                     created_at=now,
@@ -352,22 +354,24 @@ def run_contrastive_steering_test(
                     expected_answer_texts=([ground_truth] if ground_truth else []),
                     token_logprobs=None,
                 )
-                parsed_after = parse_answer_text(text_after)
-                is_correct_after = evaluate_correctness(parsed_answer_text=parsed_after, ground_truth_text=ground_truth)
+                sr_after = score_single_output(
+                    raw_text=text_after, ground_truth_text=ground_truth,
+                    wrong_answer=None, condition_name="unknown", dataset_name="unknown",
+                )
 
                 output_after_id = str(uuid.uuid4())
                 trace_db.insert_conformity_output(
                     output_id=output_after_id, trial_id=trial_id, raw_text=text_after,
-                    parsed_answer_text=parsed_after, parsed_answer_json=None,
-                    is_correct=is_correct_after, refusal_flag=is_refusal(text_after),
+                    parsed_answer_text=sr_after.parsed_answer_text, parsed_answer_json=None,
+                    is_correct=sr_after.is_correct, refusal_flag=sr_after.refusal_flag,
                     latency_ms=0.0,
                     token_usage_json={"_output_quality": {"label": classified_after.label.value, "metadata": classified_after.metadata}},
                     created_at=now,
                 )
 
                 flipped: Optional[bool] = None
-                if is_correct_before is not None and is_correct_after is not None:
-                    flipped = bool(is_correct_before) and (not bool(is_correct_after))
+                if sr_before.is_correct is not None and sr_after.is_correct is not None:
+                    flipped = bool(sr_before.is_correct) and (not bool(sr_after.is_correct))
 
                 trace_db.conn.execute(
                     """
