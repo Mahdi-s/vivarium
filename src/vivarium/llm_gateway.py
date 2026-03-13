@@ -1078,27 +1078,37 @@ class HuggingFaceHookedGateway:
         # under `rope_scaling` (or `rope_parameters` in some forks). Newer Transformers versions
         # warn (or may error) when these fields are not floats.
         try:
+            cfg_json_path = None
             if os.path.isdir(self.model_id_or_path):
                 cfg_json_path = os.path.join(self.model_id_or_path, "config.json")
-                if os.path.isfile(cfg_json_path):
-                    import json
+            else:
+                # Hub ID: resolve the cached config.json so we can patch it on disk too.
+                try:
+                    from huggingface_hub import hf_hub_download  # type: ignore
 
-                    with open(cfg_json_path, "r") as f:
-                        raw = json.load(f)
-                    changed = False
-                    for field in ("rope_scaling", "rope_parameters"):
-                        v = raw.get(field)
-                        if isinstance(v, dict):
-                            for k in ("beta_fast", "beta_slow"):
-                                if k in v and isinstance(v[k], int):
-                                    v[k] = float(v[k])
-                                    changed = True
-                    if changed:
-                        tmp_path = cfg_json_path + ".tmp"
-                        with open(tmp_path, "w") as f:
-                            json.dump(raw, f, indent=2)
-                            f.write("\n")
-                        os.replace(tmp_path, cfg_json_path)
+                    cfg_json_path = hf_hub_download(
+                        repo_id=self.model_id_or_path, filename="config.json"
+                    )
+                except Exception:
+                    pass
+
+            if cfg_json_path and os.path.isfile(cfg_json_path):
+                with open(cfg_json_path, "r") as f:
+                    raw = json.load(f)
+                changed = False
+                for field in ("rope_scaling", "rope_parameters"):
+                    v = raw.get(field)
+                    if isinstance(v, dict):
+                        for k in ("beta_fast", "beta_slow"):
+                            if k in v and isinstance(v[k], int):
+                                v[k] = float(v[k])
+                                changed = True
+                if changed:
+                    tmp_path = cfg_json_path + ".tmp"
+                    with open(tmp_path, "w") as f:
+                        json.dump(raw, f, indent=2)
+                        f.write("\n")
+                    os.replace(tmp_path, cfg_json_path)
         except Exception:
             pass
 
@@ -1117,23 +1127,33 @@ class HuggingFaceHookedGateway:
 
         self._tokenizer = AutoTokenizer.from_pretrained(self.model_id_or_path, trust_remote_code=True)
         print(f"  [HF Gateway] Loading model weights...")
-        self._model = AutoModelForCausalLM.from_pretrained(
-            self.model_id_or_path,
+
+        # On CUDA, use device_map="auto" so large models are placed across GPU(s) at
+        # load time without a separate .to() call that can leave layers on the wrong device.
+        load_kwargs: Dict[str, Any] = dict(
             config=cfg,
             dtype=torch_dtype,
             low_cpu_mem_usage=True,
             trust_remote_code=True,
         )
+        if dev == "cuda":
+            load_kwargs["device_map"] = "auto"
+
+        self._model = AutoModelForCausalLM.from_pretrained(
+            self.model_id_or_path, **load_kwargs
+        )
         print(f"  [HF Gateway] Model weights loaded")
 
-        print(f"  [HF Gateway] Moving model to device: {dev} (this may take 30-60s for 7B models on MPS)...")
-        try:
-            self._model = self._model.to(dev)
-            print(f"  [HF Gateway] Model moved to {dev}")
-        except Exception as e:
-            # Some backends rely on device_map; best-effort.
-            print(f"  [HF Gateway] Warning: device transfer failed ({e}), continuing anyway")
-            pass
+        # Only call .to(dev) when the model was NOT loaded with a device_map (e.g. MPS, CPU).
+        if not getattr(self._model, "hf_device_map", None):
+            print(f"  [HF Gateway] Moving model to device: {dev} (this may take 30-60s for 7B models on MPS)...")
+            try:
+                self._model = self._model.to(dev)
+                print(f"  [HF Gateway] Model moved to {dev}")
+            except Exception as e:
+                print(f"  [HF Gateway] Warning: device transfer failed ({e}), continuing anyway")
+        else:
+            print(f"  [HF Gateway] Model loaded with device_map={self._model.hf_device_map}")
 
         print(f"  [HF Gateway] Setting model to eval mode...")
         self._model.eval()
@@ -1365,7 +1385,12 @@ class HuggingFaceHookedGateway:
         inputs = self._tokenizer(prompt, return_tensors="pt")
         input_length = inputs["input_ids"].shape[1]
         try:
-            dev = getattr(self._model, "device", None) or self.device or "cpu"
+            # Models loaded with device_map="auto" have no single .device attribute;
+            # resolve the device from the first parameter so inputs land on the right GPU.
+            model_device = getattr(self._model, "device", None)
+            if model_device is None or (str(model_device) == "cpu" and getattr(self._model, "hf_device_map", None)):
+                model_device = next(self._model.parameters()).device
+            dev = model_device or self.device or "cpu"
             inputs = {k: v.to(dev) for k, v in inputs.items()}
         except Exception:
             pass
@@ -1401,11 +1426,26 @@ class HuggingFaceHookedGateway:
             if torch.cuda.is_available():
                 torch.cuda.manual_seed_all(seed)
 
+        # Pass sampling kwargs directly in addition to generation_config, because some
+        # model implementations (e.g. OLMo3) ignore them when read from the config object.
+        generate_kwargs: Dict[str, Any] = dict(generation_config=generation_config)
+        if do_sample:
+            generate_kwargs["temperature"] = float(temperature)
+            if top_k is not None and int(top_k) > 0:
+                generate_kwargs["top_k"] = int(top_k)
+            if top_p is not None:
+                try:
+                    top_p_f = float(top_p)
+                    if 0.0 < top_p_f <= 1.0:
+                        generate_kwargs["top_p"] = top_p_f
+                except Exception:
+                    pass
+
         print(f"      [HF Gateway] Starting generation (max_new_tokens={self.max_new_tokens}, seed={seed})...")
         with torch.no_grad():
             out = self._model.generate(
                 **inputs,
-                generation_config=generation_config,
+                **generate_kwargs,
             )
         print(f"      [HF Gateway] Generation complete, output shape: {out.shape}")
 
