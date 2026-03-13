@@ -6,7 +6,7 @@
 #SBATCH --cpus-per-task=16
 #SBATCH --gpus-per-task=2
 #SBATCH --constraint=a100|a40
-#SBATCH --mem=400G
+#SBATCH --mem=200G
 #SBATCH --time=48:00:00
 #SBATCH --job-name=AAM_32B_DPO
 
