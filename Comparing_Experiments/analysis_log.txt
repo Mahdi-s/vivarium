@@ -1,0 +1,1382 @@
+2026-03-12 17:35:00 [INFO] ============================================================
+2026-03-12 17:35:00 [INFO] EXPANDED CONFORMITY EXPERIMENTS PIPELINE
+2026-03-12 17:35:00 [INFO] ============================================================
+2026-03-12 17:35:00 [INFO] Repo root: /Users/mahdi/repos/abstractAgentMachine
+2026-03-12 17:35:00 [INFO] Mode: HPC
+2026-03-12 17:35:00 [INFO] Models directory: /scratch1/mahdisae/olmo_experiments/models/huggingface_cache
+2026-03-12 17:35:00 [INFO] Runs directory: /scratch1/mahdisae/olmo_experiments/runs
+2026-03-12 17:35:00 [INFO] Output directory: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments
+2026-03-12 17:35:00 [INFO] Mode: model-first
+2026-03-12 17:35:00 [INFO] Phase: all
+2026-03-12 17:35:00 [INFO] Suite: experiments/olmo_conformity/configs/suite_32b_think_temp0p6.json
+2026-03-12 17:35:00 [INFO] Memory usage (pipeline start): 34.4 MB
+2026-03-12 17:35:00 [INFO] 
+2026-03-12 17:35:00 [INFO] ============================================================
+2026-03-12 17:35:00 [INFO] PHASE 1: RUNNING EXPERIMENTS
+2026-03-12 17:35:00 [INFO] ============================================================
+2026-03-12 17:35:00 [INFO] 
+2026-03-12 17:35:00 [INFO] --- think_sft T=0.0 ---
+2026-03-12 17:35:00 [INFO] Running experiment for think_sft T=0.0...
+2026-03-12 17:35:00 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmpo1_ermk9.json --runs-dir /scratch1/mahdisae/olmo_experiments/runs
+2026-03-12 17:35:00 [ERROR] Experiment failed with return code 1
+2026-03-12 17:35:00 [ERROR] STDERR: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 359, in _handle_olmo_conformity
+    paths = run_olmo_conformity_suite(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 528, in run_suite
+    paths = _ensure_dirs(run_dir)
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 67, in _ensure_dirs
+    os.makedirs(d, exist_ok=True)
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  [Previous line repeated 1 more time]
+  File "<frozen os>", line 225, in makedirs
+OSError: [Errno 30] Read-only file system: '/scratch1'
+
+2026-03-12 17:35:00 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-12 17:35:00 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260312_173500_389460.csv
+2026-03-12 17:35:00 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-03-12 17:35:00 [INFO] Memory usage (after think_sft_0.0 experiment): 34.5 MB
+2026-03-12 17:35:00 [INFO] 
+2026-03-12 17:35:00 [INFO] --- think_sft T=0.2 ---
+2026-03-12 17:35:00 [INFO] Running experiment for think_sft T=0.2...
+2026-03-12 17:35:00 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmpb5y3_nu9.json --runs-dir /scratch1/mahdisae/olmo_experiments/runs
+2026-03-12 17:35:00 [ERROR] Experiment failed with return code 1
+2026-03-12 17:35:00 [ERROR] STDERR: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 359, in _handle_olmo_conformity
+    paths = run_olmo_conformity_suite(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 528, in run_suite
+    paths = _ensure_dirs(run_dir)
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 67, in _ensure_dirs
+    os.makedirs(d, exist_ok=True)
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  [Previous line repeated 1 more time]
+  File "<frozen os>", line 225, in makedirs
+OSError: [Errno 30] Read-only file system: '/scratch1'
+
+2026-03-12 17:35:00 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-12 17:35:00 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260312_173500_499941.csv
+2026-03-12 17:35:00 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-03-12 17:35:00 [INFO] Memory usage (after think_sft_0.2 experiment): 34.5 MB
+2026-03-12 17:35:00 [INFO] 
+2026-03-12 17:35:00 [INFO] --- think_sft T=0.4 ---
+2026-03-12 17:35:00 [INFO] Running experiment for think_sft T=0.4...
+2026-03-12 17:35:00 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmp79obdt2z.json --runs-dir /scratch1/mahdisae/olmo_experiments/runs
+2026-03-12 17:35:00 [ERROR] Experiment failed with return code 1
+2026-03-12 17:35:00 [ERROR] STDERR: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 359, in _handle_olmo_conformity
+    paths = run_olmo_conformity_suite(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 528, in run_suite
+    paths = _ensure_dirs(run_dir)
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 67, in _ensure_dirs
+    os.makedirs(d, exist_ok=True)
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  [Previous line repeated 1 more time]
+  File "<frozen os>", line 225, in makedirs
+OSError: [Errno 30] Read-only file system: '/scratch1'
+
+2026-03-12 17:35:00 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-12 17:35:00 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260312_173500_607249.csv
+2026-03-12 17:35:00 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-03-12 17:35:00 [INFO] Memory usage (after think_sft_0.4 experiment): 34.5 MB
+2026-03-12 17:35:00 [INFO] think_sft_0.6 already completed, skipping (run_id=453b5b2a...)
+2026-03-12 17:35:00 [INFO] 
+2026-03-12 17:35:00 [INFO] --- think_sft T=0.8 ---
+2026-03-12 17:35:00 [INFO] Running experiment for think_sft T=0.8...
+2026-03-12 17:35:00 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmp2e55khtb.json --runs-dir /scratch1/mahdisae/olmo_experiments/runs
+2026-03-12 17:35:00 [ERROR] Experiment failed with return code 1
+2026-03-12 17:35:00 [ERROR] STDERR: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 359, in _handle_olmo_conformity
+    paths = run_olmo_conformity_suite(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 528, in run_suite
+    paths = _ensure_dirs(run_dir)
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 67, in _ensure_dirs
+    os.makedirs(d, exist_ok=True)
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  [Previous line repeated 1 more time]
+  File "<frozen os>", line 225, in makedirs
+OSError: [Errno 30] Read-only file system: '/scratch1'
+
+2026-03-12 17:35:00 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-12 17:35:00 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260312_173500_715336.csv
+2026-03-12 17:35:00 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-03-12 17:35:00 [INFO] Memory usage (after think_sft_0.8 experiment): 34.7 MB
+2026-03-12 17:35:00 [INFO] 
+2026-03-12 17:35:00 [INFO] --- think_sft T=1.0 ---
+2026-03-12 17:35:00 [INFO] Running experiment for think_sft T=1.0...
+2026-03-12 17:35:00 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmp5lwg7gy8.json --runs-dir /scratch1/mahdisae/olmo_experiments/runs
+2026-03-12 17:35:00 [ERROR] Experiment failed with return code 1
+2026-03-12 17:35:00 [ERROR] STDERR: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 359, in _handle_olmo_conformity
+    paths = run_olmo_conformity_suite(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 528, in run_suite
+    paths = _ensure_dirs(run_dir)
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 67, in _ensure_dirs
+    os.makedirs(d, exist_ok=True)
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  [Previous line repeated 1 more time]
+  File "<frozen os>", line 225, in makedirs
+OSError: [Errno 30] Read-only file system: '/scratch1'
+
+2026-03-12 17:35:00 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-12 17:35:00 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260312_173500_822150.csv
+2026-03-12 17:35:00 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-03-12 17:35:00 [INFO] Memory usage (after think_sft_1.0 experiment): 34.8 MB
+2026-03-12 17:35:00 [INFO] 
+2026-03-12 17:35:00 [INFO] --- think_dpo T=0.0 ---
+2026-03-12 17:35:00 [INFO] Running experiment for think_dpo T=0.0...
+2026-03-12 17:35:00 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmp9qleqjzn.json --runs-dir /scratch1/mahdisae/olmo_experiments/runs
+2026-03-12 17:35:00 [ERROR] Experiment failed with return code 1
+2026-03-12 17:35:00 [ERROR] STDERR: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 359, in _handle_olmo_conformity
+    paths = run_olmo_conformity_suite(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 528, in run_suite
+    paths = _ensure_dirs(run_dir)
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 67, in _ensure_dirs
+    os.makedirs(d, exist_ok=True)
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  [Previous line repeated 1 more time]
+  File "<frozen os>", line 225, in makedirs
+OSError: [Errno 30] Read-only file system: '/scratch1'
+
+2026-03-12 17:35:00 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-12 17:35:00 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260312_173500_941145.csv
+2026-03-12 17:35:00 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-03-12 17:35:00 [INFO] Memory usage (after think_dpo_0.0 experiment): 35.0 MB
+2026-03-12 17:35:00 [INFO] 
+2026-03-12 17:35:00 [INFO] --- think_dpo T=0.2 ---
+2026-03-12 17:35:00 [INFO] Running experiment for think_dpo T=0.2...
+2026-03-12 17:35:00 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmpzckuxsva.json --runs-dir /scratch1/mahdisae/olmo_experiments/runs
+2026-03-12 17:35:01 [ERROR] Experiment failed with return code 1
+2026-03-12 17:35:01 [ERROR] STDERR: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 359, in _handle_olmo_conformity
+    paths = run_olmo_conformity_suite(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 528, in run_suite
+    paths = _ensure_dirs(run_dir)
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 67, in _ensure_dirs
+    os.makedirs(d, exist_ok=True)
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  [Previous line repeated 1 more time]
+  File "<frozen os>", line 225, in makedirs
+OSError: [Errno 30] Read-only file system: '/scratch1'
+
+2026-03-12 17:35:01 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-12 17:35:01 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260312_173501_065714.csv
+2026-03-12 17:35:01 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-03-12 17:35:01 [INFO] Memory usage (after think_dpo_0.2 experiment): 35.3 MB
+2026-03-12 17:35:01 [INFO] 
+2026-03-12 17:35:01 [INFO] --- think_dpo T=0.4 ---
+2026-03-12 17:35:01 [INFO] Running experiment for think_dpo T=0.4...
+2026-03-12 17:35:01 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmp6g61_kds.json --runs-dir /scratch1/mahdisae/olmo_experiments/runs
+2026-03-12 17:35:01 [ERROR] Experiment failed with return code 1
+2026-03-12 17:35:01 [ERROR] STDERR: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 359, in _handle_olmo_conformity
+    paths = run_olmo_conformity_suite(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 528, in run_suite
+    paths = _ensure_dirs(run_dir)
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 67, in _ensure_dirs
+    os.makedirs(d, exist_ok=True)
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  [Previous line repeated 1 more time]
+  File "<frozen os>", line 225, in makedirs
+OSError: [Errno 30] Read-only file system: '/scratch1'
+
+2026-03-12 17:35:01 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-12 17:35:01 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260312_173501_183050.csv
+2026-03-12 17:35:01 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-03-12 17:35:01 [INFO] Memory usage (after think_dpo_0.4 experiment): 35.5 MB
+2026-03-12 17:35:01 [INFO] think_dpo_0.6 already completed, skipping (run_id=a7b3f903...)
+2026-03-12 17:35:01 [INFO] 
+2026-03-12 17:35:01 [INFO] --- think_dpo T=0.8 ---
+2026-03-12 17:35:01 [INFO] Running experiment for think_dpo T=0.8...
+2026-03-12 17:35:01 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmpvce_w4fr.json --runs-dir /scratch1/mahdisae/olmo_experiments/runs
+2026-03-12 17:35:01 [ERROR] Experiment failed with return code 1
+2026-03-12 17:35:01 [ERROR] STDERR: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 359, in _handle_olmo_conformity
+    paths = run_olmo_conformity_suite(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 528, in run_suite
+    paths = _ensure_dirs(run_dir)
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 67, in _ensure_dirs
+    os.makedirs(d, exist_ok=True)
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  [Previous line repeated 1 more time]
+  File "<frozen os>", line 225, in makedirs
+OSError: [Errno 30] Read-only file system: '/scratch1'
+
+2026-03-12 17:35:01 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-12 17:35:01 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260312_173501_292881.csv
+2026-03-12 17:35:01 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-03-12 17:35:01 [INFO] Memory usage (after think_dpo_0.8 experiment): 35.5 MB
+2026-03-12 17:35:01 [INFO] 
+2026-03-12 17:35:01 [INFO] --- think_dpo T=1.0 ---
+2026-03-12 17:35:01 [INFO] Running experiment for think_dpo T=1.0...
+2026-03-12 17:35:01 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmpfacvq3yu.json --runs-dir /scratch1/mahdisae/olmo_experiments/runs
+2026-03-12 17:35:01 [ERROR] Experiment failed with return code 1
+2026-03-12 17:35:01 [ERROR] STDERR: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 359, in _handle_olmo_conformity
+    paths = run_olmo_conformity_suite(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 528, in run_suite
+    paths = _ensure_dirs(run_dir)
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 67, in _ensure_dirs
+    os.makedirs(d, exist_ok=True)
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  [Previous line repeated 1 more time]
+  File "<frozen os>", line 225, in makedirs
+OSError: [Errno 30] Read-only file system: '/scratch1'
+
+2026-03-12 17:35:01 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-12 17:35:01 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260312_173501_403404.csv
+2026-03-12 17:35:01 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-03-12 17:35:01 [INFO] Memory usage (after think_dpo_1.0 experiment): 35.5 MB
+2026-03-12 17:35:01 [INFO] 
+2026-03-12 17:35:01 [INFO] --- think_rl T=0.0 ---
+2026-03-12 17:35:01 [INFO] Running experiment for think_rl T=0.0...
+2026-03-12 17:35:01 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmpwiew099g.json --runs-dir /scratch1/mahdisae/olmo_experiments/runs
+2026-03-12 17:35:01 [ERROR] Experiment failed with return code 1
+2026-03-12 17:35:01 [ERROR] STDERR: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 359, in _handle_olmo_conformity
+    paths = run_olmo_conformity_suite(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 528, in run_suite
+    paths = _ensure_dirs(run_dir)
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 67, in _ensure_dirs
+    os.makedirs(d, exist_ok=True)
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  [Previous line repeated 1 more time]
+  File "<frozen os>", line 225, in makedirs
+OSError: [Errno 30] Read-only file system: '/scratch1'
+
+2026-03-12 17:35:01 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-12 17:35:01 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260312_173501_517843.csv
+2026-03-12 17:35:01 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-03-12 17:35:01 [INFO] Memory usage (after think_rl_0.0 experiment): 35.5 MB
+2026-03-12 17:35:01 [INFO] 
+2026-03-12 17:35:01 [INFO] --- think_rl T=0.2 ---
+2026-03-12 17:35:01 [INFO] Running experiment for think_rl T=0.2...
+2026-03-12 17:35:01 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmp1g24rr79.json --runs-dir /scratch1/mahdisae/olmo_experiments/runs
+2026-03-12 17:35:01 [ERROR] Experiment failed with return code 1
+2026-03-12 17:35:01 [ERROR] STDERR: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 359, in _handle_olmo_conformity
+    paths = run_olmo_conformity_suite(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 528, in run_suite
+    paths = _ensure_dirs(run_dir)
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 67, in _ensure_dirs
+    os.makedirs(d, exist_ok=True)
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  [Previous line repeated 1 more time]
+  File "<frozen os>", line 225, in makedirs
+OSError: [Errno 30] Read-only file system: '/scratch1'
+
+2026-03-12 17:35:01 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-12 17:35:01 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260312_173501_625741.csv
+2026-03-12 17:35:01 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-03-12 17:35:01 [INFO] Memory usage (after think_rl_0.2 experiment): 35.5 MB
+2026-03-12 17:35:01 [INFO] 
+2026-03-12 17:35:01 [INFO] --- think_rl T=0.4 ---
+2026-03-12 17:35:01 [INFO] Running experiment for think_rl T=0.4...
+2026-03-12 17:35:01 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmpm1bd9bui.json --runs-dir /scratch1/mahdisae/olmo_experiments/runs
+2026-03-12 17:35:01 [ERROR] Experiment failed with return code 1
+2026-03-12 17:35:01 [ERROR] STDERR: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 359, in _handle_olmo_conformity
+    paths = run_olmo_conformity_suite(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 528, in run_suite
+    paths = _ensure_dirs(run_dir)
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 67, in _ensure_dirs
+    os.makedirs(d, exist_ok=True)
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  [Previous line repeated 1 more time]
+  File "<frozen os>", line 225, in makedirs
+OSError: [Errno 30] Read-only file system: '/scratch1'
+
+2026-03-12 17:35:01 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-12 17:35:01 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260312_173501_734797.csv
+2026-03-12 17:35:01 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-03-12 17:35:01 [INFO] Memory usage (after think_rl_0.4 experiment): 35.5 MB
+2026-03-12 17:35:01 [INFO] 
+2026-03-12 17:35:01 [INFO] --- think_rl T=0.6 ---
+2026-03-12 17:35:01 [INFO] Running experiment for think_rl T=0.6...
+2026-03-12 17:35:01 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmpgi0ziexh.json --runs-dir /scratch1/mahdisae/olmo_experiments/runs
+2026-03-12 17:35:01 [ERROR] Experiment failed with return code 1
+2026-03-12 17:35:01 [ERROR] STDERR: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 359, in _handle_olmo_conformity
+    paths = run_olmo_conformity_suite(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 528, in run_suite
+    paths = _ensure_dirs(run_dir)
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 67, in _ensure_dirs
+    os.makedirs(d, exist_ok=True)
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  [Previous line repeated 1 more time]
+  File "<frozen os>", line 225, in makedirs
+OSError: [Errno 30] Read-only file system: '/scratch1'
+
+2026-03-12 17:35:01 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-12 17:35:01 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260312_173501_843197.csv
+2026-03-12 17:35:01 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-03-12 17:35:01 [INFO] Memory usage (after think_rl_0.6 experiment): 35.6 MB
+2026-03-12 17:35:01 [INFO] 
+2026-03-12 17:35:01 [INFO] --- think_rl T=0.8 ---
+2026-03-12 17:35:01 [INFO] Running experiment for think_rl T=0.8...
+2026-03-12 17:35:01 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmpybn7tsdj.json --runs-dir /scratch1/mahdisae/olmo_experiments/runs
+2026-03-12 17:35:01 [ERROR] Experiment failed with return code 1
+2026-03-12 17:35:01 [ERROR] STDERR: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 359, in _handle_olmo_conformity
+    paths = run_olmo_conformity_suite(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 528, in run_suite
+    paths = _ensure_dirs(run_dir)
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 67, in _ensure_dirs
+    os.makedirs(d, exist_ok=True)
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  [Previous line repeated 1 more time]
+  File "<frozen os>", line 225, in makedirs
+OSError: [Errno 30] Read-only file system: '/scratch1'
+
+2026-03-12 17:35:01 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-12 17:35:01 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260312_173501_951206.csv
+2026-03-12 17:35:01 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-03-12 17:35:01 [INFO] Memory usage (after think_rl_0.8 experiment): 35.7 MB
+2026-03-12 17:35:01 [INFO] 
+2026-03-12 17:35:01 [INFO] --- think_rl T=1.0 ---
+2026-03-12 17:35:01 [INFO] Running experiment for think_rl T=1.0...
+2026-03-12 17:35:01 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmprzjamzap.json --runs-dir /scratch1/mahdisae/olmo_experiments/runs
+2026-03-12 17:35:02 [ERROR] Experiment failed with return code 1
+2026-03-12 17:35:02 [ERROR] STDERR: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 359, in _handle_olmo_conformity
+    paths = run_olmo_conformity_suite(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 528, in run_suite
+    paths = _ensure_dirs(run_dir)
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 67, in _ensure_dirs
+    os.makedirs(d, exist_ok=True)
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  [Previous line repeated 1 more time]
+  File "<frozen os>", line 225, in makedirs
+OSError: [Errno 30] Read-only file system: '/scratch1'
+
+2026-03-12 17:35:02 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-12 17:35:02 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260312_173502_061553.csv
+2026-03-12 17:35:02 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-03-12 17:35:02 [INFO] Memory usage (after think_rl_1.0 experiment): 35.7 MB
+2026-03-12 17:35:02 [INFO] 
+2026-03-12 17:35:02 [INFO] ============================================================
+2026-03-12 17:35:02 [INFO] STOPPING AFTER TRIALS (runs-only or phase=trials)
+2026-03-12 17:35:02 [INFO] ============================================================
+2026-03-12 17:35:02 [INFO] Requested: 18 runs
+2026-03-12 17:35:02 [INFO] Completed: 0; Failed: 16; Skipped: 2
+2026-03-12 17:35:02 [INFO]   FAILED think_sft T=0.0: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cl
+2026-03-12 17:35:02 [INFO]   FAILED think_sft T=0.2: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cl
+2026-03-12 17:35:02 [INFO]   FAILED think_sft T=0.4: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cl
+2026-03-12 17:35:02 [INFO]   FAILED think_sft T=0.8: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cl
+2026-03-12 17:35:02 [INFO]   FAILED think_sft T=1.0: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cl
+2026-03-12 17:35:02 [INFO]   FAILED think_dpo T=0.0: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cl
+2026-03-12 17:35:02 [INFO]   FAILED think_dpo T=0.2: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cl
+2026-03-12 17:35:02 [INFO]   FAILED think_dpo T=0.4: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cl
+2026-03-12 17:35:02 [INFO]   FAILED think_dpo T=0.8: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cl
+2026-03-12 17:35:02 [INFO]   FAILED think_dpo T=1.0: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cl
+2026-03-12 17:35:02 [INFO]   FAILED think_rl T=0.0: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cl
+2026-03-12 17:35:02 [INFO]   FAILED think_rl T=0.2: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cl
+2026-03-12 17:35:02 [INFO]   FAILED think_rl T=0.4: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cl
+2026-03-12 17:35:02 [INFO]   FAILED think_rl T=0.6: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cl
+2026-03-12 17:35:02 [INFO]   FAILED think_rl T=0.8: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cl
+2026-03-12 17:35:02 [INFO]   FAILED think_rl T=1.0: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cl
+2026-03-12 20:26:46 [INFO] ============================================================
+2026-03-12 20:26:46 [INFO] EXPANDED CONFORMITY EXPERIMENTS PIPELINE
+2026-03-12 20:26:46 [INFO] ============================================================
+2026-03-12 20:26:46 [INFO] Repo root: /Users/mahdi/repos/abstractAgentMachine
+2026-03-12 20:26:46 [INFO] Mode: HPC
+2026-03-12 20:26:46 [INFO] Models directory: /scratch1/mahdisae/olmo_experiments/models/huggingface_cache
+2026-03-12 20:26:46 [INFO] Runs directory: /scratch1/mahdisae/olmo_experiments/runs
+2026-03-12 20:26:46 [INFO] Output directory: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments
+2026-03-12 20:26:46 [INFO] Mode: model-first
+2026-03-12 20:26:46 [INFO] Phase: all
+2026-03-12 20:26:46 [INFO] Suite: experiments/olmo_conformity/configs/suite_32b_think_temp0p6.json
+2026-03-12 20:26:46 [INFO] Memory usage (pipeline start): 30.8 MB
+2026-03-12 20:26:46 [INFO] 
+2026-03-12 20:26:46 [INFO] ============================================================
+2026-03-12 20:26:46 [INFO] PHASE 1: RUNNING EXPERIMENTS
+2026-03-12 20:26:46 [INFO] ============================================================
+2026-03-12 20:26:46 [INFO] 
+2026-03-12 20:26:46 [INFO] --- think_sft T=0.0 ---
+2026-03-12 20:26:46 [INFO] Running experiment for think_sft T=0.0...
+2026-03-12 20:26:46 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmphz4q48xu.json --runs-dir /scratch1/mahdisae/olmo_experiments/runs
+2026-03-12 20:26:48 [ERROR] Experiment failed with return code 1
+2026-03-12 20:26:48 [ERROR] STDERR: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 359, in _handle_olmo_conformity
+    paths = run_olmo_conformity_suite(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 528, in run_suite
+    paths = _ensure_dirs(run_dir)
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 67, in _ensure_dirs
+    os.makedirs(d, exist_ok=True)
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  [Previous line repeated 1 more time]
+  File "<frozen os>", line 225, in makedirs
+OSError: [Errno 30] Read-only file system: '/scratch1'
+
+2026-03-12 20:26:48 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-12 20:26:48 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260312_202648_344581.csv
+2026-03-12 20:26:48 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-03-12 20:26:48 [INFO] Memory usage (after think_sft_0.0 experiment): 31.2 MB
+2026-03-12 20:26:48 [INFO] 
+2026-03-12 20:26:48 [INFO] --- think_sft T=0.2 ---
+2026-03-12 20:26:48 [INFO] Running experiment for think_sft T=0.2...
+2026-03-12 20:26:48 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmpz4afaig_.json --runs-dir /scratch1/mahdisae/olmo_experiments/runs
+2026-03-12 20:26:49 [ERROR] Experiment failed with return code 1
+2026-03-12 20:26:49 [ERROR] STDERR: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 359, in _handle_olmo_conformity
+    paths = run_olmo_conformity_suite(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 528, in run_suite
+    paths = _ensure_dirs(run_dir)
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 67, in _ensure_dirs
+    os.makedirs(d, exist_ok=True)
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  [Previous line repeated 1 more time]
+  File "<frozen os>", line 225, in makedirs
+OSError: [Errno 30] Read-only file system: '/scratch1'
+
+2026-03-12 20:26:49 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-12 20:26:49 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260312_202649_409348.csv
+2026-03-12 20:26:49 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-03-12 20:26:49 [INFO] Memory usage (after think_sft_0.2 experiment): 31.4 MB
+2026-03-12 20:26:49 [INFO] 
+2026-03-12 20:26:49 [INFO] --- think_sft T=0.4 ---
+2026-03-12 20:26:49 [INFO] Running experiment for think_sft T=0.4...
+2026-03-12 20:26:49 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmp2bu0tcc0.json --runs-dir /scratch1/mahdisae/olmo_experiments/runs
+2026-03-12 20:26:50 [ERROR] Experiment failed with return code 1
+2026-03-12 20:26:50 [ERROR] STDERR: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 359, in _handle_olmo_conformity
+    paths = run_olmo_conformity_suite(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 528, in run_suite
+    paths = _ensure_dirs(run_dir)
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 67, in _ensure_dirs
+    os.makedirs(d, exist_ok=True)
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  [Previous line repeated 1 more time]
+  File "<frozen os>", line 225, in makedirs
+OSError: [Errno 30] Read-only file system: '/scratch1'
+
+2026-03-12 20:26:50 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-12 20:26:50 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260312_202650_433141.csv
+2026-03-12 20:26:50 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-03-12 20:26:50 [INFO] Memory usage (after think_sft_0.4 experiment): 31.5 MB
+2026-03-12 20:26:50 [INFO] think_sft_0.6 already completed, skipping (run_id=453b5b2a...)
+2026-03-12 20:26:50 [INFO] 
+2026-03-12 20:26:50 [INFO] --- think_sft T=0.8 ---
+2026-03-12 20:26:50 [INFO] Running experiment for think_sft T=0.8...
+2026-03-12 20:26:50 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmpkjqsp43e.json --runs-dir /scratch1/mahdisae/olmo_experiments/runs
+2026-03-12 20:26:50 [ERROR] Experiment failed with return code 1
+2026-03-12 20:26:50 [ERROR] STDERR: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 359, in _handle_olmo_conformity
+    paths = run_olmo_conformity_suite(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 528, in run_suite
+    paths = _ensure_dirs(run_dir)
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 67, in _ensure_dirs
+    os.makedirs(d, exist_ok=True)
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  [Previous line repeated 1 more time]
+  File "<frozen os>", line 225, in makedirs
+OSError: [Errno 30] Read-only file system: '/scratch1'
+
+2026-03-12 20:26:50 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-12 20:26:50 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260312_202650_923286.csv
+2026-03-12 20:26:50 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-03-12 20:26:50 [INFO] Memory usage (after think_sft_0.8 experiment): 31.5 MB
+2026-03-12 20:26:50 [INFO] 
+2026-03-12 20:26:50 [INFO] --- think_sft T=1.0 ---
+2026-03-12 20:26:50 [INFO] Running experiment for think_sft T=1.0...
+2026-03-12 20:26:50 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmp3zbxa1_7.json --runs-dir /scratch1/mahdisae/olmo_experiments/runs
+2026-03-12 20:26:51 [ERROR] Experiment failed with return code 1
+2026-03-12 20:26:51 [ERROR] STDERR: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 359, in _handle_olmo_conformity
+    paths = run_olmo_conformity_suite(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 528, in run_suite
+    paths = _ensure_dirs(run_dir)
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 67, in _ensure_dirs
+    os.makedirs(d, exist_ok=True)
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  [Previous line repeated 1 more time]
+  File "<frozen os>", line 225, in makedirs
+OSError: [Errno 30] Read-only file system: '/scratch1'
+
+2026-03-12 20:26:51 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-12 20:26:51 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260312_202651_556956.csv
+2026-03-12 20:26:51 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-03-12 20:26:51 [INFO] Memory usage (after think_sft_1.0 experiment): 31.6 MB
+2026-03-12 20:26:51 [INFO] 
+2026-03-12 20:26:51 [INFO] --- think_dpo T=0.0 ---
+2026-03-12 20:26:51 [INFO] Running experiment for think_dpo T=0.0...
+2026-03-12 20:26:51 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmpmy9n5wn0.json --runs-dir /scratch1/mahdisae/olmo_experiments/runs
+2026-03-12 20:26:52 [ERROR] Experiment failed with return code 1
+2026-03-12 20:26:52 [ERROR] STDERR: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 359, in _handle_olmo_conformity
+    paths = run_olmo_conformity_suite(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 528, in run_suite
+    paths = _ensure_dirs(run_dir)
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 67, in _ensure_dirs
+    os.makedirs(d, exist_ok=True)
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  [Previous line repeated 1 more time]
+  File "<frozen os>", line 225, in makedirs
+OSError: [Errno 30] Read-only file system: '/scratch1'
+
+2026-03-12 20:26:52 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-12 20:26:52 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260312_202652_090196.csv
+2026-03-12 20:26:52 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-03-12 20:26:52 [INFO] Memory usage (after think_dpo_0.0 experiment): 31.6 MB
+2026-03-12 20:26:52 [INFO] 
+2026-03-12 20:26:52 [INFO] --- think_dpo T=0.2 ---
+2026-03-12 20:26:52 [INFO] Running experiment for think_dpo T=0.2...
+2026-03-12 20:26:52 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmpn8stz74d.json --runs-dir /scratch1/mahdisae/olmo_experiments/runs
+2026-03-12 20:26:52 [ERROR] Experiment failed with return code 1
+2026-03-12 20:26:52 [ERROR] STDERR: Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 321, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 359, in _handle_olmo_conformity
+    paths = run_olmo_conformity_suite(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 528, in run_suite
+    paths = _ensure_dirs(run_dir)
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 67, in _ensure_dirs
+    os.makedirs(d, exist_ok=True)
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 215, in makedirs
+  [Previous line repeated 1 more time]
+  File "<frozen os>", line 225, in makedirs
+OSError: [Errno 30] Read-only file system: '/scratch1'
+
+2026-03-12 20:26:52 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-12 20:26:52 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260312_202652_743785.csv
+2026-03-12 20:26:52 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-03-12 20:26:52 [INFO] Memory usage (after think_dpo_0.2 experiment): 31.7 MB
+2026-03-12 20:26:52 [INFO] 
+2026-03-12 20:26:52 [INFO] --- think_dpo T=0.4 ---
+2026-03-12 20:26:52 [INFO] Running experiment for think_dpo T=0.4...
+2026-03-12 20:26:52 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmpq1925cul.json --runs-dir /scratch1/mahdisae/olmo_experiments/runs
+2026-03-12 20:51:28 [INFO] ============================================================
+2026-03-12 20:51:28 [INFO] EXPANDED CONFORMITY EXPERIMENTS PIPELINE
+2026-03-12 20:51:28 [INFO] ============================================================
+2026-03-12 20:51:28 [INFO] Repo root: /Users/mahdi/repos/abstractAgentMachine
+2026-03-12 20:51:28 [INFO] Mode: LOCAL
+2026-03-12 20:51:28 [INFO] Models directory: /Users/mahdi/repos/abstractAgentMachine/models
+2026-03-12 20:51:28 [INFO] Runs directory: /Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-12 20:51:28 [INFO] Output directory: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments
+2026-03-12 20:51:28 [INFO] Mode: model-first
+2026-03-12 20:51:28 [INFO] Phase: all
+2026-03-12 20:51:28 [INFO] Suite: experiments/olmo_conformity/configs/suite_32b_think_temp0p6.json
+2026-03-12 20:51:28 [INFO] Memory usage (pipeline start): 29.1 MB
+2026-03-12 20:51:28 [INFO] Set VIVARIUM_HF_CACHE=/Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-03-12 20:51:28 [INFO] Set VIVARIUM_ARTIFACTS_DIR=/Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-12 20:51:28 [INFO] Created/verified models cache directory: /Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-03-12 20:51:28 [INFO] Created/verified runs directory: /Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-12 20:51:28 [INFO] 
+2026-03-12 20:51:28 [INFO] ============================================================
+2026-03-12 20:51:28 [INFO] PHASE 1: RUNNING EXPERIMENTS
+2026-03-12 20:51:28 [INFO] ============================================================
+2026-03-12 20:51:28 [INFO] 
+2026-03-12 20:51:28 [INFO] --- think_sft T=0.0 ---
+2026-03-12 20:51:28 [INFO] Running experiment for think_sft T=0.0...
+2026-03-12 20:51:28 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmpmecdh3o6.json --runs-dir /Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-12 20:52:09 [INFO] ============================================================
+2026-03-12 20:52:09 [INFO] EXPANDED CONFORMITY EXPERIMENTS PIPELINE
+2026-03-12 20:52:09 [INFO] ============================================================
+2026-03-12 20:52:09 [INFO] Repo root: /Users/mahdi/repos/abstractAgentMachine
+2026-03-12 20:52:09 [INFO] Mode: LOCAL
+2026-03-12 20:52:09 [INFO] Models directory: /Users/mahdi/repos/abstractAgentMachine/models
+2026-03-12 20:52:09 [INFO] Runs directory: /Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-12 20:52:09 [INFO] Output directory: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments
+2026-03-12 20:52:09 [INFO] Mode: model-first
+2026-03-12 20:52:09 [INFO] Phase: all
+2026-03-12 20:52:09 [INFO] Suite: experiments/olmo_conformity/configs/suite_32b_think_temp0p6.json
+2026-03-12 20:52:09 [INFO] Memory usage (pipeline start): 28.5 MB
+2026-03-12 20:52:09 [INFO] Set VIVARIUM_HF_CACHE=/Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-03-12 20:52:09 [INFO] Set VIVARIUM_ARTIFACTS_DIR=/Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-12 20:52:09 [INFO] Created/verified models cache directory: /Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-03-12 20:52:09 [INFO] Created/verified runs directory: /Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-12 20:52:09 [INFO] 
+2026-03-12 20:52:09 [INFO] ============================================================
+2026-03-12 20:52:09 [INFO] PHASE 1: RUNNING EXPERIMENTS
+2026-03-12 20:52:09 [INFO] ============================================================
+2026-03-12 20:52:09 [INFO] 
+2026-03-12 20:52:09 [INFO] --- think_sft T=0.0 ---
+2026-03-12 20:52:09 [INFO] Running experiment for think_sft T=0.0...
+2026-03-12 20:52:09 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmpqovfgo7y.json --runs-dir /Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-12 21:11:31 [INFO] ============================================================
+2026-03-12 21:11:31 [INFO] EXPANDED CONFORMITY EXPERIMENTS PIPELINE
+2026-03-12 21:11:31 [INFO] ============================================================
+2026-03-12 21:11:31 [INFO] Repo root: /Users/mahdi/repos/abstractAgentMachine
+2026-03-12 21:11:31 [INFO] Mode: LOCAL
+2026-03-12 21:11:31 [INFO] Models directory: /Users/mahdi/repos/abstractAgentMachine/models
+2026-03-12 21:11:31 [INFO] Runs directory: /Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-12 21:11:31 [INFO] Output directory: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments
+2026-03-12 21:11:31 [INFO] Mode: model-first
+2026-03-12 21:11:31 [INFO] Phase: all
+2026-03-12 21:11:31 [INFO] Suite: experiments/olmo_conformity/configs/suite_32b_think_temp0p6.json
+2026-03-12 21:11:31 [INFO] Memory usage (pipeline start): 28.8 MB
+2026-03-12 21:11:31 [INFO] Set VIVARIUM_HF_CACHE=/Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-03-12 21:11:31 [INFO] Set VIVARIUM_ARTIFACTS_DIR=/Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-12 21:11:31 [INFO] Created/verified models cache directory: /Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-03-12 21:11:31 [INFO] Created/verified runs directory: /Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-12 21:11:31 [INFO] 
+2026-03-12 21:11:31 [INFO] ============================================================
+2026-03-12 21:11:31 [INFO] PHASE 1: RUNNING EXPERIMENTS
+2026-03-12 21:11:31 [INFO] ============================================================
+2026-03-12 21:11:31 [INFO] 
+2026-03-12 21:11:31 [INFO] --- think_sft T=0.0 ---
+2026-03-12 21:11:31 [INFO] Running experiment for think_sft T=0.0...
+2026-03-12 21:11:31 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmpb4tqxoyu.json --runs-dir /Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-12 21:23:41 [INFO] Experiment completed successfully
+2026-03-12 21:23:41 [INFO]   Run ID: 9f4edb8f-6277-4471-b4b2-df5a2c997ccb
+2026-03-12 21:23:41 [INFO]   Run dir: /Users/mahdi/repos/abstractAgentMachine/runs/20260312_211131_9f4edb8f-6277-4471-b4b2-df5a2c997ccb
+2026-03-12 21:23:41 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-12 21:23:41 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260312_212341_490288.csv
+2026-03-12 21:23:41 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-03-12 21:23:41 [INFO] Memory usage (after think_sft_0.0 experiment): 29.3 MB
+2026-03-12 21:23:41 [INFO] 
+2026-03-12 21:23:41 [INFO] --- think_sft T=0.2 ---
+2026-03-12 21:23:41 [INFO] Running experiment for think_sft T=0.2...
+2026-03-12 21:23:41 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmpktopuc6l.json --runs-dir /Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-12 21:35:23 [INFO] Experiment completed successfully
+2026-03-12 21:35:23 [INFO]   Run ID: c399d53e-ebb8-4fe1-9ecc-6070e81ba734
+2026-03-12 21:35:23 [INFO]   Run dir: /Users/mahdi/repos/abstractAgentMachine/runs/20260312_212341_c399d53e-ebb8-4fe1-9ecc-6070e81ba734
+2026-03-12 21:35:23 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-12 21:35:23 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260312_213523_596534.csv
+2026-03-12 21:35:23 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-03-12 21:35:23 [INFO] Memory usage (after think_sft_0.2 experiment): 29.6 MB
+2026-03-12 21:35:23 [INFO] 
+2026-03-12 21:35:23 [INFO] --- think_sft T=0.4 ---
+2026-03-12 21:35:23 [INFO] Running experiment for think_sft T=0.4...
+2026-03-12 21:35:23 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmp5qgxbblc.json --runs-dir /Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-12 21:47:57 [INFO] Experiment completed successfully
+2026-03-12 21:47:57 [INFO]   Run ID: 4a3a4aa4-5eac-4223-9120-142f77cc0ea9
+2026-03-12 21:47:57 [INFO]   Run dir: /Users/mahdi/repos/abstractAgentMachine/runs/20260312_213523_4a3a4aa4-5eac-4223-9120-142f77cc0ea9
+2026-03-12 21:47:57 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-12 21:47:57 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260312_214757_365289.csv
+2026-03-12 21:47:57 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-03-12 21:47:57 [INFO] Memory usage (after think_sft_0.4 experiment): 29.7 MB
+2026-03-12 21:47:57 [INFO] think_sft_0.6 already completed, skipping (run_id=453b5b2a...)
+2026-03-12 21:47:57 [INFO] 
+2026-03-12 21:47:57 [INFO] --- think_sft T=0.8 ---
+2026-03-12 21:47:57 [INFO] Running experiment for think_sft T=0.8...
+2026-03-12 21:47:57 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmphhk_0nw1.json --runs-dir /Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-12 21:59:53 [INFO] Experiment completed successfully
+2026-03-12 21:59:53 [INFO]   Run ID: 364954dc-78f8-4ee3-aeb1-ab9631cdc327
+2026-03-12 21:59:53 [INFO]   Run dir: /Users/mahdi/repos/abstractAgentMachine/runs/20260312_214757_364954dc-78f8-4ee3-aeb1-ab9631cdc327
+2026-03-12 21:59:53 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-12 21:59:53 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260312_215953_542277.csv
+2026-03-12 21:59:53 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-03-12 21:59:53 [INFO] Memory usage (after think_sft_0.8 experiment): 23.7 MB
+2026-03-12 21:59:53 [INFO] 
+2026-03-12 21:59:53 [INFO] --- think_sft T=1.0 ---
+2026-03-12 21:59:53 [INFO] Running experiment for think_sft T=1.0...
+2026-03-12 21:59:53 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmp52cl4493.json --runs-dir /Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-12 22:12:13 [INFO] Experiment completed successfully
+2026-03-12 22:12:13 [INFO]   Run ID: 6e8b02fd-b162-4c6e-ac87-ea2e9c1cee34
+2026-03-12 22:12:13 [INFO]   Run dir: /Users/mahdi/repos/abstractAgentMachine/runs/20260312_215953_6e8b02fd-b162-4c6e-ac87-ea2e9c1cee34
+2026-03-12 22:12:13 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-12 22:12:13 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260312_221213_760788.csv
+2026-03-12 22:12:13 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-03-12 22:12:13 [INFO] Memory usage (after think_sft_1.0 experiment): 23.9 MB
+2026-03-12 22:12:13 [INFO] 
+2026-03-12 22:12:13 [INFO] --- think_dpo T=0.0 ---
+2026-03-12 22:12:13 [INFO] Running experiment for think_dpo T=0.0...
+2026-03-12 22:12:13 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmpo8i2ffkb.json --runs-dir /Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-12 22:23:57 [INFO] Experiment completed successfully
+2026-03-12 22:23:57 [INFO]   Run ID: 1b5a06cb-ecf3-44d4-9f09-d132967d9ca2
+2026-03-12 22:23:57 [INFO]   Run dir: /Users/mahdi/repos/abstractAgentMachine/runs/20260312_221213_1b5a06cb-ecf3-44d4-9f09-d132967d9ca2
+2026-03-12 22:23:57 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-12 22:23:57 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260312_222357_013931.csv
+2026-03-12 22:23:57 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-03-12 22:23:57 [INFO] Memory usage (after think_dpo_0.0 experiment): 24.1 MB
+2026-03-12 22:23:57 [INFO] 
+2026-03-12 22:23:57 [INFO] --- think_dpo T=0.2 ---
+2026-03-12 22:23:57 [INFO] Running experiment for think_dpo T=0.2...
+2026-03-12 22:23:57 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmpt23h__ex.json --runs-dir /Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-12 22:35:34 [INFO] Experiment completed successfully
+2026-03-12 22:35:34 [INFO]   Run ID: 3e27b53a-aa6f-444a-a014-e0c4ef2480ff
+2026-03-12 22:35:34 [INFO]   Run dir: /Users/mahdi/repos/abstractAgentMachine/runs/20260312_222357_3e27b53a-aa6f-444a-a014-e0c4ef2480ff
+2026-03-12 22:35:34 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-12 22:35:34 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260312_223534_506108.csv
+2026-03-12 22:35:34 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-03-12 22:35:34 [INFO] Memory usage (after think_dpo_0.2 experiment): 24.3 MB
+2026-03-12 22:35:34 [INFO] 
+2026-03-12 22:35:34 [INFO] --- think_dpo T=0.4 ---
+2026-03-12 22:35:34 [INFO] Running experiment for think_dpo T=0.4...
+2026-03-12 22:35:34 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmppnxuda65.json --runs-dir /Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-12 22:47:04 [INFO] Experiment completed successfully
+2026-03-12 22:47:04 [INFO]   Run ID: 47ceefe6-be99-4bbc-9431-c51ebb0a4c7f
+2026-03-12 22:47:04 [INFO]   Run dir: /Users/mahdi/repos/abstractAgentMachine/runs/20260312_223534_47ceefe6-be99-4bbc-9431-c51ebb0a4c7f
+2026-03-12 22:47:04 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-12 22:47:04 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260312_224704_787496.csv
+2026-03-12 22:47:04 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-03-12 22:47:04 [INFO] Memory usage (after think_dpo_0.4 experiment): 24.5 MB
+2026-03-12 22:47:04 [INFO] think_dpo_0.6 already completed, skipping (run_id=a7b3f903...)
+2026-03-12 22:47:04 [INFO] 
+2026-03-12 22:47:04 [INFO] --- think_dpo T=0.8 ---
+2026-03-12 22:47:04 [INFO] Running experiment for think_dpo T=0.8...
+2026-03-12 22:47:04 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmpxz_sx9il.json --runs-dir /Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-12 22:58:35 [INFO] Experiment completed successfully
+2026-03-12 22:58:35 [INFO]   Run ID: d9ac6c3a-9369-42e9-b6af-f723a1c26b00
+2026-03-12 22:58:35 [INFO]   Run dir: /Users/mahdi/repos/abstractAgentMachine/runs/20260312_224704_d9ac6c3a-9369-42e9-b6af-f723a1c26b00
+2026-03-12 22:58:35 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-12 22:58:35 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260312_225835_111078.csv
+2026-03-12 22:58:35 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-03-12 22:58:35 [INFO] Memory usage (after think_dpo_0.8 experiment): 24.6 MB
+2026-03-12 22:58:35 [INFO] 
+2026-03-12 22:58:35 [INFO] --- think_dpo T=1.0 ---
+2026-03-12 22:58:35 [INFO] Running experiment for think_dpo T=1.0...
+2026-03-12 22:58:35 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmpk9km6p36.json --runs-dir /Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-12 23:10:06 [INFO] Experiment completed successfully
+2026-03-12 23:10:06 [INFO]   Run ID: 13bebfdf-56a5-4793-9dca-25e814a623a5
+2026-03-12 23:10:06 [INFO]   Run dir: /Users/mahdi/repos/abstractAgentMachine/runs/20260312_225835_13bebfdf-56a5-4793-9dca-25e814a623a5
+2026-03-12 23:10:06 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-12 23:10:06 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260312_231006_130184.csv
+2026-03-12 23:10:06 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-03-12 23:10:06 [INFO] Memory usage (after think_dpo_1.0 experiment): 24.7 MB
+2026-03-12 23:10:06 [INFO] 
+2026-03-12 23:10:06 [INFO] --- think_rl T=0.0 ---
+2026-03-12 23:10:06 [INFO] Running experiment for think_rl T=0.0...
+2026-03-12 23:10:06 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmpye_4w4nj.json --runs-dir /Users/mahdi/repos/abstractAgentMachine/runs

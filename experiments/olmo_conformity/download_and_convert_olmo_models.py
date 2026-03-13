@@ -42,6 +42,10 @@ except ImportError:
 MODELS = [
     ("allenai/Olmo-3-1025-7B", "olmo-3-1025-7b-base.gguf"),
     ("allenai/Olmo-3-1125-32B", "olmo-3-1125-32b-base.gguf"),
+    # 32B Think pipeline (SFT → DPO → RLVR), used by job_32b_run.sh / suite_32b_think_*
+    ("allenai/Olmo-3-32B-Think-SFT", "olmo-3-32b-think-sft.gguf"),
+    ("allenai/Olmo-3-32B-Think-DPO", "olmo-3-32b-think-dpo.gguf"),
+    ("allenai/Olmo-3-32B-Think", "olmo-3-32b-think.gguf"),
     ("allenai/Olmo-3-7B-RL-Zero-Math", "olmo-3-7b-rl-zero-math.gguf"),
     ("allenai/Olmo-3-7B-Think", "olmo-3-7b-think.gguf"),
     ("allenai/Olmo-3-7B-Think-SFT", "olmo-3-7b-think-sft.gguf"),
