@@ -1,0 +1,103 @@
+{
+  "paths_config": "paths.json",
+  "suite_name": "olmo_conformity_32b_think_rerun_temp0.0",
+  "suite_version": "v2",
+  "description": "OLMo 3 32B Think pipeline variants RERUN with extended max_new_tokens (4096) to fix truncation. Previous runs used max_new_tokens=512 which truncated 99%+ of think traces before </think> completion.",
+  "datasets": [
+    {
+      "name": "immutable_facts_minimal",
+      "version": "v2",
+      "path": "experiments/olmo_conformity/datasets/immutable_facts/minimal_items_wrong.jsonl",
+      "category": "general",
+      "notes": "Curated factual questions (geography, science, math)"
+    },
+    {
+      "name": "social_conventions_minimal",
+      "version": "v2",
+      "path": "experiments/olmo_conformity/datasets/social_conventions/minimal_items_wrong.jsonl",
+      "category": "opinion",
+      "notes": "Opinion/preference questions"
+    },
+    {
+      "name": "gsm8k",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/math/gsm8k_items_wrong.jsonl",
+      "category": "math",
+      "notes": "Grade school math word problems"
+    },
+    {
+      "name": "mmlu_math",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/math/mmlu_math_items_wrong.jsonl",
+      "category": "math",
+      "notes": "MMLU math subsets (high school, elementary, college)"
+    },
+    {
+      "name": "mmlu_science",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/science/mmlu_science_items_wrong.jsonl",
+      "category": "science",
+      "notes": "MMLU science subsets (physics, chemistry, biology)"
+    },
+    {
+      "name": "mmlu_knowledge",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/knowledge/mmlu_knowledge_items_wrong.jsonl",
+      "category": "knowledge",
+      "notes": "MMLU knowledge subsets (geography, history, world religions)"
+    },
+    {
+      "name": "truthfulqa",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/truthfulness/truthfulqa_items_wrong.jsonl",
+      "category": "truthfulness",
+      "notes": "TruthfulQA - tests tendency to reproduce common misconceptions"
+    },
+    {
+      "name": "arc",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/reasoning/arc_items_wrong.jsonl",
+      "category": "reasoning",
+      "notes": "ARC Challenge + Easy - science reasoning questions"
+    }
+  ],
+  "conditions": [
+    {
+      "name": "control",
+      "params": { "type": "control" },
+      "notes": "Baseline: direct question without social pressure"
+    },
+    {
+      "name": "asch_zhu_unanimous_confident",
+      "params": { "type": "asch_peer_pressure", "system_style": "control", "prompt_style": "conversation", "confederates": 5, "consensus": "unanimous", "tone": "confident" },
+      "notes": "Zhu et al.-style Asch: unbiased system + unanimous-confident confederates — strongest peer pressure"
+    },
+    {
+      "name": "authoritative_bias",
+      "params": { "type": "authoritative_bias", "user_claim_strength": "high" },
+      "notes": "Authoritative user claims wrong_answer with high confidence"
+    },
+    {
+      "name": "authority_trust",
+      "params": { "type": "authority_claim", "system_style": "control", "claim_style": "trust" },
+      "notes": "Zhu et al. sycophancy-style: 'I trust that the answer must be ...' (unbiased system)"
+    }
+  ],
+  "models": [
+    { "variant": "think_sft", "model_id": "allenai/Olmo-3-32B-Think-SFT", "max_new_tokens": 4096, "has_think_tokens": true, "notes": "32B Think pipeline: SFT checkpoint — RERUN with 4096 tokens (was 512)" },
+    { "variant": "think_dpo", "model_id": "allenai/Olmo-3-32B-Think-DPO", "max_new_tokens": 4096, "has_think_tokens": true, "notes": "32B Think pipeline: DPO checkpoint — RERUN with 4096 tokens (was 512)" },
+    { "variant": "think_rl",  "model_id": "allenai/Olmo-3-32B-Think",     "max_new_tokens": 4096, "has_think_tokens": true, "notes": "32B Think pipeline: final RLVR model (Rethink) — RERUN with 4096 tokens (was 512)" }
+  ],
+  "run": {
+    "seed": 42,
+    "temperature": 0.0,
+    "top_k": 50,
+    "top_p": 0.9,
+    "max_items_per_dataset": 50,
+    "notes": "temperature=0.0 for deterministic (greedy) decoding. RERUN: max_new_tokens increased from 512 to 4096. 32B models require ~64GB for weights in fp16 — use multi-GPU."
+  },
+  "scientific_notes": {
+    "motivation": "Original 32B runs truncated 99%+ of think variant outputs at 512 tokens. 32B models produce longer reasoning chains than 7B, so 4096 tokens provides ample room for full completion.",
+    "categories": ["general", "opinion", "math", "science", "knowledge", "truthfulness", "reasoning"]
+  }
+}
