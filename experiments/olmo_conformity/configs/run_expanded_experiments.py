@@ -206,7 +206,12 @@ def build_run_config(suite: Dict[str, Any], variant: str, model_id: str, tempera
     """Build a single-run config from suite: one model, one temperature."""
     import copy
     config = copy.deepcopy(suite)
-    config["models"] = [{"variant": variant, "model_id": model_id}]
+    # Preserve full model spec (max_new_tokens, has_think_tokens, etc.)
+    full_spec = next(
+        (m for m in suite.get("models", []) if m.get("variant") == variant and m.get("model_id") == model_id),
+        {"variant": variant, "model_id": model_id},
+    )
+    config["models"] = [copy.deepcopy(full_spec)]
     config.setdefault("run", {})["temperature"] = temperature
     return config
 
