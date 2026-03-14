@@ -1366,6 +1366,12 @@ def main():
         action="store_true",
         help="Prevent macOS from sleeping during experiments (uses caffeinate)",
     )
+    parser.add_argument(
+        "--metadata",
+        type=str,
+        default=None,
+        help="Path to runs metadata JSON (default: runs_metadata.json, or runs_metadata_32b.json when suite is a 32B suite). Use to scope the 32B limited study to a dedicated file.",
+    )
 
     args = parser.parse_args()
 
@@ -1405,7 +1411,17 @@ def main():
         # Local mode: use repo-relative defaults
         models_dir = Path(args.models_dir) if args.models_dir else DEFAULT_MODELS_DIR
         runs_dir = Path(args.runs_dir) if args.runs_dir else DEFAULT_RUNS_DIR
-    metadata_path = COMPARING_EXPERIMENTS_DIR / "runs_metadata.json"
+    # Metadata file: explicit --metadata, or 32B-scoped file for 32B suites, or default
+    if args.metadata:
+        metadata_path = Path(args.metadata)
+        if not metadata_path.is_absolute():
+            metadata_path = REPO_ROOT / metadata_path
+    elif suite and (
+        "32b" in str(suite_path).lower() or "32b" in suite.get("suite_name", "").lower()
+    ):
+        metadata_path = COMPARING_EXPERIMENTS_DIR / "runs_metadata_32b.json"
+    else:
+        metadata_path = COMPARING_EXPERIMENTS_DIR / "runs_metadata.json"
     # If we split temperatures into separate HPC jobs, multiple processes would write
     # to the same rotating log file (not multiprocess-safe). Use per-temp log files
     # for single-temp runs-only jobs.
@@ -1424,6 +1440,7 @@ def main():
     logger.info("=" * 60)
     logger.info(f"Repo root: {REPO_ROOT}")
     logger.info(f"Mode: {'HPC' if args.hpc else 'LOCAL'}")
+    logger.info(f"Metadata file: {metadata_path}")
     logger.info(f"Models directory: {models_dir}")
     logger.info(f"Runs directory: {runs_dir}")
     logger.info(f"Output directory: {COMPARING_EXPERIMENTS_DIR}")
@@ -1475,7 +1492,15 @@ def main():
         logger.info("=" * 60)
 
         if use_model_first:
-            default_temps = suite.get("default_temperatures", TEMPERATURES)
+            # Prefer suite default_temperatures; else if suite specifies run.temperature (single temp), use only that
+            if "default_temperatures" in suite:
+                default_temps = suite["default_temperatures"]
+            else:
+                run_block = suite.get("run", {})
+                if isinstance(run_block.get("temperature"), (int, float)):
+                    default_temps = [float(run_block["temperature"])]
+                else:
+                    default_temps = TEMPERATURES
             models_specs = suite.get("models", [])
 
             for model_spec in models_specs:

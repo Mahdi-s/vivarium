@@ -1380,3 +1380,141 @@ OSError: [Errno 30] Read-only file system: '/scratch1'
 2026-03-12 23:10:06 [INFO] --- think_rl T=0.0 ---
 2026-03-12 23:10:06 [INFO] Running experiment for think_rl T=0.0...
 2026-03-12 23:10:06 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmpye_4w4nj.json --runs-dir /Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-14 00:43:09 [INFO] ============================================================
+2026-03-14 00:43:09 [INFO] EXPANDED CONFORMITY EXPERIMENTS PIPELINE
+2026-03-14 00:43:09 [INFO] ============================================================
+2026-03-14 00:43:09 [INFO] Repo root: /Users/mahdi/repos/abstractAgentMachine
+2026-03-14 00:43:09 [INFO] Mode: LOCAL
+2026-03-14 00:43:09 [INFO] Models directory: /Users/mahdi/repos/abstractAgentMachine/models
+2026-03-14 00:43:09 [INFO] Runs directory: /Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-14 00:43:09 [INFO] Output directory: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments
+2026-03-14 00:43:09 [INFO] Mode: model-first
+2026-03-14 00:43:09 [INFO] Phase: all
+2026-03-14 00:43:09 [INFO] Suite: experiments/olmo_conformity/configs/suite_32b_think_dpo_temp0p0.json
+2026-03-14 00:43:09 [INFO] Memory usage (pipeline start): 28.9 MB
+2026-03-14 00:43:09 [INFO] Set VIVARIUM_HF_CACHE=/Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-03-14 00:43:09 [INFO] Set VIVARIUM_ARTIFACTS_DIR=/Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-14 00:43:09 [INFO] Created/verified models cache directory: /Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-03-14 00:43:09 [INFO] Created/verified runs directory: /Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-14 00:43:09 [INFO] 
+2026-03-14 00:43:09 [INFO] ============================================================
+2026-03-14 00:43:09 [INFO] PHASE 1: RUNNING EXPERIMENTS
+2026-03-14 00:43:09 [INFO] ============================================================
+2026-03-14 00:43:09 [INFO] think_dpo_0.0 already completed, skipping (run_id=1b5a06cb...)
+2026-03-14 00:43:09 [INFO] think_dpo_0.2 already completed, skipping (run_id=3e27b53a...)
+2026-03-14 00:43:09 [INFO] think_dpo_0.4 already completed, skipping (run_id=47ceefe6...)
+2026-03-14 00:43:09 [INFO] think_dpo_0.6 already completed, skipping (run_id=a7b3f903...)
+2026-03-14 00:43:09 [INFO] think_dpo_0.8 already completed, skipping (run_id=d9ac6c3a...)
+2026-03-14 00:43:09 [INFO] think_dpo_1.0 already completed, skipping (run_id=13bebfdf...)
+2026-03-14 00:43:09 [INFO] 
+2026-03-14 00:43:09 [INFO] ============================================================
+2026-03-14 00:43:09 [INFO] STOPPING AFTER TRIALS (runs-only or phase=trials)
+2026-03-14 00:43:09 [INFO] ============================================================
+2026-03-14 00:43:09 [INFO] Requested: 6 runs
+2026-03-14 00:43:09 [INFO] Completed: 0; Failed: 0; Skipped: 6
+2026-03-14 00:48:39 [INFO] ============================================================
+2026-03-14 00:48:39 [INFO] EXPANDED CONFORMITY EXPERIMENTS PIPELINE
+2026-03-14 00:48:39 [INFO] ============================================================
+2026-03-14 00:48:39 [INFO] Repo root: /Users/mahdi/repos/abstractAgentMachine
+2026-03-14 00:48:39 [INFO] Mode: LOCAL
+2026-03-14 00:48:39 [INFO] Models directory: /Users/mahdi/repos/abstractAgentMachine/models
+2026-03-14 00:48:39 [INFO] Runs directory: /Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-14 00:48:39 [INFO] Output directory: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments
+2026-03-14 00:48:39 [INFO] Mode: model-first
+2026-03-14 00:48:39 [INFO] Phase: all
+2026-03-14 00:48:39 [INFO] Suite: experiments/olmo_conformity/configs/suite_32b_think_dpo_temp0p0.json
+2026-03-14 00:48:39 [INFO] Memory usage (pipeline start): 28.1 MB
+2026-03-14 00:48:39 [INFO] Set VIVARIUM_HF_CACHE=/Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-03-14 00:48:39 [INFO] Set VIVARIUM_ARTIFACTS_DIR=/Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-14 00:48:39 [INFO] Created/verified models cache directory: /Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-03-14 00:48:39 [INFO] Created/verified runs directory: /Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-14 00:48:39 [INFO] 
+2026-03-14 00:48:39 [INFO] ============================================================
+2026-03-14 00:48:39 [INFO] PHASE 1: RUNNING EXPERIMENTS
+2026-03-14 00:48:39 [INFO] ============================================================
+2026-03-14 00:48:39 [INFO] 
+2026-03-14 00:48:39 [INFO] --- think_dpo T=0.0 ---
+2026-03-14 00:48:39 [INFO] Running experiment for think_dpo T=0.0...
+2026-03-14 00:48:39 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmp93pxl3nq.json --runs-dir /Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-14 01:00:19 [INFO] ============================================================
+2026-03-14 01:00:19 [INFO] EXPANDED CONFORMITY EXPERIMENTS PIPELINE
+2026-03-14 01:00:19 [INFO] ============================================================
+2026-03-14 01:00:19 [INFO] Repo root: /Users/mahdi/repos/abstractAgentMachine
+2026-03-14 01:00:19 [INFO] Mode: LOCAL
+2026-03-14 01:00:19 [INFO] Models directory: /Users/mahdi/repos/abstractAgentMachine/models
+2026-03-14 01:00:19 [INFO] Runs directory: /Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-14 01:00:19 [INFO] Output directory: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments
+2026-03-14 01:00:19 [INFO] Mode: model-first
+2026-03-14 01:00:19 [INFO] Phase: all
+2026-03-14 01:00:19 [INFO] Suite: experiments/olmo_conformity/configs/suite_32b_think_dpo_temp0p0.json
+2026-03-14 01:00:19 [INFO] Memory usage (pipeline start): 29.0 MB
+2026-03-14 01:00:19 [INFO] Set VIVARIUM_HF_CACHE=/Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-03-14 01:00:19 [INFO] Set VIVARIUM_ARTIFACTS_DIR=/Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-14 01:00:19 [INFO] Created/verified models cache directory: /Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-03-14 01:00:19 [INFO] Created/verified runs directory: /Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-14 01:00:19 [INFO] 
+2026-03-14 01:00:19 [INFO] ============================================================
+2026-03-14 01:00:19 [INFO] PHASE 1: RUNNING EXPERIMENTS
+2026-03-14 01:00:19 [INFO] ============================================================
+2026-03-14 01:00:19 [INFO] think_dpo_0.0 already completed, skipping (run_id=1b5a06cb...)
+2026-03-14 01:00:19 [INFO] think_dpo_0.2 already completed, skipping (run_id=3e27b53a...)
+2026-03-14 01:00:19 [INFO] think_dpo_0.4 already completed, skipping (run_id=47ceefe6...)
+2026-03-14 01:00:19 [INFO] think_dpo_0.6 already completed, skipping (run_id=a7b3f903...)
+2026-03-14 01:00:19 [INFO] think_dpo_0.8 already completed, skipping (run_id=d9ac6c3a...)
+2026-03-14 01:00:19 [INFO] think_dpo_1.0 already completed, skipping (run_id=13bebfdf...)
+2026-03-14 01:00:19 [INFO] 
+2026-03-14 01:00:19 [INFO] ============================================================
+2026-03-14 01:00:19 [INFO] STOPPING AFTER TRIALS (runs-only or phase=trials)
+2026-03-14 01:00:19 [INFO] ============================================================
+2026-03-14 01:00:19 [INFO] Requested: 6 runs
+2026-03-14 01:00:19 [INFO] Completed: 0; Failed: 0; Skipped: 6
+2026-03-14 01:05:55 [INFO] ============================================================
+2026-03-14 01:05:55 [INFO] EXPANDED CONFORMITY EXPERIMENTS PIPELINE
+2026-03-14 01:05:55 [INFO] ============================================================
+2026-03-14 01:05:55 [INFO] Repo root: /Users/mahdi/repos/abstractAgentMachine
+2026-03-14 01:05:55 [INFO] Mode: LOCAL
+2026-03-14 01:05:55 [INFO] Metadata file: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata_32b.json
+2026-03-14 01:05:55 [INFO] Models directory: /Users/mahdi/repos/abstractAgentMachine/models
+2026-03-14 01:05:55 [INFO] Runs directory: /Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-14 01:05:55 [INFO] Output directory: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments
+2026-03-14 01:05:55 [INFO] Mode: model-first
+2026-03-14 01:05:55 [INFO] Phase: all
+2026-03-14 01:05:55 [INFO] Suite: experiments/olmo_conformity/configs/suite_32b_think_dpo_temp0p0.json
+2026-03-14 01:05:55 [INFO] Memory usage (pipeline start): 27.7 MB
+2026-03-14 01:05:55 [INFO] Set VIVARIUM_HF_CACHE=/Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-03-14 01:05:55 [INFO] Set VIVARIUM_ARTIFACTS_DIR=/Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-14 01:05:55 [INFO] Created/verified models cache directory: /Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-03-14 01:05:55 [INFO] Created/verified runs directory: /Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-14 01:05:55 [INFO] 
+2026-03-14 01:05:55 [INFO] ============================================================
+2026-03-14 01:05:55 [INFO] PHASE 1: RUNNING EXPERIMENTS
+2026-03-14 01:05:55 [INFO] ============================================================
+2026-03-14 01:05:55 [INFO] 
+2026-03-14 01:05:55 [INFO] --- think_dpo T=0.0 ---
+2026-03-14 01:05:55 [INFO] Running experiment for think_dpo T=0.0...
+2026-03-14 01:05:55 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmpg_qwrf5c.json --runs-dir /Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-14 01:06:13 [INFO] ============================================================
+2026-03-14 01:06:13 [INFO] EXPANDED CONFORMITY EXPERIMENTS PIPELINE
+2026-03-14 01:06:13 [INFO] ============================================================
+2026-03-14 01:06:13 [INFO] Repo root: /Users/mahdi/repos/abstractAgentMachine
+2026-03-14 01:06:13 [INFO] Mode: LOCAL
+2026-03-14 01:06:13 [INFO] Metadata file: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata_32b.json
+2026-03-14 01:06:13 [INFO] Models directory: /Users/mahdi/repos/abstractAgentMachine/models
+2026-03-14 01:06:13 [INFO] Runs directory: /Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-14 01:06:13 [INFO] Output directory: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments
+2026-03-14 01:06:13 [INFO] Mode: model-first
+2026-03-14 01:06:13 [INFO] Phase: all
+2026-03-14 01:06:13 [INFO] Suite: experiments/olmo_conformity/configs/suite_32b_think_dpo_temp0p0.json
+2026-03-14 01:06:13 [INFO] Memory usage (pipeline start): 27.6 MB
+2026-03-14 01:06:13 [INFO] Set VIVARIUM_HF_CACHE=/Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-03-14 01:06:13 [INFO] Set VIVARIUM_ARTIFACTS_DIR=/Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-14 01:06:13 [INFO] Created/verified models cache directory: /Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-03-14 01:06:13 [INFO] Created/verified runs directory: /Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-14 01:06:13 [INFO] 
+2026-03-14 01:06:13 [INFO] ============================================================
+2026-03-14 01:06:13 [INFO] PHASE 1: RUNNING EXPERIMENTS
+2026-03-14 01:06:13 [INFO] ============================================================
+2026-03-14 01:06:13 [INFO] 
+2026-03-14 01:06:13 [INFO] --- think_dpo T=0.0 ---
+2026-03-14 01:06:13 [INFO] Running experiment for think_dpo T=0.0...
+2026-03-14 01:06:13 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmp3h3j97ao.json --runs-dir /Users/mahdi/repos/abstractAgentMachine/runs

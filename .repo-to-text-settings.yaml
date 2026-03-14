@@ -1,14 +1,25 @@
-# Configuration for repo-to-text to extract Abstract Agent Machine source code
-# This config focuses on src/ directory and includes relevant config examples
+# Configuration for repo-to-text: code and structure only (no .csv, .md, archives, docs, logs).
+# Excludes: zip/tar/gz, docs/, analysis logs, huge generated .txt — keeps only code and layout.
 
 # Import and respect .gitignore patterns
 gitignore-import-and-ignore: True
 
 # Files/directories to exclude from both tree and content sections
 ignore-tree-and-content:
-  - "tests/"
-  - "notebooks/"
+  - "*.csv"
+  - "*.md"
+  - "*.zip"
+  - "*.tar"
+  - "*.tar.gz"
+  - "*.tgz"
+  - "*.gz"
+  - "*.7z"
+  - "*.rar"
   - "*.pyc"
+  - "*.log"
+  - "**/analysis_log.txt"
+  - "abstract_agent_machine_code_documentation.txt"
+  - "docs/"
   - "__pycache__/"
   - ".pytest_cache/"
   - ".mypy_cache/"
@@ -16,9 +27,7 @@ ignore-tree-and-content:
   - "build/"
   - "dist/"
   - ".git/"
-  - "models/"
   - "runs/"
-  - "third_party/"
   - "*.db"
   - "*.parquet"
   - "*.safetensors"
@@ -30,15 +39,28 @@ ignore-tree-and-content:
   - ".github/"
 
 # Files/directories to exclude only from content (but include in tree)
+# Token-efficient: core platform (src minus experiments/analytics) + structure + one suite example only.
 ignore-content:
-  - "README.md"
   - "LICENSE"
-  - "CONTRIBUTING.md"
-  - "SETUP.md"
-  - "TESTING_GUIDE.md"
   - "Abstract Agent Machine PRD.txt"
   - "supplementary documentation /"
-  - "Olmo inspection.md"
+  # Olmo conformity datasets: full JSONL omitted; structure + one example in datasets/STRUCTURE_AND_EXAMPLE.txt
+  - "experiments/olmo_conformity/datasets/**/*.jsonl"
+  # Tree-only: notebooks, Comparing_Experiments, Analysis Scripts, scripts, paper, tests
+  - "*.ipynb"
+  - "Comparing_Experiments/**"
+  - "Analysis Scripts/**"
+  - "scripts/**"
+  - "paper/**"
+  - "tests/**"
+  # Experiment package under src (olmo_conformity runner, cli, probes, etc.) — tree only
+  - "src/vivarium/experiments/**"
+  # Analytics/reporting under src — tree only
+  - "src/vivarium/analytics/**"
+  # experiments/olmo_conformity: only STRUCTURE_AND_EXAMPLE + one suite JSON; rest tree-only
+  - "experiments/olmo_conformity/**"
+  - "!experiments/olmo_conformity/datasets/STRUCTURE_AND_EXAMPLE.txt"
+  - "!experiments/olmo_conformity/configs/suite_32b_think_temp0p0.json"
 
 # Include JSON config examples from experiments directory
 # (These will be included in the output for reference)
