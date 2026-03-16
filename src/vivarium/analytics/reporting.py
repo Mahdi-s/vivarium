@@ -329,7 +329,7 @@ class ScientificReportGenerator:
         # Check for truth probe
         probe_row = self.context.db.conn.execute(
             """
-            SELECT probe_id FROM conformity_probes
+            SELECT probe_id FROM vivarium_probes
             WHERE run_id = ? AND probe_kind = 'truth'
             ORDER BY created_at DESC LIMIT 1;
             """,
@@ -346,7 +346,7 @@ class ScientificReportGenerator:
             """
             SELECT AVG(value_float) as mean_projection,
                    COUNT(*) as n_projections
-            FROM conformity_probe_projections
+            FROM vivarium_probe_projections
             WHERE probe_id = ?;
             """,
             (probe_id,),
@@ -512,7 +512,7 @@ class ScientificReportGenerator:
         # Check for think tokens
         count = self.context.db.conn.execute(
             """
-            SELECT COUNT(*) FROM conformity_think_tokens tt
+            SELECT COUNT(*) FROM vivarium_think_tokens tt
             JOIN conformity_trials t ON t.trial_id = tt.trial_id
             WHERE t.run_id = ?;
             """,

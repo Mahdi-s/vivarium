@@ -85,7 +85,7 @@ def register_social_vector_intervention(
     notes: Optional[str] = None,
 ) -> str:
     intervention_id = str(uuid.uuid4())
-    trace_db.insert_conformity_intervention(
+    trace_db.insert_intervention(
         intervention_id=intervention_id,
         run_id=run_id,
         name=name,
@@ -118,9 +118,9 @@ def run_intervention_sweep(
     """
     Executes activation steering by subtracting alpha * v_social at specified layers.
     Writes:
-      - conformity_interventions
+      - vivarium_interventions
       - conformity_outputs (before/after)
-      - conformity_intervention_results
+      - vivarium_intervention_results
     Returns number of result rows inserted.
     """
     load_file, torch = _require_safetensors()
@@ -316,9 +316,9 @@ def run_intervention_sweep(
                 flipped_to_truth = None
             else:
                 flipped_to_truth = (not bool(is_correct_before)) and bool(is_correct_after)
-            trace_db.insert_conformity_intervention_result(
+            trace_db.insert_intervention_result(
                 result_id=str(uuid.uuid4()),
-                trial_id=trial_id,
+                trace_id=trial_id,
                 intervention_id=intervention_id,
                 output_id_before=output_before_id,
                 output_id_after=output_after_id,

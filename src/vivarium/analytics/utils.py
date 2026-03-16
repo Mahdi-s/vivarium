@@ -144,7 +144,7 @@ def check_missing_prerequisites(trace_db: TraceDb, run_id: str) -> Dict[str, boo
     
     # Check for probes
     probe_count = trace_db.conn.execute(
-        "SELECT COUNT(*) FROM conformity_probes WHERE run_id = ?",
+        "SELECT COUNT(*) FROM vivarium_probes WHERE run_id = ?",
         (run_id,),
     ).fetchone()[0]
     missing["probes"] = probe_count > 0
@@ -152,7 +152,7 @@ def check_missing_prerequisites(trace_db: TraceDb, run_id: str) -> Dict[str, boo
     # Check for probe projections
     projection_count = trace_db.conn.execute(
         """
-        SELECT COUNT(*) FROM conformity_probe_projections p
+        SELECT COUNT(*) FROM vivarium_probe_projections p
         JOIN conformity_trials t ON t.trial_id = p.trial_id
         WHERE t.run_id = ?
         """,
@@ -162,7 +162,7 @@ def check_missing_prerequisites(trace_db: TraceDb, run_id: str) -> Dict[str, boo
     
     # Check for interventions
     intervention_count = trace_db.conn.execute(
-        "SELECT COUNT(*) FROM conformity_interventions WHERE run_id = ?",
+        "SELECT COUNT(*) FROM vivarium_interventions WHERE run_id = ?",
         (run_id,),
     ).fetchone()[0]
     missing["interventions"] = intervention_count > 0
@@ -170,7 +170,7 @@ def check_missing_prerequisites(trace_db: TraceDb, run_id: str) -> Dict[str, boo
     # Check for intervention results
     intervention_result_count = trace_db.conn.execute(
         """
-        SELECT COUNT(*) FROM conformity_intervention_results r
+        SELECT COUNT(*) FROM vivarium_intervention_results r
         JOIN conformity_trials t ON t.trial_id = r.trial_id
         WHERE t.run_id = ?
         """,
@@ -181,7 +181,7 @@ def check_missing_prerequisites(trace_db: TraceDb, run_id: str) -> Dict[str, boo
     # Check for think tokens
     think_count = trace_db.conn.execute(
         """
-        SELECT COUNT(*) FROM conformity_think_tokens tt
+        SELECT COUNT(*) FROM vivarium_think_tokens tt
         JOIN conformity_trials t ON t.trial_id = tt.trial_id
         WHERE t.run_id = ?
         """,
@@ -203,7 +203,7 @@ def check_missing_prerequisites(trace_db: TraceDb, run_id: str) -> Dict[str, boo
     # Check for answer logprob probes (correct vs conforming)
     answer_logprob_count = trace_db.conn.execute(
         """
-        SELECT COUNT(*) FROM conformity_answer_logprobs a
+        SELECT COUNT(*) FROM vivarium_answer_logprobs a
         JOIN conformity_trials t ON t.trial_id = a.trial_id
         WHERE t.run_id = ?
         """,

@@ -26,7 +26,7 @@ def _fetch_latest_probe(
     row = trace_db.conn.execute(
         """
         SELECT probe_id, artifact_path
-        FROM conformity_probes
+        FROM vivarium_probes
         WHERE run_id = ? AND probe_kind = ? AND model_id = ?
         ORDER BY created_at DESC
         LIMIT 1;
@@ -184,7 +184,7 @@ def resume_from_projections(
         row = trace_db.conn.execute(
             """
             SELECT COUNT(*) AS c
-            FROM conformity_probe_projections p
+            FROM vivarium_probe_projections p
             JOIN conformity_trials t ON t.trial_id = p.trial_id
             WHERE t.run_id = ? AND p.probe_id = ?;
             """,

@@ -218,7 +218,7 @@ def parse_and_store_think_tokens(*, trace_db: TraceDb, trial_id: str) -> int:
     for i, tok in enumerate(parts):
         trace_db.conn.execute(
             """
-            INSERT INTO conformity_think_tokens(think_id, trial_id, token_index, token_text, token_id, created_at)
+            INSERT INTO vivarium_think_tokens(think_id, trial_id, token_index, token_text, token_id, created_at)
             VALUES (?, ?, ?, ?, ?, ?);
             """,
             (str(uuid.uuid4()), trial_id, int(i), str(tok), None, now),
@@ -458,7 +458,7 @@ def compute_logit_lens_tug_of_war_for_trial(
     Applies the model's final LayerNorm before unembedding per [R2]:
         logits = W_U @ LN_final(h_L)
 
-    Stores rows in ``conformity_logit_lens_tug_of_war``.
+    Stores rows in ``vivarium_logit_lens_tug_of_war``.
     Returns number of rows inserted.
     """
     torch, load_file = _require_torch_and_safetensors()
@@ -506,7 +506,7 @@ def compute_logit_lens_tug_of_war_for_trial(
     for layer in sorted(layers):
         if skip_existing:
             already = trace_db.conn.execute(
-                "SELECT 1 FROM conformity_logit_lens_tug_of_war WHERE trial_id = ? AND layer_index = ? LIMIT 1;",
+                "SELECT 1 FROM vivarium_logit_lens_tug_of_war WHERE trial_id = ? AND layer_index = ? LIMIT 1;",
                 (trial_id, int(layer)),
             ).fetchone()
             if already is not None:
@@ -551,7 +551,7 @@ def compute_logit_lens_tug_of_war_for_trial(
 
         trace_db.conn.execute(
             """
-            INSERT INTO conformity_logit_lens_tug_of_war(
+            INSERT INTO vivarium_logit_lens_tug_of_war(
               tow_id, trial_id, layer_index,
               truth_token, truth_token_id, truth_prob,
               sycophantic_token, sycophantic_token_id, sycophantic_prob,
@@ -674,7 +674,7 @@ def plot_logit_lens_tug_of_war(
         f"""
         SELECT tow.trial_id, tow.layer_index, tow.truth_prob, tow.sycophantic_prob,
                tow.crossing_flag, c.name AS condition_name
-        FROM conformity_logit_lens_tug_of_war tow
+        FROM vivarium_logit_lens_tug_of_war tow
         JOIN conformity_trials t ON t.trial_id = tow.trial_id
         JOIN conformity_conditions c ON c.condition_id = t.condition_id
         WHERE t.run_id = ? {model_filter}

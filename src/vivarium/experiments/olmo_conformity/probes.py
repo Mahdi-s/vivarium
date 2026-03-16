@@ -272,7 +272,7 @@ def train_probe_from_captured_activations(
 ) -> str:
     """
     Trains per-layer logistic probes on captured activations from the probe dataset.
-    Saves weights to a safetensors file and registers a row in conformity_probes.
+    Saves weights to a safetensors file and registers a row in vivarium_probes.
     Returns probe_id.
     """
     np = _require_numpy()
@@ -384,7 +384,7 @@ def train_probe_from_captured_activations(
     save_file(tensors_to_save, output_artifact_path)
 
     probe_id = str(uuid.uuid4())
-    trace_db.insert_conformity_probe(
+    trace_db.insert_probe(
         probe_id=probe_id,
         run_id=run_id,
         probe_kind=probe_kind,
@@ -475,5 +475,5 @@ def compute_and_store_probe_projections_for_trials(
             rows_to_insert.append((str(uuid.uuid4()), trial_id, probe_id, int(layer), None, score))
 
     if rows_to_insert:
-        trace_db.insert_conformity_projection_rows(rows=rows_to_insert)
+        trace_db.insert_projection_rows(rows=rows_to_insert)
     return len(rows_to_insert)

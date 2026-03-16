@@ -161,6 +161,217 @@ class TraceDb:
         )
         self.conn.execute("CREATE INDEX IF NOT EXISTS idx_agent_states_run_step ON agent_states(run_id, time_step);")
 
+        # Initialize the generic mechanistic-interpretability tables.
+        self.init_interpretability_schema()
+
+    def init_interpretability_schema(self) -> None:
+        """
+        Initialize the generic mechanistic-interpretability schema (vivarium_* tables).
+
+        These tables are experiment-agnostic and keyed off the core trace table,
+        allowing any experiment to record probes, interventions, steering, and
+        activation-patching results without coupling to a specific experiment schema.
+        """
+        # Probe registry: probe weights stored on disk (safetensors) and indexed here
+        self.conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS vivarium_probes (
+              probe_id TEXT PRIMARY KEY,
+              run_id TEXT NOT NULL,
+              probe_kind TEXT NOT NULL,
+              train_dataset_id TEXT,
+              model_id TEXT NOT NULL,
+              layers_json TEXT NOT NULL,
+              component TEXT NOT NULL,
+              token_position INTEGER NOT NULL,
+              artifact_path TEXT NOT NULL,
+              metrics_json TEXT NOT NULL,
+              created_at REAL NOT NULL,
+              FOREIGN KEY(run_id) REFERENCES runs(run_id)
+            );
+            """
+        )
+        self.conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_vivarium_probes_run ON vivarium_probes(run_id, probe_kind, model_id);"
+        )
+
+        # Layerwise projections (scalar) against a probe
+        self.conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS vivarium_probe_projections (
+              projection_id TEXT PRIMARY KEY,
+              trace_id TEXT NOT NULL,
+              probe_id TEXT NOT NULL,
+              layer_index INTEGER NOT NULL,
+              token_index INTEGER,
+              value_float REAL NOT NULL,
+              created_at REAL NOT NULL,
+              FOREIGN KEY(trace_id) REFERENCES trace(trace_id),
+              FOREIGN KEY(probe_id) REFERENCES vivarium_probes(probe_id)
+            );
+            """
+        )
+        self.conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_vivarium_proj_trace ON vivarium_probe_projections(trace_id, probe_id);"
+        )
+        self.conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_vivarium_proj_layer ON vivarium_probe_projections(probe_id, layer_index);"
+        )
+
+        # Think token traces
+        self.conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS vivarium_think_tokens (
+              think_id TEXT PRIMARY KEY,
+              trace_id TEXT NOT NULL,
+              token_index INTEGER NOT NULL,
+              token_text TEXT NOT NULL,
+              token_id INTEGER,
+              created_at REAL NOT NULL,
+              FOREIGN KEY(trace_id) REFERENCES trace(trace_id)
+            );
+            """
+        )
+        self.conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_vivarium_think_trace ON vivarium_think_tokens(trace_id, token_index);"
+        )
+
+        # Answer-level logprob probes (posthoc)
+        self.conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS vivarium_answer_logprobs (
+              trace_id TEXT NOT NULL,
+              context_kind TEXT NOT NULL,
+              candidate_kind TEXT NOT NULL,
+              candidate_text TEXT NOT NULL,
+              token_count INTEGER NOT NULL,
+              logprob_sum REAL NOT NULL,
+              logprob_mean REAL NOT NULL,
+              first_token_id INTEGER,
+              first_token_logprob REAL,
+              metadata_json TEXT NOT NULL,
+              created_at REAL NOT NULL,
+              PRIMARY KEY(trace_id, context_kind, candidate_kind),
+              FOREIGN KEY(trace_id) REFERENCES trace(trace_id)
+            );
+            """
+        )
+        self.conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_vivarium_answerlog_trace ON vivarium_answer_logprobs(trace_id, context_kind);"
+        )
+
+        # Intervention definitions (activation steering)
+        self.conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS vivarium_interventions (
+              intervention_id TEXT PRIMARY KEY,
+              run_id TEXT NOT NULL,
+              name TEXT NOT NULL,
+              alpha REAL NOT NULL,
+              target_layers_json TEXT NOT NULL,
+              component TEXT NOT NULL,
+              vector_probe_id TEXT NOT NULL,
+              notes TEXT,
+              created_at REAL NOT NULL,
+              FOREIGN KEY(run_id) REFERENCES runs(run_id),
+              FOREIGN KEY(vector_probe_id) REFERENCES vivarium_probes(probe_id)
+            );
+            """
+        )
+        self.conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_vivarium_interventions_run ON vivarium_interventions(run_id, name);"
+        )
+
+        # Intervention results compare before/after outputs for the same trace event
+        self.conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS vivarium_intervention_results (
+              result_id TEXT PRIMARY KEY,
+              trace_id TEXT NOT NULL,
+              intervention_id TEXT NOT NULL,
+              output_id_before TEXT NOT NULL,
+              output_id_after TEXT NOT NULL,
+              flipped_to_truth INTEGER,
+              created_at REAL NOT NULL,
+              FOREIGN KEY(trace_id) REFERENCES trace(trace_id),
+              FOREIGN KEY(intervention_id) REFERENCES vivarium_interventions(intervention_id)
+            );
+            """
+        )
+        self.conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_vivarium_intervention_trace ON vivarium_intervention_results(trace_id, intervention_id);"
+        )
+
+        # Logit lens tug-of-war: P(truth) vs P(sycophantic) per (trace, layer)
+        self.conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS vivarium_logit_lens_tug_of_war (
+              tow_id TEXT PRIMARY KEY,
+              trace_id TEXT NOT NULL,
+              layer_index INTEGER NOT NULL,
+              truth_token TEXT NOT NULL,
+              truth_token_id INTEGER,
+              truth_prob REAL NOT NULL,
+              sycophantic_token TEXT NOT NULL,
+              sycophantic_token_id INTEGER,
+              sycophantic_prob REAL NOT NULL,
+              crossing_flag INTEGER NOT NULL DEFAULT 0,
+              created_at REAL NOT NULL,
+              FOREIGN KEY(trace_id) REFERENCES trace(trace_id)
+            );
+            """
+        )
+        self.conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_vivarium_tow_trace ON vivarium_logit_lens_tug_of_war(trace_id, layer_index);"
+        )
+
+        # Contrastive steering results (Contrastive Activation Addition / RepE)
+        self.conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS vivarium_contrastive_steering (
+              steering_id TEXT PRIMARY KEY,
+              run_id TEXT NOT NULL,
+              layer_index INTEGER NOT NULL,
+              alpha REAL NOT NULL,
+              trace_id TEXT NOT NULL,
+              output_id_before TEXT NOT NULL,
+              output_id_after TEXT NOT NULL,
+              flipped_to_sycophantic INTEGER,
+              deference_vector_path TEXT,
+              created_at REAL NOT NULL,
+              FOREIGN KEY(run_id) REFERENCES runs(run_id),
+              FOREIGN KEY(trace_id) REFERENCES trace(trace_id)
+            );
+            """
+        )
+        self.conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_vivarium_steering_run ON vivarium_contrastive_steering(run_id, layer_index, alpha);"
+        )
+
+        # Activation patching (causal tracing) results
+        self.conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS vivarium_activation_patching (
+              patch_id TEXT PRIMARY KEY,
+              run_id TEXT NOT NULL,
+              source_trace_id TEXT NOT NULL,
+              target_trace_id TEXT NOT NULL,
+              layer_index INTEGER NOT NULL,
+              output_id_before_patch TEXT NOT NULL,
+              output_id_after_patch TEXT NOT NULL,
+              rescued_truth INTEGER,
+              logit_diff_recovery REAL,
+              created_at REAL NOT NULL,
+              FOREIGN KEY(run_id) REFERENCES runs(run_id),
+              FOREIGN KEY(source_trace_id) REFERENCES trace(trace_id),
+              FOREIGN KEY(target_trace_id) REFERENCES trace(trace_id)
+            );
+            """
+        )
+        self.conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_vivarium_patching_run ON vivarium_activation_patching(run_id, layer_index);"
+        )
+
     def insert_agent_state(
         self,
         *,
@@ -334,69 +545,6 @@ class TraceDb:
         self.conn.execute("CREATE INDEX IF NOT EXISTS idx_conformity_outputs_trial ON conformity_outputs(trial_id);")
         self.conn.execute("CREATE INDEX IF NOT EXISTS idx_conformity_outputs_correct ON conformity_outputs(is_correct);")
 
-        # Probe registry: probe weights stored on disk (safetensors) and indexed here
-        self.conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS conformity_probes (
-              probe_id TEXT PRIMARY KEY,
-              run_id TEXT NOT NULL,
-              probe_kind TEXT NOT NULL,
-              train_dataset_id TEXT NOT NULL,
-              model_id TEXT NOT NULL,
-              layers_json TEXT NOT NULL,
-              component TEXT NOT NULL,
-              token_position INTEGER NOT NULL,
-              artifact_path TEXT NOT NULL,
-              metrics_json TEXT NOT NULL,
-              created_at REAL NOT NULL,
-              FOREIGN KEY(run_id) REFERENCES runs(run_id),
-              FOREIGN KEY(train_dataset_id) REFERENCES conformity_datasets(dataset_id)
-            );
-            """
-        )
-        self.conn.execute("CREATE INDEX IF NOT EXISTS idx_conformity_probes_run ON conformity_probes(run_id, probe_kind, model_id);")
-
-        # Layerwise projections (scalar) against a probe
-        self.conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS conformity_probe_projections (
-              projection_id TEXT PRIMARY KEY,
-              trial_id TEXT NOT NULL,
-              probe_id TEXT NOT NULL,
-              layer_index INTEGER NOT NULL,
-              token_index INTEGER,
-              value_float REAL NOT NULL,
-              created_at REAL NOT NULL,
-              FOREIGN KEY(trial_id) REFERENCES conformity_trials(trial_id),
-              FOREIGN KEY(probe_id) REFERENCES conformity_probes(probe_id)
-            );
-            """
-        )
-        self.conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_conformity_proj_trial ON conformity_probe_projections(trial_id, probe_id);"
-        )
-        self.conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_conformity_proj_layer ON conformity_probe_projections(probe_id, layer_index);"
-        )
-
-        # Think token traces (optional)
-        self.conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS conformity_think_tokens (
-              think_id TEXT PRIMARY KEY,
-              trial_id TEXT NOT NULL,
-              token_index INTEGER NOT NULL,
-              token_text TEXT NOT NULL,
-              token_id INTEGER,
-              created_at REAL NOT NULL,
-              FOREIGN KEY(trial_id) REFERENCES conformity_trials(trial_id)
-            );
-            """
-        )
-        self.conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_conformity_think_trial ON conformity_think_tokens(trial_id, token_index);"
-        )
-
         # Logit lens outputs (optional, stored as JSON for compactness)
         self.conn.execute(
             """
@@ -413,148 +561,6 @@ class TraceDb:
         )
         self.conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_conformity_logit_trial ON conformity_logit_lens(trial_id, layer_index, token_index);"
-        )
-
-        # Answer-level logprob probes (posthoc): compare probability of correct vs conforming answers.
-        self.conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS conformity_answer_logprobs (
-              trial_id TEXT NOT NULL,
-              context_kind TEXT NOT NULL,
-              candidate_kind TEXT NOT NULL,
-              candidate_text TEXT NOT NULL,
-              token_count INTEGER NOT NULL,
-              logprob_sum REAL NOT NULL,
-              logprob_mean REAL NOT NULL,
-              first_token_id INTEGER,
-              first_token_logprob REAL,
-              metadata_json TEXT NOT NULL,
-              created_at REAL NOT NULL,
-              PRIMARY KEY(trial_id, context_kind, candidate_kind),
-              FOREIGN KEY(trial_id) REFERENCES conformity_trials(trial_id)
-            );
-            """
-        )
-        self.conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_conformity_answerlog_trial ON conformity_answer_logprobs(trial_id, context_kind);"
-        )
-
-        # Intervention definitions (activation steering)
-        self.conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS conformity_interventions (
-              intervention_id TEXT PRIMARY KEY,
-              run_id TEXT NOT NULL,
-              name TEXT NOT NULL,
-              alpha REAL NOT NULL,
-              target_layers_json TEXT NOT NULL,
-              component TEXT NOT NULL,
-              vector_probe_id TEXT NOT NULL,
-              notes TEXT,
-              created_at REAL NOT NULL,
-              FOREIGN KEY(run_id) REFERENCES runs(run_id),
-              FOREIGN KEY(vector_probe_id) REFERENCES conformity_probes(probe_id)
-            );
-            """
-        )
-        self.conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_conformity_interventions_run ON conformity_interventions(run_id, name);"
-        )
-
-        # Intervention results compare before/after outputs for the same trial
-        self.conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS conformity_intervention_results (
-              result_id TEXT PRIMARY KEY,
-              trial_id TEXT NOT NULL,
-              intervention_id TEXT NOT NULL,
-              output_id_before TEXT NOT NULL,
-              output_id_after TEXT NOT NULL,
-              flipped_to_truth INTEGER,
-              created_at REAL NOT NULL,
-              FOREIGN KEY(trial_id) REFERENCES conformity_trials(trial_id),
-              FOREIGN KEY(intervention_id) REFERENCES conformity_interventions(intervention_id),
-              FOREIGN KEY(output_id_before) REFERENCES conformity_outputs(output_id),
-              FOREIGN KEY(output_id_after) REFERENCES conformity_outputs(output_id)
-            );
-            """
-        )
-        self.conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_conformity_intervention_trial ON conformity_intervention_results(trial_id, intervention_id);"
-        )
-
-        # Logit lens tug-of-war: focused P(truth) vs P(sycophantic) per (trial, layer)
-        self.conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS conformity_logit_lens_tug_of_war (
-              tow_id TEXT PRIMARY KEY,
-              trial_id TEXT NOT NULL,
-              layer_index INTEGER NOT NULL,
-              truth_token TEXT NOT NULL,
-              truth_token_id INTEGER,
-              truth_prob REAL NOT NULL,
-              sycophantic_token TEXT NOT NULL,
-              sycophantic_token_id INTEGER,
-              sycophantic_prob REAL NOT NULL,
-              crossing_flag INTEGER NOT NULL DEFAULT 0,
-              created_at REAL NOT NULL,
-              FOREIGN KEY(trial_id) REFERENCES conformity_trials(trial_id)
-            );
-            """
-        )
-        self.conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_conformity_tow_trial ON conformity_logit_lens_tug_of_war(trial_id, layer_index);"
-        )
-
-        # Contrastive steering results (Contrastive Activation Addition / RepE)
-        self.conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS conformity_contrastive_steering (
-              steering_id TEXT PRIMARY KEY,
-              run_id TEXT NOT NULL,
-              layer_index INTEGER NOT NULL,
-              alpha REAL NOT NULL,
-              trial_id TEXT NOT NULL,
-              output_id_before TEXT NOT NULL,
-              output_id_after TEXT NOT NULL,
-              flipped_to_sycophantic INTEGER,
-              deference_vector_path TEXT,
-              created_at REAL NOT NULL,
-              FOREIGN KEY(run_id) REFERENCES runs(run_id),
-              FOREIGN KEY(trial_id) REFERENCES conformity_trials(trial_id),
-              FOREIGN KEY(output_id_before) REFERENCES conformity_outputs(output_id),
-              FOREIGN KEY(output_id_after) REFERENCES conformity_outputs(output_id)
-            );
-            """
-        )
-        self.conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_conformity_steering_run ON conformity_contrastive_steering(run_id, layer_index, alpha);"
-        )
-
-        # Activation patching (causal tracing) results
-        self.conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS conformity_activation_patching (
-              patch_id TEXT PRIMARY KEY,
-              run_id TEXT NOT NULL,
-              source_trial_id TEXT NOT NULL,
-              target_trial_id TEXT NOT NULL,
-              layer_index INTEGER NOT NULL,
-              output_id_before_patch TEXT NOT NULL,
-              output_id_after_patch TEXT NOT NULL,
-              rescued_truth INTEGER,
-              logit_diff_recovery REAL,
-              created_at REAL NOT NULL,
-              FOREIGN KEY(run_id) REFERENCES runs(run_id),
-              FOREIGN KEY(source_trial_id) REFERENCES conformity_trials(trial_id),
-              FOREIGN KEY(target_trial_id) REFERENCES conformity_trials(trial_id),
-              FOREIGN KEY(output_id_before_patch) REFERENCES conformity_outputs(output_id),
-              FOREIGN KEY(output_id_after_patch) REFERENCES conformity_outputs(output_id)
-            );
-            """
-        )
-        self.conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_conformity_patching_run ON conformity_activation_patching(run_id, layer_index);"
         )
 
     def insert_run(self, meta: RunMetadata) -> None:
@@ -1005,10 +1011,13 @@ class TraceDb:
                 ),
             )
 
-    def upsert_conformity_answer_logprob(
+    # -----------------------------------------
+    # Generic interpretability helpers
+    # -----------------------------------------
+    def upsert_answer_logprob(
         self,
         *,
-        trial_id: str,
+        trace_id: str,
         context_kind: str,
         candidate_kind: str,
         candidate_text: str,
@@ -1024,14 +1033,14 @@ class TraceDb:
         with self.conn:
             self.conn.execute(
                 """
-                INSERT INTO conformity_answer_logprobs(
-                  trial_id, context_kind, candidate_kind, candidate_text,
+                INSERT INTO vivarium_answer_logprobs(
+                  trace_id, context_kind, candidate_kind, candidate_text,
                   token_count, logprob_sum, logprob_mean,
                   first_token_id, first_token_logprob,
                   metadata_json, created_at
                 )
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(trial_id, context_kind, candidate_kind) DO UPDATE SET
+                ON CONFLICT(trace_id, context_kind, candidate_kind) DO UPDATE SET
                   candidate_text=excluded.candidate_text,
                   token_count=excluded.token_count,
                   logprob_sum=excluded.logprob_sum,
@@ -1041,7 +1050,7 @@ class TraceDb:
                   metadata_json=excluded.metadata_json;
                 """,
                 (
-                    str(trial_id),
+                    str(trace_id),
                     str(context_kind),
                     str(candidate_kind),
                     str(candidate_text),
@@ -1055,7 +1064,7 @@ class TraceDb:
                 ),
             )
 
-    def insert_conformity_probe(
+    def insert_probe(
         self,
         *,
         probe_id: str,
@@ -1074,7 +1083,7 @@ class TraceDb:
         with self.conn:
             self.conn.execute(
                 """
-                INSERT INTO conformity_probes(
+                INSERT INTO vivarium_probes(
                   probe_id, run_id, probe_kind, train_dataset_id, model_id,
                   layers_json, component, token_position, artifact_path, metrics_json, created_at
                 )
@@ -1095,26 +1104,26 @@ class TraceDb:
                 ),
             )
 
-    def insert_conformity_projection_rows(
+    def insert_projection_rows(
         self, *, rows: List[Tuple[str, str, str, int, Optional[int], float]], created_at: Optional[float] = None
     ) -> None:
         """
-        Bulk insert projections.
-        rows: [(projection_id, trial_id, probe_id, layer_index, token_index, value_float), ...]
+        Bulk insert projections into vivarium_probe_projections.
+        rows: [(projection_id, trace_id, probe_id, layer_index, token_index, value_float), ...]
         """
         ts = float(time.time() if created_at is None else created_at)
         with self.conn:
             self.conn.executemany(
                 """
-                INSERT INTO conformity_probe_projections(
-                  projection_id, trial_id, probe_id, layer_index, token_index, value_float, created_at
+                INSERT INTO vivarium_probe_projections(
+                  projection_id, trace_id, probe_id, layer_index, token_index, value_float, created_at
                 )
                 VALUES (?, ?, ?, ?, ?, ?, ?);
                 """,
                 [(pid, tid, prid, int(layer), tok, float(val), ts) for (pid, tid, prid, layer, tok, val) in rows],
             )
 
-    def insert_conformity_intervention(
+    def insert_intervention(
         self,
         *,
         intervention_id: str,
@@ -1131,7 +1140,7 @@ class TraceDb:
         with self.conn:
             self.conn.execute(
                 """
-                INSERT INTO conformity_interventions(
+                INSERT INTO vivarium_interventions(
                   intervention_id, run_id, name, alpha, target_layers_json, component, vector_probe_id, notes, created_at
                 )
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
@@ -1149,11 +1158,11 @@ class TraceDb:
                 ),
             )
 
-    def insert_conformity_intervention_result(
+    def insert_intervention_result(
         self,
         *,
         result_id: str,
-        trial_id: str,
+        trace_id: str,
         intervention_id: str,
         output_id_before: str,
         output_id_after: str,
@@ -1164,14 +1173,14 @@ class TraceDb:
         with self.conn:
             self.conn.execute(
                 """
-                INSERT INTO conformity_intervention_results(
-                  result_id, trial_id, intervention_id, output_id_before, output_id_after, flipped_to_truth, created_at
+                INSERT INTO vivarium_intervention_results(
+                  result_id, trace_id, intervention_id, output_id_before, output_id_after, flipped_to_truth, created_at
                 )
                 VALUES (?, ?, ?, ?, ?, ?, ?);
                 """,
                 (
                     result_id,
-                    trial_id,
+                    trace_id,
                     intervention_id,
                     output_id_before,
                     output_id_after,

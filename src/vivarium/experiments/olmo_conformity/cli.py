@@ -118,7 +118,7 @@ def register_subparsers(subparsers: Any) -> None:
     pl.add_argument("--model-id", type=str, required=True)
     pl.add_argument("--layers", type=str, default="0", help="Comma-separated layer indices")
     pl.add_argument("--topk", type=int, default=10)
-    pl.add_argument("--parse-think", action="store_true", help="Also parse <think>...</think> into conformity_think_tokens")
+    pl.add_argument("--parse-think", action="store_true", help="Also parse <think>...</think> into vivarium_think_tokens")
     pl.add_argument("--analyze-think", action="store_true", help="Also compute logit lens for intermediate <think> tokens")
     pl.add_argument(
         "--trial-scope",
@@ -133,7 +133,7 @@ def register_subparsers(subparsers: Any) -> None:
     pi.add_argument("--db", type=str, required=True)
     pi.add_argument("--model-id", type=str, required=True)
     pi.add_argument("--probe-path", type=str, required=True, help="Path to social probe safetensors (layer_*.weight)")
-    pi.add_argument("--social-probe-id", type=str, required=True, help="conformity_probes.probe_id for the social vector")
+    pi.add_argument("--social-probe-id", type=str, required=True, help="vivarium_probes.probe_id for the social vector")
     pi.add_argument("--layers", type=str, default="0", help="Comma-separated target layers")
     pi.add_argument("--alpha", type=str, default="1.0", help="Comma-separated alpha values, e.g. '0.5,1.0,2.0'")
     pi.add_argument("--component-hook", type=str, default="hook_resid_post")
@@ -175,7 +175,7 @@ def register_subparsers(subparsers: Any) -> None:
     pph.add_argument("--layers", type=str, default=default_layers_32, help="Comma-separated layer indices")
     pph.add_argument("--logit-lens-k", type=int, default=10)
     pph.add_argument("--trial-scope", type=str, default="behavioral-only", choices=["all", "behavioral-only"])
-    pph.add_argument("--parse-think-tokens", action="store_true", help="Parse <think>...</think> blocks into conformity_think_tokens")
+    pph.add_argument("--parse-think-tokens", action="store_true", help="Parse <think>...</think> blocks into vivarium_think_tokens")
     pph.add_argument("--no-logit-lens", action="store_true", help="Skip logit lens computation")
     pph.add_argument(
         "--no-answer-logprobs",
@@ -803,27 +803,27 @@ def _handle_posthoc(args: Any) -> int:
             trial_ids,
         )
         trace_db.conn.execute(
-            f"DELETE FROM conformity_think_tokens WHERE trial_id IN ({','.join(['?']*len(trial_ids))});",
+            f"DELETE FROM vivarium_think_tokens WHERE trial_id IN ({','.join(['?']*len(trial_ids))});",
             trial_ids,
         )
         trace_db.conn.execute(
-            f"DELETE FROM conformity_answer_logprobs WHERE trial_id IN ({','.join(['?']*len(trial_ids))});",
+            f"DELETE FROM vivarium_answer_logprobs WHERE trial_id IN ({','.join(['?']*len(trial_ids))});",
             trial_ids,
         )
         trace_db.conn.execute(
             """
-            DELETE FROM conformity_intervention_results
-            WHERE intervention_id IN (SELECT intervention_id FROM conformity_interventions WHERE run_id = ?);
+            DELETE FROM vivarium_intervention_results
+            WHERE intervention_id IN (SELECT intervention_id FROM vivarium_interventions WHERE run_id = ?);
             """,
             (run_id,),
         )
-        trace_db.conn.execute("DELETE FROM conformity_interventions WHERE run_id = ?;", (run_id,))
+        trace_db.conn.execute("DELETE FROM vivarium_interventions WHERE run_id = ?;", (run_id,))
         trace_db.conn.execute(
-            f"DELETE FROM conformity_logit_lens_tug_of_war WHERE trial_id IN ({','.join(['?']*len(trial_ids))});",
+            f"DELETE FROM vivarium_logit_lens_tug_of_war WHERE trial_id IN ({','.join(['?']*len(trial_ids))});",
             trial_ids,
         )
-        trace_db.conn.execute("DELETE FROM conformity_contrastive_steering WHERE run_id = ?;", (run_id,))
-        trace_db.conn.execute("DELETE FROM conformity_activation_patching WHERE run_id = ?;", (run_id,))
+        trace_db.conn.execute("DELETE FROM vivarium_contrastive_steering WHERE run_id = ?;", (run_id,))
+        trace_db.conn.execute("DELETE FROM vivarium_activation_patching WHERE run_id = ?;", (run_id,))
         trace_db.conn.commit()
 
     think_inserted = 0
@@ -874,7 +874,7 @@ def _handle_posthoc(args: Any) -> int:
         sp = trace_db.conn.execute(
             """
             SELECT probe_id, artifact_path
-            FROM conformity_probes
+            FROM vivarium_probes
             WHERE run_id = ? AND probe_kind = 'social'
             ORDER BY created_at DESC
             LIMIT 1;

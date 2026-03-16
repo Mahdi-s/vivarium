@@ -1,7 +1,7 @@
 """
 Answer-logprob analytics for Olmo Conformity Experiment.
 
-Uses posthoc-computed `conformity_answer_logprobs` to quantify how model preference
+Uses posthoc-computed `vivarium_answer_logprobs` to quantify how model preference
 shifts between the ground-truth answer and the conforming (injected wrong) answer
 across conditions, prompt scenarios, and model variants.
 """
@@ -83,7 +83,7 @@ def compute_answer_logprob_metrics(
           t.model_id,
           c.name AS condition_name,
           pm.metadata_json AS prompt_metadata_json
-        FROM conformity_answer_logprobs a
+        FROM vivarium_answer_logprobs a
         JOIN conformity_trials t ON t.trial_id = a.trial_id
         JOIN conformity_conditions c ON c.condition_id = t.condition_id
         LEFT JOIN conformity_prompts p ON p.prompt_id = (
@@ -104,7 +104,7 @@ def compute_answer_logprob_metrics(
         return {
             "run_id": str(run_id),
             "metrics": {},
-            "statistics": {"message": "No conformity_answer_logprobs rows found"},
+            "statistics": {"message": "No vivarium_answer_logprobs rows found"},
         }
 
     # Exclude probe-capture conditions from paper-facing plots.
@@ -131,7 +131,7 @@ def compute_answer_logprob_metrics(
         return {
             "run_id": str(run_id),
             "metrics": {},
-            "statistics": {"message": "No ground_truth/wrong_answer rows found in conformity_answer_logprobs"},
+            "statistics": {"message": "No ground_truth/wrong_answer rows found in vivarium_answer_logprobs"},
         }
 
     pivot = (

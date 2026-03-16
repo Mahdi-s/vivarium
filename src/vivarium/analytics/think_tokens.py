@@ -45,7 +45,7 @@ def compute_think_metrics(
     # Check if think tokens exist
     think_count = trace_db.conn.execute(
         """
-        SELECT COUNT(*) FROM conformity_think_tokens tt
+        SELECT COUNT(*) FROM vivarium_think_tokens tt
         JOIN conformity_trials t ON t.trial_id = tt.trial_id
         WHERE t.run_id = ?
         """,
@@ -118,7 +118,7 @@ def compute_think_metrics(
                 tt.token_text,
                 t.variant,
                 c.name AS condition_name
-            FROM conformity_think_tokens tt
+            FROM vivarium_think_tokens tt
             JOIN conformity_trials t ON t.trial_id = tt.trial_id
             JOIN conformity_conditions c ON c.condition_id = t.condition_id
             WHERE t.run_id = ?

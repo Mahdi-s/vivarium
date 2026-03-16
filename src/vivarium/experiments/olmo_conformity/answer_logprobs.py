@@ -122,7 +122,7 @@ def compute_and_store_answer_logprobs_for_model(
     """
     Compute and store answer-level logprob metrics for a single model_id over a set of trials.
 
-    Stores one row per (trial_id, context_kind, candidate_kind) in `conformity_answer_logprobs`.
+    Stores one row per (trial_id, context_kind, candidate_kind) in `vivarium_answer_logprobs`.
     """
     if not trial_ids:
         return {"model_id": str(model_id), "n_trials": 0, "inserted": 0, "skipped": 0, "errors": 0}
@@ -151,7 +151,7 @@ def compute_and_store_answer_logprobs_for_model(
         rows = trace_db.conn.execute(
             """
             SELECT a.trial_id, a.context_kind, a.candidate_kind
-            FROM conformity_answer_logprobs a
+            FROM vivarium_answer_logprobs a
             JOIN conformity_trials t ON t.trial_id = a.trial_id
             WHERE t.run_id = ? AND t.model_id = ?;
             """,
@@ -346,8 +346,8 @@ def compute_and_store_answer_logprobs_for_model(
                         },
                     }
 
-                    trace_db.upsert_conformity_answer_logprob(
-                        trial_id=str(tid),
+                    trace_db.upsert_answer_logprob(
+                        trace_id=str(tid),
                         context_kind=str(ctx.kind),
                         candidate_kind=str(cand_kind),
                         candidate_text=str(cand_text),

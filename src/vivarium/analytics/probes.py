@@ -55,7 +55,7 @@ def compute_probe_metrics(
     """
     # Check if probes exist
     probe_count = trace_db.conn.execute(
-        "SELECT COUNT(*) FROM conformity_probes WHERE run_id = ?",
+        "SELECT COUNT(*) FROM vivarium_probes WHERE run_id = ?",
         (run_id,),
     ).fetchone()[0]
     
@@ -79,8 +79,8 @@ def compute_probe_metrics(
             pr.component,
             t.variant,
             c.name AS condition_name
-        FROM conformity_probe_projections p
-        JOIN conformity_probes pr ON pr.probe_id = p.probe_id
+        FROM vivarium_probe_projections p
+        JOIN vivarium_probes pr ON pr.probe_id = p.probe_id
         JOIN conformity_trials t ON t.trial_id = p.trial_id
         JOIN conformity_conditions c ON c.condition_id = t.condition_id
         WHERE pr.run_id = ?
@@ -157,7 +157,7 @@ def compute_probe_metrics(
             probe_kind,
             layers_json,
             metrics_json
-        FROM conformity_probes
+        FROM vivarium_probes
         WHERE run_id = ?
         """,
         trace_db.conn,
@@ -250,8 +250,8 @@ def generate_probe_graphs(
             pr.probe_kind,
             t.variant,
             c.name AS condition_name
-        FROM conformity_probe_projections p
-        JOIN conformity_probes pr ON pr.probe_id = p.probe_id
+        FROM vivarium_probe_projections p
+        JOIN vivarium_probes pr ON pr.probe_id = p.probe_id
         JOIN conformity_trials t ON t.trial_id = p.trial_id
         JOIN conformity_conditions c ON c.condition_id = t.condition_id
         WHERE pr.run_id = ?

@@ -44,7 +44,7 @@ def compute_intervention_metrics(
     """
     # Check if interventions exist
     intervention_count = trace_db.conn.execute(
-        "SELECT COUNT(*) FROM conformity_interventions WHERE run_id = ?",
+        "SELECT COUNT(*) FROM vivarium_interventions WHERE run_id = ?",
         (run_id,),
     ).fetchone()[0]
     
@@ -68,8 +68,8 @@ def compute_intervention_metrics(
             i.target_layers_json,
             t.variant,
             c.name AS condition_name
-        FROM conformity_intervention_results r
-        JOIN conformity_interventions i ON i.intervention_id = r.intervention_id
+        FROM vivarium_intervention_results r
+        JOIN vivarium_interventions i ON i.intervention_id = r.intervention_id
         JOIN conformity_trials t ON t.trial_id = r.trial_id
         JOIN conformity_conditions c ON c.condition_id = t.condition_id
         WHERE i.run_id = ?
@@ -111,8 +111,8 @@ def compute_intervention_metrics(
             i.name AS intervention_name,
             i.alpha,
             t.variant
-        FROM conformity_intervention_results r
-        JOIN conformity_interventions i ON i.intervention_id = r.intervention_id
+        FROM vivarium_intervention_results r
+        JOIN vivarium_interventions i ON i.intervention_id = r.intervention_id
         JOIN conformity_outputs o_before ON o_before.output_id = r.output_id_before
         JOIN conformity_outputs o_after ON o_after.output_id = r.output_id_after
         JOIN conformity_trials t ON t.trial_id = r.trial_id
@@ -223,8 +223,8 @@ def generate_intervention_graphs(
             t.variant,
             o_before.is_correct AS correctness_before,
             o_after.is_correct AS correctness_after
-        FROM conformity_intervention_results r
-        JOIN conformity_interventions i ON i.intervention_id = r.intervention_id
+        FROM vivarium_intervention_results r
+        JOIN vivarium_interventions i ON i.intervention_id = r.intervention_id
         JOIN conformity_trials t ON t.trial_id = r.trial_id
         JOIN conformity_outputs o_before ON o_before.output_id = r.output_id_before
         JOIN conformity_outputs o_after ON o_after.output_id = r.output_id_after

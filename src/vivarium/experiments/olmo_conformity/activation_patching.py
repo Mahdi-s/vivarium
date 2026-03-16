@@ -163,7 +163,7 @@ def run_activation_patching(
     Following [R8] and [R9], we use contrastive-prompt corruption rather than
     Gaussian noise, and measure both binary rescue and logit-difference recovery.
 
-    Writes to ``conformity_activation_patching`` and ``conformity_outputs``.
+    Writes to ``vivarium_activation_patching`` and ``conformity_outputs``.
     Returns total rows inserted.
     """
     torch, _ = _require_torch_and_safetensors()
@@ -336,7 +336,7 @@ def run_activation_patching(
 
             trace_db.conn.execute(
                 """
-                INSERT INTO conformity_activation_patching(
+                INSERT INTO vivarium_activation_patching(
                   patch_id, run_id, source_trial_id, target_trial_id, layer_index,
                   output_id_before_patch, output_id_after_patch,
                   rescued_truth, logit_diff_recovery, created_at
@@ -373,7 +373,7 @@ def compute_patching_heatmap(
         """
         SELECT ap.layer_index, ap.rescued_truth, ap.logit_diff_recovery,
                ca.name AS authority_condition
-        FROM conformity_activation_patching ap
+        FROM vivarium_activation_patching ap
         JOIN conformity_trials t ON t.trial_id = ap.target_trial_id
         JOIN conformity_conditions ca ON ca.condition_id = t.condition_id
         WHERE ap.run_id = ? AND ap.rescued_truth IS NOT NULL;
@@ -440,7 +440,7 @@ def plot_activation_patching_heatmap(
         """
         SELECT ap.layer_index, ap.rescued_truth, ap.logit_diff_recovery,
                ca.name AS authority_condition
-        FROM conformity_activation_patching ap
+        FROM vivarium_activation_patching ap
         JOIN conformity_trials t ON t.trial_id = ap.target_trial_id
         JOIN conformity_conditions ca ON ca.condition_id = t.condition_id
         WHERE ap.run_id = ? AND ap.rescued_truth IS NOT NULL;

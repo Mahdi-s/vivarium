@@ -278,7 +278,7 @@ def detect_turn_layers(
             p.layer_index,
             AVG(CASE WHEN p.probe_id = ? THEN p.value_float ELSE NULL END) as avg_truth,
             AVG(CASE WHEN p.probe_id = ? THEN p.value_float ELSE NULL END) as avg_social
-        FROM conformity_probe_projections p
+        FROM vivarium_probe_projections p
         JOIN conformity_trials t ON t.trial_id = p.trial_id
         WHERE t.run_id = ? {variant_filter} AND p.layer_index IN ({layers})
         GROUP BY t.variant, t.condition_id, p.layer_index
@@ -365,7 +365,7 @@ def generate_vector_collision_plots(
                 p.layer_index,
                 AVG(CASE WHEN p.probe_id = ? THEN p.value_float ELSE NULL END) as avg_truth,
                 AVG(CASE WHEN p.probe_id = ? THEN p.value_float ELSE NULL END) as avg_social
-            FROM conformity_probe_projections p
+            FROM vivarium_probe_projections p
             JOIN conformity_trials t ON t.trial_id = p.trial_id
             WHERE t.run_id = ? {variant_filter} AND p.layer_index IN ({layers})
             GROUP BY p.layer_index
@@ -380,7 +380,7 @@ def generate_vector_collision_plots(
             SELECT 
                 p.layer_index,
                 AVG(p.value_float) as avg_truth
-            FROM conformity_probe_projections p
+            FROM vivarium_probe_projections p
             JOIN conformity_trials t ON t.trial_id = p.trial_id
             WHERE t.run_id = ? AND p.probe_id = ? {variant_filter} AND p.layer_index IN ({layers})
             GROUP BY p.layer_index

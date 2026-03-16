@@ -230,7 +230,7 @@ def run_contrastive_steering_test(
     per sweep but at ALL token positions during generation (the hook
     fires on every forward pass through that layer).
 
-    Writes to ``conformity_contrastive_steering`` and ``conformity_outputs``.
+    Writes to ``vivarium_contrastive_steering`` and ``conformity_outputs``.
     Returns total result rows inserted.
     """
     torch, load_file, _ = _require_torch_and_safetensors()
@@ -375,7 +375,7 @@ def run_contrastive_steering_test(
 
                 trace_db.conn.execute(
                     """
-                    INSERT INTO conformity_contrastive_steering(
+                    INSERT INTO vivarium_contrastive_steering(
                       steering_id, run_id, layer_index, alpha, trial_id,
                       output_id_before, output_id_after,
                       flipped_to_sycophantic, deference_vector_path, created_at
@@ -426,7 +426,7 @@ def plot_contrastive_steering_results(
     rows = trace_db.conn.execute(
         """
         SELECT layer_index, alpha, flipped_to_sycophantic
-        FROM conformity_contrastive_steering
+        FROM vivarium_contrastive_steering
         WHERE run_id = ? AND flipped_to_sycophantic IS NOT NULL;
         """,
         (run_id,),

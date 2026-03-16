@@ -47,8 +47,8 @@ def compute_probe_behavioral_correlations(
             t.variant,
             c.name AS condition_name,
             o.is_correct
-        FROM conformity_probe_projections p
-        JOIN conformity_probes pr ON pr.probe_id = p.probe_id
+        FROM vivarium_probe_projections p
+        JOIN vivarium_probes pr ON pr.probe_id = p.probe_id
         JOIN conformity_trials t ON t.trial_id = p.trial_id
         JOIN conformity_conditions c ON c.condition_id = t.condition_id
         JOIN conformity_outputs o ON o.trial_id = t.trial_id
@@ -133,8 +133,8 @@ def compute_probe_judgeval_correlations(
             c.name AS condition_name,
             json_extract(o.parsed_answer_json, '$.is_correct') AS judge_is_correct,
             json_extract(o.parsed_answer_json, '$.wrong_answer_endorsed') AS judge_wrong_answer_endorsed
-        FROM conformity_probe_projections p
-        JOIN conformity_probes pr ON pr.probe_id = p.probe_id
+        FROM vivarium_probe_projections p
+        JOIN vivarium_probes pr ON pr.probe_id = p.probe_id
         JOIN conformity_trials t ON t.trial_id = p.trial_id
         JOIN conformity_conditions c ON c.condition_id = t.condition_id
         JOIN conformity_outputs o ON o.trial_id = t.trial_id
@@ -229,8 +229,8 @@ def compute_logit_lens_probe_correlations(
             p.layer_index,
             p.value_float,
             pr.probe_kind
-        FROM conformity_probe_projections p
-        JOIN conformity_probes pr ON pr.probe_id = p.probe_id
+        FROM vivarium_probe_projections p
+        JOIN vivarium_probes pr ON pr.probe_id = p.probe_id
         JOIN conformity_trials t ON t.trial_id = p.trial_id
         WHERE pr.run_id = ?
         """,
@@ -302,8 +302,8 @@ def compute_intervention_probe_correlations(
             r.after_correct,
             i.alpha,
             i.name AS intervention_name
-        FROM conformity_intervention_results r
-        JOIN conformity_interventions i ON i.intervention_id = r.intervention_id
+        FROM vivarium_intervention_results r
+        JOIN vivarium_interventions i ON i.intervention_id = r.intervention_id
         JOIN conformity_trials t ON t.trial_id = r.trial_id
         WHERE i.run_id = ?
         """,
@@ -324,8 +324,8 @@ def compute_intervention_probe_correlations(
             p.trial_id,
             p.value_float,
             pr.probe_kind
-        FROM conformity_probe_projections p
-        JOIN conformity_probes pr ON pr.probe_id = p.probe_id
+        FROM vivarium_probe_projections p
+        JOIN vivarium_probes pr ON pr.probe_id = p.probe_id
         JOIN conformity_trials t ON t.trial_id = p.trial_id
         WHERE pr.run_id = ?
         """,

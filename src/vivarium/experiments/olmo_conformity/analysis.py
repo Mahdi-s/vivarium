@@ -179,8 +179,8 @@ def generate_core_figures(*, trace_db: TraceDb, run_id: str, run_dir: str) -> Di
     df_int = pd.read_sql_query(
         """
         SELECT r.flipped_to_truth, i.alpha, i.name
-        FROM conformity_intervention_results r
-        JOIN conformity_interventions i ON i.intervention_id = r.intervention_id
+        FROM vivarium_intervention_results r
+        JOIN vivarium_interventions i ON i.intervention_id = r.intervention_id
         JOIN conformity_trials t ON t.trial_id = r.trial_id
         WHERE t.run_id = ?
         """,
