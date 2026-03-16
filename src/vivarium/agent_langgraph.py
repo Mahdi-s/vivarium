@@ -34,6 +34,14 @@ def _openai_messages_from_observation(
             "Use tools when available."
         )
 
+    # Inject agent persona from EmpiricalAgentStateSpace (or any state space
+    # that provides a ``persona`` key in its observe() output).
+    agent_state = observation.get("agent_state")
+    if agent_state and isinstance(agent_state, dict):
+        persona = agent_state.get("persona")
+        if persona:
+            system = f"{system}\n\n{persona}"
+
     # Provide message feed as context (simple text form for Phase 2 MVP).
     history_lines = []
     for m in msgs:
