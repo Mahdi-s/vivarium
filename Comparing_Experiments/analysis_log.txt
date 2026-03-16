@@ -53,3 +53,4 @@
 2026-03-14 02:25:48 [INFO] --- think_sft T=0.0 ---
 2026-03-14 02:25:48 [INFO] Running experiment for think_sft T=0.0...
 2026-03-14 02:25:48 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmpe1sjestj.json --runs-dir /Users/mahdi/repos/abstractAgentMachine/runs
+2026-03-14 23:53:57 [INFO] Stopped caffeinate - system can sleep normally again

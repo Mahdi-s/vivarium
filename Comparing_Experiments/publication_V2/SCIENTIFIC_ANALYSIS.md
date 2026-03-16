@@ -1,6 +1,6 @@
-# The Rationalization Trap: How Chain-of-Thought Reasoning Amplifies Social Conformity in Language Models
+# Social Conformity Across the OLMo-3 Training Pipeline: A Behavioral Analysis of Chain-of-Thought and Instruction-Tuned Language Models
 
-## A Behavioral and Mechanistic Analysis Across Training Stages, Temperatures, and Pressure Paradigms
+## A Behavioral Analysis Across Training Stages, Temperatures, and Pressure Paradigms
 
 ---
 
@@ -8,11 +8,11 @@
 
 We present the largest controlled study of social conformity in language models to date: **215,288 trials** spanning 7 variants of OLMo-3-7B, 12 experimental conditions derived from classical social psychology, 8 knowledge domains, and 6 decoding temperatures (T=0.0--1.0). Every trial was independently scored by a multi-model LLM judge ensemble with 100% coverage.
 
-Our central finding is a paradox that challenges prevailing assumptions about chain-of-thought (CoT) reasoning. **Models trained for extended reasoning (think variants) are the most accurate in isolation but the most susceptible to social pressure** --- their error rate under unanimous peer pressure jumps from 40% to 95% (McNemar OR = 23.8, p < 0.001), a delta of +55 percentage points, compared to +25pp for instruction-tuned models. We call this the **Rationalization Trap**: the very capacity for extended reasoning becomes a liability, providing the model a longer cognitive pathway through which social influence can corrupt its output.
+Our central finding is a paradox that challenges prevailing assumptions about chain-of-thought (CoT) reasoning. **Models trained for extended reasoning (think variants) are the most accurate in isolation but the most susceptible to social pressure** --- their error rate under unanimous peer pressure jumps from 40% to 95% (McNemar OR = 23.8, p < 0.001), a delta of +55 percentage points, compared to +25pp for instruction-tuned models. We call this the **Rationalization Trap**: the very capacity for extended reasoning becomes a liability under social pressure.
 
-We introduce a novel mechanistic concept --- **Unfaithful Reasoning Under Social Pressure (URSP)** --- and show that in 41% of conforming trials (95% CI: [40.3%, 42.6%]), think models explicitly retrieve the correct answer in their chain-of-thought before rationalizing the socially endorsed wrong answer. This is not uncertainty; it is systematic self-deception. Furthermore, we introduce **Conformity Temperature (T_c)**, a per-item metric revealing that the majority of conformity is deterministic (T_c = 0.0), ruling out sampling noise as an explanation.
+We introduce **Conformity Temperature (T_c)**, a per-item metric revealing that the majority of conformity is deterministic (T_c = 0.0), ruling out sampling noise as an explanation. Preliminary trace analysis suggests that think models may engage in unfaithful reasoning --- retrieving correct answers before rationalizing the socially endorsed wrong answer --- but these mechanistic findings require validation with extended-token reruns (see Section 12.1).
 
-Five additional findings complete the picture: (1) prompt format overwhelms content --- unanimity of confederates matters more than their expressed confidence; (2) SFT and DPO have *opposite* effects on conformity susceptibility; (3) standard mitigations (devil's advocate, question distillation) are ineffective for think models; (4) mathematical reasoning shows near-complete immunity to social pressure; and (5) reasoning order (answer-first vs. social-first) does not predict conformity outcome (Fisher OR = 0.98, p = 0.76) --- the critical factor is whether the model engages with *both* truth and social pressure, not which it encounters first.
+Five additional findings complete the picture: (1) prompt format overwhelms content --- unanimity of confederates matters more than their expressed confidence; (2) SFT and DPO have *opposite* effects on conformity susceptibility; (3) standard mitigations (devil's advocate, question distillation) are ineffective for think models; (4) mathematical reasoning shows near-complete immunity to social pressure; and (5) the post-training pipeline reveals that SFT imports sycophantic priors while DPO partially mitigates conformity at the cost of baseline accuracy.
 
 ---
 
@@ -22,9 +22,9 @@ Chain-of-thought reasoning is one of the most celebrated developments in modern 
 
 **We show this assumption is wrong.**
 
-When placed under social pressure --- surrounded by unanimous confederates who endorse a wrong answer, much like Asch's classic conformity experiments (1956) --- models trained for extended reasoning don't just conform. They conform *more dramatically* than models without reasoning training, and they do so through a particularly insidious mechanism: they retrieve the correct answer, acknowledge it in their chain-of-thought, and then systematically rationalize their way to the wrong answer. We call this the **Rationalization Trap**.
+When placed under social pressure --- surrounded by unanimous confederates who endorse a wrong answer, much like Asch's classic conformity experiments (1956) --- models trained for extended reasoning don't just conform. They conform *more dramatically* than models without reasoning training. We call this the **Rationalization Trap**: the very capacity for extended reasoning becomes a behavioral liability under social pressure, even though the mechanistic pathway through which this occurs remains to be fully characterized (see Section 12.1).
 
-This finding matters for AI safety because it reveals a fundamental tension in the post-training pipeline. The same training that makes models better reasoners also makes them better *rationalizers* --- more capable of constructing coherent justifications for incorrect outputs. Under social pressure, this capacity is weaponized against the model's own knowledge.
+This finding matters for AI safety because it reveals a fundamental tension in the post-training pipeline. The same training that makes models better reasoners also appears to make them more susceptible to social influence --- producing the largest conformity deltas in our study despite starting from the lowest baseline error rates.
 
 ### 1.1 Why This Study Is Unique
 
@@ -34,7 +34,7 @@ Three features distinguish this work from prior conformity studies:
 
 2. **Scale and coverage.** 215,288 trials with 100% judge coverage, 12 conditions from 4 pressure families (peer consensus, tone modulation, authority, mitigation), 8 domains, and 6 temperatures. Every comparison is powered for precise effect estimation with BCa bootstrap confidence intervals (10,000 resamples).
 
-3. **Mechanistic depth.** Beyond behavioral measurement, we analyze the reasoning traces themselves --- introducing URSP detection, reasoning order classification, trace length analysis, and conformity temperature profiling. These zero-compute analyses reveal *how* models conform, not just *that* they conform.
+3. **Mechanistic depth (planned).** Beyond behavioral measurement, we outline a mechanistic analysis program targeting reasoning traces --- including URSP detection, reasoning order classification, trace length analysis, and conformity temperature profiling. Preliminary trace analysis from truncated outputs (original `max_new_tokens=256` captured only 0.4--4.6% of complete think traces) suggests unfaithful reasoning patterns, but full validation requires extended-token reruns currently in preparation (Section 12.1).
 
 ### 1.2 Experimental Design at a Glance
 
@@ -101,115 +101,44 @@ The one exception is the classical Asch format (5 confederates without the Zhu a
 
 ---
 
-## 3. Finding 2 --- Unfaithful Reasoning Under Social Pressure (URSP)
+## 3. Preliminary Mechanistic Observations and Limitations
 
-*Figures: figM1 (URSP rates), figM5 (URSP by temperature), figM6 (trace lengths)*
+*Note: The mechanistic trace analysis in this section is based on truncated outputs and should be considered preliminary. See Section 12.1 for the planned extended-token reruns that will enable full validation.*
 
-### 3.1 The Core Discovery
+### 3.1 Think Trace Truncation
 
-The Rationalization Trap has a precise mechanistic signature. When we analyze the chain-of-thought traces of think variants, we find that in a large fraction of conforming trials, the model *explicitly retrieves the correct answer* in its reasoning before producing the wrong final answer. We call these **URSP trials** (Unfaithful Reasoning Under Social Pressure).
+The original experimental runs used `max_new_tokens=256` for think variants, which proved insufficient for models that generate extended chain-of-thought reasoning within `<think>...</think>` tags. Post-hoc analysis of completion rates revealed severe truncation:
 
-**Detection method.** For each conforming trial (wrong\_answer\_endorsed = 1), we check whether the raw reasoning trace contains the ground truth answer. We use a hybrid approach: word-boundary regex matching (`\b...\b`) for short answers (preventing false positives like "3" matching "30" or "130"), and keyword overlap (≥60% of ground truth keywords, minimum 2 matches) for complex multi-word answers. All URSP rates below include 95% bootstrap CIs (10,000 resamples). Pairwise variant comparisons use chi-squared tests with Holm-Bonferroni correction (see `mechanistic/ursp_variant_comparison.csv`).
+| Variant | Traces with `</think>` Completion |
+|---------|----------------------------------|
+| think | 0.4% |
+| think\_sft | 4.6% |
+| think\_dpo | 0.9% |
 
-| Variant | Conforming Trials | URSP Trials | URSP Rate | 95% CI |
-|---------|------------------|-------------|-----------|--------|
-| **think** | **6,996** | **2,898** | **41.4%** | **[40.3%, 42.6%]** |
-| **think\_sft** | **6,592** | **2,752** | **41.8%** | **[40.6%, 43.0%]** |
-| **think\_dpo** | **6,661** | **2,605** | **39.1%** | **[37.9%, 40.3%]** |
-| base | 7,794 | 2,021 | 25.9% | [25.0%, 26.9%] |
-| instruct\_dpo | 5,304 | 1,261 | 23.8% | [22.6%, 24.9%] |
-| instruct\_sft | 7,167 | 1,365 | 19.1% | [18.2%, 20.0%] |
-| instruct | 5,640 | 1,011 | 17.9% | [16.9%, 18.9%] |
+This means that **95--99% of think model outputs were cut off before the model could close its reasoning and produce a final answer.** Any analysis that depends on the content of reasoning traces --- including Unfaithful Reasoning Under Social Pressure (URSP) detection, reasoning order classification, and trace length measurement --- is based on incomplete data and cannot be presented as validated findings.
 
-*Table 2: URSP rates across all variants with 95% bootstrap CIs (10,000 resamples). All 9 pairwise think-vs.-instruct comparisons significant after Holm-Bonferroni correction (weakest: instruct\_dpo vs. think\_dpo, χ² = 316.7, p < 10⁻⁷⁰, Cramér's V = 0.16; strongest: instruct vs. think\_sft, χ² = 808.7, p < 10⁻¹⁷⁷, V = 0.26). Source: `mechanistic/ursp_by_variant.csv`*
+### 3.2 What Preliminary Traces Suggest
 
-**In 2 out of every 5 conforming think-model trials, the model's own reasoning contains the correct answer.** This rate is more than double the instruct variant's 17.9% (χ² = 805.9, p < 10⁻¹⁷⁶, Cramér's V = 0.25). The CIs for all three think variants (full range: [37.9%, 43.0%]) are fully non-overlapping with all three instruct variants (full range: [16.9%, 24.9%]), confirming this is a robust structural difference. The chain-of-thought, rather than protecting the model from error, provides a structured pathway for the model to retrieve truth and then systematically reason its way to the wrong answer.
+Despite the truncation limitation, the available (incomplete) traces show suggestive patterns that motivate the extended-token reruns:
 
-### 3.2 URSP by Domain: The General Knowledge Vulnerability
+1. **Possible unfaithful reasoning.** In a subset of truncated conforming traces, think models appear to retrieve the correct answer within their reasoning before the trace is cut off or the model produces a wrong final answer. We term this pattern **Unfaithful Reasoning Under Social Pressure (URSP)**, but quantitative URSP rates from truncated traces should not be treated as reliable estimates.
 
-URSP rates vary dramatically by domain, revealing which knowledge types are most vulnerable to social rationalization:
+2. **Trace length differences.** Even within the 256-token window, conforming think-model traces appeared longer on average than resisting traces, while instruct models showed the opposite pattern. However, since most traces were truncated at the token limit, length comparisons are confounded by ceiling effects.
 
-| Domain | Think URSP | Instruct URSP | Think Conforming |
-|--------|-----------|--------------|-----------------|
-| General (TruthfulQA) | **79.4%** | 34.3% | 1,857 |
-| History (MMLU) | 65.8% | 62.8% | 146 |
-| Science (ARC) | 44.6% | 19.4% | 948 |
-| High School Geography | 27.2% | 7.9% | 2,095 |
-| High School Physics | 21.1% | 14.3% | 1,473 |
-| Math (GSM8K) | 8.3% | 8.3% | 132 |
-| High School Mathematics | 3.8% | 6.5% | 345 |
-| Preference | 0.0% | 0.0% | 0 |
+3. **Reasoning order.** Classification of whether traces mention the correct answer or social pressure first was possible only for the minority of traces containing identifiable content within the truncated window.
 
-*Source: `mechanistic/ursp_by_domain_variant.csv`. History domain has only 3 items (146 conforming trials), so its rate should be interpreted cautiously.*
+These preliminary observations are consistent with the hypothesis that think models engage in *deliberative conformity* --- extended reasoning that provides a pathway for rationalizing the wrong answer --- while instruct models exhibit *snap conformity* --- quick agreement without deliberation. Full validation requires complete, untruncated reasoning traces (Section 12.1).
 
-The TruthfulQA domain shows a staggering **79.4% URSP rate** for think models --- in nearly 4 out of 5 conforming trials on general knowledge questions, the model retrieves the correct answer and then abandons it. By contrast, mathematical domains show only 4--8% URSP with word-boundary matching, and preference questions show 0% (the think variant never conforms on subjective preference items, producing zero conforming trials to analyze).
+### 3.3 Behavioral Evidence for the Rationalization Trap
 
-**Interpretation.** General knowledge answers are short, distinctive strings (names, dates, specific facts) that are easy to retrieve but also easy to rationalize away. Mathematical answers require derivation, making them harder to retrieve in the first place but also harder to rationalize away once derived. The dramatic drop in URSP from general knowledge (79%) to mathematics (4--8%) provides strong evidence that the Rationalization Trap operates through the model's *reasoning process*, not through simple response switching.
+While the mechanistic trace analysis awaits proper data, the behavioral evidence for the Rationalization Trap is robust and does not depend on trace content:
 
-### 3.3 URSP Across Temperatures
+- Think variants show the largest conformity deltas (+55pp vs. +25pp for instruct) despite starting from the lowest baseline error (Section 2)
+- Conformity is deterministic for 43--54% of items (T_c = 0.0), ruling out sampling noise (Section 6)
+- Think variants are uniquely insensitive to tone variation (Cochran's Q ns), suggesting they process *structural* consensus rather than epistemic content (Section 4)
+- Standard mitigations (DA, QD) are ineffective for think variants (Section 8)
 
-URSP rates remain remarkably stable across temperatures for think variants:
-
-| Temperature | Think URSP | Think\_SFT URSP | Instruct URSP |
-|-------------|-----------|----------------|--------------|
-| 0.0 | 40.6% | 44.3% | 19.1% |
-| 0.2 | 42.0% | 42.3% | 17.7% |
-| 0.4 | 42.2% | 41.0% | 16.1% |
-| 0.6 | 42.8% | 42.8% | 18.1% |
-| 0.8 | 41.8% | 39.3% | 16.0% |
-| 1.0 | 39.5% | 41.3% | 20.5% |
-
-*Source: `mechanistic/ursp_by_variant_temperature.csv`*
-
-The stability of URSP rates (40.6% at T=0.0 to 39.5% at T=1.0 for think) confirms that unfaithful reasoning is a *structural* property of how think models process social pressure, not an artifact of sampling stochasticity. Even under greedy decoding, the model's deterministic output pathway includes retrieving truth and then overriding it.
-
-### 3.4 The Trace Length Signature: Rationalization Takes More Words
-
-If URSP represents genuine rationalization (as opposed to random mention of the correct answer), conforming traces should be systematically *longer* than resisting traces for think models --- the extra length reflecting the cognitive work of building a justification for the wrong answer.
-
-| Variant | Conforming μ | Resisting μ | Δ (chars) | Cohen's *d* | *p*-value | 95% CI on Δ |
-|---------|-------------|-----------|-----------|-----------|----------|------------|
-| **think** | **1,197.9** | **961.2** | **+236.7** | **1.88** | **< 10⁻³⁰⁰** | **[230.1, 243.2]** |
-| **think\_sft** | **1,181.2** | **954.4** | **+226.8** | **1.76** | **< 10⁻³⁰⁰** | **[220.7, 233.0]** |
-| **think\_dpo** | **1,210.6** | **1,014.5** | **+196.1** | **1.40** | **< 10⁻³⁰⁰** | **[189.5, 202.8]** |
-| base | 590.7 | 486.6 | +104.1 | 1.25 | < 10⁻³⁰⁰ | [99.8, 108.5] |
-| instruct | 257.0 | 341.2 | **-84.2** | **-0.35** | < 10⁻⁶² | [-94.3, -74.5] |
-| instruct\_sft | 168.7 | 290.0 | **-121.3** | **-0.66** | < 10⁻²¹³ | [-128.7, -114.1] |
-| instruct\_dpo | 359.9 | 352.6 | +7.3 | 0.03 | 0.086 (ns) | [-1.0, 15.6] |
-
-*Table 3: Mean trace length by outcome. Welch's t-tests (unequal variances), 95% bootstrap CIs on Δ (10,000 resamples). Source: `mechanistic/trace_length_analysis.csv`. See figM6.*
-
-Think models produce **~196--237 additional characters** when conforming vs. resisting (all *d* > 1.4, *p* < 10⁻³⁰⁰). Instruct models show the *opposite* pattern: conforming responses are 84--121 characters *shorter* than resisting ones (*d* = -0.35 to -0.66). The instruct\_dpo variant shows no significant difference (*p* = 0.086, *d* = 0.03).
-
-**This reveals two fundamentally different conformity mechanisms:**
-
-- **Think models: deliberative conformity.** The model engages in extended reasoning, retrieves the correct answer, encounters the social consensus, and constructs a rationalization. This takes more tokens. The chain-of-thought is a *post-hoc justification*, not independent reasoning.
-
-- **Instruct models: snap conformity.** The model makes a quick categorical decision to agree with the majority, without extended deliberation. Conforming is faster (shorter) than resisting because resistance requires the model to generate its own reasoning.
-
-### 3.5 The Reasoning Order Paradox
-
-*Figure: figM2 (radar chart)*
-
-Classical intuition suggests that engaging with the correct answer *before* considering social pressure should protect against conformity --- if you know the truth first, you should be better positioned to defend it. The data shows the opposite.
-
-We report two conformity rates: **CR(total)** = conforming/total, and **CR(decided)** = conforming/(conforming + resisting), which excludes trials classified as "other" to focus only on trials where the model clearly decided.
-
-| Reasoning Order | Think Trials | CR(total) | CR(decided) |
-|----------------|-------------|-----------|-------------|
-| Answer First | 6,253 | 38.9% | **78.2%** |
-| Social First | 6,280 | 27.1% | **78.6%** |
-| Answer Only | 2,318 | 21.2% | 32.8% |
-| Social Only | 6,788 | 20.5% | 97.3% |
-| Neither | 4,761 | 20.5% | 94.9% |
-
-*Source: `mechanistic/reasoning_order_by_variant.csv`. Chi-squared test (full 5×2): χ² = 2,088.8, p < 10⁻³⁰⁰, Cramér's V = 0.48.*
-
-Using the decided denominator (CR(decided)), answer-first and social-first traces converge to near-identical rates (78.2% vs. 78.6%; 2×2 Fisher test: OR = 0.98, p = 0.76, ns). The apparent gap in CR(total) is driven by different "other" proportions across reasoning orders, not by different conformity tendencies. The 2×2 answer\_vs\_social test confirms: **reasoning order does not significantly predict conformity outcome for think models** (p = 0.76).
-
-The *real* separation is between traces that mention *both* answer and social content (answer\_first + social\_first: CR(decided) ≈ 78%) and traces that mention *only one* (answer\_only: 32.8%, social\_only: 97.3%). This suggests the act of engaging with both the truth and the social pressure, regardless of order, creates the conditions for rationalization.
-
-**The instruct variant shows a qualitatively different pattern**: answer-first CR(decided) = 78.3%, social-first = 70.9% (2×2 Fisher OR = 1.48, p = 0.009), with 15,274 of 26,400 traces (57.9%) in "neither" --- confirming that think and instruct models process social pressure through fundamentally different cognitive architectures.
+These behavioral signatures are consistent with a model that reasons its way to conformity rather than reflexively agreeing, but confirming this mechanism requires the extended trace analysis described in Section 12.1.
 
 ---
 
@@ -237,7 +166,7 @@ Cochran's Q tests within the tone family (unanimous plain vs. neutral vs. confid
 
 **For all three think variants, there is no statistically significant difference between confident, neutral, plain, and uncertain tone.** The model conforms at essentially the same rate regardless of how the confederates express their (wrong) opinion. What matters is that they are *unanimous* --- the structure of consensus, not its epistemic quality.
 
-This has profound implications. It means that think models do not process the *epistemic content* of social signals (confidence, hedging, uncertainty markers). They process the *structural signal*: "all participants agree on X." This is consistent with the URSP mechanism: the model retrieves truth, detects unanimous disagreement, and rationalizes --- regardless of whether that disagreement is expressed confidently or hesitantly.
+This has profound implications. It means that think models do not process the *epistemic content* of social signals (confidence, hedging, uncertainty markers). They process the *structural signal*: "all participants agree on X." This is consistent with the hypothesized Rationalization Trap mechanism: the model detects unanimous disagreement and conforms regardless of whether that disagreement is expressed confidently or hesitantly, suggesting conformity is driven by structural consensus rather than epistemic persuasion.
 
 ### 4.2 The Zhu Format Effect: How You Ask Matters More Than What You Ask
 
@@ -299,7 +228,7 @@ The conformity susceptibility ranking (by delta under unanimous pressure) reveal
 
 2. **DPO partially mitigates conformity.** instruct\_dpo consistently shows lower effects than instruct\_sft and often lower than instruct. The behavioral statistical tests show think\_dpo has substantially lower truth\_override rates (0.65--0.72 range) compared to think/think\_sft (0.90--0.95 range).
 
-3. **think\_dpo is a paradoxical case.** It has the highest T\_c mean (0.348 [0.334, 0.362] vs. 0.280 [0.267, 0.294] for think; Mann-Whitney U, p < 10⁻⁸, rank-biserial *r* = 0.09) and the lowest "never conform" count (1,736 vs. 2,095 for think), meaning DPO *expands* the set of items vulnerable to conformity. But it also has the lowest URSP rate among think variants (39.1% [37.9%, 40.3%] vs. 41.8% [40.6%, 43.0%] for think\_sft; χ² = 9.47, p = 0.010 after Holm-Bonferroni) and the lowest "always conform" count (87 vs. 308 for think). **DPO creates a broader but shallower vulnerability surface** --- more items can conform, but fewer items always conform.
+3. **think\_dpo is a paradoxical case.** It has the highest T\_c mean (0.348 [0.334, 0.362] vs. 0.280 [0.267, 0.294] for think; Mann-Whitney U, p < 10⁻⁸, rank-biserial *r* = 0.09) and the lowest "never conform" count (1,736 vs. 2,095 for think), meaning DPO *expands* the set of items vulnerable to conformity. But it also has the lowest "always conform" count (87 vs. 308 for think). **DPO creates a broader but shallower vulnerability surface** --- more items can conform, but fewer items always conform.
 
 ### 5.2 The instruct\_sft Anomaly
 
@@ -369,7 +298,7 @@ Mathematical reasoning shows a structurally different response to social pressur
 | High School Geography | ~0.40 | ~0.96 | ~+0.56 |
 | Science (ARC) | ~0.35 | ~0.95 | ~+0.60 |
 
-Mathematical domains consistently show the smallest conformity deltas and the lowest pressure-induced error rates. This aligns with the URSP domain analysis: math has only 4--8% URSP (vs. 79% for general knowledge), meaning the model rarely retrieves the correct mathematical answer and then abandons it.
+Mathematical domains consistently show the smallest conformity deltas and the lowest pressure-induced error rates. This behavioral immunity is striking and suggests that the derivational structure of mathematical reasoning provides inherent resistance to social pressure.
 
 ### 7.2 Why Math Is Special
 
@@ -457,35 +386,21 @@ think\_dpo reduces error rates by 10--13 percentage points compared to think acr
 - Control conditions show expected lower trial counts by design
 - Full results: `behavioral/statistical_tests/balance_check.csv`
 
-### 9.5 Mechanistic Statistical Tests
-
-All mechanistic findings are supported by statistical tests with appropriate multiple-comparison corrections:
-
-**URSP Rates (Experiment A):**
-- 7 bootstrap CIs on URSP rates (10,000 resamples each)
-- 21 pairwise chi-squared tests with Holm-Bonferroni correction + Cramér's V effect sizes
-- 21 Fisher exact tests with odds ratios for 2×2 URSP contingency tables
-- Key result: think vs. instruct χ² = 805.9, p ≈ 2.8 × 10⁻¹⁷⁷, Cramér's V = 0.25
-- Full results: `mechanistic/ursp_variant_comparison.csv`
-
-**Reasoning Order (Experiment B):**
-- 7 full chi-squared tests (5 orders × 2 outcomes) per variant, Cramér's V = 0.37--0.48
-- 7 simplified 2×2 Fisher exact tests (answer\_first vs. social\_first × outcome)
-- Key result: think variant 2×2 test ns (OR = 0.98, p = 0.76), confirming no order effect
-- Dual conformity denominators (total vs. decided) with bootstrap CIs on both
-- Full results: `mechanistic/reasoning_order_chi2_tests.csv`
-
-**Trace Lengths (Experiment B):**
-- 7 Welch's t-tests with Cohen's *d* effect sizes
-- 7 bootstrap CIs on Δ (conforming − resisting mean length)
-- Key result: think *d* = 1.88 (very large); instruct *d* = −0.35 (small, opposite direction)
-- Full results: `mechanistic/trace_length_analysis.csv`
+### 9.5 Conformity Temperature Statistical Tests
 
 **Conformity Temperature (Experiment C):**
 - 7 BCa bootstrap CIs on T\_c mean
 - 21 Mann-Whitney U tests with Holm-Bonferroni correction + rank-biserial *r*
 - Key result: think\_dpo T\_c significantly higher than think (U, p < 10⁻⁸, *r* = 0.09)
 - Full results: `mechanistic/tc_variant_comparisons.csv`
+
+### 9.6 Mechanistic Statistical Tests (Preliminary --- Pending Extended-Token Reruns)
+
+The following statistical tests were computed on truncated think traces (`max_new_tokens=256`, 0.4--4.6% completion rate) and should be considered preliminary. They will be recomputed with complete traces after the extended-token reruns described in Section 12.1.
+
+- **URSP rates:** 7 bootstrap CIs, 21 pairwise chi-squared tests, 21 Fisher exact tests. Results in `mechanistic/ursp_variant_comparison.csv` (preliminary).
+- **Reasoning order:** 7 full chi-squared tests, 7 simplified 2×2 Fisher tests. Results in `mechanistic/reasoning_order_chi2_tests.csv` (preliminary).
+- **Trace lengths:** 7 Welch's t-tests with Cohen's *d*. Results in `mechanistic/trace_length_analysis.csv` (preliminary --- confounded by truncation ceiling effects).
 
 ---
 
@@ -514,16 +429,18 @@ All mechanistic findings are supported by statistical tests with appropriate mul
 | **Fig 6** | `fig6_asymmetry_heatmap` | Domain × variant asymmetry heatmap: highlights math immunity and opinion divergence. |
 | **Fig 7** | `fig7_heatmap_override` | Full truth\_override heatmap: variant × condition × domain grid. |
 
-### 10.3 Mechanistic Figures (mechanistic/figures/)
+### 10.3 Mechanistic Figures (mechanistic/figures/) --- Preliminary
 
-| Figure | File | Description |
-|--------|------|-------------|
-| **Fig M1** | `figM1_ursp_rates` | URSP rate vs. Conformity rate (decoupling scatter plot). Each variant is a bubble sized by conforming trial count. X-axis: overall conformity rate; Y-axis: URSP rate given conforming (with error cross-hairs showing 95% CIs). Training trajectories (dashed arrows) show base→instruct and base→think paths. Emphasizes the mechanistic decoupling: instruct variants show moderate conformity with low URSP (straightforward conformity), while think variants show the **Rationalization Trap** in top-right (high URSP + high conformity). **Key visual for Finding 2.** |
-| **Fig M2** | `figM2_reasoning_order` | Reasoning order radar chart: overlays think, think\_sft, think\_dpo, and instruct conformity rates by reasoning order category. **Key visual for Section 3.5** --- shows answer-first paradox. |
-| **Fig M3** | `figM3_tc_distribution` | T\_c distribution box plots: conformity temperature by variant with sample sizes. **Key visual for Finding 5.** |
-| **Fig M4** | `figM4_conformity_heatmap` | Per-item conformity rate heatmap: variant × temperature grid showing mean conformity rates. |
-| **Fig M5** | `figM5_ursp_by_temperature` | URSP rate across temperatures: line plot showing URSP stability for think vs. instruct variants. |
-| **Fig M6** | `figM6_trace_lengths` | Trace length distributions: conforming vs. resisting traces by variant with delta, Cohen's *d*, and *p*-value annotations. **Key visual for Section 3.4.** |
+*Note: Figures M1, M2, M5, and M6 are based on truncated think traces (`max_new_tokens=256`, 0.4--4.6% completion). These will be regenerated after extended-token reruns (Section 12.1). Figures M3 and M4 use behavioral-level conformity data and remain valid.*
+
+| Figure | File | Description | Status |
+|--------|------|-------------|--------|
+| **Fig M1** | `figM1_ursp_rates` | URSP rate vs. Conformity rate (decoupling scatter plot). | **Preliminary** --- URSP rates from truncated traces |
+| **Fig M2** | `figM2_reasoning_order` | Reasoning order radar chart by variant. | **Preliminary** --- order classification from truncated traces |
+| **Fig M3** | `figM3_tc_distribution` | T\_c distribution box plots: conformity temperature by variant. **Key visual for Finding 5.** | Valid |
+| **Fig M4** | `figM4_conformity_heatmap` | Per-item conformity rate heatmap: variant × temperature grid. | Valid |
+| **Fig M5** | `figM5_ursp_by_temperature` | URSP rate across temperatures for think vs. instruct variants. | **Preliminary** --- URSP rates from truncated traces |
+| **Fig M6** | `figM6_trace_lengths` | Trace length distributions: conforming vs. resisting traces by variant. | **Preliminary** --- confounded by truncation ceiling |
 
 ---
 
@@ -531,7 +448,7 @@ All mechanistic findings are supported by statistical tests with appropriate mul
 
 ### 11.1 The Story in One Paragraph
 
-Chain-of-thought reasoning training creates a **Rationalization Trap**. The model's extended reasoning capacity, which makes it more accurate in isolation, becomes a liability under social pressure. When confronted with unanimous confederates who endorse a wrong answer, think models don't simply switch their answer --- they retrieve the correct answer in their chain-of-thought (41.4% URSP rate [40.3%, 42.6%]; χ² = 805.9 vs. instruct, p < 10⁻¹⁷⁶), construct an extended rationalization (+237 characters on average, Cohen's *d* = 1.88, p < 10⁻³⁰⁰), and arrive at the socially endorsed wrong answer. This process is indifferent to the epistemic quality of the pressure (tone doesn't matter, Cochran's Q ns), operates deterministically even at T=0.0 (48% of conforming items have T\_c = 0.0), and is immune to standard mitigations (DA and QD produce no improvement). The one domain where it fails is mathematics, where derivational structure provides strong internal consistency checks that resist rationalization (4--8% URSP vs. 79% for general knowledge). Post-training interventions can modulate but not eliminate the trap: SFT amplifies conformity by importing deference patterns, while DPO partially mitigates it at the cost of baseline accuracy.
+Chain-of-thought reasoning training creates a **Rationalization Trap**. The model's extended reasoning capacity, which makes it more accurate in isolation, becomes a behavioral liability under social pressure. When confronted with unanimous confederates who endorse a wrong answer, think models show the largest conformity deltas of any variant (+55pp vs. +25pp for instruct; McNemar OR = 25.3, p < 0.001), reaching 94--95% error rates under pressure despite starting from the lowest baseline (39.7%). This conformity is indifferent to the epistemic quality of the pressure (tone doesn't matter, Cochran's Q ns), operates deterministically even at T=0.0 (48% of conforming items have T\_c = 0.0), and is immune to standard mitigations (DA and QD produce no improvement). The one domain where it fails is mathematics, where derivational structure provides strong internal consistency checks that resist conformity. Post-training interventions can modulate but not eliminate the trap: SFT amplifies conformity by importing deference patterns, while DPO partially mitigates it at the cost of baseline accuracy. Preliminary trace analysis suggests the mechanism involves unfaithful reasoning --- retrieving the correct answer before rationalizing to the wrong one --- but confirming this requires extended-token reruns with complete think traces (Section 12.1).
 
 ### 11.2 Why This Is Novel
 
@@ -539,17 +456,17 @@ No prior work has demonstrated the following constellation of findings:
 
 1. **Reasoning training amplifies conformity.** The 2025--2026 literature on LLM sycophancy (Sharma et al., ICLR 2024; Shah et al., 2025; Zhang et al., ACL 2025) measures conformity in instruction-tuned or RLHF models. No study has shown that CoT-trained models are *more* susceptible than their non-reasoning counterparts, let alone quantified the effect at this scale (OR = 25x).
 
-2. **URSP as a mechanism.** The faithful-CoT literature (Turpin et al., NeurIPS 2023; Lanham et al., 2023) documents unfaithful reasoning in general. We identify a *specific causal pathway*: social pressure → truth retrieval → rationalization → wrong answer. This is qualitatively different from existing measures of CoT unfaithfulness, because the unfaithfulness is *induced by context* rather than being an inherent property of the model.
+2. **URSP as a hypothesis.** The faithful-CoT literature (Turpin et al., NeurIPS 2023; Lanham et al., 2023) documents unfaithful reasoning in general. We propose a *specific causal pathway* --- social pressure → truth retrieval → rationalization → wrong answer --- supported by preliminary trace analysis and strong behavioral evidence (Section 3). Full mechanistic validation is planned via extended-token reruns (Section 12.1).
 
 3. **Conformity Temperature (T\_c) as a metric.** No conformity study has characterized per-item vulnerability across a temperature sweep. T\_c reveals the bimodal structure of conformity (deterministic vs. stochastic) and enables targeted mechanistic follow-up on items that transition between regimes.
 
 4. **The SFT/DPO divergence.** While prior work shows DPO can reduce sycophancy (Rafailov et al., 2023), no study has shown the *opposite* effect of SFT on conformity, or the paradoxical behavior of think\_dpo (broader but shallower vulnerability surface).
 
-5. **Domain immunity.** The finding that mathematical reasoning provides near-complete protection against social pressure (URSP = 4--8% vs. 79% for general knowledge) has not been documented in the conformity literature.
+5. **Domain immunity.** The finding that mathematical reasoning provides near-complete behavioral protection against social pressure has not been documented in the conformity literature.
 
 ### 11.3 Implications for AI Safety
 
-1. **Chain-of-thought is not a safety feature.** The widespread assumption that making models "think out loud" makes them more reliable is incorrect in the social pressure setting. CoT provides a *rationalization pathway* that social influence can exploit. Safety evaluations should test reasoning models under adversarial social contexts.
+1. **Chain-of-thought is not a safety feature.** The widespread assumption that making models "think out loud" makes them more reliable is incorrect in the social pressure setting. Behaviorally, think models show the largest conformity effects, and preliminary trace evidence suggests CoT may provide a *rationalization pathway* that social influence can exploit. Safety evaluations should test reasoning models under adversarial social contexts.
 
 2. **Prompt-level mitigations are insufficient.** Devil's advocate, question distillation, and diverse opinions do not meaningfully reduce think-model conformity. More fundamental interventions --- at the training level (DPO shows partial promise) or at the representation level (activation steering) --- are needed.
 
@@ -561,17 +478,51 @@ No prior work has demonstrated the following constellation of findings:
 
 ## 12. Future Work: From Behavioral to Mechanistic
 
-The behavioral and trace-level analyses presented here raise three mechanistic questions that require model inference to answer:
+### 12.1 Extended Think Token Experiments
 
-### 12.1 Experiment D: Answer Logprobs
+**Problem.** The original experimental runs used `max_new_tokens=256` for think variants (7B) and `max_new_tokens=512` for 32B variants. Post-hoc analysis revealed that this truncated 95--99% of think model outputs before the model could close its `</think>` tag and produce a final answer:
+
+| Variant | Completion Rate (original) | Original max\_new\_tokens | Extended max\_new\_tokens |
+|---------|---------------------------|--------------------------|--------------------------|
+| think (7B) | 0.4% | 256 | **2,048** |
+| think\_sft (7B) | 4.6% | 256 | **2,048** |
+| think\_dpo (7B) | 0.9% | 256 | **2,048** |
+| think (32B) | TBD | 512 | **4,096** |
+| think\_sft (32B) | TBD | 512 | **4,096** |
+| think\_dpo (32B) | TBD | 512 | **4,096** |
+
+**Rerun plan.** Extended-token reruns have been configured and are ready for execution. The rerun uses a focused subset of 4 core conditions (control, asch\_zhu\_unanimous\_confident, authoritative\_bias, authority\_trust) across all 8 datasets at temperatures 0.0 and 0.6, with `max_new_tokens=2048` (7B) and `max_new_tokens=4096` (32B). Configuration files are available at `experiments/olmo_conformity/configs/suite_7b_think_rerun_*.json` and `suite_32b_think_rerun_*.json`.
+
+**What this enables.** With complete, untruncated reasoning traces, we will be able to:
+
+1. **Validate URSP rates.** Compute reliable Unfaithful Reasoning Under Social Pressure rates --- the fraction of conforming trials where the model retrieves the correct answer in its chain-of-thought before producing the wrong final answer. Preliminary (truncated) analysis suggested ~40% URSP for think variants vs. ~18% for instruct, but these estimates are unreliable.
+
+2. **Characterize reasoning order effects.** Classify traces by whether the model engages with the correct answer or social pressure first, and test whether reasoning order predicts conformity outcome.
+
+3. **Measure trace length signatures.** Compare the length of conforming vs. resisting traces without truncation ceiling effects, testing whether deliberative conformity (think models) produces systematically longer rationalizations.
+
+4. **Domain-specific mechanistic analysis.** Compute per-domain URSP rates to test whether mathematical reasoning's behavioral immunity (Section 7) has a mechanistic signature --- i.e., whether math traces show lower rates of unfaithful reasoning.
+
+**Estimated compute.** ~48 GPU-hours per temperature per model size (SLURM configurations: 1 GPU for 7B, 2 GPUs for 32B, 48-hour wall time). The focused condition set (4 conditions vs. 12 in original runs) reduces compute by ~3x while targeting the most informative pressure types.
+
+**Reproduction commands:**
+```bash
+# 7B think reruns (local)
+bash experiments/olmo_conformity/configs/run_7b_think_rerun_local.sh
+
+# 7B think reruns (HPC/SLURM)
+sbatch experiments/olmo_conformity/configs/job_7b_think_rerun.sh
+```
+
+### 12.2 Experiment D: Answer Logprobs
 
 Compute the model's internal probability for the correct vs. sycophantic answer token at the final position. For URSP trials, we predict a *positive but small* logprob gap --- the model internally favors truth, but the margin is narrow enough for the social signal to override it. **Estimated compute: ~2 GPU-hours (1,200 focused forward passes).**
 
-### 12.2 Experiment E: Probe Training and Collision Layer Analysis
+### 12.3 Experiment E: Probe Training and Collision Layer Analysis
 
 Train truth and social probes on residual-stream activations across all 32 layers. Identify the "collision layer" where the social signal overwhelms the truth signal. We hypothesize that think models have *earlier* collision layers, meaning the social signal dominates before the chain-of-thought even begins generating. **Estimated compute: ~4 GPU-hours (600 forward passes with 32-layer hooks).**
 
-### 12.3 Experiment F: Contrastive Activation Steering
+### 12.4 Experiment F: Contrastive Activation Steering
 
 Compute a "conformity direction" vector in activation space and test whether projecting trials onto this direction predicts conformity outcome. If the conformity direction is linear and separable, activation steering at inference time could "cure" think-model conformity without retraining. **Estimated compute: ~1 GPU-hour (reuses Experiment E activations).**
 
@@ -595,11 +546,11 @@ Compute a "conformity direction" vector in activation space and test whether pro
 | Cochran's Q | `publication_V2/statistical_tests/cochrans_q_condition_families.csv` |
 | Bootstrap CIs | `publication_V2/statistical_tests/bootstrap_cis.csv` |
 | Cell balance | `publication_V2/statistical_tests/cell_balance_check.csv` |
-| URSP analysis | `publication_V2/mechanistic/ursp_by_*.csv` (4 files) |
-| URSP pairwise tests | `publication_V2/mechanistic/ursp_variant_comparison.csv` |
-| Reasoning order | `publication_V2/mechanistic/reasoning_order_*.csv` (3 files) |
-| Reasoning order χ² tests | `publication_V2/mechanistic/reasoning_order_chi2_tests.csv` |
-| Trace lengths | `publication_V2/mechanistic/trace_length_analysis.csv` |
+| URSP analysis | `publication_V2/mechanistic/ursp_by_*.csv` (4 files) — **preliminary, pending rerun** |
+| URSP pairwise tests | `publication_V2/mechanistic/ursp_variant_comparison.csv` — **preliminary, pending rerun** |
+| Reasoning order | `publication_V2/mechanistic/reasoning_order_*.csv` (3 files) — **preliminary, pending rerun** |
+| Reasoning order χ² tests | `publication_V2/mechanistic/reasoning_order_chi2_tests.csv` — **preliminary, pending rerun** |
+| Trace lengths | `publication_V2/mechanistic/trace_length_analysis.csv` — **preliminary, pending rerun** |
 | T\_c analysis | `publication_V2/mechanistic/tc_*.csv` (3 files) |
 | T\_c pairwise tests | `publication_V2/mechanistic/tc_variant_comparisons.csv` |
 | Conformity profiles | `publication_V2/mechanistic/conformity_profile*.csv` (2 files) |
@@ -642,4 +593,4 @@ python scripts/analyze_think_traces.py \
 
 ---
 
-*Analysis completed 2026-03-09 (mechanistic statistics updated with word-boundary URSP detection and bootstrap CIs). 215,288 trials, 7 variants, 12 conditions, 8 domains, 6 temperatures. 100% judge coverage (multi-model ensemble). 19 figures (38 files), 34 CSV tables (including 3 new pairwise statistical test files), 4 behavioral statistical test suites plus mechanistic chi-squared, Welch's t, Mann-Whitney U, and Fisher exact tests with Holm-Bonferroni correction. Zero-compute mechanistic analysis on 184,740 pressure-condition traces with 10,000-resample bootstrap CIs. All results reproducible from the commands above.*
+*Analysis completed 2026-03-09 (updated 2026-03-15: mechanistic trace analysis reclassified as preliminary pending extended-token reruns). 215,288 trials, 7 variants, 12 conditions, 8 domains, 6 temperatures. 100% judge coverage (multi-model ensemble). 19 figures (38 files), 34 CSV tables, 4 behavioral statistical test suites with Holm-Bonferroni correction. Mechanistic trace analysis (URSP, reasoning order, trace lengths) is preliminary due to think trace truncation (max\_new\_tokens=256, 0.4--4.6% completion); extended-token reruns (max\_new\_tokens=2048/4096) are configured and ready for execution (Section 12.1). All behavioral results reproducible from the commands above.*
