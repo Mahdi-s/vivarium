@@ -203,7 +203,23 @@ class ScientificReportGenerator:
                     anomalies.append(f"MODE_COLLAPSE_RISK: Response entropy {entropy:.2f} < 0.8 bits/token")
         except Exception as e:
             anomalies.append(f"ENTROPY_ERROR: {e}")
-        
+
+        # Epic 5: Action-type mode collapse entropy
+        mode_collapse_entropy: Optional[float] = None
+        try:
+            from vivarium.analytics.validation import compute_mode_collapse_entropy
+            mode_collapse_entropy = compute_mode_collapse_entropy(
+                self.context.db, run_id,
+            )
+            metrics["mode_collapse_entropy"] = mode_collapse_entropy
+            if mode_collapse_entropy < 0.5:
+                anomalies.append(
+                    f"ACTION_MODE_COLLAPSE: Action entropy {mode_collapse_entropy:.4f} < 0.5 "
+                    "— agents are acting nearly identically"
+                )
+        except Exception as e:
+            anomalies.append(f"MODE_COLLAPSE_ENTROPY_ERROR: {e}")
+
         # Convergence analysis
         convergence_data = self._compute_convergence_analysis()
         
@@ -241,6 +257,7 @@ class ScientificReportGenerator:
             anomalies=anomalies,
             convergence_data=convergence_data,
             output_quality=output_quality,
+            mode_collapse_entropy=mode_collapse_entropy,
         )
         
         return report

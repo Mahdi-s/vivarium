@@ -108,6 +108,18 @@ class ScientificReport(BaseModel):
         None,
         description="Diversity metrics, failure categorization (JSONDecodeError, Refusal, ToolError)"
     )
+
+    # Mode collapse detection (Epic 5)
+    mode_collapse_entropy: Optional[float] = Field(
+        None,
+        description="Shannon entropy of action_type distribution across the population. "
+        "Values near 0 indicate severe mode collapse (all agents acting identically)."
+    )
+    empirical_divergence: Optional[float] = Field(
+        None,
+        description="Kolmogorov-Smirnov statistic comparing simulated action distribution "
+        "against an empirical reference. Lower is better (0 = identical distributions)."
+    )
     
     def save(self, path: str) -> None:
         """
@@ -146,7 +158,18 @@ class ScientificReport(BaseModel):
             f"  Integrity: {'✓ Verified' if self.integrity_verified else '✗ FAILED'}",
             f"  Dual-Stack Risk: {'⚠ YES' if self.dual_stack_risk else '✓ No'}",
         ]
-        
+
+        # Mode collapse warning (Epic 5)
+        if self.mode_collapse_entropy is not None:
+            ent = self.mode_collapse_entropy
+            if ent < 0.5:
+                lines.append(f"  ⚠ WARNING: MODE COLLAPSE DETECTED — action entropy {ent:.4f} < 0.5")
+            else:
+                lines.append(f"  Action Entropy: {ent:.4f}")
+
+        if self.empirical_divergence is not None:
+            lines.append(f"  Empirical Divergence (KS): {self.empirical_divergence:.4f}")
+
         if self.metrics:
             lines.append("  Metrics:")
             for key, value in self.metrics.items():
@@ -154,14 +177,14 @@ class ScientificReport(BaseModel):
                     lines.append(f"    {key}: {value:.4f}")
                 else:
                     lines.append(f"    {key}: {value}")
-        
+
         if self.anomalies:
             lines.append(f"  Anomalies ({len(self.anomalies)}):")
             for anomaly in self.anomalies[:5]:  # Show first 5
                 lines.append(f"    - {anomaly}")
             if len(self.anomalies) > 5:
                 lines.append(f"    ... and {len(self.anomalies) - 5} more")
-        
+
         return "\n".join(lines)
 
 
