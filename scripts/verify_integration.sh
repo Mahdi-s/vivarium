@@ -106,7 +106,7 @@ if [[ $RUN_OLLAMA -eq 1 ]]; then
     echo "────────────────────────────────────────"
 
     OLLAMA_URL="${OLLAMA_BASE_URL:-http://localhost:11434/v1}"
-    MODEL="${VVM_TEST_MODEL:-qwen3:0.6b}" 
+    MODEL="${VVM_TEST_MODEL:-qwen3:0.6b}"
 
     echo -n "Pre-flight: Ollama reachable at ${OLLAMA_URL%/v1}... "
     if curl -sf "${OLLAMA_URL%/v1}/api/tags" > /dev/null 2>&1; then
@@ -172,7 +172,7 @@ if [[ $RUN_HF -eq 1 ]]; then
     echo "  Backend: HuggingFace Transformers"
     echo "────────────────────────────────────────"
 
-    HF_MODEL="${VVM_TEST_MODEL:-Qwen/Qwen2.5-0.5B-Instruct}"
+    HF_MODEL="${VVM_TEST_MODEL_HF:-Qwen/Qwen2.5-0.5B-Instruct}"
 
     echo -n "Pre-flight: transformers importable... "
     if "$PYTHON" -c "from transformers import AutoModelForCausalLM" 2>/dev/null; then
@@ -230,7 +230,7 @@ if [[ $RUN_LLAMACPP -eq 1 ]]; then
     echo "  Backend: llama.cpp"
     echo "────────────────────────────────────────"
 
-    GGUF_NAME="${VVM_TEST_MODEL:-qwen2.5-0.5b-instruct-q5_k_m.gguf}"
+    GGUF_NAME="${VVM_TEST_MODEL_GGUF:-qwen2.5-0.5b-instruct-q5_k_m.gguf}"
     MODELS_DIR="${VIVARIUM_MODEL_DIR:-${REPO_DIR}/models}"
 
     echo -n "Pre-flight: litellm importable... "

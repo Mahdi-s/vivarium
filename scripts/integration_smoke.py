@@ -44,6 +44,7 @@ from vivarium.agent_state import EmpiricalAgentStateSpace
 from vivarium.channel import InMemoryChannel
 from vivarium.llm_gateway import create_gateway
 from vivarium.persistence import TraceDb, TraceDbConfig
+from vivarium.policy import ArchetypeAgentPolicy
 from vivarium.tools import default_tools
 from vivarium.types import RunMetadata
 from vivarium.world_engine import WorldEngine, WorldEngineConfig
@@ -58,7 +59,7 @@ FAIL = "\033[91m✗\033[0m"
 
 # Default models per backend
 DEFAULT_MODELS = {
-    "ollama": "qwen2.5:0.5b",
+    "ollama": "qwen3:0.6b",
     "huggingface": "Qwen/Qwen2.5-0.5B-Instruct",
     "llamacpp": "qwen2.5-0.5b-instruct-q5_k_m.gguf",
 }
@@ -409,6 +410,79 @@ def run_pipeline(gateway, model_for_api: str, backend_label: str) -> int:
         ).fetchone()[0]
         check(f"Messages table populated ({msg_count} msgs)",
               msg_count >= 0)  # 0 is OK if all noops
+
+        # ---- 11. Epic 3: ArchetypeAgentPolicy with real LLM ----
+        arch_run_id = f"arch_{uuid.uuid4().hex[:8]}"
+        trace_db.insert_run(RunMetadata(
+            run_id=arch_run_id, seed=42, created_at=time.time(),
+            config={"model": model_for_api, "test": True, "policy": "archetype"},
+        ))
+
+        arch_policy = ArchetypeAgentPolicy(
+            gateway=gateway,
+            model=model_for_api,
+            action_space=["post_message", "noop"],
+            master_seed=42,
+            temperature=0.7,
+        )
+        # 6 agents sharing the archetype policy, 2 distinct profiles
+        arch_agents = {f"arch_{i:03d}": arch_policy for i in range(6)}
+
+        arch_engine = WorldEngine(
+            config=WorldEngineConfig(
+                run_id=arch_run_id,
+                deterministic_timestamps=True,
+                deterministic_ids=True,
+                message_history_limit=10,
+            ),
+            agents=arch_agents,
+            channel=InMemoryChannel(),
+            trace_db=trace_db,
+            agent_state_space=agent_state,
+        )
+
+        try:
+            arch_engine.run(steps=1)
+            check("Epic 3: ArchetypeAgentPolicy ran 1 step", True)
+        except Exception as e:
+            check("Epic 3: ArchetypeAgentPolicy ran 1 step", False, str(e))
+
+        arch_rows = trace_db.conn.execute(
+            "SELECT agent_id, action_type FROM trace WHERE run_id = ?;",
+            (arch_run_id,),
+        ).fetchall()
+        check("Epic 3: Archetype trace rows (6 agents)",
+              len(arch_rows) == 6,
+              f"got {len(arch_rows)}")
+
+        # Verify archetype metadata in trace
+        arch_info_row = trace_db.conn.execute(
+            "SELECT info_json FROM trace WHERE run_id = ? LIMIT 1;",
+            (arch_run_id,),
+        ).fetchone()
+        if arch_info_row:
+            arch_info = json.loads(arch_info_row["info_json"])
+            arch_meta = arch_info.get("metadata", {})
+            check("Epic 3: Archetype metadata present",
+                  arch_meta.get("policy") == "ArchetypeAgentPolicy"
+                  and "archetype_hash" in arch_meta,
+                  f"metadata={arch_meta}")
+        else:
+            check("Epic 3: Archetype metadata present", False, "no trace rows")
+
+        # Verify cache efficiency: at most K archetype hashes for 6 agents
+        all_arch_info = trace_db.conn.execute(
+            "SELECT info_json FROM trace WHERE run_id = ?;",
+            (arch_run_id,),
+        ).fetchall()
+        arch_hashes = set()
+        for row in all_arch_info:
+            info = json.loads(row["info_json"])
+            h = info.get("metadata", {}).get("archetype_hash")
+            if h:
+                arch_hashes.add(h)
+        check(f"Epic 3: Cache efficiency ({len(arch_hashes)} archetypes for 6 agents)",
+              0 < len(arch_hashes) <= 6)
 
         trace_db.close()
 
