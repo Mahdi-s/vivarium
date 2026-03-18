@@ -15,7 +15,7 @@ set -euo pipefail
 #   --all          Run all three backends sequentially
 #
 # Prerequisites:
-#   Ollama:      ollama serve && ollama pull qwen2.5:0.5b
+#   Ollama:      ollama serve && ollama pull qwen3:0.6b
 #   HuggingFace: python scripts/download_test_model.py --hf-only
 #   llama.cpp:   python scripts/download_test_model.py --gguf-only
 #                + llama-server built (third_party/llama.cpp/build/bin/llama-server)
@@ -106,7 +106,7 @@ if [[ $RUN_OLLAMA -eq 1 ]]; then
     echo "────────────────────────────────────────"
 
     OLLAMA_URL="${OLLAMA_BASE_URL:-http://localhost:11434/v1}"
-    MODEL="${VVM_TEST_MODEL:-qwen2.5:0.5b}"
+    MODEL="${VVM_TEST_MODEL:-qwen3:0.6b}" 
 
     echo -n "Pre-flight: Ollama reachable at ${OLLAMA_URL%/v1}... "
     if curl -sf "${OLLAMA_URL%/v1}/api/tags" > /dev/null 2>&1; then
