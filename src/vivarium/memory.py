@@ -218,6 +218,30 @@ class MemoryManager:
             metadata={"type": "action", "action_name": action_name, "time_step": time_step},
         )
 
+    def store_feedback(
+        self,
+        *,
+        agent_id: str,
+        time_step: int,
+        action_name: str,
+        error: str,
+    ) -> None:
+        """
+        Store simulation feedback for a failed action (RLSF).
+
+        When a domain handler or the world engine rejects an action, this
+        records the failure so the agent can self-correct on the next step.
+        The feedback is injected into the agent's observation via
+        ``enrich_observation`` → ``memory_context``.
+        """
+        content = f"Feedback: Action '{action_name}' failed with error: {error}"
+        self._memory.store(
+            agent_id=agent_id,
+            time_step=time_step,
+            content=content,
+            metadata={"type": "feedback", "action_name": action_name, "time_step": time_step},
+        )
+
     def enrich_observation(
         self, *, agent_id: str, time_step: int, observation: Observation, query: Optional[str] = None
     ) -> Observation:
