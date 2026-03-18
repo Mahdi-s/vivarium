@@ -2,24 +2,33 @@
 """
 Minimal end-to-end integration smoke test for Vivarium.
 
-Requires:
-  - Ollama running locally (http://localhost:11434)
-  - A small model pulled (default: qwen2.5:0.5b)
-  - litellm installed (pip install litellm)
+Supports three LLM backends:
+
+  ollama      – Ollama running locally (default, lightest dependency)
+  huggingface – HuggingFace Transformers local inference (no server needed)
+  llamacpp    – llama.cpp llama-server spawned as a subprocess
 
 Exercises:
   1. TraceDb schema init (core + interpretability)
   2. EmpiricalAgentStateSpace loading + deterministic assignment
   3. Persona injection into LLM system prompt
-  4. Real LLM call via Ollama (LiteLLMGateway)
+  4. Real LLM call via the selected backend
   5. WorldEngine step: observation → decide → execute → trace
   6. Interpretability table writes (probe, projection, answer_logprob)
   7. Query-back verification of all stored data
+
+Usage:
+  python scripts/integration_smoke.py --backend ollama
+  python scripts/integration_smoke.py --backend huggingface
+  python scripts/integration_smoke.py --backend llamacpp
 """
 from __future__ import annotations
 
+import argparse
 import json
 import os
+import signal
+import subprocess
 import sys
 import tempfile
 import time
@@ -39,16 +48,20 @@ from vivarium.tools import default_tools
 from vivarium.types import RunMetadata
 from vivarium.world_engine import WorldEngine, WorldEngineConfig
 
-
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
-OLLAMA_BASE = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434/v1")
-MODEL_ID = os.environ.get("VVM_TEST_MODEL", "qwen2.5:0.5b")
 NUM_AGENTS = 3
 NUM_STEPS = 1
 PASS = "\033[92m✓\033[0m"
 FAIL = "\033[91m✗\033[0m"
+
+# Default models per backend
+DEFAULT_MODELS = {
+    "ollama": "qwen2.5:0.5b",
+    "huggingface": "Qwen/Qwen2.5-0.5B-Instruct",
+    "llamacpp": "qwen2.5-0.5b-instruct-q5_k_m.gguf",
+}
 
 results: list[tuple[str, bool, str]] = []
 
@@ -62,10 +75,139 @@ def check(name: str, passed: bool, detail: str = "") -> None:
     print(msg)
 
 
-def main() -> int:
-    print(f"\n=== Vivarium Integration Smoke Test ===")
-    print(f"    Model : {MODEL_ID}")
-    print(f"    Ollama: {OLLAMA_BASE}")
+# ---------------------------------------------------------------------------
+# Backend-specific gateway constructors
+# ---------------------------------------------------------------------------
+
+def _gateway_ollama(model_id: str, api_base: str):
+    """Create gateway targeting a running Ollama server."""
+    return create_gateway(model_id=model_id, api_base=api_base, max_new_tokens=64)
+
+
+def _gateway_huggingface(model_id: str):
+    """Create gateway using local HuggingFace Transformers inference."""
+    hf_cache = os.environ.get("VIVARIUM_HF_CACHE") or os.environ.get("AAM_HF_CACHE")
+    return create_gateway(
+        model_id=model_id,
+        hf_cache_dir=hf_cache,
+        max_new_tokens=64,
+    )
+
+
+def _resolve_gguf_path(model_name: str) -> str:
+    """Resolve GGUF file path from models directory."""
+    env = os.environ.get("VIVARIUM_MODEL_DIR") or os.environ.get("AAM_MODEL_DIR")
+    models_dir = env if env else os.path.join(REPO_ROOT, "models")
+    path = os.path.join(models_dir, model_name)
+    if os.path.isfile(path):
+        return path
+    # Already an absolute path?
+    if os.path.isfile(model_name):
+        return model_name
+    raise FileNotFoundError(
+        f"GGUF file not found: {path}\n"
+        f"  Download with: python scripts/download_test_model.py --gguf-only"
+    )
+
+
+def _find_llama_server_binary() -> str:
+    """Find llama-server binary."""
+    # 1. Vivarium settings path
+    default = os.path.join(REPO_ROOT, "third_party", "llama.cpp", "build", "bin", "llama-server")
+    if os.path.isfile(default):
+        return default
+    # 2. Environment variable
+    root = os.environ.get("VIVARIUM_LLAMA_CPP_ROOT") or os.environ.get("AAM_LLAMA_CPP_ROOT")
+    if root:
+        candidate = os.path.join(root, "build", "bin", "llama-server")
+        if os.path.isfile(candidate):
+            return candidate
+    # 3. PATH
+    import shutil
+    found = shutil.which("llama-server")
+    if found:
+        return found
+    raise FileNotFoundError(
+        "llama-server binary not found.\n"
+        "  Build llama.cpp or set VIVARIUM_LLAMA_CPP_ROOT."
+    )
+
+
+class LlamaServerProcess:
+    """Context manager that starts and stops a llama-server subprocess."""
+
+    def __init__(self, gguf_path: str, port: int = 18081):
+        self.gguf_path = gguf_path
+        self.port = port
+        self.proc: subprocess.Popen | None = None
+
+    @property
+    def api_base(self) -> str:
+        return f"http://127.0.0.1:{self.port}/v1"
+
+    def __enter__(self) -> "LlamaServerProcess":
+        binary = _find_llama_server_binary()
+        # Determine GPU layers: -1 on Apple Silicon (Metal), 0 otherwise
+        import platform
+        n_gpu = "-1" if (platform.system() == "Darwin" and platform.machine() == "arm64") else "0"
+
+        cmd = [
+            binary,
+            "--model", self.gguf_path,
+            "--host", "127.0.0.1",
+            "--port", str(self.port),
+            "--ctx-size", "2048",
+            "--n-gpu-layers", n_gpu,
+        ]
+        print(f"  Starting llama-server on port {self.port} ...")
+        self.proc = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+        )
+        # Wait for server to become healthy (up to 60s)
+        self._wait_ready()
+        return self
+
+    def _wait_ready(self, timeout: float = 60.0) -> None:
+        import urllib.request
+        import urllib.error
+        health_url = f"http://127.0.0.1:{self.port}/health"
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            try:
+                with urllib.request.urlopen(health_url, timeout=2) as resp:
+                    if resp.status == 200:
+                        print(f"  llama-server ready (port {self.port})")
+                        return
+            except (urllib.error.URLError, OSError, ConnectionRefusedError):
+                pass
+            # Check if process died
+            if self.proc and self.proc.poll() is not None:
+                stdout = self.proc.stdout.read() if self.proc.stdout else ""
+                raise RuntimeError(f"llama-server exited early (rc={self.proc.returncode}):\n{stdout}")
+            time.sleep(0.5)
+        raise TimeoutError(f"llama-server did not become healthy within {timeout}s")
+
+    def __exit__(self, *exc) -> None:
+        if self.proc and self.proc.poll() is None:
+            self.proc.terminate()
+            try:
+                self.proc.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                self.proc.kill()
+            print(f"  llama-server stopped.")
+
+
+# ---------------------------------------------------------------------------
+# Core test pipeline (shared across all backends)
+# ---------------------------------------------------------------------------
+
+def run_pipeline(gateway, model_for_api: str, backend_label: str) -> int:
+    """Run the full integration pipeline and return 0 on success."""
+    global results
+    results = []
+
+    print(f"\n=== Vivarium Integration Smoke Test ({backend_label}) ===")
+    print(f"    Model : {model_for_api}")
     print(f"    Agents: {NUM_AGENTS}  Steps: {NUM_STEPS}\n")
 
     with tempfile.TemporaryDirectory() as td:
@@ -91,7 +233,7 @@ def main() -> int:
 
         trace_db.insert_run(RunMetadata(
             run_id=run_id, seed=42, created_at=time.time(),
-            config={"model": MODEL_ID, "test": True},
+            config={"model": model_for_api, "test": True},
         ))
         check("Run metadata inserted", True)
 
@@ -101,28 +243,15 @@ def main() -> int:
               len(agent_state._profiles) == 3,
               f"got {len(agent_state._profiles)} profiles")
 
-        # Determinism check
         s1 = agent_state.init_state("agent_000")
         s2 = agent_state.init_state("agent_000")
         check("Deterministic profile assignment", s1 == s2)
 
-        # Persona text
         obs_state = agent_state.observe(agent_id="agent_000", state=s1, time_step=0)
         has_persona = "persona" in obs_state and "Your Identity" in obs_state["persona"]
         check("Persona text generated", has_persona)
 
-        # ---- 4. Create LLM gateway via Ollama ----
-        try:
-            gateway, model_for_api = create_gateway(
-                model_id=MODEL_ID,
-                api_base=OLLAMA_BASE,
-                max_new_tokens=64,
-            )
-            check("LiteLLM gateway created", True)
-        except Exception as e:
-            check("LiteLLM gateway created", False, str(e))
-            _print_summary()
-            return 1
+        check(f"Gateway created ({backend_label})", True)
 
         # ---- 5. Build agents + world engine ----
         tools = default_tools()
@@ -156,7 +285,7 @@ def main() -> int:
             check(f"Simulation ran {NUM_STEPS} step(s)", True)
         except Exception as e:
             check(f"Simulation ran {NUM_STEPS} step(s)", False, str(e))
-            _print_summary()
+            _print_summary(backend_label)
             return 1
 
         # ---- 7. Verify trace rows ----
@@ -169,12 +298,10 @@ def main() -> int:
               len(rows) == expected,
               f"got {len(rows)}")
 
-        # Verify deterministic ordering (agent_id sorted)
         agent_ids = [r["agent_id"] for r in rows]
         check("Trace order is deterministic (agent_id sorted)",
               agent_ids == sorted(agent_ids))
 
-        # At least one non-noop action (LLM actually responded)
         actions = [r["action_type"] for r in rows]
         has_real_action = any(a != "noop" for a in actions)
         check("LLM produced at least one non-noop action",
@@ -186,12 +313,11 @@ def main() -> int:
             "SELECT agent_id, state_json FROM agent_states WHERE run_id = ?;",
             (run_id,),
         ).fetchall()
-        check(f"Agent state rows persisted",
+        check("Agent state rows persisted",
               len(state_rows) >= NUM_AGENTS,
               f"got {len(state_rows)}")
 
         # ---- 9. Write interpretability records ----
-        # Pick first trace_id for interpretability writes
         trace_id_0 = rows[0]["trace_id"]
 
         # 9a. Insert a probe
@@ -201,7 +327,7 @@ def main() -> int:
             run_id=run_id,
             probe_kind="linear_classifier",
             train_dataset_id="smoke_test",
-            model_id=MODEL_ID,
+            model_id=model_for_api,
             layers=[0, 1],
             component="resid_post",
             token_position=-1,
@@ -236,7 +362,7 @@ def main() -> int:
             logprob_mean=-0.42,
             first_token_id=9999,
             first_token_logprob=-0.42,
-            metadata={"model_id": MODEL_ID},
+            metadata={"model_id": model_for_api},
         )
         lp_row = trace_db.conn.execute(
             "SELECT * FROM vivarium_answer_logprobs WHERE trace_id = ?;",
@@ -277,7 +403,7 @@ def main() -> int:
         ).fetchone()[0]
         check("vivarium_intervention_results insert", ir_count == 1)
 
-        # ---- 10. Verify messages table (if any agent posted) ----
+        # ---- 10. Verify messages table ----
         msg_count = trace_db.conn.execute(
             "SELECT COUNT(*) FROM messages WHERE run_id = ?;", (run_id,)
         ).fetchone()[0]
@@ -286,24 +412,78 @@ def main() -> int:
 
         trace_db.close()
 
-    # ---- Summary ----
-    _print_summary()
+    _print_summary(backend_label)
     return 0 if all(r[1] for r in results) else 1
 
 
-def _print_summary() -> None:
+def _print_summary(backend_label: str) -> None:
     passed = sum(1 for _, ok, _ in results if ok)
     total = len(results)
     failed = total - passed
     print(f"\n{'='*50}")
     if failed == 0:
-        print(f"  All {total} checks passed {PASS}")
+        print(f"  [{backend_label}] All {total} checks passed {PASS}")
     else:
-        print(f"  {passed}/{total} passed, {failed} FAILED {FAIL}")
+        print(f"  [{backend_label}] {passed}/{total} passed, {failed} FAILED {FAIL}")
         for name, ok, detail in results:
             if not ok:
                 print(f"    {FAIL} {name}: {detail}")
     print(f"{'='*50}\n")
+
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Vivarium integration smoke test")
+    parser.add_argument(
+        "--backend", choices=["ollama", "huggingface", "llamacpp"],
+        default="ollama",
+        help="LLM backend to test (default: ollama)",
+    )
+    parser.add_argument(
+        "--model", default=None,
+        help="Override model name/path (default varies per backend)",
+    )
+    args = parser.parse_args()
+
+    backend = args.backend
+    model_id = args.model or os.environ.get("VVM_TEST_MODEL") or DEFAULT_MODELS[backend]
+
+    if backend == "ollama":
+        api_base = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434/v1")
+        try:
+            gateway, model_for_api = _gateway_ollama(model_id, api_base)
+        except Exception as e:
+            print(f"ERROR: Failed to create Ollama gateway: {e}")
+            return 1
+        return run_pipeline(gateway, model_for_api, "Ollama")
+
+    elif backend == "huggingface":
+        try:
+            gateway, model_for_api = _gateway_huggingface(model_id)
+        except Exception as e:
+            print(f"ERROR: Failed to create HuggingFace gateway: {e}")
+            return 1
+        return run_pipeline(gateway, model_for_api, "HuggingFace")
+
+    elif backend == "llamacpp":
+        gguf_path = _resolve_gguf_path(model_id)
+        port = int(os.environ.get("LLAMA_SERVER_PORT", "18081"))
+        with LlamaServerProcess(gguf_path, port=port) as srv:
+            try:
+                gateway, model_for_api = create_gateway(
+                    model_id=model_id,
+                    api_base=srv.api_base,
+                    max_new_tokens=64,
+                )
+            except Exception as e:
+                print(f"ERROR: Failed to create llama.cpp gateway: {e}")
+                return 1
+            return run_pipeline(gateway, model_for_api, "llama.cpp")
+
+    return 1
 
 
 if __name__ == "__main__":
