@@ -17,48 +17,91 @@ JsonDict = Dict[str, Any]
 def _openai_messages_from_observation(
     *, agent_id: str, observation: Observation, require_json_action: bool
 ) -> List[JsonDict]:
+    """
+    Build OpenAI-format messages using a **BDI** (Belief-Desire-Intention)
+    framing that bounds the LLM's reasoning and reduces hallucinatory drift.
+
+    Sections:
+      [BELIEFS]  – objective world state (immutable facts)
+      [DESIRES]  – agent persona / intrinsic goals
+      [INTENTIONS] – action-selection instruction with reasoning requirement
+    """
     time_step = int(observation.get("time_step", 0))
     msgs = observation.get("messages", []) or []
+    tools = observation.get("tools", [])
 
-    if require_json_action:
-        system = (
-            "You are an agent in a simulation. You must decide ONE action each step.\n"
-            "Output ONLY a JSON object, with no surrounding markdown.\n"
-            'Schema: {"action": "<action_name>", "args": {...}, "reasoning": "<optional>"}\n'
-            'If unsure, output: {"action":"noop","args":{}}'
-        )
-    else:
-        system = (
-            "You are an agent in a simulation. "
-            "You must decide ONE action each step. "
-            "Use tools when available."
-        )
-
-    # Inject agent persona from EmpiricalAgentStateSpace (or any state space
-    # that provides a ``persona`` key in its observe() output).
-    agent_state = observation.get("agent_state")
-    if agent_state and isinstance(agent_state, dict):
-        persona = agent_state.get("persona")
-        if persona:
-            system = f"{system}\n\n{persona}"
-
-    # Provide message feed as context (simple text form for Phase 2 MVP).
+    # ------------------------------------------------------------------
+    # [BELIEFS] – objective environmental state
+    # ------------------------------------------------------------------
     history_lines = []
     for m in msgs:
-        history_lines.append(f"[t={m.get('time_step')}] {m.get('author_id')}: {m.get('content')}")
-    history = "\n".join(history_lines) if history_lines else "(no messages yet)"
-
-    user = (
-        f"agent_id={agent_id}\n"
-        f"time_step={time_step}\n\n"
-        "Shared message feed:\n"
-        f"{history}\n\n"
-        + (
-            "Decide an action."
-            if require_json_action
-            else "If you post, write a short, helpful message."
+        history_lines.append(
+            f"  [t={m.get('time_step')}] {m.get('author_id')}: {m.get('content')}"
         )
+    history = "\n".join(history_lines) if history_lines else "  (no messages yet)"
+
+    tools_str = ", ".join(str(t) for t in tools) if tools else "post_message, noop"
+
+    beliefs = (
+        "[BELIEFS]\n"
+        "These are absolute facts of your environment. You cannot alter them.\n"
+        f"- time_step: {time_step}\n"
+        f"- agent_id: {agent_id}\n"
+        f"- Available actions: {tools_str}\n"
+        f"- Shared message feed:\n{history}"
     )
+
+    # Inject memory context into beliefs (RLSF feedback + past experiences)
+    memory_context = observation.get("memory_context", [])
+    if memory_context:
+        mem_lines = []
+        for mem in memory_context:
+            mem_lines.append(f"  [t={mem.get('time_step', '?')}] {mem.get('content', '')}")
+        beliefs += "\n- Past experiences:\n" + "\n".join(mem_lines)
+
+    # ------------------------------------------------------------------
+    # [DESIRES] – agent persona / intrinsic goals
+    # ------------------------------------------------------------------
+    agent_state = observation.get("agent_state")
+    persona = ""
+    if agent_state and isinstance(agent_state, dict):
+        persona = agent_state.get("persona", "")
+
+    if persona:
+        desires = f"[DESIRES]\n{persona}"
+    else:
+        desires = (
+            "[DESIRES]\n"
+            "Act cooperatively and helpfully within the simulation. "
+            "Contribute meaningfully to the shared conversation."
+        )
+
+    # ------------------------------------------------------------------
+    # [INTENTIONS] – action-selection instruction
+    # ------------------------------------------------------------------
+    if require_json_action:
+        intentions = (
+            "[INTENTIONS]\n"
+            "Bridge your Beliefs and Desires to decide ONE action this step.\n"
+            "You MUST reason about how your beliefs and desires connect before choosing.\n"
+            "Output ONLY a JSON object, with no surrounding markdown.\n"
+            'Schema: {"reasoning": "<chain of thought connecting beliefs to desires>", '
+            '"action": "<action_name>", "args": {...}}\n'
+            'If unsure, output: {"action":"noop","args":{},'
+            '"reasoning":"No clear action aligns with my goals."}'
+        )
+    else:
+        intentions = (
+            "[INTENTIONS]\n"
+            "Bridge your Beliefs and Desires to decide ONE action this step.\n"
+            "Reason about how your beliefs and desires connect, then act.\n"
+            "Use tools when available. If you post, write a message that "
+            "reflects your persona and the current conversation."
+        )
+
+    system = f"{beliefs}\n\n{desires}\n\n{intentions}"
+
+    user = "Decide your next action."
     return [{"role": "system", "content": system}, {"role": "user", "content": user}]
 
 

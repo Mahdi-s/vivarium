@@ -218,6 +218,15 @@ class WorldEngine:
             res, event = self.execute(req, timestamp=ts, trace_id=trace_id)
             events.append(event)
 
+            # RLSF: Store failure feedback in memory so agent can self-correct
+            if not res.success and self._memory is not None and res.error:
+                self._memory.store_feedback(
+                    agent_id=req.agent_id,
+                    time_step=time_step,
+                    action_name=req.action_name,
+                    error=str(res.error),
+                )
+
             # Update agent state if AgentStateSpace is provided
             if self._agent_state_space is not None:
                 current = self._agent_states.get(req.agent_id)

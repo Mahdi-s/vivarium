@@ -161,8 +161,12 @@ msgs = _openai_messages_from_observation(
     agent_id='agent_007', observation=obs, require_json_action=False
 )
 system_content = msgs[0]['content']
-assert 'You are an agent in a simulation' in system_content
-assert 'Persona' not in system_content and 'persona' not in system_content
+# BDI structure present even without agent_state
+assert '[BELIEFS]' in system_content
+assert '[DESIRES]' in system_content
+assert '[INTENTIONS]' in system_content
+# No persona-specific text should appear (only default desire)
+assert 'Demographic Profile' not in system_content
 print('✓')
 " || echo "✗"
 
