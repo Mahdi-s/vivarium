@@ -36,6 +36,11 @@ from vivarium.analytics.answer_logprobs import (
     generate_answer_logprob_graphs,
     export_answer_logprob_logs,
 )
+from vivarium.analytics.validation import (
+    compute_mode_collapse_entropy,
+    compute_empirical_divergence,
+    compute_entropy_series,
+)
 
 __all__ = [
     "compute_behavioral_metrics",
@@ -72,4 +77,7 @@ __all__ = [
     "compute_answer_logprob_metrics",
     "generate_answer_logprob_graphs",
     "export_answer_logprob_logs",
+    "compute_mode_collapse_entropy",
+    "compute_empirical_divergence",
+    "compute_entropy_series",
 ]
