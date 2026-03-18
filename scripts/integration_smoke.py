@@ -39,14 +39,15 @@ SRC_ROOT = os.path.join(REPO_ROOT, "src")
 if SRC_ROOT not in sys.path:
     sys.path.insert(0, SRC_ROOT)
 
-from vivarium.agent_langgraph import SimpleCognitivePolicy
+from vivarium.agent_langgraph import SimpleCognitivePolicy, _openai_messages_from_observation
 from vivarium.agent_state import EmpiricalAgentStateSpace
 from vivarium.channel import InMemoryChannel
 from vivarium.llm_gateway import create_gateway
+from vivarium.memory import SimpleMemorySystem, MemoryManager
 from vivarium.persistence import TraceDb, TraceDbConfig
 from vivarium.policy import ArchetypeAgentPolicy
 from vivarium.tools import default_tools
-from vivarium.types import RunMetadata
+from vivarium.types import ActionRequest, RunMetadata
 from vivarium.world_engine import WorldEngine, WorldEngineConfig
 
 # ---------------------------------------------------------------------------
@@ -483,6 +484,86 @@ def run_pipeline(gateway, model_for_api: str, backend_label: str) -> int:
                 arch_hashes.add(h)
         check(f"Epic 3: Cache efficiency ({len(arch_hashes)} archetypes for 6 agents)",
               0 < len(arch_hashes) <= 6)
+
+        # ---- 12. Epic 4: BDI prompt structure with real LLM ----
+        # Verify BDI sections exist in the generated prompt
+        bdi_obs = {
+            "time_step": 0,
+            "messages": [],
+            "tools": ["post_message", "noop"],
+            "agent_state": {"persona": "Your Identity: Age 34, Female, Engineer"},
+        }
+        bdi_msgs = _openai_messages_from_observation(
+            agent_id="agent_000", observation=bdi_obs, require_json_action=True,
+        )
+        bdi_system = bdi_msgs[0]["content"]
+        check("Epic 4: BDI [BELIEFS] section present",
+              "[BELIEFS]" in bdi_system)
+        check("Epic 4: BDI [DESIRES] section present",
+              "[DESIRES]" in bdi_system and "Engineer" in bdi_system)
+        check("Epic 4: BDI [INTENTIONS] with reasoning",
+              "[INTENTIONS]" in bdi_system and '"reasoning"' in bdi_system)
+
+        # ---- 13. Epic 4: RLSF feedback on failed action ----
+        rlsf_run_id = f"rlsf_{uuid.uuid4().hex[:8]}"
+        trace_db.insert_run(RunMetadata(
+            run_id=rlsf_run_id, seed=42, created_at=time.time(),
+            config={"model": model_for_api, "test": True, "policy": "rlsf"},
+        ))
+
+        mem_sys = SimpleMemorySystem()
+        mem_mgr = MemoryManager(mem_sys)
+
+        rlsf_policy = SimpleCognitivePolicy(
+            gateway=gateway,
+            model=model_for_api,
+            tools=tools,
+            temperature=0.7,
+        )
+        rlsf_agents = {f"rlsf_{i:03d}": rlsf_policy for i in range(2)}
+
+        rlsf_engine = WorldEngine(
+            config=WorldEngineConfig(
+                run_id=rlsf_run_id,
+                deterministic_timestamps=True,
+                deterministic_ids=True,
+                message_history_limit=10,
+            ),
+            agents=rlsf_agents,
+            channel=InMemoryChannel(),
+            trace_db=trace_db,
+            agent_state_space=agent_state,
+            memory_manager=mem_mgr,
+        )
+
+        # Inject a failing action to test RLSF feedback
+        bad_req = ActionRequest(
+            run_id=rlsf_run_id, time_step=0, agent_id="rlsf_000",
+            action_name="invalid_action_xyz", arguments={},
+            reasoning=None, metadata={},
+        )
+        rlsf_engine.commit_requests(time_step=0, reqs=[bad_req])
+
+        feedback_entries = [
+            e for e in mem_sys.get_short_term_context(
+                agent_id="rlsf_000", time_step=1, limit=20,
+            )
+            if e.get("metadata", {}).get("type") == "feedback"
+        ]
+        check("Epic 4: RLSF feedback stored for failed action",
+              len(feedback_entries) == 1,
+              f"got {len(feedback_entries)} feedback entries")
+
+        # Also verify store_action still recorded the attempt
+        action_entries = [
+            e for e in mem_sys.get_short_term_context(
+                agent_id="rlsf_000", time_step=1, limit=20,
+            )
+            if e.get("metadata", {}).get("type") == "action"
+        ]
+        check("Epic 4: store_action still records failed attempt",
+              len(action_entries) >= 1,
+              f"got {len(action_entries)} action entries")
 
         trace_db.close()
 
