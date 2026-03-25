@@ -52,6 +52,7 @@ HPC=0
 HAS_THINK_TOKENS="false"
 PHASE="trials"
 METADATA=""
+RESUME_RUN_ID=""
 
 # ── Parse flags ─────────────────────────────────────────────────────────────
 while [[ $# -gt 0 ]]; do
@@ -70,6 +71,7 @@ while [[ $# -gt 0 ]]; do
         --think)        HAS_THINK_TOKENS="true"; shift ;;
         --phase)        PHASE="$2"; shift 2 ;;
         --metadata)     METADATA="$2"; shift 2 ;;
+        --resume)       RESUME_RUN_ID="$2"; shift 2 ;;
         -h|--help)
             cat <<'HELPEOF'
 Usage: run_experiment.sh [flags]
@@ -88,6 +90,7 @@ Optional:
   --think              Flag this model as having <think> tokens
   --phase PHASE        Pipeline phase: trials, judge, posthoc, all (default: trials)
   --metadata PATH      Custom metadata file path
+  --resume RUN_ID      Resume an existing run by UUID (skips completed trials)
   --hpc                Use HPC paths from paths.json
   --no-sleep           Prevent macOS sleep (caffeinate)
   --dry-run            Show config without running
@@ -206,6 +209,9 @@ echo "  Conditions:    ${CONDITIONS}"
 echo "  Items/dataset: ${ITEMS}"
 echo "  Seed:          ${SEED}"
 echo "  Phase:         ${PHASE}"
+if [[ -n "$RESUME_RUN_ID" ]]; then
+echo "  Resume:        ${RESUME_RUN_ID}"
+fi
 echo "  Output:        ${VARIANT_DIR}/"
 echo "  Suite config:  ${SUITE_FILE}"
 echo "  HPC:           ${HPC}"
@@ -272,6 +278,9 @@ if [[ $HPC -eq 1 ]]; then
 fi
 if [[ -n "$METADATA" ]]; then
     CMD+=(--metadata "${METADATA}")
+fi
+if [[ -n "$RESUME_RUN_ID" ]]; then
+    CMD+=(--resume-run-id "${RESUME_RUN_ID}")
 fi
 
 # ── Execute with logging ───────────────────────────────────────────────────

@@ -843,6 +843,18 @@ def run_suite(
                 condition = {"name": cond_name, "params": condition_params.get(cond_name, {})}
 
                 trial_num += 1
+
+                # On resume: skip item×condition pairs that already have a completed output
+                if is_resume:
+                    _existing = trace_db.conn.execute(
+                        "SELECT 1 FROM conformity_trials t "
+                        "JOIN conformity_outputs o ON t.trial_id = o.trial_id "
+                        "WHERE t.run_id = ? AND t.item_id = ? AND t.condition_id = ?",
+                        (run_id_final, str(item["item_id"]), cond_id),
+                    ).fetchone()
+                    if _existing:
+                        continue
+
                 trial_id = str(uuid.uuid4())
                 print(f"  [Runner] Trial {trial_num}/{total_trials}: item={item['item_id']}, condition={cond_name}")
                 trace_db.insert_conformity_trial(
@@ -1051,6 +1063,18 @@ def run_suite(
                     token_usage_json=token_usage_json,
                 )
                 print(f"    [Runner] Trial {trial_num}/{total_trials} complete (correct={is_correct}, refusal={refusal})\n")
+
+                # Periodic memory cleanup to prevent MPS/CUDA fragmentation on long runs
+                if trial_num % 20 == 0:
+                    try:
+                        import torch
+                        gc.collect()
+                        if hasattr(torch, "mps") and hasattr(torch.mps, "empty_cache"):
+                            torch.mps.empty_cache()
+                        elif torch.cuda.is_available():
+                            torch.cuda.empty_cache()
+                    except Exception:
+                        pass
 
         # Clean up model memory between iterations to prevent MPS device mismatch errors
         # This is critical when running multiple 7B models sequentially on Apple Silicon

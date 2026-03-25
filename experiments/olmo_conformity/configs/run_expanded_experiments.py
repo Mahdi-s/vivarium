@@ -451,6 +451,7 @@ def run_single_experiment(
     dry_run: bool = False,
     model_variant: Optional[str] = None,
     config_label: Optional[str] = None,
+    resume_run_id: Optional[str] = None,
 ) -> ExperimentResult:
     """
     Run a single experiment and return the result.
@@ -494,6 +495,8 @@ def run_single_experiment(
         "--suite-config", str(config_path),
         "--runs-dir", str(runs_dir),
     ]
+    if resume_run_id:
+        cmd.extend(["--run-id", resume_run_id])
     if api_base:
         cmd.extend(["--api-base", api_base])
     if api_key:
@@ -1377,6 +1380,12 @@ def main():
         default=None,
         help="Path to runs metadata JSON (default: runs_metadata.json, or runs_metadata_32b.json when suite is a 32B suite). Use to scope the 32B limited study to a dedicated file.",
     )
+    parser.add_argument(
+        "--resume-run-id",
+        type=str,
+        default=None,
+        help="Resume an existing run by its UUID. Passes --run-id to the runner so it reuses the DB and skips completed trials.",
+    )
 
     args = parser.parse_args()
 
@@ -1555,6 +1564,7 @@ def main():
                             dry_run=args.dry_run,
                             model_variant=variant,
                             config_label=f"{suite_path.name} ({variant}, T={temp})",
+                            resume_run_id=getattr(args, "resume_run_id", None),
                         )
                     phase1_results.append(result)
 
@@ -1624,6 +1634,7 @@ def main():
                     api_key=args.api_key,
                     logger=logger,
                     dry_run=args.dry_run,
+                    resume_run_id=getattr(args, "resume_run_id", None),
                 )
                 phase1_results.append(result)
 
