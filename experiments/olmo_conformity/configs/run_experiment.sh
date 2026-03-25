@@ -192,7 +192,10 @@ VARIANT_DIR="${RUNS_DIR}/${VARIANT}"
 mkdir -p "${VARIANT_DIR}"
 
 # ── Write suite config to temp file ─────────────────────────────────────────
-SUITE_FILE=$(mktemp "${VARIANT_DIR}/suite_${VARIANT}_XXXXXX.json")
+# macOS mktemp requires X's at the very end — append .json suffix after creation
+_SUITE_TMP=$(mktemp "${VARIANT_DIR}/suite_${VARIANT}_XXXXXX")
+SUITE_FILE="${_SUITE_TMP}.json"
+mv "${_SUITE_TMP}" "${SUITE_FILE}"
 echo "${SUITE_JSON}" > "${SUITE_FILE}"
 
 # ── Display config ──────────────────────────────────────────────────────────
