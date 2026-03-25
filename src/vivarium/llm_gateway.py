@@ -1471,6 +1471,8 @@ class HuggingFaceHookedGateway:
                     text = full_text.strip()
         
         print(f"      [HF Gateway] Decoding complete, response length: {len(text)} chars")
+        # Eagerly free large tensors to reduce MPS/CUDA memory pressure
+        del out, generated_ids, inputs
         return {"choices": [{"message": {"role": "assistant", "content": text}}]}
 
     def on_action_decided(self, *, run_id: str, time_step: int, agent_id: str, action_name: str) -> None:
