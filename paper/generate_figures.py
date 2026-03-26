@@ -70,16 +70,22 @@ ax.axhline(y=1.0, color="#bbb", linewidth=0.8, linestyle="--", zorder=0)
 ax.set_ylabel("McNemar Odds Ratio")
 ax.set_xticks(x)
 ax.set_xticklabels(conditions)
-ax.set_ylim(0, 7.2)
-ax.legend(loc="upper right", ncol=2, frameon=True, fancybox=False,
-          edgecolor="#ddd", facecolor="white", framealpha=0.95)
+ax.set_ylim(0, 7.4)
+# Small transparent legend in upper-right corner, away from the tall left bars
+ax.legend(loc="upper right", ncol=1, frameon=True, fancybox=False,
+          edgecolor="#ccc", facecolor="white", framealpha=0.6, fontsize=7,
+          handlelength=1.0, handletextpad=0.4, borderpad=0.3)
 ax.set_title("Conformity susceptibility across the post-training pipeline", fontsize=10, pad=8)
-ax.annotate("SFT amplifies", xy=(0.15, 5.85), xytext=(1.4, 6.6),
-            fontsize=7, color=COLORS["Instruct-SFT"],
-            arrowprops=dict(arrowstyle="->", color=COLORS["Instruct-SFT"], lw=0.8))
-ax.annotate("DPO mitigates", xy=(-0.05, 1.35), xytext=(1.4, 2.2),
-            fontsize=7, color=COLORS["Instruct-DPO"],
-            arrowprops=dict(arrowstyle="->", color=COLORS["Instruct-DPO"], lw=0.8))
+# SFT arrow: point to the RED (SFT) bar in Unan.Confident group
+# SFT bar x-position = x[0] + offsets[2]*width = 0 + 0.5*0.19 = 0.095
+ax.annotate("SFT amplifies", xy=(0.095, 5.85), xytext=(1.3, 6.8),
+            fontsize=7.5, fontweight="bold", color=COLORS["Instruct-SFT"],
+            arrowprops=dict(arrowstyle="->", color=COLORS["Instruct-SFT"], lw=1.0))
+# DPO arrow: point to the GREEN (DPO) bar in Unan.Confident group
+# DPO bar x-position = x[0] + offsets[3]*width = 0 + 1.5*0.19 = 0.285
+ax.annotate("DPO mitigates", xy=(0.285, 1.35), xytext=(1.3, 0.4),
+            fontsize=7.5, fontweight="bold", color=COLORS["Instruct-DPO"],
+            arrowprops=dict(arrowstyle="->", color=COLORS["Instruct-DPO"], lw=1.0))
 
 fig.savefig("paper/figures/fig2_conformity_or.pdf")
 fig.savefig("paper/figures/fig2_conformity_or.png")
