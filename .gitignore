@@ -50,6 +50,12 @@ smoke*.db
 
 # Run artifacts (Phase 3+)
 runs/
+!runs/
+!runs/**
+!runs_latest/runs/
+!runs_latest/runs/**
+!runs_latest/mpl_cache/
+!runs_latest/mpl_cache/**
 
 # Model files (large, should be managed separately)
 # Uncomment if you don't want to track models in git
@@ -94,6 +100,7 @@ uv.lock
 *.tmp
 *.temp
 *.bak
+.fuse_hidden*
 
 *.gguf
 
@@ -101,8 +108,38 @@ uv.lock
 
 huggingface_cache/
 
-
 *.png
 *.pdf
 
-runs-old/*
+runs-old/
+
+# --- Experiment runs & analysis outputs (do not push) ---
+runs-hpc-full/
+runs-hpc/
+tmp/
+slides/
+paper/*.pptx
+paper/presentation.pptx
+
+# Comparing_Experiments: generated tables, figures, metadata, and analysis output dirs
+Comparing_Experiments/tables/
+Comparing_Experiments/runs_metadata.json
+Comparing_Experiments/runs_metadata.json.bak
+Comparing_Experiments/expanded_suite_analysis/
+Comparing_Experiments/expanded_suite_analysis_db_endorse/
+Comparing_Experiments/publication_analysis*/
+
+models/*
+
+.claude/
+
+# Local AI/dev workspace metadata (machine-specific)
+.windsurf/
+.windsurf.agent/
+.cursor/
+.codex/
+*.code-workspace
+
+.agents/
+
+.claude/

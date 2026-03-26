@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sqlite3 /Users/mahdi/repos/abstractAgentMachine/runs_latest/runs/20260307_230500_b5a2b275-a88e-4038-8e96-f8f5cfcd571b/simulation.db \".schema\")",
+      "Bash(sqlite3 /Users/mahdi/repos/abstractAgentMachine/.claude/worktrees/suspicious-sanderson/runs_latest/runs/20260225_124244_9369442d-d825-4cd0-81a1-8ed276c37814/simulation.db \".tables\")",
+      "Bash(python scripts/merge_surgical_runs.py)",
+      "Bash(python scripts/merge_surgical_runs.py --commit)",
+      "Bash(python scripts/analyze_think_traces.py --runs-dir runs_latest/runs --metadata Comparing_Experiments/runs_metadata_v6.json --item-set Comparing_Experiments/publication_V2/item_set.csv --out-dir Comparing_Experiments/publication_V2/mechanistic --n-boot 10000)",
+      "Bash(git add -A)",
+      "Bash(git commit -m \"Redesign figM1 as decoupling scatter plot with training trajectories:*)",
+      "Bash(npx skills:*)",
+      "Bash(npx -y skills add https://github.com/ailabs-393/ai-labs-claude-skills --skill research-paper-writer --yes)",
+      "Bash(npx -y skills add https://github.com/karpathy/nanochat --skill read-arxiv-paper --yes)"
+    ]
+  }
+}

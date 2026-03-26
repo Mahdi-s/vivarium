@@ -1,0 +1,65 @@
+V7 Publication Item-Set Summary
+======================================================================
+
+SCOPE
+----------------------------------------
+Judge-labeled conditions (3): control, asch_history_5, authoritative_bias
+Excluded variants: rl_zero, think_dpo
+
+EXCLUSION REASONING
+----------------------------------------
+  rl_zero  (OLMo-3-7B-RL-Zero-Math):  0 judge labels at T=0.0, 0.2, 0.8, 1.0;
+           excluded by user request.
+  think_dpo (OLMo-3-7B-Think-DPO):    575/1200 judge labels at T=0.8 (48%);
+           including it collapses the item intersection to 191 items
+           from only 4 of 8 datasets.
+
+ITEM SET
+----------------------------------------
+Total items: 400
+Datasets:    8
+
+Per-dataset counts:
+  arc                                        50 items
+  gsm8k                                      50 items
+  immutable_facts_minimal                    50 items
+  mmlu_knowledge                             50 items
+  mmlu_math                                  50 items
+  mmlu_science                               50 items
+  social_conventions_minimal                 50 items
+  truthfulqa                                 50 items
+
+Min items per dataset: 50
+(Intended max_items_per_dataset: 50)
+
+JUDGE-LABEL COVERAGE
+----------------------------------------
+Included models per run: 6
+Conditions with judge labels: 3 (control, asch_history_5, authoritative_bias)
+Judge-labeled trials per model per temperature: 1200  (400 items × 3 conditions)
+Total judge-labeled trials across all 6 temperatures: 43,200
+
+Per-run fully-covered item counts:
+  T=0.0: 400 items fully judge-covered
+  T=0.2: 400 items fully judge-covered
+  T=0.4: 400 items fully judge-covered
+  T=0.6: 400 items fully judge-covered
+  T=0.8: 400 items fully judge-covered
+  T=1.0: 400 items fully judge-covered
+
+Cross-temperature intersection: 400 items
+
+RECOMMENDED ANALYSIS COMMAND
+----------------------------------------
+python 'Analysis Scripts/expanded_suite_behavioral_breakdown.py' \
+  --runs-dir runs_latest/runs \
+  --metadata Comparing_Experiments/runs_metadata_v6.json \
+  --publication-item-set Comparing_Experiments/v7_publication/item_set.csv \
+  --out-dir Comparing_Experiments/v7_publication \
+  --use-judge-labels \
+  --exclude-variants rl_zero think_dpo \
+  --publication
+
+NOTE: The 9 extra suite conditions (tone, mitigation, format, authority)
+have no judge labels. They are excluded from V7. Pass --include-extra-conditions
+in a future run once judge labels for those conditions are available.

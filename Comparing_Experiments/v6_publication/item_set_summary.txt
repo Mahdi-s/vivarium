@@ -1,0 +1,35 @@
+V6 Publication Item-Set Summary
+============================================================
+
+Suite conditions used: 12
+  Behavioral (3): control, asch_history_5, authoritative_bias
+  Tone (4): asch_zhu_unbiased_unanimous_plain, asch_zhu_unbiased_unanimous_neutral, asch_zhu_unbiased_unanimous_confident, asch_zhu_unbiased_unanimous_uncertain
+  Mitigation (2): asch_zhu_unbiased_da, asch_zhu_unbiased_qd
+  Format (1): asch_zhu_unbiased_diverse_plain
+  Authority (2): authority_zhu_unbiased_trust, authority_zhu_unbiased_trust_da
+
+Suite models: 8
+Suite datasets: 8
+Intended max_items_per_dataset: 50
+
+Per-run trial counts:
+  T=0.0: 34794 trials, 34794 with output, 0 MISSING OUTPUT
+  T=0.2: 34746 trials, 34746 with output, 0 MISSING OUTPUT
+  T=0.4: 37978 trials, 37978 with output, 0 MISSING OUTPUT
+  T=0.6: 38170 trials, 38170 with output, 0 MISSING OUTPUT
+  T=0.8: 32925 trials, 32925 with output, 0 MISSING OUTPUT
+  T=1.0: 63315 trials, 38608 with output, 24707 MISSING OUTPUT
+
+Intersection size (items with output in ALL runs): 400
+Recommended V6 publication max_items_per_dataset: 50
+Total V6 publication trials: 38,400 (400 items × 12 conds × 8 models)
+
+Per-dataset counts in intersection:
+  arc                                        50
+  gsm8k                                      50
+  immutable_facts_minimal                    50
+  mmlu_knowledge                             50
+  mmlu_math                                  50
+  mmlu_science                               50
+  social_conventions_minimal                 50
+  truthfulqa                                 50

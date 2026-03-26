@@ -23,7 +23,7 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from aam.analytics import (
+from vivarium.analytics import (
     compute_behavioral_metrics,
     generate_behavioral_graphs,
     export_behavioral_logs,
@@ -34,7 +34,6 @@ from aam.analytics import (
     generate_intervention_graphs,
     export_intervention_logs,
     compute_judgeval_metrics,
-    generate_judgeval_graphs,
     export_judgeval_logs,
     compute_think_metrics,
     generate_think_graphs,
@@ -44,7 +43,7 @@ from aam.analytics import (
     export_token_logs,
     compute_all_correlations,
 )
-from aam.analytics.utils import load_simulation_db, get_run_metadata, check_missing_prerequisites, save_metrics_json, save_table_csv, ensure_logs_dir
+from vivarium.analytics.utils import load_simulation_db, get_run_metadata, check_missing_prerequisites, save_metrics_json, save_table_csv, ensure_logs_dir
 
 
 def extract_run_id(run_dir: str) -> str:
@@ -142,13 +141,10 @@ def main():
     print("=" * 80)
     try:
         judgeval_metrics = compute_judgeval_metrics(db, run_id, run_dir)
-        if judgeval_metrics.get("statistics", {}).get("n_scores", 0) > 0:
-            judgeval_figures = generate_judgeval_graphs(db, run_id, run_dir, judgeval_metrics)
+        if judgeval_metrics.get("statistics", {}).get("n_judged", 0) > 0:
             judgeval_logs = export_judgeval_logs(db, run_id, run_dir, judgeval_metrics)
-            all_figures.update(judgeval_figures)
             all_logs.update(judgeval_logs)
-            print(f"  Generated {len(judgeval_figures)} figures")
-            print(f"  Exported {len(judgeval_logs)} log files")
+            print(f"  Exported {len(judgeval_logs)} log files (agreement table)")
         else:
             print("  No Judge Eval scores found, skipping")
     except Exception as e:

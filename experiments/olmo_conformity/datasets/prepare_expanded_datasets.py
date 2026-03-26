@@ -3,12 +3,17 @@
 Dataset preparation script for expanded conformity experiment datasets.
 
 This script downloads and formats datasets from HuggingFace for use in the
-conformity experiment. Datasets include:
+conformity experiment. All examples are from real Hugging Face benchmark
+datasets; no hand-curated or synthetic items are used. Datasets include:
 
-1. GSM8K - Grade school math word problems (tests RL-Zero's training domain)
-2. MMLU subsets - Multiple choice questions across various domains
-3. TruthfulQA - Tests model tendency to reproduce falsehoods
-4. ARC - AI2 Reasoning Challenge questions
+1. immutable_facts - MMLU high_school_geography + GSM8K (factual/geography/math)
+2. social_conventions - CommonsenseQA (commonsense reasoning, multiple choice)
+3. GSM8K - Grade school math word problems (tests RL-Zero's training domain)
+4. MMLU math - Multiple choice math (high school, elementary, college)
+5. MMLU science - Physics, chemistry, biology
+6. MMLU knowledge - Geography, history, world religions
+7. TruthfulQA - Tests model tendency to reproduce falsehoods
+8. ARC - AI2 Reasoning Challenge questions
 
 Each item is formatted with:
 - item_id: Unique identifier
@@ -16,7 +21,7 @@ Each item is formatted with:
 - category: High-level category for analysis grouping
 - question: The question text
 - ground_truth_text: The correct answer
-- wrong_answer: A plausible wrong answer (for conformity pressure conditions)
+- wrong_answer: A wrong answer from the benchmark (for conformity pressure)
 - source: Metadata about the dataset origin
 
 Usage:
@@ -256,6 +261,81 @@ def load_arc(split_name: str = "ARC-Challenge", max_items: int = 50) -> List[Dic
         return []
 
 
+def load_social_conventions_commonsense_qa(max_items: int = 200) -> List[Dict[str, Any]]:
+    """
+    Load CommonsenseQA dataset for social_conventions / opinion category.
+
+    CommonsenseQA is a benchmark for commonsense reasoning (multiple choice).
+    Each example has question, choices (label + text), and answerKey. All
+    content is from the benchmark; wrong_answer is one of the other choices.
+    """
+    if not HAS_DATASETS:
+        return []
+    print("  Loading CommonsenseQA (commonsense_qa)...")
+    try:
+        ds = datasets.load_dataset("commonsense_qa", "default", split="validation")
+        items = []
+        for i, row in enumerate(ds):
+            if i >= max_items:
+                break
+            choices = row["choices"]
+            labels = choices["label"]
+            texts = choices["text"]
+            answer_key = row["answerKey"]
+            correct_idx = labels.index(answer_key)
+            correct_answer = texts[correct_idx]
+            wrong_indices = [j for j in range(len(texts)) if j != correct_idx]
+            wrong_answer = texts[random.choice(wrong_indices)]
+            items.append({
+                "item_id": f"commonsense_qa_{i:04d}",
+                "domain": "preference",
+                "category": "opinion",
+                "question": row["question"],
+                "ground_truth_text": correct_answer,
+                "wrong_answer": wrong_answer,
+                "source": {
+                    "dataset": "commonsense_qa",
+                    "split": "validation",
+                    "index": i,
+                },
+            })
+        print(f"  Loaded {len(items)} CommonsenseQA items")
+        return items
+    except Exception as e:
+        print(f"  Warning: Could not load CommonsenseQA: {e}")
+        return []
+
+
+def build_immutable_facts_from_hf(max_items: int = 200) -> List[Dict[str, Any]]:
+    """
+    Build immutable_facts dataset from Hugging Face benchmarks only.
+
+    Uses MMLU high_school_geography (factual) and GSM8K (math) so every
+    example is from a real benchmark. Wrong answers come from the dataset
+    (MMLU wrong choice, GSM8K derived from numeric offset). Category
+    "general" to match the expanded suite.
+    """
+    if not HAS_DATASETS:
+        return []
+    print("  Building from MMLU geography + GSM8K...")
+    half = max_items // 2
+    items = []
+    # MMLU geography: factual, high-confidence
+    mmlu = load_mmlu_subset("high_school_geography", "general", max_items=half)
+    for it in mmlu:
+        it["item_id"] = "immutable_facts_" + it["item_id"]
+    items.extend(mmlu)
+    # GSM8K: math facts
+    gsm8k = load_gsm8k(max_items=half)
+    for it in gsm8k:
+        it["item_id"] = "immutable_facts_" + it["item_id"]
+        it["category"] = "general"
+    items.extend(gsm8k)
+    items = items[:max_items]
+    print(f"  Built {len(items)} immutable_facts items (all from HF benchmarks)")
+    return items
+
+
 def write_jsonl(items: List[Dict[str, Any]], output_path: str) -> None:
     """Write items to a JSONL file."""
     output_file = Path(output_path)
@@ -270,8 +350,8 @@ def main():
     parser = argparse.ArgumentParser(description="Prepare expanded datasets for conformity experiment")
     parser.add_argument("--output-dir", type=str, default=None,
                         help="Output directory for dataset files (default: script directory)")
-    parser.add_argument("--max-per-dataset", type=int, default=50,
-                        help="Maximum items per dataset (default: 50)")
+    parser.add_argument("--max-per-dataset", type=int, default=200,
+                        help="Maximum items per dataset (default: 200)")
     parser.add_argument("--seed", type=int, default=42,
                         help="Random seed for reproducibility (default: 42)")
     args = parser.parse_args()
@@ -296,22 +376,35 @@ def main():
         return 1
     
     # Create output directories
+    immutable_facts_dir = output_dir / "immutable_facts"
+    social_conventions_dir = output_dir / "social_conventions"
     math_dir = output_dir / "math"
     science_dir = output_dir / "science"
     knowledge_dir = output_dir / "knowledge"
     truthfulness_dir = output_dir / "truthfulness"
     reasoning_dir = output_dir / "reasoning"
     
-    for d in [math_dir, science_dir, knowledge_dir, truthfulness_dir, reasoning_dir]:
+    for d in [immutable_facts_dir, social_conventions_dir, math_dir, science_dir,
+              knowledge_dir, truthfulness_dir, reasoning_dir]:
         d.mkdir(parents=True, exist_ok=True)
     
-    # Load datasets
-    print("\n[1/6] Loading GSM8K (Math)...")
+    # Load datasets (all from Hugging Face benchmarks)
+    print("\n[1/8] Building immutable_facts (MMLU geography + GSM8K)...")
+    immutable_facts_items = build_immutable_facts_from_hf(max_items=args.max_per_dataset)
+    if immutable_facts_items:
+        write_jsonl(immutable_facts_items, str(immutable_facts_dir / "minimal_items_wrong.jsonl"))
+    
+    print("\n[2/8] Loading CommonsenseQA (social_conventions)...")
+    social_conventions_items = load_social_conventions_commonsense_qa(max_items=args.max_per_dataset)
+    if social_conventions_items:
+        write_jsonl(social_conventions_items, str(social_conventions_dir / "minimal_items_wrong.jsonl"))
+    
+    print("\n[3/8] Loading GSM8K (Math)...")
     gsm8k_items = load_gsm8k(max_items=args.max_per_dataset)
     if gsm8k_items:
         write_jsonl(gsm8k_items, str(math_dir / "gsm8k_items_wrong.jsonl"))
     
-    print("\n[2/6] Loading MMLU Math subsets...")
+    print("\n[4/8] Loading MMLU Math subsets...")
     mmlu_math_items = []
     for subset in ["high_school_mathematics", "elementary_mathematics", "college_mathematics"]:
         items = load_mmlu_subset(subset, "math", max_items=args.max_per_dataset // 3 + 1)
@@ -320,7 +413,7 @@ def main():
         mmlu_math_items = mmlu_math_items[:args.max_per_dataset]
         write_jsonl(mmlu_math_items, str(math_dir / "mmlu_math_items_wrong.jsonl"))
     
-    print("\n[3/6] Loading MMLU Science subsets...")
+    print("\n[5/8] Loading MMLU Science subsets...")
     mmlu_science_items = []
     for subset in ["high_school_physics", "high_school_chemistry", "high_school_biology", "conceptual_physics"]:
         items = load_mmlu_subset(subset, "science", max_items=args.max_per_dataset // 4 + 1)
@@ -329,7 +422,7 @@ def main():
         mmlu_science_items = mmlu_science_items[:args.max_per_dataset]
         write_jsonl(mmlu_science_items, str(science_dir / "mmlu_science_items_wrong.jsonl"))
     
-    print("\n[4/6] Loading MMLU Knowledge subsets...")
+    print("\n[6/8] Loading MMLU Knowledge subsets...")
     mmlu_knowledge_items = []
     for subset in ["high_school_geography", "high_school_world_history", "high_school_us_history", "world_religions"]:
         items = load_mmlu_subset(subset, "knowledge", max_items=args.max_per_dataset // 4 + 1)
@@ -338,12 +431,12 @@ def main():
         mmlu_knowledge_items = mmlu_knowledge_items[:args.max_per_dataset]
         write_jsonl(mmlu_knowledge_items, str(knowledge_dir / "mmlu_knowledge_items_wrong.jsonl"))
     
-    print("\n[5/6] Loading TruthfulQA...")
+    print("\n[7/8] Loading TruthfulQA...")
     truthfulqa_items = load_truthfulqa(max_items=args.max_per_dataset)
     if truthfulqa_items:
         write_jsonl(truthfulqa_items, str(truthfulness_dir / "truthfulqa_items_wrong.jsonl"))
     
-    print("\n[6/6] Loading ARC (Reasoning)...")
+    print("\n[8/8] Loading ARC (Reasoning)...")
     arc_items = []
     arc_challenge = load_arc("ARC-Challenge", max_items=args.max_per_dataset // 2)
     arc_easy = load_arc("ARC-Easy", max_items=args.max_per_dataset // 2)
@@ -355,12 +448,15 @@ def main():
     
     # Print summary
     print("\n" + "=" * 60)
-    print("Dataset Preparation Complete")
+    print("Dataset Preparation Complete (all from Hugging Face benchmarks)")
     print("=" * 60)
-    total_items = len(gsm8k_items) + len(mmlu_math_items) + len(mmlu_science_items) + \
-                  len(mmlu_knowledge_items) + len(truthfulqa_items) + len(arc_items)
+    total_items = (len(immutable_facts_items) + len(social_conventions_items) + len(gsm8k_items) +
+                   len(mmlu_math_items) + len(mmlu_science_items) + len(mmlu_knowledge_items) +
+                   len(truthfulqa_items) + len(arc_items))
     print(f"Total items created: {total_items}")
     print("\nDataset files created:")
+    print(f"  - {immutable_facts_dir / 'minimal_items_wrong.jsonl'}: {len(immutable_facts_items)} items")
+    print(f"  - {social_conventions_dir / 'minimal_items_wrong.jsonl'}: {len(social_conventions_items)} items")
     print(f"  - {math_dir / 'gsm8k_items_wrong.jsonl'}: {len(gsm8k_items)} items")
     print(f"  - {math_dir / 'mmlu_math_items_wrong.jsonl'}: {len(mmlu_math_items)} items")
     print(f"  - {science_dir / 'mmlu_science_items_wrong.jsonl'}: {len(mmlu_science_items)} items")

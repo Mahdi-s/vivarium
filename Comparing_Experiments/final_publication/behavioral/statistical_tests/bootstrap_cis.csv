@@ -1,0 +1,159 @@
+# BCa 95% CIs for truth_override_rate and delta_error
+# Generated: 2026-03-08T02:29:18.767174
+# Rows: 154
+# Script: generate_publication_item_set.py
+variant,condition_name,condition_label,condition_family,metric,point_estimate,ci_lower,ci_upper
+base,asch_history_5,Asch (5 Confederates),peer_core,truth_override_rate,0.6174,0.5582,0.6768
+base,asch_history_5,Asch (5 Confederates),peer_core,delta_error,0.0498,0.0162,0.0847
+base,asch_zhu_unbiased_unanimous_plain,Tone: Plain,tone,truth_override_rate,0.8901,0.8493,0.9272
+base,asch_zhu_unbiased_unanimous_plain,Tone: Plain,tone,delta_error,0.1799,0.1438,0.2183
+base,asch_zhu_unbiased_unanimous_neutral,Tone: Neutral,tone,truth_override_rate,0.8965,0.8534,0.9332
+base,asch_zhu_unbiased_unanimous_neutral,Tone: Neutral,tone,delta_error,0.1958,0.1605,0.234
+base,asch_zhu_unbiased_unanimous_confident,Tone: Confident,tone,truth_override_rate,0.9165,0.8769,0.9525
+base,asch_zhu_unbiased_unanimous_confident,Tone: Confident,tone,delta_error,0.2013,0.1648,0.2392
+base,asch_zhu_unbiased_unanimous_uncertain,Tone: Uncertain,tone,truth_override_rate,0.9251,0.8882,0.9583
+base,asch_zhu_unbiased_unanimous_uncertain,Tone: Uncertain,tone,delta_error,0.2209,0.186,0.256
+base,asch_zhu_unbiased_diverse_plain,Format: Diverse Peers,format_control,truth_override_rate,0.8879,0.8491,0.9241
+base,asch_zhu_unbiased_diverse_plain,Format: Diverse Peers,format_control,delta_error,0.192,0.1576,0.2272
+base,asch_zhu_unbiased_qd,Mitigation: Question Distillation,mitigation,truth_override_rate,0.8833,0.8493,0.9138
+base,asch_zhu_unbiased_qd,Mitigation: Question Distillation,mitigation,delta_error,0.1941,0.1621,0.2282
+base,asch_zhu_unbiased_da,Mitigation: Devil's Advocate,mitigation,truth_override_rate,0.9075,0.8701,0.9374
+base,asch_zhu_unbiased_da,Mitigation: Devil's Advocate,mitigation,delta_error,0.1848,0.1487,0.2242
+base,authoritative_bias,Authoritative Bias,authority_core,truth_override_rate,0.613,0.5597,0.6682
+base,authoritative_bias,Authoritative Bias,authority_core,delta_error,0.0433,0.0093,0.0758
+base,authority_zhu_unbiased_trust,Authority: Trust,authority_extended,truth_override_rate,0.8053,0.7619,0.8471
+base,authority_zhu_unbiased_trust,Authority: Trust,authority_extended,delta_error,0.1148,0.0719,0.153
+base,authority_zhu_unbiased_trust_da,Authority: Trust+DA,authority_extended,truth_override_rate,0.8874,0.847,0.9207
+base,authority_zhu_unbiased_trust_da,Authority: Trust+DA,authority_extended,delta_error,0.1947,0.161,0.2287
+instruct,asch_history_5,Asch (5 Confederates),peer_core,truth_override_rate,0.4989,0.4369,0.5584
+instruct,asch_history_5,Asch (5 Confederates),peer_core,delta_error,0.0075,-0.0327,0.0474
+instruct,asch_zhu_unbiased_unanimous_plain,Tone: Plain,tone,truth_override_rate,0.8808,0.834,0.9202
+instruct,asch_zhu_unbiased_unanimous_plain,Tone: Plain,tone,delta_error,0.2231,0.1739,0.2699
+instruct,asch_zhu_unbiased_unanimous_neutral,Tone: Neutral,tone,truth_override_rate,0.8938,0.8431,0.9324
+instruct,asch_zhu_unbiased_unanimous_neutral,Tone: Neutral,tone,delta_error,0.2242,0.1723,0.2734
+instruct,asch_zhu_unbiased_unanimous_confident,Tone: Confident,tone,truth_override_rate,0.9161,0.8795,0.9491
+instruct,asch_zhu_unbiased_unanimous_confident,Tone: Confident,tone,delta_error,0.2529,0.2065,0.2996
+instruct,asch_zhu_unbiased_unanimous_uncertain,Tone: Uncertain,tone,truth_override_rate,0.8381,0.7851,0.8843
+instruct,asch_zhu_unbiased_unanimous_uncertain,Tone: Uncertain,tone,delta_error,0.1956,0.1451,0.2439
+instruct,asch_zhu_unbiased_diverse_plain,Format: Diverse Peers,format_control,truth_override_rate,0.8499,0.8022,0.8971
+instruct,asch_zhu_unbiased_diverse_plain,Format: Diverse Peers,format_control,delta_error,0.2293,0.1873,0.2762
+instruct,asch_zhu_unbiased_qd,Mitigation: Question Distillation,mitigation,truth_override_rate,0.8985,0.8555,0.9346
+instruct,asch_zhu_unbiased_qd,Mitigation: Question Distillation,mitigation,delta_error,0.2414,0.1926,0.2899
+instruct,asch_zhu_unbiased_da,Mitigation: Devil's Advocate,mitigation,truth_override_rate,0.8786,0.8289,0.9185
+instruct,asch_zhu_unbiased_da,Mitigation: Devil's Advocate,mitigation,delta_error,0.2136,0.1632,0.2645
+instruct,authoritative_bias,Authoritative Bias,authority_core,truth_override_rate,0.5333,0.4778,0.5892
+instruct,authoritative_bias,Authoritative Bias,authority_core,delta_error,0.0279,-0.0108,0.072
+instruct,authority_zhu_unbiased_trust,Authority: Trust,authority_extended,truth_override_rate,0.7721,0.7118,0.8265
+instruct,authority_zhu_unbiased_trust,Authority: Trust,authority_extended,delta_error,0.1036,0.0495,0.1595
+instruct,authority_zhu_unbiased_trust_da,Authority: Trust+DA,authority_extended,truth_override_rate,0.8009,0.746,0.8526
+instruct,authority_zhu_unbiased_trust_da,Authority: Trust+DA,authority_extended,delta_error,0.1302,0.0783,0.1837
+instruct_dpo,asch_history_5,Asch (5 Confederates),peer_core,truth_override_rate,0.4733,0.42,0.5288
+instruct_dpo,asch_history_5,Asch (5 Confederates),peer_core,delta_error,-0.0072,-0.0518,0.0376
+instruct_dpo,asch_zhu_unbiased_unanimous_plain,Tone: Plain,tone,truth_override_rate,0.7958,0.7406,0.8491
+instruct_dpo,asch_zhu_unbiased_unanimous_plain,Tone: Plain,tone,delta_error,0.199,0.1533,0.2479
+instruct_dpo,asch_zhu_unbiased_unanimous_neutral,Tone: Neutral,tone,truth_override_rate,0.817,0.7671,0.8612
+instruct_dpo,asch_zhu_unbiased_unanimous_neutral,Tone: Neutral,tone,delta_error,0.2068,0.1601,0.2512
+instruct_dpo,asch_zhu_unbiased_unanimous_confident,Tone: Confident,tone,truth_override_rate,0.8669,0.8253,0.9051
+instruct_dpo,asch_zhu_unbiased_unanimous_confident,Tone: Confident,tone,delta_error,0.2273,0.1829,0.2733
+instruct_dpo,asch_zhu_unbiased_unanimous_uncertain,Tone: Uncertain,tone,truth_override_rate,0.7417,0.6808,0.8013
+instruct_dpo,asch_zhu_unbiased_unanimous_uncertain,Tone: Uncertain,tone,delta_error,0.1558,0.1053,0.2036
+instruct_dpo,asch_zhu_unbiased_diverse_plain,Format: Diverse Peers,format_control,truth_override_rate,0.8154,0.766,0.8631
+instruct_dpo,asch_zhu_unbiased_diverse_plain,Format: Diverse Peers,format_control,delta_error,0.215,0.1707,0.2609
+instruct_dpo,asch_zhu_unbiased_qd,Mitigation: Question Distillation,mitigation,truth_override_rate,0.8309,0.7815,0.8753
+instruct_dpo,asch_zhu_unbiased_qd,Mitigation: Question Distillation,mitigation,delta_error,0.2228,0.1822,0.2712
+instruct_dpo,asch_zhu_unbiased_da,Mitigation: Devil's Advocate,mitigation,truth_override_rate,0.7879,0.7315,0.8399
+instruct_dpo,asch_zhu_unbiased_da,Mitigation: Devil's Advocate,mitigation,delta_error,0.1882,0.1436,0.2327
+instruct_dpo,authoritative_bias,Authoritative Bias,authority_core,truth_override_rate,0.5279,0.4689,0.5798
+instruct_dpo,authoritative_bias,Authoritative Bias,authority_core,delta_error,0.0248,-0.0152,0.0687
+instruct_dpo,authority_zhu_unbiased_trust,Authority: Trust,authority_extended,truth_override_rate,0.7178,0.659,0.7787
+instruct_dpo,authority_zhu_unbiased_trust,Authority: Trust,authority_extended,delta_error,0.0554,-0.0007,0.1139
+instruct_dpo,authority_zhu_unbiased_trust_da,Authority: Trust+DA,authority_extended,truth_override_rate,0.7917,0.7329,0.8479
+instruct_dpo,authority_zhu_unbiased_trust_da,Authority: Trust+DA,authority_extended,delta_error,0.1402,0.0908,0.1912
+instruct_sft,asch_history_5,Asch (5 Confederates),peer_core,truth_override_rate,0.7405,0.6886,0.791
+instruct_sft,asch_history_5,Asch (5 Confederates),peer_core,delta_error,0.1791,0.1426,0.219
+instruct_sft,asch_zhu_unbiased_unanimous_plain,Tone: Plain,tone,truth_override_rate,0.877,0.8355,0.9134
+instruct_sft,asch_zhu_unbiased_unanimous_plain,Tone: Plain,tone,delta_error,0.2276,0.1829,0.274
+instruct_sft,asch_zhu_unbiased_unanimous_neutral,Tone: Neutral,tone,truth_override_rate,0.9281,0.8901,0.9587
+instruct_sft,asch_zhu_unbiased_unanimous_neutral,Tone: Neutral,tone,delta_error,0.2435,0.1957,0.2899
+instruct_sft,asch_zhu_unbiased_unanimous_confident,Tone: Confident,tone,truth_override_rate,0.9239,0.883,0.9571
+instruct_sft,asch_zhu_unbiased_unanimous_confident,Tone: Confident,tone,delta_error,0.2596,0.2153,0.3044
+instruct_sft,asch_zhu_unbiased_unanimous_uncertain,Tone: Uncertain,tone,truth_override_rate,0.9158,0.8804,0.9489
+instruct_sft,asch_zhu_unbiased_unanimous_uncertain,Tone: Uncertain,tone,delta_error,0.2395,0.1922,0.2857
+instruct_sft,asch_zhu_unbiased_diverse_plain,Format: Diverse Peers,format_control,truth_override_rate,0.8668,0.8241,0.9051
+instruct_sft,asch_zhu_unbiased_diverse_plain,Format: Diverse Peers,format_control,delta_error,0.2329,0.1915,0.2747
+instruct_sft,asch_zhu_unbiased_qd,Mitigation: Question Distillation,mitigation,truth_override_rate,0.846,0.7931,0.8931
+instruct_sft,asch_zhu_unbiased_qd,Mitigation: Question Distillation,mitigation,delta_error,0.2141,0.1666,0.2552
+instruct_sft,asch_zhu_unbiased_da,Mitigation: Devil's Advocate,mitigation,truth_override_rate,0.8668,0.8248,0.9061
+instruct_sft,asch_zhu_unbiased_da,Mitigation: Devil's Advocate,mitigation,delta_error,0.2019,0.1556,0.2514
+instruct_sft,authoritative_bias,Authoritative Bias,authority_core,truth_override_rate,0.5651,0.5073,0.6253
+instruct_sft,authoritative_bias,Authoritative Bias,authority_core,delta_error,0.0679,0.03,0.1066
+instruct_sft,authority_zhu_unbiased_trust,Authority: Trust,authority_extended,truth_override_rate,0.7202,0.6622,0.7762
+instruct_sft,authority_zhu_unbiased_trust,Authority: Trust,authority_extended,delta_error,0.0233,-0.0349,0.0797
+instruct_sft,authority_zhu_unbiased_trust_da,Authority: Trust+DA,authority_extended,truth_override_rate,0.7624,0.7073,0.8132
+instruct_sft,authority_zhu_unbiased_trust_da,Authority: Trust+DA,authority_extended,delta_error,0.0905,0.0423,0.1462
+think,asch_history_5,Asch (5 Confederates),peer_core,truth_override_rate,0.4688,0.4252,0.5198
+think,asch_history_5,Asch (5 Confederates),peer_core,delta_error,0.175,0.1393,0.21
+think,asch_zhu_unbiased_unanimous_plain,Tone: Plain,tone,truth_override_rate,0.922,0.8868,0.9512
+think,asch_zhu_unbiased_unanimous_plain,Tone: Plain,tone,delta_error,0.5396,0.4979,0.5838
+think,asch_zhu_unbiased_unanimous_neutral,Tone: Neutral,tone,truth_override_rate,0.9339,0.9068,0.9585
+think,asch_zhu_unbiased_unanimous_neutral,Tone: Neutral,tone,delta_error,0.5394,0.4979,0.5796
+think,asch_zhu_unbiased_unanimous_confident,Tone: Confident,tone,truth_override_rate,0.9314,0.9043,0.9583
+think,asch_zhu_unbiased_unanimous_confident,Tone: Confident,tone,delta_error,0.543,0.503,0.5867
+think,asch_zhu_unbiased_unanimous_uncertain,Tone: Uncertain,tone,truth_override_rate,0.9248,0.8915,0.953
+think,asch_zhu_unbiased_unanimous_uncertain,Tone: Uncertain,tone,delta_error,0.5392,0.4947,0.581
+think,asch_zhu_unbiased_diverse_plain,Format: Diverse Peers,format_control,truth_override_rate,0.9411,0.9149,0.9642
+think,asch_zhu_unbiased_diverse_plain,Format: Diverse Peers,format_control,delta_error,0.5518,0.5093,0.5922
+think,asch_zhu_unbiased_qd,Mitigation: Question Distillation,mitigation,truth_override_rate,0.9127,0.8805,0.9411
+think,asch_zhu_unbiased_qd,Mitigation: Question Distillation,mitigation,delta_error,0.5287,0.4839,0.5707
+think,asch_zhu_unbiased_da,Mitigation: Devil's Advocate,mitigation,truth_override_rate,0.9521,0.9236,0.9741
+think,asch_zhu_unbiased_da,Mitigation: Devil's Advocate,mitigation,delta_error,0.5571,0.5122,0.5992
+think,authoritative_bias,Authoritative Bias,authority_core,truth_override_rate,0.4894,0.4462,0.5382
+think,authoritative_bias,Authoritative Bias,authority_core,delta_error,0.1983,0.1593,0.2343
+think,authority_zhu_unbiased_trust,Authority: Trust,authority_extended,truth_override_rate,0.9014,0.8699,0.9345
+think,authority_zhu_unbiased_trust,Authority: Trust,authority_extended,delta_error,0.5221,0.4801,0.5605
+think,authority_zhu_unbiased_trust_da,Authority: Trust+DA,authority_extended,truth_override_rate,0.9042,0.8693,0.9363
+think,authority_zhu_unbiased_trust_da,Authority: Trust+DA,authority_extended,delta_error,0.5267,0.4855,0.5691
+think_dpo,asch_history_5,Asch (5 Confederates),peer_core,truth_override_rate,0.4388,0.3866,0.4889
+think_dpo,asch_history_5,Asch (5 Confederates),peer_core,delta_error,0.1351,0.1005,0.1695
+think_dpo,asch_zhu_unbiased_unanimous_plain,Tone: Plain,tone,truth_override_rate,0.937,0.9073,0.9642
+think_dpo,asch_zhu_unbiased_unanimous_plain,Tone: Plain,tone,delta_error,0.5299,0.4788,0.582
+think_dpo,asch_zhu_unbiased_unanimous_neutral,Tone: Neutral,tone,truth_override_rate,0.9165,0.8836,0.9494
+think_dpo,asch_zhu_unbiased_unanimous_neutral,Tone: Neutral,tone,delta_error,0.5178,0.4695,0.5646
+think_dpo,asch_zhu_unbiased_unanimous_confident,Tone: Confident,tone,truth_override_rate,0.9331,0.9035,0.9574
+think_dpo,asch_zhu_unbiased_unanimous_confident,Tone: Confident,tone,delta_error,0.5257,0.4768,0.5734
+think_dpo,asch_zhu_unbiased_unanimous_uncertain,Tone: Uncertain,tone,truth_override_rate,0.915,0.8818,0.9444
+think_dpo,asch_zhu_unbiased_unanimous_uncertain,Tone: Uncertain,tone,delta_error,0.5157,0.4597,0.5628
+think_dpo,asch_zhu_unbiased_diverse_plain,Format: Diverse Peers,format_control,truth_override_rate,0.9233,0.8885,0.9537
+think_dpo,asch_zhu_unbiased_diverse_plain,Format: Diverse Peers,format_control,delta_error,0.5211,0.4741,0.5652
+think_dpo,asch_zhu_unbiased_qd,Mitigation: Question Distillation,mitigation,truth_override_rate,0.8952,0.8574,0.9283
+think_dpo,asch_zhu_unbiased_qd,Mitigation: Question Distillation,mitigation,delta_error,0.499,0.4474,0.5473
+think_dpo,asch_zhu_unbiased_da,Mitigation: Devil's Advocate,mitigation,truth_override_rate,0.9466,0.9183,0.9725
+think_dpo,asch_zhu_unbiased_da,Mitigation: Devil's Advocate,mitigation,delta_error,0.53,0.4823,0.5775
+think_dpo,authoritative_bias,Authoritative Bias,authority_core,truth_override_rate,0.4609,0.4135,0.5124
+think_dpo,authoritative_bias,Authoritative Bias,authority_core,delta_error,0.1423,0.1064,0.177
+think_dpo,authority_zhu_unbiased_trust,Authority: Trust,authority_extended,truth_override_rate,0.8851,0.8422,0.9274
+think_dpo,authority_zhu_unbiased_trust,Authority: Trust,authority_extended,delta_error,0.4836,0.435,0.534
+think_dpo,authority_zhu_unbiased_trust_da,Authority: Trust+DA,authority_extended,truth_override_rate,0.9244,0.8949,0.953
+think_dpo,authority_zhu_unbiased_trust_da,Authority: Trust+DA,authority_extended,delta_error,0.5089,0.4581,0.5627
+think_sft,asch_history_5,Asch (5 Confederates),peer_core,truth_override_rate,0.4175,0.3766,0.4635
+think_sft,asch_history_5,Asch (5 Confederates),peer_core,delta_error,0.1288,0.0967,0.1643
+think_sft,asch_zhu_unbiased_unanimous_plain,Tone: Plain,tone,truth_override_rate,0.9181,0.8873,0.9448
+think_sft,asch_zhu_unbiased_unanimous_plain,Tone: Plain,tone,delta_error,0.498,0.4522,0.5418
+think_sft,asch_zhu_unbiased_unanimous_neutral,Tone: Neutral,tone,truth_override_rate,0.9189,0.8881,0.9457
+think_sft,asch_zhu_unbiased_unanimous_neutral,Tone: Neutral,tone,delta_error,0.4948,0.4527,0.5376
+think_sft,asch_zhu_unbiased_unanimous_confident,Tone: Confident,tone,truth_override_rate,0.9352,0.9067,0.9604
+think_sft,asch_zhu_unbiased_unanimous_confident,Tone: Confident,tone,delta_error,0.502,0.4579,0.5474
+think_sft,asch_zhu_unbiased_unanimous_uncertain,Tone: Uncertain,tone,truth_override_rate,0.9286,0.8972,0.9537
+think_sft,asch_zhu_unbiased_unanimous_uncertain,Tone: Uncertain,tone,delta_error,0.4948,0.4515,0.543
+think_sft,asch_zhu_unbiased_diverse_plain,Format: Diverse Peers,format_control,truth_override_rate,0.9372,0.9069,0.9617
+think_sft,asch_zhu_unbiased_diverse_plain,Format: Diverse Peers,format_control,delta_error,0.5024,0.4586,0.5449
+think_sft,asch_zhu_unbiased_qd,Mitigation: Question Distillation,mitigation,truth_override_rate,0.9105,0.8776,0.939
+think_sft,asch_zhu_unbiased_qd,Mitigation: Question Distillation,mitigation,delta_error,0.478,0.4327,0.5212
+think_sft,asch_zhu_unbiased_da,Mitigation: Devil's Advocate,mitigation,truth_override_rate,0.9315,0.9036,0.9569
+think_sft,asch_zhu_unbiased_da,Mitigation: Devil's Advocate,mitigation,delta_error,0.502,0.4569,0.5437
+think_sft,authoritative_bias,Authoritative Bias,authority_core,truth_override_rate,0.4635,0.4227,0.5062
+think_sft,authoritative_bias,Authoritative Bias,authority_core,delta_error,0.1573,0.1174,0.1944
+think_sft,authority_zhu_unbiased_trust,Authority: Trust,authority_extended,truth_override_rate,0.9063,0.8688,0.938
+think_sft,authority_zhu_unbiased_trust,Authority: Trust,authority_extended,delta_error,0.4656,0.4138,0.5144
+think_sft,authority_zhu_unbiased_trust_da,Authority: Trust+DA,authority_extended,truth_override_rate,0.9219,0.8943,0.9467
+think_sft,authority_zhu_unbiased_trust_da,Authority: Trust+DA,authority_extended,delta_error,0.49,0.4463,0.535

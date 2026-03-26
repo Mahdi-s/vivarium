@@ -15,9 +15,10 @@ Usage:
     python download_and_convert_olmo_models.py --torch-only
     
 Environment Variables:
-    AAM_MODEL_DIR: Override model storage directory
-    AAM_LLAMA_CPP_ROOT: Override llama.cpp installation path
-    AAM_HF_CACHE: Override HuggingFace cache directory
+    VIVARIUM_MODEL_DIR: Override model storage directory
+    VIVARIUM_LLAMA_CPP_ROOT: Override llama.cpp installation path
+    VIVARIUM_HF_CACHE: Override HuggingFace cache directory
+    (Legacy: AAM_MODEL_DIR, AAM_LLAMA_CPP_ROOT, AAM_HF_CACHE)
 """
 
 from __future__ import annotations
@@ -31,7 +32,7 @@ from typing import List, Optional, Tuple
 
 # Try to import settings; fallback to local defaults if not installed
 try:
-    from aam.settings import settings
+    from vivarium.settings import settings
     USE_SETTINGS = True
 except ImportError:
     USE_SETTINGS = False
@@ -41,11 +42,17 @@ except ImportError:
 MODELS = [
     ("allenai/Olmo-3-1025-7B", "olmo-3-1025-7b-base.gguf"),
     ("allenai/Olmo-3-1125-32B", "olmo-3-1125-32b-base.gguf"),
+    # 32B Think pipeline (SFT → DPO → RLVR), used by job_32b_run.sh / suite_32b_think_*
+    ("allenai/Olmo-3-32B-Think-SFT", "olmo-3-32b-think-sft.gguf"),
+    ("allenai/Olmo-3-32B-Think-DPO", "olmo-3-32b-think-dpo.gguf"),
+    ("allenai/Olmo-3-32B-Think", "olmo-3-32b-think.gguf"),
     ("allenai/Olmo-3-7B-RL-Zero-Math", "olmo-3-7b-rl-zero-math.gguf"),
     ("allenai/Olmo-3-7B-Think", "olmo-3-7b-think.gguf"),
     ("allenai/Olmo-3-7B-Think-SFT", "olmo-3-7b-think-sft.gguf"),
+    ("allenai/Olmo-3-7B-Think-DPO", "olmo-3-7b-think-dpo.gguf"),
     ("allenai/Olmo-3-7B-Instruct", "olmo-3-7b-instruct.gguf"),
     ("allenai/Olmo-3-7B-Instruct-SFT", "olmo-3-7b-instruct-sft.gguf"),
+    ("allenai/Olmo-3-7B-Instruct-DPO", "olmo-3-7b-instruct-dpo.gguf"),
 ]
 
 
@@ -63,7 +70,7 @@ def get_models_dir() -> Path:
     if USE_SETTINGS:
         return settings.MODEL_DIR
     
-    env_val = os.environ.get("AAM_MODEL_DIR")
+    env_val = os.environ.get("VIVARIUM_MODEL_DIR") or os.environ.get("AAM_MODEL_DIR")
     if env_val:
         return Path(env_val)
     return get_repo_root() / "models"
@@ -74,7 +81,7 @@ def get_hf_cache_dir() -> Path:
     if USE_SETTINGS:
         return settings.HF_CACHE
     
-    env_val = os.environ.get("AAM_HF_CACHE")
+    env_val = os.environ.get("VIVARIUM_HF_CACHE") or os.environ.get("AAM_HF_CACHE")
     if env_val:
         return Path(env_val)
     return get_models_dir() / "huggingface_cache"
@@ -85,8 +92,8 @@ def get_llama_cpp_path() -> Path:
     Get path to llama.cpp repository.
     
     Resolution order:
-    1. AAM settings (if installed)
-    2. AAM_LLAMA_CPP_ROOT environment variable
+    1. Vivarium settings (if installed)
+    2. VIVARIUM_LLAMA_CPP_ROOT or AAM_LLAMA_CPP_ROOT environment variable
     3. Default: repo_root/third_party/llama.cpp
     
     Raises:
@@ -95,7 +102,7 @@ def get_llama_cpp_path() -> Path:
     if USE_SETTINGS:
         llama_cpp = settings.LLAMA_CPP_ROOT
     else:
-        env_val = os.environ.get("AAM_LLAMA_CPP_ROOT")
+        env_val = os.environ.get("VIVARIUM_LLAMA_CPP_ROOT") or os.environ.get("AAM_LLAMA_CPP_ROOT")
         if env_val:
             llama_cpp = Path(env_val)
         else:
@@ -106,7 +113,7 @@ def get_llama_cpp_path() -> Path:
             f"llama.cpp not found at {llama_cpp}.\n"
             "Options:\n"
             "  1. Clone it: git clone https://github.com/ggerganov/llama.cpp.git third_party/llama.cpp\n"
-            "  2. Set AAM_LLAMA_CPP_ROOT environment variable to your llama.cpp installation\n"
+            "  2. Set VIVARIUM_LLAMA_CPP_ROOT environment variable to your llama.cpp installation\n"
             "  3. Use --torch-only flag to skip GGUF conversion"
         )
     return llama_cpp
@@ -181,6 +188,12 @@ def download_model(model_id: str, cache_dir: Path) -> Path:
             cache_dir=str(cache_dir),
             torch_dtype="auto",
         )
+        # Fix generation_config so save_pretrained() does not fail: either do_sample=True
+        # or unset temperature/top_p. Prefer making do_sample True so config is preserved.
+        if getattr(model, "generation_config", None) is not None:
+            gc = model.generation_config
+            if getattr(gc, "temperature", None) is not None or getattr(gc, "top_p", None) is not None:
+                gc.do_sample = True
         model.save_pretrained(str(model_path))
         
         print(f"✓ Downloaded via transformers to: {model_path}")
@@ -287,9 +300,9 @@ def parse_args() -> argparse.Namespace:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Environment Variables:
-  AAM_MODEL_DIR       Override model storage directory
-  AAM_LLAMA_CPP_ROOT  Override llama.cpp installation path  
-  AAM_HF_CACHE        Override HuggingFace cache directory
+  VIVARIUM_MODEL_DIR       Override model storage directory
+  VIVARIUM_LLAMA_CPP_ROOT  Override llama.cpp installation path
+  VIVARIUM_HF_CACHE        Override HuggingFace cache directory
 
 Examples:
   # Download and convert all models to GGUF

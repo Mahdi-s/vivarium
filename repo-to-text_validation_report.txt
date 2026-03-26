@@ -1,0 +1,55 @@
+# repo-to-text validation report
+
+Generated: 2026-03-14 (after running repo-to-text with updated .repo-to-text-settings.yaml)
+Output file: repo-to-text_2026-03-14-02-33-05-UTC.txt
+
+## Checklist results
+
+1. **Analysis scripts** – PASS
+   - Tree: Analysis Scripts/ with all Python files and README.txt.
+   - Content: Multiple <content full_path="Analysis Scripts/..."> blocks (e.g. generate_*.py, audit_*.py, utils.py, README.txt).
+
+2. **Comparing_Experiments** – PASS
+   - Tree: Comparing_Experiments/ and subdirs (publication_V2, final_publication, v5_updated_analysis, v6/v7/v8_publication, judge_eval, judge_manual_agreement).
+   - Purpose: Documented in README content and in scripts that reference runs_metadata.json / completion_tracker.json.
+   - JSONs: completion_tracker.json, runs_metadata_v5.json, runs_metadata_v6.json, runs_metadata.json.lock have content; runs_metadata.json is gitignored (omitted). Tree lists all listed JSONs.
+
+3. **experiments/** – PASS
+   - Tree: experiments/olmo_conformity/ with configs/, datasets/, prompts/, analysis_specs/, test_scripts/.
+   - Content: Suite JSONs (suite_32b_think_*.json), job scripts (.sh), run_*.py, paths.json, judge_config_local.json, dataset .py and .jsonl, figures.json.
+
+4. **models/** – PARTIAL (tree)
+   - models/ is not present in the <directory_structure> section (directory is gitignored via models/* or empty).
+   - README.md content describes models/ and third_party/llama.cpp locations, so “where they exist” is documented.
+
+5. **Notebooks** – PASS
+   - Tree: notebooks/ with comprehensive_run_analysis.ipynb, experiment_db_inspector.ipynb, olmo.ipynb; scripts/trace_analysis.ipynb.
+   - Content: <content full_path="notebooks/olmo.ipynb">, comprehensive_run_analysis.ipynb, experiment_db_inspector.ipynb, notebooks/olmo_conformity_analytics.py, scripts/trace_analysis.ipynb.
+
+6. **scripts/** – PASS
+   - Tree: scripts/ with .py, .sh, trace_analysis.ipynb.
+   - Content: Multiple script files included (e.g. generate_code_documentation.py, compare_judge_manual_agreement.py, etc.).
+
+7. **src/** – PASS
+   - Tree: src/vivarium/ and subpackages (experiments/olmo_conformity, analytics, etc.).
+   - Content: Python modules under src/ (e.g. run.py, world_engine.py, experiments/olmo_conformity/*.py).
+
+8. **tests/** – PASS
+   - Tree: tests/ with test_*.py.
+   - Content: test_provenance.py, test_output_parsing.py, test_phase4_scheduler.py, test_conformity_scoring.py.
+
+9. **third_party/** – PARTIAL (tree)
+   - third_party/ is not in the <directory_structure> section (no tracked files or gitignored).
+   - README content describes third_party/llama.cpp.
+
+10. **README and CONTRIBUTING** – PASS
+    - Full content in <content full_path="README.md"> and <content full_path="CONTRIBUTING.md">.
+
+11. **Other markdowns** – PASS
+    - Tree shows locations (e.g. COMMANDS_TO_COMPLETE_TRIALS.md, docs/*.md, Comparing_Experiments/**/README.md, INFRASTRUCTURE_FOR_SURGICAL_COMPLETION.md). No full-content requirement; tree-only as requested.
+
+## Summary
+
+Config changes were applied to .repo-to-text-settings.yaml (removed tests/, notebooks/, models/, third_party/ from ignore-tree-and-content; README.md and CONTRIBUTING.md included via ! in ignore-content; other *.md tree-only). The generated repo-to-text output satisfies the plan’s validation checklist. The only partial items are models/ and third_party/, which do not appear in the directory tree because they are gitignored or empty; their roles and locations are described in README content.
+
+Command used: repo-to-text --output-dir . (from repo root).

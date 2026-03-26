@@ -3,25 +3,9 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 from utils import build_arg_parser, ensure_artifacts_dirs, load_db_for_run, resolve_run_ref
-
-
-def _latest_probe_id(*, db: Any, run_id: str, probe_kind: str) -> Optional[str]:
-    row = db.conn.execute(
-        """
-        SELECT probe_id
-        FROM conformity_probes
-        WHERE run_id = ? AND probe_kind = ?
-        ORDER BY created_at DESC
-        LIMIT 1;
-        """,
-        (run_id, probe_kind),
-    ).fetchone()
-    if row is None:
-        return None
-    return str(row["probe_id"])
 
 
 def _write_json(path: str, obj: Any) -> None:
@@ -45,9 +29,15 @@ def main() -> int:
 
     db = load_db_for_run(ref)
     try:
-        truth_probe_id = _latest_probe_id(db=db, run_id=ref.run_id, probe_kind="truth")
-        social_probe_id = _latest_probe_id(db=db, run_id=ref.run_id, probe_kind="social")
-        if not truth_probe_id or not social_probe_id:
+        # Multi-variant safe: use *all* truth/social probes for this run and
+        # merge by (trial_id, layer_index). Because projection computation is
+        # variant-scoped in the pipeline, each trial has exactly one truth and
+        # one social projection per layer.
+        probe_kinds = [r[0] for r in db.conn.execute(
+            "SELECT DISTINCT probe_kind FROM conformity_probes WHERE run_id = ? ORDER BY probe_kind ASC;",
+            (ref.run_id,),
+        ).fetchall()]
+        if "truth" not in probe_kinds or "social" not in probe_kinds:
             raise RuntimeError(
                 "Missing required probes for turn-layer analysis. "
                 "Expected both 'truth' and 'social' rows in conformity_probes for this run."
@@ -57,14 +47,16 @@ def main() -> int:
         df = pd.read_sql_query(
             """
             WITH truth AS (
-              SELECT trial_id, layer_index, value_float AS truth_val
-              FROM conformity_probe_projections
-              WHERE probe_id = ?
+              SELECT p.trial_id, p.layer_index, p.value_float AS truth_val
+              FROM conformity_probe_projections p
+              JOIN conformity_probes pr ON pr.probe_id = p.probe_id
+              WHERE pr.run_id = ? AND pr.probe_kind = 'truth'
             ),
             social AS (
-              SELECT trial_id, layer_index, value_float AS social_val
-              FROM conformity_probe_projections
-              WHERE probe_id = ?
+              SELECT p.trial_id, p.layer_index, p.value_float AS social_val
+              FROM conformity_probe_projections p
+              JOIN conformity_probes pr ON pr.probe_id = p.probe_id
+              WHERE pr.run_id = ? AND pr.probe_kind = 'social'
             ),
             merged AS (
               SELECT
@@ -90,10 +82,11 @@ def main() -> int:
             JOIN conformity_trials tr ON tr.trial_id = c.trial_id
             JOIN conformity_conditions cond ON cond.condition_id = tr.condition_id
             WHERE tr.run_id = ?
+              AND cond.name IN ('control','asch_history_5','authoritative_bias')
             ORDER BY c.first_collision_layer ASC;
             """,
             db.conn,
-            params=(truth_probe_id, social_probe_id, ref.run_id),
+            params=(ref.run_id, ref.run_id, ref.run_id),
         )
 
         detection_path = os.path.join(tables_dir, "turn_layer_detection.json")
@@ -101,8 +94,6 @@ def main() -> int:
             detection_path,
             {
                 "run_id": ref.run_id,
-                "truth_probe_id": truth_probe_id,
-                "social_probe_id": social_probe_id,
                 "n_collisions": int(len(df)),
                 "collisions": df.to_dict("records"),
             },
@@ -111,11 +102,14 @@ def main() -> int:
         stats_path = os.path.join(tables_dir, "turn_layer_statistics.csv")
         if not df.empty:
             stats = (
-                df.groupby(["variant", "condition_name"], as_index=False)["first_collision_layer"]
-                .agg(["count", "mean", "std"])
+                df.groupby(["variant", "condition_name"])["first_collision_layer"]
+                .agg(
+                    n="count",
+                    mean_first_collision_layer="mean",
+                    std_first_collision_layer="std",
+                )
                 .reset_index()
             )
-            stats.columns = ["variant", "condition_name", "n", "mean_first_collision_layer", "std_first_collision_layer"]
             stats.to_csv(stats_path, index=False)
         else:
             # still create an empty file with headers for downstream pipelines
@@ -133,14 +127,16 @@ def main() -> int:
         diff_df = pd.read_sql_query(
             """
             WITH truth AS (
-              SELECT trial_id, layer_index, value_float AS truth_val
-              FROM conformity_probe_projections
-              WHERE probe_id = ?
+              SELECT p.trial_id, p.layer_index, p.value_float AS truth_val
+              FROM conformity_probe_projections p
+              JOIN conformity_probes pr ON pr.probe_id = p.probe_id
+              WHERE pr.run_id = ? AND pr.probe_kind = 'truth'
             ),
             social AS (
-              SELECT trial_id, layer_index, value_float AS social_val
-              FROM conformity_probe_projections
-              WHERE probe_id = ?
+              SELECT p.trial_id, p.layer_index, p.value_float AS social_val
+              FROM conformity_probe_projections p
+              JOIN conformity_probes pr ON pr.probe_id = p.probe_id
+              WHERE pr.run_id = ? AND pr.probe_kind = 'social'
             )
             SELECT
               tr.variant,
@@ -152,36 +148,41 @@ def main() -> int:
               ON s.trial_id = t.trial_id AND s.layer_index = t.layer_index
             JOIN conformity_trials tr ON tr.trial_id = t.trial_id
             JOIN conformity_conditions cond ON cond.condition_id = tr.condition_id
-            WHERE tr.run_id = ?;
+            WHERE tr.run_id = ?
+              AND cond.name IN ('control','asch_history_5','authoritative_bias');
             """,
             db.conn,
-            params=(truth_probe_id, social_probe_id, ref.run_id),
+            params=(ref.run_id, ref.run_id, ref.run_id),
         )
 
-        fig_path = os.path.join(figures_dir, "turn_layer_heatmap.png")
+        fig_path = ""
         if not diff_df.empty:
-            pivot = (
-                diff_df.groupby(["layer_index", "condition_name"], as_index=False)["diff"]
+            # Plot: mean first collision layer by (variant, condition)
+            stats = (
+                df.groupby(["variant", "condition_name"], as_index=False)["first_collision_layer"]
                 .mean()
-                .pivot(index="layer_index", columns="condition_name", values="diff")
-                .sort_index()
+                .rename(columns={"first_collision_layer": "mean_first_collision_layer"})
             )
-            fig, ax = plt.subplots(figsize=(10, 6))
-            im = ax.imshow(pivot.values, aspect="auto", cmap="RdBu_r", interpolation="nearest")
-            ax.set_xticks(range(len(pivot.columns)))
-            ax.set_xticklabels(list(pivot.columns), rotation=45, ha="right")
-            ax.set_yticks(range(len(pivot.index)))
-            ax.set_yticklabels(list(pivot.index))
-            ax.set_xlabel("Condition")
-            ax.set_ylabel("Layer Index")
-            ax.set_title("Turn Layer Heatmap (Social - Truth)")
-            fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-            plt.tight_layout()
-            plt.savefig(fig_path, dpi=150)
-            plt.close(fig)
-        else:
-            # If no data, don't error; just skip heatmap creation.
-            fig_path = ""
+            if not stats.empty:
+                fig, ax = plt.subplots(figsize=(10, 4.8))
+                # Order variants as they appear in paper
+                variant_order = ["base", "instruct", "instruct_sft", "think", "think_sft", "rl_zero"]
+                cond_order = ["control", "asch_history_5", "authoritative_bias"]
+                stats["variant"] = pd.Categorical(stats["variant"], categories=variant_order, ordered=True)
+                stats["condition_name"] = pd.Categorical(stats["condition_name"], categories=cond_order, ordered=True)
+                stats = stats.sort_values(["variant", "condition_name"])
+
+                # Pivot for grouped bar plot
+                pivot = stats.pivot(index="variant", columns="condition_name", values="mean_first_collision_layer")
+                pivot.plot(kind="bar", ax=ax)
+                ax.set_ylabel("Mean first collision layer (SVP > TVP)")
+                ax.set_xlabel("Variant")
+                ax.set_title("Turn Layer by Variant and Condition")
+                ax.legend(title="Condition", bbox_to_anchor=(1.02, 1), loc="upper left")
+                plt.tight_layout()
+                fig_path = os.path.join(figures_dir, "turn_layer_by_variant.png")
+                plt.savefig(fig_path, dpi=150)
+                plt.close(fig)
 
     finally:
         db.close()
@@ -195,4 +196,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

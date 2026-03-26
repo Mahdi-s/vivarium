@@ -1,0 +1,13 @@
+variant,pressure_condition,pearson_r,p_value,n_items,metric_type
+base,asch_history_5,-0.4072105818613263,1.5671189174832248e-13,303,pearson_item_difficulty
+base,authoritative_bias,-0.36402453242226246,6.320509901640754e-11,303,pearson_item_difficulty
+instruct,asch_history_5,-0.47722018984543996,3.677491605367953e-17,277,pearson_item_difficulty
+instruct,authoritative_bias,-0.46411232210107944,3.3407427535637935e-16,277,pearson_item_difficulty
+instruct_dpo,asch_history_5,-0.44940546721024077,7.160036216224547e-16,291,pearson_item_difficulty
+instruct_dpo,authoritative_bias,-0.37503859506164383,3.763934402765641e-11,291,pearson_item_difficulty
+instruct_sft,asch_history_5,-0.3931317026108943,1.5938497341529456e-11,273,pearson_item_difficulty
+instruct_sft,authoritative_bias,-0.38871609751863323,2.3673839250517252e-11,275,pearson_item_difficulty
+think,asch_history_5,-0.4565954072215899,9.201129559704514e-21,376,pearson_item_difficulty
+think,authoritative_bias,-0.4555807797111503,1.1473346015089483e-20,376,pearson_item_difficulty
+think_sft,asch_history_5,-0.45815373553238947,9.358361795866697e-21,373,pearson_item_difficulty
+think_sft,authoritative_bias,-0.4334460912903762,1.6222689716858292e-18,373,pearson_item_difficulty

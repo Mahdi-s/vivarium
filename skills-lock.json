@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "skills": {
+    "pretty-mermaid": {
+      "source": "imxv/pretty-mermaid-skills",
+      "sourceType": "github",
+      "computedHash": "7c490ca8cac54a6038dcf31cb5f5472ff1c982e7352763ebb54e5387349529a6"
+    },
+    "read-arxiv-paper": {
+      "source": "karpathy/nanochat",
+      "sourceType": "github",
+      "computedHash": "fbfe8363abc18db544f627d00a69078f2371f2c272c480c2e83d065fc6588b02"
+    },
+    "research-paper-writer": {
+      "source": "ailabs-393/ai-labs-claude-skills",
+      "sourceType": "github",
+      "computedHash": "67be14e704ff0c2972e4fcfd164bffa4504898590ed43276d6ada1a376934748"
+    }
+  }
+}

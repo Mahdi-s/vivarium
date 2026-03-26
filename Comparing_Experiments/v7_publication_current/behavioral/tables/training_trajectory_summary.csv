@@ -1,0 +1,13 @@
+variant,pressure_condition,truth_override_rate
+base,asch_history_5,0.5813953488372093
+base,authoritative_bias,0.5921205098493627
+instruct,asch_history_5,0.4772234273318872
+instruct,authoritative_bias,0.5304347826086957
+instruct_sft,asch_history_5,0.6906019007391764
+instruct_sft,authoritative_bias,0.5194942044257113
+instruct_dpo,asch_history_5,0.44111570247933884
+instruct_dpo,authoritative_bias,0.5281837160751566
+think,asch_history_5,0.5191717791411042
+think,authoritative_bias,0.5359877488514548
+think_sft,asch_history_5,0.5026737967914439
+think_sft,authoritative_bias,0.5168970814132104

@@ -44,7 +44,7 @@ def extract_code_manually(project_root: Path) -> str:
     
     code_parts = []
     code_parts.append("=" * 80 + "\n")
-    code_parts.append("SOURCE CODE FROM src/aam/ (Manual Extraction)\n")
+    code_parts.append("SOURCE CODE FROM src/vivarium/ (Manual Extraction)\n")
     code_parts.append("=" * 80 + "\n\n")
     
     # Walk through src/ directory
@@ -77,7 +77,7 @@ def get_documentation_sections() -> str:
 VIVARIUM - COMPREHENSIVE CODE DOCUMENTATION
 ================================================================================
 
-This document contains all source code from src/aam/ along with detailed
+This document contains all source code from src/vivarium/ along with detailed
 documentation about data structures, persistence mechanisms, retrieval methods,
 and post-simulation analysis tools.
 
@@ -470,10 +470,11 @@ Each line is a JSON object:
 SECTION 4: PERSISTENCE MECHANISMS
 ================================================================================
 
-1. TraceDb Class (src/aam/persistence.py):
+1. TraceDb Class (src/vivarium/persistence.py):
    - SQLite database wrapper for trace events and metadata
    - Methods:
-     * init_schema(): Creates all tables and indexes
+     * init_schema(): Creates core (experiment-agnostic) tables and indexes
+     * init_conformity_schema(): Creates Olmo conformity (conformity_*) tables and indexes
      * insert_run(meta): Inserts run metadata
      * append_trace(event): Appends trace event
      * insert_message(...): Inserts message
@@ -483,7 +484,7 @@ SECTION 4: PERSISTENCE MECHANISMS
      * insert_merkle_log(...): Logs Merkle tree entry
      * fetch_activation_metadata(...): Queries activation metadata
 
-2. CaptureContext Class (src/aam/interpretability.py):
+2. CaptureContext Class (src/vivarium/interpretability.py):
    - Buffers activations during model inference
    - Commits activations based on action decision
    - Flushes to safetensors files per time step
@@ -491,12 +492,12 @@ SECTION 4: PERSISTENCE MECHANISMS
    - Embeds metadata in safetensors headers
    - Indexes activations in activation_metadata table
 
-3. Export Functions (src/aam/export.py):
+3. Export Functions (src/vivarium/export.py):
    - export_trace_to_parquet(): Exports trace events to Parquet
    - export_messages_to_parquet(): Exports messages to Parquet
    - export_table_to_parquet(): Generic Parquet export for any table
 
-4. Probe Persistence (src/aam/experiments/olmo_conformity/probes.py):
+4. Probe Persistence (src/vivarium/experiments/olmo_conformity/probes.py):
    - train_probe_from_captured_activations(): Trains probe, saves weights as safetensors
    - compute_and_store_probe_projections_for_trials(): Computes and stores projections
    - Probe weights stored in artifacts/ directory
@@ -537,7 +538,7 @@ SECTION 5: RETRIEVAL MECHANISMS
 SECTION 6: POST-SIMULATION ANALYSIS
 ================================================================================
 
-ANALYTICS MODULES (src/aam/analytics/):
+ANALYTICS MODULES (src/vivarium/analytics/):
 ----------------------------------------
 
 1. behavioral.py:
@@ -573,7 +574,7 @@ ANALYTICS MODULES (src/aam/analytics/):
 PROBE TRAINING AND PROJECTION:
 -------------------------------
 
-Location: src/aam/experiments/olmo_conformity/probes.py
+Location: src/vivarium/experiments/olmo_conformity/probes.py
 
 Process:
 1. capture_probe_dataset_to_db(): Runs model over labeled dataset, captures activations
@@ -585,7 +586,7 @@ Process:
 VECTOR ANALYSIS:
 ----------------
 
-Location: src/aam/experiments/olmo_conformity/vector_analysis.py
+Location: src/vivarium/experiments/olmo_conformity/vector_analysis.py
 
 Functions:
 - run_truth_social_vector_analysis(): Complete workflow for truth vs social vector analysis
@@ -596,7 +597,7 @@ Functions:
 INTERVENTION ANALYSIS:
 ----------------------
 
-Location: src/aam/experiments/olmo_conformity/intervention.py
+Location: src/vivarium/experiments/olmo_conformity/intervention.py
 
 Process:
 1. Load social probe vector
@@ -609,7 +610,7 @@ Process:
 LOGIT LENS ANALYSIS:
 --------------------
 
-Location: src/aam/experiments/olmo_conformity/logit_lens.py
+Location: src/vivarium/experiments/olmo_conformity/logit_lens.py
 
 Process:
 1. For each trial, extract logits at each layer
@@ -620,7 +621,7 @@ Process:
 JUDGE EVAL SCORING:
 --------------------
 
-Location: src/aam/experiments/olmo_conformity/judgeval_scorers.py
+Location: src/vivarium/experiments/olmo_conformity/judgeval_scorers.py
 
 Scorers:
 - ConformityScorer: Detects sycophancy and conformity patterns (0-1 scale)
@@ -636,7 +637,7 @@ Process:
 ORCHESTRATION:
 --------------
 
-Location: src/aam/experiments/olmo_conformity/orchestration.py
+Location: src/vivarium/experiments/olmo_conformity/orchestration.py
 
 Function: run_full_experiment(config)
 - Coordinates entire experiment pipeline
@@ -755,7 +756,7 @@ def main():
     full_documentation = f"""{doc_sections}
 
 ================================================================================
-SECTION 8: SOURCE CODE FROM src/aam/
+SECTION 8: SOURCE CODE FROM src/vivarium/
 ================================================================================
 
 The following section contains all source code extracted from the src/ directory

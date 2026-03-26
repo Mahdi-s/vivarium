@@ -1,0 +1,25 @@
+variant,family,k_conditions,n_subjects,conditions,Q_stat,df,p_value
+base,tone,4,2389,Unanimous Plain; Unanimous Neutral; Unanimous Confident; Unanimous Uncertain,10.996,3,0.0117
+base,mitigation,2,2394,Asch: Devil's Advocate; Diverse Plain,6.789,1,0.0092
+base,authority,3,2343,Authoritative Bias; Authority: Trust; Authority: Trust+DA,30.288,2,0.0
+base,peer_full,7,2345,Asch (5 Confederates); Unanimous Plain; Unanimous Neutral; Unanimous Confident; Unanimous Uncertain; Diverse Plain; Asch: Devil's Advocate,93.233,6,0.0
+instruct,tone,4,2383,Unanimous Plain; Unanimous Neutral; Unanimous Confident; Unanimous Uncertain,26.06,3,0.0
+instruct,mitigation,2,2393,Asch: Devil's Advocate; Diverse Plain,1.0,1,0.3173
+instruct,authority,3,2318,Authoritative Bias; Authority: Trust; Authority: Trust+DA,173.855,2,0.0
+instruct,peer_full,7,2314,Asch (5 Confederates); Unanimous Plain; Unanimous Neutral; Unanimous Confident; Unanimous Uncertain; Diverse Plain; Asch: Devil's Advocate,44.548,6,0.0
+instruct_dpo,tone,4,2375,Unanimous Plain; Unanimous Neutral; Unanimous Confident; Unanimous Uncertain,23.526,3,0.0
+instruct_dpo,mitigation,2,2396,Asch: Devil's Advocate; Diverse Plain,1.032,1,0.3097
+instruct_dpo,authority,3,2328,Authoritative Bias; Authority: Trust; Authority: Trust+DA,165.291,2,0.0
+instruct_dpo,peer_full,7,2325,Asch (5 Confederates); Unanimous Plain; Unanimous Neutral; Unanimous Confident; Unanimous Uncertain; Diverse Plain; Asch: Devil's Advocate,37.1,6,0.0
+instruct_sft,tone,4,2388,Unanimous Plain; Unanimous Neutral; Unanimous Confident; Unanimous Uncertain,77.191,3,0.0
+instruct_sft,mitigation,2,2396,Asch: Devil's Advocate; Diverse Plain,2.283,1,0.1308
+instruct_sft,authority,3,2307,Authoritative Bias; Authority: Trust; Authority: Trust+DA,208.475,2,0.0
+instruct_sft,peer_full,7,2308,Asch (5 Confederates); Unanimous Plain; Unanimous Neutral; Unanimous Confident; Unanimous Uncertain; Diverse Plain; Asch: Devil's Advocate,238.439,6,0.0
+think,tone,4,2360,Unanimous Plain; Unanimous Neutral; Unanimous Confident; Unanimous Uncertain,4.589,3,0.2045
+think,mitigation,2,2379,Asch: Devil's Advocate; Diverse Plain,8.117,1,0.0044
+think,authority,3,2286,Authoritative Bias; Authority: Trust; Authority: Trust+DA,76.655,2,0.0
+think,peer_full,7,2244,Asch (5 Confederates); Unanimous Plain; Unanimous Neutral; Unanimous Confident; Unanimous Uncertain; Diverse Plain; Asch: Devil's Advocate,68.44,6,0.0
+think_sft,tone,4,2345,Unanimous Plain; Unanimous Neutral; Unanimous Confident; Unanimous Uncertain,1.877,3,0.5984
+think_sft,mitigation,2,2365,Asch: Devil's Advocate; Diverse Plain,9.96,1,0.0016
+think_sft,authority,3,2295,Authoritative Bias; Authority: Trust; Authority: Trust+DA,91.783,2,0.0
+think_sft,peer_full,7,2256,Asch (5 Confederates); Unanimous Plain; Unanimous Neutral; Unanimous Confident; Unanimous Uncertain; Diverse Plain; Asch: Devil's Advocate,68.682,6,0.0
