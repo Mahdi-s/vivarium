@@ -165,7 +165,7 @@ We evaluate four OLMo-3-7B checkpoints along the post-training pipeline, listed 
     \item \textbf{Stage 3 --- Instruct} (\texttt{allenai/OLMo-3-7B-Instruct}): final checkpoint after reinforcement learning with verifiable rewards (RLVR).
 \end{itemize}
 
-The OLMo-3 family also includes chain-of-thought (think) variants. Initial data collection used an insufficient token budget (\texttt{max\_new\_tokens}=256), truncating reasoning traces. We reran the 7B think variant with \texttt{max\_new\_tokens}=2{,}048 (average output: 5{,}989 characters), collecting 210 items across 4 core conditions at $T\!=\!0.0$ (837 trials). Preliminary results are reported in \S\ref{sec:think}.
+The OLMo-3 family also includes chain-of-thought (think) variants. We ran the 7B think variant collecting 210 items across 4 core conditions at $T\!=\!0.0$ (837 trials). Preliminary results are reported in \S\ref{sec:think}.
 
 \subsection{Experimental Conditions}
 \label{sec:conditions}
@@ -205,7 +205,7 @@ Evaluation items are drawn from 8 domains: ARC~\citep{clark2018arc} (science rea
 
 \subsection{Metrics}
 
-Let $Y^{(c)} \in \{0,1\}$ denote correctness under control and $Y^{(p)}$ under pressure. Let $W \in \{0,1\}$ denote wrong-answer endorsement as determined by a post-hoc LLM judge (multi-model ensemble: Qwen, Gemma 1b/12b, GPT-o3-20b).
+Let $Y^{(c)} \in \{0,1\}$ denote correctness under control and $Y^{(p)}$ under pressure. Let $W \in \{0,1\}$ denote wrong-answer endorsement as determined by a post-hoc LLM judge (multi-model ensemble: Qwen2.5-1.5B/7B, Gemma-2-2B/9B, GPT-4o).
 
 \begin{align*}
 \text{Truth Override} &= P(Y^{(p)}\!=\!0 \mid Y^{(c)}\!=\!1) \\
@@ -242,12 +242,12 @@ We apply McNemar's test with Yates' continuity correction (Holm-Bonferroni corre
     \label{tab:pooled_error}
 \end{table}
 
-The training trajectory reveals opposing forces (Figure~\ref{fig:or}). Following the true pipeline chronology (Base $\to$ SFT $\to$ DPO $\to$ Instruct), control error rates decrease monotonically ($0.726 \to 0.677 \to 0.657 \to 0.671$), but conformity susceptibility diverges dramatically: SFT massively amplifies the McNemar OR from 4.76 to 7.68, DPO partially reverses this to 5.13, and the final RLVR stage produces a slight relapse to 5.98.
+The training trajectory reveals opposing forces (Figure~\ref{fig:or}). Following the true pipeline chronology (Base $\to$ SFT $\to$ DPO $\to$ Instruct), control error rates decrease overall compared to base ($0.726 \to 0.677 \to 0.657 \to 0.671$), but conformity susceptibility diverges dramatically: SFT massively amplifies the McNemar OR from 4.76 to 7.68, DPO partially reverses this to 5.13, and the final RLVR stage produces a slight relapse to 5.98.
 
 \begin{figure}[t]
     \centering
     \includegraphics[width=\textwidth]{fig2_conformity_or.pdf}
-    \caption{McNemar odds ratios across 5 pressure conditions, pooled over 6 temperatures. Values above the dashed line ($\text{OR}=1$) indicate significant conformity. SFT consistently amplifies; DPO shows the lowest ORs among instruct-family variants. Note: condition-specific ORs here may differ from pooled values in Table~\ref{tab:pooled_error}.}
+    \caption{McNemar odds ratios across 5 pressure conditions, pooled over 6 temperatures. Values above the dashed line ($\text{OR}=1$) indicate significant conformity. SFT consistently amplifies; DPO shows the lowest ORs among instruct-family variants.}
     \label{fig:or}
 \end{figure}
 
@@ -339,7 +339,7 @@ Mathematical reasoning shows a structurally different response to social pressur
 \section{Standard Mitigations Fail}
 \label{sec:mitigation}
 
-\citet{zhu2025conformity} propose devil's advocate (DA) and question distillation (QD) as effective mitigations. Figure~\ref{fig:or} shows both are negligible in our setting: DA and QD McNemar ORs remain high for base (3.51, 2.01), instruct (2.38, 2.00), and SFT (2.95, 2.29). DPO shows the lowest ORs under DA and QD conditions---not because mitigations are especially effective for DPO, but because DPO's baseline conformity is already the lowest in the instruct family (OR\,=\,5.13 under unanimous pressure). The discrepancy with \citet{zhu2025conformity} likely reflects our stronger pressure (unanimous 5-confederate, 6 temperatures) vs.\ their fewer conditions at $T\!=\!0$ only. Note that Figure~\ref{fig:or} plots condition-specific ORs (e.g., unanimous confident only), while Table~\ref{tab:pooled_error} reports pooled values; apparent discrepancies reflect this difference in aggregation level.
+\citet{zhu2025conformity} propose devil's advocate (DA) and question distillation (QD) as effective mitigations. Figure~\ref{fig:or} shows both are negligible in our setting: DA and QD McNemar ORs remain high for base (3.51, 2.01), instruct (2.38, 2.00), and SFT (2.95, 2.29). DPO shows the lowest ORs under DA and QD conditions---not because mitigations are especially effective for DPO, but because DPO's baseline conformity is already the lowest in the instruct family (OR\,=\,5.13 under unanimous pressure). The discrepancy with \citet{zhu2025conformity} likely reflects our stronger pressure (unanimous 5-confederate, 6 temperatures) vs.\ their fewer conditions at $T\!=\!0$ only.
 
 
 %% ============================================================

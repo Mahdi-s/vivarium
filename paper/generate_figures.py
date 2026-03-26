@@ -29,12 +29,12 @@ plt.rcParams.update({
     "axes.spines.right": False,
 })
 
-VARIANT_ORDER = ["Base", "Instruct", "Instruct-SFT", "Instruct-DPO"]
+VARIANT_ORDER = ["Base", "SFT", "DPO", "Instruct"]
 COLORS = {
-    "Base":          "#7f8c8d",  # grey
-    "Instruct":      "#3498db",  # blue
-    "Instruct-SFT":  "#e74c3c",  # red (amplifies)
-    "Instruct-DPO":  "#2ecc71",  # green (mitigates)
+    "Base":      "#7f8c8d",  # grey
+    "SFT":       "#e74c3c",  # red (amplifies)
+    "DPO":       "#2ecc71",  # green (mitigates)
+    "Instruct":  "#3498db",  # blue
 }
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -42,12 +42,13 @@ COLORS = {
 # ═══════════════════════════════════════════════════════════════════════════
 
 # Pooled McNemar OR from the analysis (all 6 temperatures)
+# Unan. Confident values match Table 2 exactly; other conditions from per-condition analysis
 conditions = ["Unan.\nConfident", "Auth.\nBias", "Auth.\nTrust", "Devil's\nAdvocate", "Question\nDistill."]
 or_data = {
-    "Base":          [3.15, 1.58, 1.75, 3.51, 2.01],
-    "Instruct":      [5.58, 3.65, 1.67, 2.38, 2.00],
-    "Instruct-SFT":  [5.79, 2.01, 1.89, 2.95, 2.29],
-    "Instruct-DPO":  [1.23, 3.28, 1.85, 1.01, 1.02],
+    "Base":      [4.76, 1.58, 1.75, 3.51, 2.01],
+    "SFT":       [7.68, 2.01, 1.89, 2.95, 2.29],
+    "DPO":       [5.13, 3.28, 1.85, 1.01, 1.02],
+    "Instruct":  [5.98, 3.65, 1.67, 2.38, 2.00],
 }
 
 fig, ax = plt.subplots(figsize=(5.5, 2.5))
@@ -70,26 +71,25 @@ ax.axhline(y=1.0, color="#bbb", linewidth=0.8, linestyle="--", zorder=0)
 ax.set_ylabel("McNemar Odds Ratio")
 ax.set_xticks(x)
 ax.set_xticklabels(conditions)
-ax.set_ylim(0, 7.4)
+ax.set_ylim(0, 9.5)
 # Legend outside the plot area, below title, to avoid any bar overlap
 ax.legend(loc="upper right", ncol=2, frameon=True, fancybox=False,
           edgecolor="#ddd", facecolor="white", framealpha=0.85, fontsize=6,
           handlelength=0.7, handletextpad=0.3, borderpad=0.2, columnspacing=0.4,
-          bbox_to_anchor=(1.0, 0.75))
+          bbox_to_anchor=(1.0, 0.85))
 ax.set_title("Conformity susceptibility across the post-training pipeline", fontsize=10, pad=8)
-ax.set_ylim(0, 7.8)
 
-# SFT arrow: text at very top-left, arrow down to the RED (SFT) bar
-sft_bar_x = x[0] + offsets[2] * width
-ax.annotate("SFT amplifies", xy=(sft_bar_x, 5.85), xytext=(-0.2, 7.3),
-            fontsize=7.5, fontweight="bold", color=COLORS["Instruct-SFT"],
-            arrowprops=dict(arrowstyle="->", color=COLORS["Instruct-SFT"], lw=1.0))
+# SFT arrow: text at top-left, arrow down to the RED (SFT) bar
+sft_bar_x = x[0] + offsets[1] * width
+ax.annotate("SFT amplifies", xy=(sft_bar_x, 7.75), xytext=(-0.2, 9.0),
+            fontsize=7.5, fontweight="bold", color=COLORS["SFT"],
+            arrowprops=dict(arrowstyle="->", color=COLORS["SFT"], lw=1.0))
 
 # DPO arrow: text at top-center, arrow down to the GREEN (DPO) bar
-dpo_bar_x = x[0] + offsets[3] * width
-ax.annotate("DPO mitigates", xy=(dpo_bar_x, 1.35), xytext=(1.2, 7.3),
-            fontsize=7.5, fontweight="bold", color=COLORS["Instruct-DPO"],
-            arrowprops=dict(arrowstyle="->", color=COLORS["Instruct-DPO"], lw=1.0))
+dpo_bar_x = x[0] + offsets[2] * width
+ax.annotate("DPO mitigates", xy=(dpo_bar_x, 5.25), xytext=(1.2, 9.0),
+            fontsize=7.5, fontweight="bold", color=COLORS["DPO"],
+            arrowprops=dict(arrowstyle="->", color=COLORS["DPO"], lw=1.0))
 
 fig.savefig("paper/figures/fig2_conformity_or.pdf")
 fig.savefig("paper/figures/fig2_conformity_or.png")
@@ -107,10 +107,10 @@ fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(5.5, 2.8),
 # ── Left panel: Tc distribution as stacked horizontal bars ──
 tc_data = {
     # pct of conforming items at each Tc threshold
-    "Base":          [53.3, 13.6, 10.7, 8.7, 7.7, 5.9],
-    "Instruct":      [54.1, 10.4,  8.4, 7.4, 11.2, 8.4],
-    "Instruct-SFT":  [61.8, 10.0,  7.8, 6.7,  7.3, 6.4],
-    "Instruct-DPO":  [46.1, 10.5,  8.6, 8.9, 12.1, 13.8],
+    "Base":      [53.3, 13.6, 10.7, 8.7, 7.7, 5.9],
+    "SFT":       [61.8, 10.0,  7.8, 6.7,  7.3, 6.4],
+    "DPO":       [46.1, 10.5,  8.6, 8.9, 12.1, 13.8],
+    "Instruct":  [54.1, 10.4,  8.4, 7.4, 11.2, 8.4],
 }
 temps = ["0.0", "0.2", "0.4", "0.6", "0.8", "1.0"]
 temp_colors = ["#2c3e50", "#34495e", "#5d6d7e", "#85929e", "#aeb6bf", "#d5d8dc"]
@@ -139,8 +139,9 @@ ax1.legend(handles=tc_legend, loc="upper center", bbox_to_anchor=(0.5, -0.28),
            fontsize=6, frameon=False, ncol=6, handlelength=0.8, columnspacing=0.6)
 
 # ── Right panel: URSP rate + trace-length direction ──
-ursp_rates = [25.9, 17.9, 19.1, 23.8]  # % given conforming
-trace_d = [1.25, -0.35, -0.66, 0.03]   # Cohen's d (positive = longer when conforming)
+# Order: Base, SFT, DPO, Instruct (chronological)
+ursp_rates = [25.9, 19.1, 23.8, 17.9]  # % given conforming
+trace_d = [1.25, -0.66, 0.03, -0.35]   # Cohen's d (positive = longer when conforming)
 
 bars = ax2.bar(np.arange(4), ursp_rates, color=[COLORS[v] for v in VARIANT_ORDER],
                edgecolor="white", linewidth=0.5, width=0.6)
@@ -159,7 +160,7 @@ for i, (bar, d_val) in enumerate(zip(bars, trace_d)):
              f"{ursp_rates[i]:.1f}%", ha="center", va="bottom", fontsize=7)
 
 ax2.set_xticks(np.arange(4))
-ax2.set_xticklabels(["Base", "Inst.", "SFT", "DPO"], fontsize=8)
+ax2.set_xticklabels(["Base", "SFT", "DPO", "Inst."], fontsize=8)
 ax2.set_ylabel("URSP rate (%)")
 ax2.set_ylim(0, 33)
 ax2.set_title("Unfaithful reasoning", fontsize=9, pad=6)
