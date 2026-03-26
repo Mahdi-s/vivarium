@@ -15,8 +15,13 @@
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
 \usepgfplotslibrary{groupplots}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,calc}
 
 \definecolor{darkblue}{rgb}{0, 0, 0.5}
+\definecolor{sftred}{RGB}{231,76,60}
+\definecolor{dpogreen}{RGB}{46,204,113}
+\definecolor{instblue}{RGB}{52,152,219}
+\definecolor{basegrey}{RGB}{127,140,141}
 \hypersetup{colorlinks=true, citecolor=darkblue, linkcolor=darkblue, urlcolor=darkblue}
 
 \graphicspath{{figures/}}
@@ -60,6 +65,62 @@ We make three contributions:
     \item We introduce \emph{Conformity Temperature} ($T_c$), a per-item metric demonstrating that conformity is predominantly deterministic, and release $T_c$ as an open-source evaluation tool for the community (\S\ref{sec:temperature}).
     \item We characterize how prompt format, domain, and mitigation strategies interact with post-training stage, showing that format overwhelms content and standard mitigations fail (\S\ref{sec:format}--\ref{sec:mitigation}).
 \end{enumerate}
+
+\begin{figure}[t]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+    node distance=0.4cm and 0.6cm,
+    stage/.style={rectangle, rounded corners=3pt, draw=#1, fill=#1!10,
+                  minimum height=0.7cm, minimum width=1.6cm, align=center,
+                  font=\footnotesize\bfseries, line width=0.8pt},
+    probe/.style={rectangle, rounded corners=2pt, draw=black!50, fill=white,
+                  minimum height=0.55cm, align=center, font=\scriptsize,
+                  line width=0.5pt},
+    arrow/.style={-{Stealth[length=4pt]}, thick, #1},
+    effect/.style={font=\scriptsize\bfseries, #1},
+]
+
+% Pipeline stages
+\node[stage=basegrey]  (base)    {Base};
+\node[stage=instblue, right=0.7cm of base]  (inst)  {Instruct};
+\node[stage=sftred, right=0.7cm of inst]   (sft)   {SFT};
+\node[stage=dpogreen, right=0.7cm of sft]  (dpo)   {DPO};
+
+% Arrows between stages
+\draw[arrow=basegrey!80]  (base) -- (inst);
+\draw[arrow=instblue!80]  (inst) -- (sft);
+\draw[arrow=sftred!80]    (sft) -- (dpo);
+
+% Conformity effect labels
+\node[effect=instblue, below=0.15cm of $(base.south)!0.5!(inst.south)$] {$\downarrow$ err};
+\node[effect=sftred, below=0.15cm of $(inst.south)!0.5!(sft.south)$]   {$\uparrow$ OR};
+\node[effect=dpogreen, below=0.15cm of $(sft.south)!0.5!(dpo.south)$]  {$\downarrow$ OR};
+
+% Experimental design (below pipeline)
+\node[probe, below=0.9cm of $(inst.south)!0.5!(sft.south)$, minimum width=7.2cm] (design) {%
+    \begin{tabular}{@{}cccc@{}}
+    12 conditions & $\times$ 8 domains & $\times$ 6 temps & $\times$ 400 items
+    \end{tabular}
+};
+\node[font=\scriptsize, above=0.02cm of design.north, anchor=south] {Asch-style conformity paradigm};
+
+% Metrics (below design)
+\node[probe, below=0.35cm of design, minimum width=7.2cm] (metrics) {%
+    \begin{tabular}{@{}ccccc@{}}
+    McNemar OR & \quad $T_c$ & \quad URSP & \quad Trace $\Delta$ & \quad LLM Judge
+    \end{tabular}
+};
+
+% Arrows from pipeline to design
+\draw[arrow=black!40, dashed] ($(base.south)+(0,-0.45)$) -- (design.north -| base);
+\draw[arrow=black!40, dashed] ($(dpo.south)+(0,-0.45)$) -- (design.north -| dpo);
+
+\end{tikzpicture}%
+}
+\caption{Study overview. Four OLMo-3-7B checkpoints sharing identical pretraining are evaluated under 12 Asch-style conformity conditions. SFT amplifies conformity (higher McNemar OR); DPO partially mitigates it.}
+\label{fig:pipeline}
+\end{figure}
 
 
 %% ============================================================
@@ -173,11 +234,14 @@ We apply McNemar's test (Holm-Bonferroni corrected) for paired pressure-vs.-cont
     \label{tab:pooled_error}
 \end{table}
 
-The training trajectory reveals opposing forces:
-\begin{equation*}
-\underset{0.726}{\text{base}} \to \underset{0.671}{\text{instruct}} \to \underset{0.677}{\text{SFT}\uparrow} \to \underset{0.657}{\text{DPO}\downarrow}
-\end{equation*}
-where values are control error rates. SFT slightly \emph{increases} error while DPO decreases it---but the conformity effects diverge far more dramatically than the baselines suggest.
+The training trajectory reveals opposing forces (Figure~\ref{fig:or}). Control error rates shift modestly ($0.726 \to 0.671 \to 0.677 \to 0.657$), but conformity susceptibility diverges dramatically: SFT amplifies the McNemar OR from 5.98 to 7.68, while DPO drops it to 5.13.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\textwidth]{fig2_conformity_or.pdf}
+    \caption{McNemar odds ratios across 5 pressure conditions, pooled over 6 temperatures. Values above the dashed line ($\text{OR}=1$) indicate significant conformity. SFT consistently amplifies; DPO neutralizes peer pressure and mitigations (DA, QD approach OR\,$\approx$\,1).}
+    \label{fig:or}
+\end{figure}
 
 \paragraph{The SFT Anomaly.}
 Despite nearly identical control accuracy, Instruct-SFT shows dramatically amplified conformity:
@@ -200,15 +264,7 @@ Instruct-DPO consistently shows the lowest pressure-induced error rates and the 
 \section{Format Trumps Content}
 \label{sec:format}
 
-\subsection{Unanimity Overwhelms Confidence}
-
-Classical social psychology emphasizes that \emph{how} influence is expressed matters for persuasion. For language models, we find that the \emph{structural format} of pressure dominates its \emph{epistemic content}.
-
-Cochran's Q tests within the tone family (unanimous plain vs.\ neutral vs.\ confident vs.\ uncertain) are significant for all four variants ($p \leq 0.002$), with Instruct-SFT showing the most extreme sensitivity ($Q = 77.19$). However, the magnitude of tone differences is modest compared to the overwhelming effect of unanimity itself: all tones produce high conformity when confederates are unanimous. The structural signal of consensus---not its epistemic quality---drives the effect.
-
-\subsection{The Structured-Format Effect}
-
-The most striking format effect involves the classical Asch condition (5 confederates in free-text format) vs.\ the structured format (confederates presented with answer options), following the paradigm of \citet{zhu2025conformity}:
+Cochran's Q tests within the tone family (plain, neutral, confident, uncertain) are significant for all variants ($p \leq 0.002$; SFT: $Q = 77.19$), but the magnitude of tone differences is modest. The structural signal of consensus---not its epistemic quality---drives the effect. The most striking format contrast involves the classical Asch condition (free-text) vs.\ structured format (answer options;~\citealp{zhu2025conformity}):
 
 \begin{table}[t]
     \centering
@@ -225,11 +281,7 @@ The most striking format effect involves the classical Asch condition (5 confede
     \label{tab:format_effect}
 \end{table}
 
-The entire conformity effect---from non-significant to $+$22 percentage points---is driven by \emph{how the pressure is formatted}, not its content. This has practical implications: seemingly benign UI changes to how peer opinions are displayed could dramatically alter LLM conformity behavior.
-
-\subsection{Authority Framing}
-
-Authority-based pressure shows a clear escalation for instruction-tuned models. The instruct variant's error rate jumps from 0.676 (authoritative bias) to 0.801 (authority trust, $+$12.5pp) when explicit trust framing is added. Introducing a devil's advocate within the authority condition does not meaningfully reduce the effect (0.823), suggesting that once authority framing is established, dissent alone is insufficient.
+The entire conformity effect---non-significant to $+$22pp---is driven by \emph{format}, not content: seemingly benign UI changes to how peer opinions are displayed dramatically alter conformity. Authority-based pressure shows a clear escalation: instruct error jumps from 0.676 (authoritative bias) to 0.801 (authority trust, $+$12.5pp); adding a devil's advocate does not help (0.823).
 
 
 %% ============================================================
@@ -255,17 +307,17 @@ A common objection is that conformity might be a sampling artifact---the model `
     \label{tab:tc}
 \end{table}
 
-For both base and instruct, \textbf{53--54\% of conforming items already conform at $T\!=\!0.0$} (greedy decoding). These items produce the wrong answer \emph{deterministically} under social pressure---the model's single most likely token sequence is the sycophantic one. This definitively rules out sampling noise as the mechanism.
+For both base and instruct, \textbf{53--54\% of conforming items already conform at $T\!=\!0.0$} (greedy decoding, Figure~\ref{fig:tc_ursp} left). SFT pushes this to 61.8\%; DPO pulls it back to 46.1\%. These items produce the wrong answer \emph{deterministically}---the model's single most likely token sequence is the sycophantic one, ruling out sampling noise.
 
-A complementary pattern is ``greedy-only'' conformity: 79--110 items (depending on variant) conform \emph{only} at $T\!=\!0.0$ and resist at all higher temperatures. For these items, the deterministic argmax selects the sycophantic branch, but any stochasticity helps the model escape---indicating near-equal logit-level support for correct and sycophantic answers.
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\textwidth]{fig3_tc_ursp.pdf}
+    \caption{\textbf{Left:} $T_c$ distribution showing where conformity first appears. SFT concentrates conformity at greedy decoding (61.8\% at $T_c\!=\!0$); DPO spreads it across temperatures (46.1\%). \textbf{Right:} URSP rate---the fraction of conforming trials where the model retrieved the correct answer but output the wrong one. Base rationalizes the most (25.9\%); instruct-family models capitulate faster (17.9--23.8\%). Arrows indicate trace-length direction when conforming ($\uparrow$ = longer traces, i.e., rationalization; $\downarrow$ = shorter, i.e., fast capitulation).}
+    \label{fig:tc_ursp}
+\end{figure}
 
-We release the $T_c$ computation pipeline as an open-source evaluation tool, enabling the community to benchmark conformity susceptibility as a continuous per-item metric rather than a binary population statistic.
-
-\paragraph{Unfaithful Reasoning Under Social Pressure (URSP).}
-We define URSP as the rate at which a model retrieves the correct answer in its generation but ultimately outputs the wrong (conforming) answer. Among conforming trials, URSP rates are: base 25.9\% [24.9, 26.9], instruct 17.9\% [16.9, 18.9], instruct-SFT 19.1\% [18.2, 20.0], and instruct-DPO 23.8\% [22.6, 24.9] (95\% BCa CIs). The model \emph{knows the truth}---it appears in the generated text---but rationalizes away from it under social pressure. This is not mere ignorance; it is active epistemic betrayal.
-
-\paragraph{Trace Length Signature.}
-Instruct-family models produce \emph{shorter} traces when conforming (instruct: 257 vs.\ 341 tokens, $d\!=\!-0.35$; SFT: 169 vs.\ 290 tokens, $d\!=\!-0.66$), suggesting ``fast capitulation''---the model agrees quickly without deliberation. Base models show the opposite pattern: \emph{longer} traces when conforming (591 vs.\ 487 tokens, $d\!=\!1.25$), suggesting extended rationalization of the wrong answer. DPO shows no significant difference ($d\!=\!0.03$).
+\paragraph{Unfaithful Reasoning (URSP).}
+We define URSP as the rate at which a model retrieves the correct answer but ultimately outputs the wrong one. Among conforming trials (Figure~\ref{fig:tc_ursp} right), base shows the highest URSP (25.9\% [24.9, 26.9]) with \emph{longer} traces when conforming ($d\!=\!1.25$, rationalization), while instruct-family models show lower URSP (17.9--23.8\%) with \emph{shorter} traces ($d\!=\!-0.35$ to $-0.66$, fast capitulation). We release $T_c$ as an open-source evaluation tool.
 
 
 %% ============================================================
@@ -279,30 +331,7 @@ Mathematical reasoning shows a structurally different response to social pressur
 \section{Standard Mitigations Fail}
 \label{sec:mitigation}
 
-Classical social psychology established that a single dissenting voice dramatically reduces conformity~\citep{asch1956}. \citet{zhu2025conformity} propose devil's advocate prompting and question distillation as effective mitigations for LLM conformity. We test both:
-\begin{itemize}
-    \item \textbf{Devil's Advocate (DA):} One confederate disagrees with the majority.
-    \item \textbf{Question Distillation (QD):} The wrong answer is summarized rather than repeated verbatim.
-\end{itemize}
-
-\begin{table}[t]
-    \centering
-    \small
-    \begin{tabular}{lrrrrl}
-        \toprule
-        Variant & Unan.\ Err & DA Err & QD Err & DA OR & Effect \\
-        \midrule
-        Instruct-SFT & 0.919 & 0.919 & 0.908 & 2.95 & Negligible \\
-        Instruct & 0.935 & 0.893 & 0.910 & 2.38 & Negligible \\
-        Base & 0.945 & 0.899 & 0.917 & 3.51 & Negligible \\
-        Instruct-DPO & 0.895 & 0.895 & 0.896 & 1.01 & \textbf{Already immune} \\
-        \bottomrule
-    \end{tabular}
-    \caption{Mitigation effectiveness. DA OR is the McNemar odds ratio for the devil's advocate condition (lower = less conformity; 1.0 = no effect). DPO is already immune to DA/QD pressure (OR\,$\approx$\,1); other variants show significant conformity regardless of mitigation.}
-    \label{tab:mitigation}
-\end{table}
-
-Neither strategy provides meaningful relief, contradicting \citet{zhu2025conformity} who report both as effective. The discrepancy likely reflects scale: we test under unanimous 5-confederate pressure across 6 temperatures, while they used fewer conditions at $T\!=\!0$ only. The prompt-level interventions easiest to deploy in production are insufficient against strong peer pressure.
+\citet{zhu2025conformity} propose devil's advocate (DA) and question distillation (QD) as effective mitigations. Figure~\ref{fig:or} shows both are negligible in our setting: DA and QD McNemar ORs remain high for base (3.51, 2.01), instruct (2.38, 2.00), and SFT (2.95, 2.29). The exception is DPO, which is \emph{already immune}---DA and QD both yield OR\,$\approx$\,1.0, not because mitigations work but because DPO does not conform to begin with. The discrepancy with \citet{zhu2025conformity} likely reflects our stronger pressure (unanimous 5-confederate, 6 temperatures) vs.\ their fewer conditions at $T\!=\!0$ only.
 
 
 %% ============================================================
