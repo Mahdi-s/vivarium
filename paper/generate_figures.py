@@ -71,19 +71,23 @@ ax.set_ylabel("McNemar Odds Ratio")
 ax.set_xticks(x)
 ax.set_xticklabels(conditions)
 ax.set_ylim(0, 7.4)
-# Small transparent legend in upper-right corner, away from the tall left bars
-ax.legend(loc="upper right", ncol=1, frameon=True, fancybox=False,
-          edgecolor="#ccc", facecolor="white", framealpha=0.6, fontsize=7,
-          handlelength=1.0, handletextpad=0.4, borderpad=0.3)
+# Legend outside the plot area, below title, to avoid any bar overlap
+ax.legend(loc="upper right", ncol=2, frameon=True, fancybox=False,
+          edgecolor="#ddd", facecolor="white", framealpha=0.85, fontsize=6,
+          handlelength=0.7, handletextpad=0.3, borderpad=0.2, columnspacing=0.4,
+          bbox_to_anchor=(1.0, 0.75))
 ax.set_title("Conformity susceptibility across the post-training pipeline", fontsize=10, pad=8)
-# SFT arrow: point to the RED (SFT) bar in Unan.Confident group
-# SFT bar x-position = x[0] + offsets[2]*width = 0 + 0.5*0.19 = 0.095
-ax.annotate("SFT amplifies", xy=(0.095, 5.85), xytext=(1.5, 6.8),
+ax.set_ylim(0, 7.8)
+
+# SFT arrow: text at very top-left, arrow down to the RED (SFT) bar
+sft_bar_x = x[0] + offsets[2] * width
+ax.annotate("SFT amplifies", xy=(sft_bar_x, 5.85), xytext=(-0.2, 7.3),
             fontsize=7.5, fontweight="bold", color=COLORS["Instruct-SFT"],
             arrowprops=dict(arrowstyle="->", color=COLORS["Instruct-SFT"], lw=1.0))
-# DPO arrow: point to the GREEN (DPO) bar in Unan.Confident group, text ABOVE
-# DPO bar x-position = x[0] + offsets[3]*width = 0 + 1.5*0.19 = 0.285
-ax.annotate("DPO mitigates", xy=(0.285, 1.35), xytext=(1.5, 6.2),
+
+# DPO arrow: text at top-center, arrow down to the GREEN (DPO) bar
+dpo_bar_x = x[0] + offsets[3] * width
+ax.annotate("DPO mitigates", xy=(dpo_bar_x, 1.35), xytext=(1.2, 7.3),
             fontsize=7.5, fontweight="bold", color=COLORS["Instruct-DPO"],
             arrowprops=dict(arrowstyle="->", color=COLORS["Instruct-DPO"], lw=1.0))
 
@@ -128,11 +132,11 @@ ax1.set_xlabel("% of conforming items")
 ax1.set_title("$T_c$ distribution", fontsize=9, pad=6)
 ax1.invert_yaxis()
 
-# Legend below the left panel so it doesn't overlap bars
+# Legend below the left panel, anchored to the axes
 from matplotlib.patches import Patch
 tc_legend = [Patch(facecolor=c, label=f"$T_c$={t}") for c, t in zip(temp_colors, temps)]
-fig.legend(handles=tc_legend, loc="lower center", fontsize=6.5, frameon=False,
-           ncol=6, bbox_to_anchor=(0.32, 0.02))
+ax1.legend(handles=tc_legend, loc="upper center", bbox_to_anchor=(0.5, -0.15),
+           fontsize=6, frameon=False, ncol=6, handlelength=0.8, columnspacing=0.6)
 
 # ── Right panel: URSP rate + trace-length direction ──
 ursp_rates = [25.9, 17.9, 19.1, 23.8]  # % given conforming
