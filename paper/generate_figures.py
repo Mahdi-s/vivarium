@@ -70,13 +70,14 @@ ax.axhline(y=1.0, color="#bbb", linewidth=0.8, linestyle="--", zorder=0)
 ax.set_ylabel("McNemar Odds Ratio")
 ax.set_xticks(x)
 ax.set_xticklabels(conditions)
-ax.set_ylim(0, 6.8)
-ax.legend(loc="upper left", ncol=2, frameon=False)
+ax.set_ylim(0, 7.2)
+ax.legend(loc="upper right", ncol=2, frameon=True, fancybox=False,
+          edgecolor="#ddd", facecolor="white", framealpha=0.95)
 ax.set_title("Conformity susceptibility across the post-training pipeline", fontsize=10, pad=8)
-ax.annotate("SFT amplifies", xy=(0.15, 5.79), xytext=(0.6, 6.3),
+ax.annotate("SFT amplifies", xy=(0.15, 5.85), xytext=(1.4, 6.6),
             fontsize=7, color=COLORS["Instruct-SFT"],
             arrowprops=dict(arrowstyle="->", color=COLORS["Instruct-SFT"], lw=0.8))
-ax.annotate("DPO mitigates", xy=(-0.05, 1.23), xytext=(0.8, 1.8),
+ax.annotate("DPO mitigates", xy=(-0.05, 1.35), xytext=(1.4, 2.2),
             fontsize=7, color=COLORS["Instruct-DPO"],
             arrowprops=dict(arrowstyle="->", color=COLORS["Instruct-DPO"], lw=0.8))
 
@@ -90,7 +91,8 @@ plt.close(fig)
 # Figure 3: Combined — Tc distribution (left) + URSP & trace-length (right)
 # ═══════════════════════════════════════════════════════════════════════════
 
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(5.5, 2.4), gridspec_kw={"wspace": 0.4})
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(5.5, 2.8),
+                               gridspec_kw={"wspace": 0.4, "bottom": 0.22})
 
 # ── Left panel: Tc distribution as stacked horizontal bars ──
 tc_data = {
@@ -120,11 +122,11 @@ ax1.set_xlabel("% of conforming items")
 ax1.set_title("$T_c$ distribution", fontsize=9, pad=6)
 ax1.invert_yaxis()
 
-# Compact legend for temperature bins
+# Legend below the left panel so it doesn't overlap bars
 from matplotlib.patches import Patch
-tc_legend = [Patch(facecolor=c, label=f"$T_c$={t}") for c, t in zip(temp_colors[:3], temps[:3])]
-tc_legend.append(Patch(facecolor=temp_colors[4], label="$T_c$≥0.6"))
-ax1.legend(handles=tc_legend, loc="lower right", fontsize=6, frameon=False, ncol=2)
+tc_legend = [Patch(facecolor=c, label=f"$T_c$={t}") for c, t in zip(temp_colors, temps)]
+fig.legend(handles=tc_legend, loc="lower center", fontsize=6.5, frameon=False,
+           ncol=6, bbox_to_anchor=(0.32, 0.02))
 
 # ── Right panel: URSP rate + trace-length direction ──
 ursp_rates = [25.9, 17.9, 19.1, 23.8]  # % given conforming
