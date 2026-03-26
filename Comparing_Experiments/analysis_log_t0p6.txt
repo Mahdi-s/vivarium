@@ -1,0 +1,244 @@
+2026-03-25 01:55:36 [INFO] ============================================================
+2026-03-25 01:55:36 [INFO] EXPANDED CONFORMITY EXPERIMENTS PIPELINE
+2026-03-25 01:55:36 [INFO] ============================================================
+2026-03-25 01:55:36 [INFO] Repo root: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine
+2026-03-25 01:55:36 [INFO] Mode: LOCAL
+2026-03-25 01:55:36 [INFO] Metadata file: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-25 01:55:36 [INFO] Models directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/models
+2026-03-25 01:55:36 [INFO] Runs directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think
+2026-03-25 01:55:36 [INFO] Output directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/Comparing_Experiments
+2026-03-25 01:55:36 [INFO] Mode: model-first
+2026-03-25 01:55:36 [INFO] Phase: trials
+2026-03-25 01:55:36 [INFO] Suite: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think/suite_think_XXXXXX.json
+2026-03-25 01:55:36 [INFO] Memory usage (pipeline start): 26.5 MB
+2026-03-25 01:55:36 [INFO] Set VIVARIUM_HF_CACHE=/Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/models/huggingface_cache
+2026-03-25 01:55:36 [INFO] Set VIVARIUM_ARTIFACTS_DIR=/Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think
+2026-03-25 01:55:36 [INFO] Created/verified models cache directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/models/huggingface_cache
+2026-03-25 01:55:36 [INFO] Created/verified runs directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think
+2026-03-25 01:55:36 [INFO] 
+2026-03-25 01:55:36 [INFO] ============================================================
+2026-03-25 01:55:36 [INFO] PHASE 1: RUNNING EXPERIMENTS
+2026-03-25 01:55:36 [INFO] ============================================================
+2026-03-25 01:55:36 [INFO] 
+2026-03-25 01:55:36 [INFO] ============================================================
+2026-03-25 01:55:36 [INFO] STOPPING AFTER TRIALS (runs-only or phase=trials)
+2026-03-25 01:55:36 [INFO] ============================================================
+2026-03-25 01:55:36 [INFO] Requested: 0 runs
+2026-03-25 01:55:36 [INFO] Completed: 0; Failed: 0; Skipped: 0
+2026-03-25 01:56:26 [INFO] ============================================================
+2026-03-25 01:56:26 [INFO] EXPANDED CONFORMITY EXPERIMENTS PIPELINE
+2026-03-25 01:56:26 [INFO] ============================================================
+2026-03-25 01:56:26 [INFO] Repo root: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine
+2026-03-25 01:56:26 [INFO] Mode: LOCAL
+2026-03-25 01:56:26 [INFO] Metadata file: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-25 01:56:26 [INFO] Models directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/models
+2026-03-25 01:56:26 [INFO] Runs directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think
+2026-03-25 01:56:26 [INFO] Output directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/Comparing_Experiments
+2026-03-25 01:56:26 [INFO] Mode: model-first
+2026-03-25 01:56:26 [INFO] Phase: trials
+2026-03-25 01:56:26 [INFO] Suite: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think/suite_think_XXXXXX.json
+2026-03-25 01:56:26 [INFO] Memory usage (pipeline start): 26.6 MB
+2026-03-25 01:56:26 [INFO] Set VIVARIUM_HF_CACHE=/Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/models/huggingface_cache
+2026-03-25 01:56:26 [INFO] Set VIVARIUM_ARTIFACTS_DIR=/Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think
+2026-03-25 01:56:26 [INFO] Created/verified models cache directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/models/huggingface_cache
+2026-03-25 01:56:26 [INFO] Created/verified runs directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think
+2026-03-25 01:56:26 [INFO] 
+2026-03-25 01:56:26 [INFO] ============================================================
+2026-03-25 01:56:26 [INFO] PHASE 1: RUNNING EXPERIMENTS
+2026-03-25 01:56:26 [INFO] ============================================================
+2026-03-25 01:56:26 [INFO] 
+2026-03-25 01:56:26 [INFO] ============================================================
+2026-03-25 01:56:26 [INFO] STOPPING AFTER TRIALS (runs-only or phase=trials)
+2026-03-25 01:56:26 [INFO] ============================================================
+2026-03-25 01:56:26 [INFO] Requested: 0 runs
+2026-03-25 01:56:26 [INFO] Completed: 0; Failed: 0; Skipped: 0
+2026-03-25 01:56:43 [INFO] ============================================================
+2026-03-25 01:56:43 [INFO] EXPANDED CONFORMITY EXPERIMENTS PIPELINE
+2026-03-25 01:56:43 [INFO] ============================================================
+2026-03-25 01:56:43 [INFO] Repo root: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine
+2026-03-25 01:56:43 [INFO] Mode: LOCAL
+2026-03-25 01:56:43 [INFO] Metadata file: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-25 01:56:43 [INFO] Models directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/models
+2026-03-25 01:56:43 [INFO] Runs directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think
+2026-03-25 01:56:43 [INFO] Output directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/Comparing_Experiments
+2026-03-25 01:56:43 [INFO] Mode: model-first
+2026-03-25 01:56:43 [INFO] Phase: trials
+2026-03-25 01:56:43 [INFO] Suite: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think/suite_think_XXXXXX.json
+2026-03-25 01:56:43 [INFO] Memory usage (pipeline start): 26.5 MB
+2026-03-25 01:56:43 [INFO] Set VIVARIUM_HF_CACHE=/Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/models/huggingface_cache
+2026-03-25 01:56:43 [INFO] Set VIVARIUM_ARTIFACTS_DIR=/Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think
+2026-03-25 01:56:43 [INFO] Created/verified models cache directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/models/huggingface_cache
+2026-03-25 01:56:43 [INFO] Created/verified runs directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think
+2026-03-25 01:56:43 [INFO] 
+2026-03-25 01:56:43 [INFO] ============================================================
+2026-03-25 01:56:43 [INFO] PHASE 1: RUNNING EXPERIMENTS
+2026-03-25 01:56:43 [INFO] ============================================================
+2026-03-25 01:56:43 [INFO] 
+2026-03-25 01:56:43 [INFO] ============================================================
+2026-03-25 01:56:43 [INFO] STOPPING AFTER TRIALS (runs-only or phase=trials)
+2026-03-25 01:56:43 [INFO] ============================================================
+2026-03-25 01:56:43 [INFO] Requested: 0 runs
+2026-03-25 01:56:43 [INFO] Completed: 0; Failed: 0; Skipped: 0
+2026-03-25 01:57:23 [INFO] ============================================================
+2026-03-25 01:57:23 [INFO] EXPANDED CONFORMITY EXPERIMENTS PIPELINE
+2026-03-25 01:57:23 [INFO] ============================================================
+2026-03-25 01:57:23 [INFO] Repo root: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine
+2026-03-25 01:57:23 [INFO] Mode: LOCAL
+2026-03-25 01:57:23 [INFO] Metadata file: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-25 01:57:23 [INFO] Models directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/models
+2026-03-25 01:57:23 [INFO] Runs directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think
+2026-03-25 01:57:23 [INFO] Output directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/Comparing_Experiments
+2026-03-25 01:57:23 [INFO] Mode: model-first
+2026-03-25 01:57:23 [INFO] Phase: trials
+2026-03-25 01:57:23 [INFO] Suite: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think/suite_think_XXXXXX.json
+2026-03-25 01:57:23 [INFO] Memory usage (pipeline start): 26.5 MB
+2026-03-25 01:57:23 [INFO] Set VIVARIUM_HF_CACHE=/Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/models/huggingface_cache
+2026-03-25 01:57:23 [INFO] Set VIVARIUM_ARTIFACTS_DIR=/Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think
+2026-03-25 01:57:23 [INFO] Created/verified models cache directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/models/huggingface_cache
+2026-03-25 01:57:23 [INFO] Created/verified runs directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think
+2026-03-25 01:57:23 [INFO] 
+2026-03-25 01:57:23 [INFO] ============================================================
+2026-03-25 01:57:23 [INFO] PHASE 1: RUNNING EXPERIMENTS
+2026-03-25 01:57:23 [INFO] ============================================================
+2026-03-25 01:57:23 [INFO] 
+2026-03-25 01:57:23 [INFO] ============================================================
+2026-03-25 01:57:23 [INFO] STOPPING AFTER TRIALS (runs-only or phase=trials)
+2026-03-25 01:57:23 [INFO] ============================================================
+2026-03-25 01:57:23 [INFO] Requested: 0 runs
+2026-03-25 01:57:23 [INFO] Completed: 0; Failed: 0; Skipped: 0
+2026-03-25 02:00:00 [INFO] ============================================================
+2026-03-25 02:00:00 [INFO] EXPANDED CONFORMITY EXPERIMENTS PIPELINE
+2026-03-25 02:00:00 [INFO] ============================================================
+2026-03-25 02:00:00 [INFO] Repo root: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine
+2026-03-25 02:00:00 [INFO] Mode: LOCAL
+2026-03-25 02:00:00 [INFO] Metadata file: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-25 02:00:00 [INFO] Models directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/models
+2026-03-25 02:00:00 [INFO] Runs directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think
+2026-03-25 02:00:00 [INFO] Output directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/Comparing_Experiments
+2026-03-25 02:00:00 [INFO] Mode: model-first
+2026-03-25 02:00:00 [INFO] Phase: trials
+2026-03-25 02:00:00 [INFO] Suite: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think/suite_think_XXXXXX.json
+2026-03-25 02:00:00 [INFO] Memory usage (pipeline start): 27.0 MB
+2026-03-25 02:00:00 [INFO] Set VIVARIUM_HF_CACHE=/Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/models/huggingface_cache
+2026-03-25 02:00:00 [INFO] Set VIVARIUM_ARTIFACTS_DIR=/Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think
+2026-03-25 02:00:00 [INFO] Created/verified models cache directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/models/huggingface_cache
+2026-03-25 02:00:00 [INFO] Created/verified runs directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think
+2026-03-25 02:00:00 [INFO] 
+2026-03-25 02:00:00 [INFO] ============================================================
+2026-03-25 02:00:00 [INFO] PHASE 1: RUNNING EXPERIMENTS
+2026-03-25 02:00:00 [INFO] ============================================================
+2026-03-25 02:00:00 [INFO] 
+2026-03-25 02:00:00 [INFO] ============================================================
+2026-03-25 02:00:00 [INFO] STOPPING AFTER TRIALS (runs-only or phase=trials)
+2026-03-25 02:00:00 [INFO] ============================================================
+2026-03-25 02:00:00 [INFO] Requested: 0 runs
+2026-03-25 02:00:00 [INFO] Completed: 0; Failed: 0; Skipped: 0
+2026-03-25 02:02:37 [INFO] ============================================================
+2026-03-25 02:02:37 [INFO] EXPANDED CONFORMITY EXPERIMENTS PIPELINE
+2026-03-25 02:02:37 [INFO] ============================================================
+2026-03-25 02:02:37 [INFO] Repo root: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine
+2026-03-25 02:02:37 [INFO] Mode: LOCAL
+2026-03-25 02:02:37 [INFO] Metadata file: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-25 02:02:37 [INFO] Models directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/models
+2026-03-25 02:02:37 [INFO] Runs directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think
+2026-03-25 02:02:37 [INFO] Output directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/Comparing_Experiments
+2026-03-25 02:02:37 [INFO] Mode: model-first
+2026-03-25 02:02:37 [INFO] Phase: trials
+2026-03-25 02:02:37 [INFO] Suite: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think/suite_think_IbxRCJ
+2026-03-25 02:02:37 [INFO] Memory usage (pipeline start): 27.3 MB
+2026-03-25 02:02:37 [INFO] Set VIVARIUM_HF_CACHE=/Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/models/huggingface_cache
+2026-03-25 02:02:37 [INFO] Set VIVARIUM_ARTIFACTS_DIR=/Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think
+2026-03-25 02:02:37 [INFO] Created/verified models cache directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/models/huggingface_cache
+2026-03-25 02:02:37 [INFO] Created/verified runs directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think
+2026-03-25 02:02:37 [INFO] 
+2026-03-25 02:02:37 [INFO] ============================================================
+2026-03-25 02:02:37 [INFO] PHASE 1: RUNNING EXPERIMENTS
+2026-03-25 02:02:37 [INFO] ============================================================
+2026-03-25 02:02:37 [INFO] think_0.6 already completed, skipping (run_id=27647719...)
+2026-03-25 02:02:37 [INFO] 
+2026-03-25 02:02:37 [INFO] ============================================================
+2026-03-25 02:02:37 [INFO] STOPPING AFTER TRIALS (runs-only or phase=trials)
+2026-03-25 02:02:37 [INFO] ============================================================
+2026-03-25 02:02:37 [INFO] Requested: 1 runs
+2026-03-25 02:02:37 [INFO] Completed: 0; Failed: 0; Skipped: 1
+2026-03-25 02:02:46 [INFO] ============================================================
+2026-03-25 02:02:46 [INFO] EXPANDED CONFORMITY EXPERIMENTS PIPELINE
+2026-03-25 02:02:46 [INFO] ============================================================
+2026-03-25 02:02:46 [INFO] Repo root: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine
+2026-03-25 02:02:46 [INFO] Mode: LOCAL
+2026-03-25 02:02:46 [INFO] Metadata file: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-25 02:02:46 [INFO] Models directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/models
+2026-03-25 02:02:46 [INFO] Runs directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think
+2026-03-25 02:02:46 [INFO] Output directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/Comparing_Experiments
+2026-03-25 02:02:46 [INFO] Mode: model-first
+2026-03-25 02:02:46 [INFO] Phase: trials
+2026-03-25 02:02:46 [INFO] Suite: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think/suite_think_o9b8EL
+2026-03-25 02:02:46 [INFO] Memory usage (pipeline start): 26.7 MB
+2026-03-25 02:02:46 [INFO] Set VIVARIUM_HF_CACHE=/Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/models/huggingface_cache
+2026-03-25 02:02:46 [INFO] Set VIVARIUM_ARTIFACTS_DIR=/Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think
+2026-03-25 02:02:46 [INFO] Created/verified models cache directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/models/huggingface_cache
+2026-03-25 02:02:46 [INFO] Created/verified runs directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think
+2026-03-25 02:02:46 [INFO] 
+2026-03-25 02:02:46 [INFO] ============================================================
+2026-03-25 02:02:46 [INFO] PHASE 1: RUNNING EXPERIMENTS
+2026-03-25 02:02:46 [INFO] ============================================================
+2026-03-25 02:02:46 [INFO] think_0.6 already completed, skipping (run_id=27647719...)
+2026-03-25 02:02:46 [INFO] 
+2026-03-25 02:02:46 [INFO] ============================================================
+2026-03-25 02:02:46 [INFO] STOPPING AFTER TRIALS (runs-only or phase=trials)
+2026-03-25 02:02:46 [INFO] ============================================================
+2026-03-25 02:02:46 [INFO] Requested: 1 runs
+2026-03-25 02:02:46 [INFO] Completed: 0; Failed: 0; Skipped: 1
+2026-03-25 02:03:17 [INFO] ============================================================
+2026-03-25 02:03:17 [INFO] EXPANDED CONFORMITY EXPERIMENTS PIPELINE
+2026-03-25 02:03:17 [INFO] ============================================================
+2026-03-25 02:03:17 [INFO] Repo root: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine
+2026-03-25 02:03:17 [INFO] Mode: LOCAL
+2026-03-25 02:03:17 [INFO] Metadata file: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-25 02:03:17 [INFO] Models directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/models
+2026-03-25 02:03:17 [INFO] Runs directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think
+2026-03-25 02:03:17 [INFO] Output directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/Comparing_Experiments
+2026-03-25 02:03:17 [INFO] Mode: model-first
+2026-03-25 02:03:17 [INFO] Phase: trials
+2026-03-25 02:03:17 [INFO] Suite: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think/suite_think_fK1N5V
+2026-03-25 02:03:17 [INFO] Memory usage (pipeline start): 26.8 MB
+2026-03-25 02:03:17 [INFO] Set VIVARIUM_HF_CACHE=/Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/models/huggingface_cache
+2026-03-25 02:03:17 [INFO] Set VIVARIUM_ARTIFACTS_DIR=/Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think
+2026-03-25 02:03:17 [INFO] Created/verified models cache directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/models/huggingface_cache
+2026-03-25 02:03:17 [INFO] Created/verified runs directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think
+2026-03-25 02:03:17 [INFO] 
+2026-03-25 02:03:17 [INFO] ============================================================
+2026-03-25 02:03:17 [INFO] PHASE 1: RUNNING EXPERIMENTS
+2026-03-25 02:03:17 [INFO] ============================================================
+2026-03-25 02:03:17 [INFO] think_0.6 already completed, skipping (run_id=27647719...)
+2026-03-25 02:03:17 [INFO] 
+2026-03-25 02:03:17 [INFO] ============================================================
+2026-03-25 02:03:17 [INFO] STOPPING AFTER TRIALS (runs-only or phase=trials)
+2026-03-25 02:03:17 [INFO] ============================================================
+2026-03-25 02:03:17 [INFO] Requested: 1 runs
+2026-03-25 02:03:17 [INFO] Completed: 0; Failed: 0; Skipped: 1
+2026-03-25 02:04:35 [INFO] ============================================================
+2026-03-25 02:04:35 [INFO] EXPANDED CONFORMITY EXPERIMENTS PIPELINE
+2026-03-25 02:04:35 [INFO] ============================================================
+2026-03-25 02:04:35 [INFO] Repo root: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine
+2026-03-25 02:04:35 [INFO] Mode: LOCAL
+2026-03-25 02:04:35 [INFO] Metadata file: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-25 02:04:35 [INFO] Models directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/models
+2026-03-25 02:04:35 [INFO] Runs directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think
+2026-03-25 02:04:35 [INFO] Output directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/Comparing_Experiments
+2026-03-25 02:04:35 [INFO] Mode: model-first
+2026-03-25 02:04:35 [INFO] Phase: trials
+2026-03-25 02:04:35 [INFO] Suite: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think/suite_think_fK1N5V
+2026-03-25 02:04:35 [INFO] Memory usage (pipeline start): 26.5 MB
+2026-03-25 02:04:35 [INFO] Set VIVARIUM_HF_CACHE=/Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/models/huggingface_cache
+2026-03-25 02:04:35 [INFO] Set VIVARIUM_ARTIFACTS_DIR=/Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think
+2026-03-25 02:04:35 [INFO] Created/verified models cache directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/models/huggingface_cache
+2026-03-25 02:04:35 [INFO] Created/verified runs directory: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think
+2026-03-25 02:04:35 [INFO] 
+2026-03-25 02:04:35 [INFO] ============================================================
+2026-03-25 02:04:35 [INFO] PHASE 1: RUNNING EXPERIMENTS
+2026-03-25 02:04:35 [INFO] ============================================================
+2026-03-25 02:04:35 [INFO] 
+2026-03-25 02:04:35 [INFO] --- think T=0.6 ---
+2026-03-25 02:04:35 [INFO] Running experiment for think T=0.6...
+2026-03-25 02:04:35 [INFO]   Command: /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/.venv/bin/python3 -m vivarium olmo-conformity --suite-config /var/folders/8t/8s_4yb6s11dcq8_wb1kgxk1m0000gp/T/tmp_6zutnsb.json --runs-dir /Users/mahdithisisnothislaptop/Documents/GitHub/abstractAgentMachine/runs/think
