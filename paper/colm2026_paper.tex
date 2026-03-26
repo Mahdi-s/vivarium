@@ -74,77 +74,76 @@ We make three contributions:
     stage/.style={rectangle, rounded corners=4pt, draw=#1, fill=#1!8,
                   minimum height=0.85cm, minimum width=1.8cm, align=center,
                   font=\small\bfseries, line width=1pt},
-    condbox/.style={rectangle, rounded corners=3pt, draw=#1!70, fill=#1!6,
-                    minimum height=0.65cm, align=center, font=\scriptsize,
+    condbox/.style={rectangle, rounded corners=3pt, draw=black!40, fill=#1!6,
+                    minimum height=0.6cm, align=center, font=\scriptsize,
                     line width=0.6pt},
     metricbox/.style={rectangle, rounded corners=2pt, draw=black!30,
                       fill=black!3, minimum height=0.5cm, align=center,
                       font=\scriptsize, line width=0.4pt},
     arrow/.style={-{Stealth[length=5pt]}, line width=1.2pt, #1},
-    thindarrow/.style={-{Stealth[length=3pt]}, line width=0.6pt, #1, dashed},
     effect/.style={font=\scriptsize\bfseries, #1},
+    brace/.style={decorate, decoration={brace, amplitude=4pt, raise=2pt}},
 ]
 
-% ── Training pipeline (top row) ──
+% ── Row 1: Training pipeline ──
 \node[stage=basegrey]  (base) {Base};
-\node[stage=instblue, right=1.0cm of base]  (inst) {Instruct};
-\node[stage=sftred, right=1.0cm of inst]    (sft)  {SFT};
-\node[stage=dpogreen, right=1.0cm of sft]   (dpo)  {DPO};
+\node[stage=instblue, right=0.9cm of base]  (inst) {Instruct};
+\node[stage=sftred, right=0.9cm of inst]    (sft)  {SFT};
+\node[stage=dpogreen, right=0.9cm of sft]   (dpo)  {DPO};
 
 \draw[arrow=black!50]  (base) -- (inst);
 \draw[arrow=black!50]  (inst) -- (sft);
 \draw[arrow=black!50]  (sft)  -- (dpo);
 
 % Effect labels between stages
-\node[effect=instblue, below=0.12cm of $(base.south)!0.5!(inst.south)$]
-    {$\downarrow$ error};
-\node[effect=sftred, below=0.12cm of $(inst.south)!0.5!(sft.south)$]
-    {$\uparrow$ conformity};
-\node[effect=dpogreen, below=0.12cm of $(sft.south)!0.5!(dpo.south)$]
-    {$\downarrow$ conformity};
+\node[effect=instblue, below=0.1cm of $(base.south)!0.5!(inst.south)$]
+    {$\downarrow$\,error};
+\node[effect=sftred, below=0.1cm of $(inst.south)!0.5!(sft.south)$]
+    {$\uparrow$\,conformity};
+\node[effect=dpogreen, below=0.1cm of $(sft.south)!0.5!(dpo.south)$]
+    {$\downarrow$\,conformity};
 
-% ── Pressure conditions (middle row) ──
-\coordinate (midpipe) at ($(inst.south)!0.5!(sft.south)+(0,-1.1)$);
+% ── Row 2: Big bracket → "each variant tested under all conditions" ──
+% Single wide box spanning the full pipeline width
+\coordinate (condtop) at ($(base.south)!0.5!(dpo.south)+(0,-0.85)$);
 
-\node[condbox=instblue, left=0.25cm of midpipe, minimum width=3.0cm] (peer) {%
-    \textbf{Peer pressure}\\[-1pt]
-    {\tiny 5 confederates $\times$ 4 tones, DA, QD}
+\draw[thick, black!50, -{Stealth[length=4pt]}]
+    ($(base.south)+(0,-0.42)$) -- ($(base.south)+(0,-0.7)$);
+\draw[thick, black!50, -{Stealth[length=4pt]}]
+    ($(inst.south)+(0,-0.42)$) -- ($(inst.south)+(0,-0.7)$);
+\draw[thick, black!50, -{Stealth[length=4pt]}]
+    ($(sft.south)+(0,-0.42)$) -- ($(sft.south)+(0,-0.7)$);
+\draw[thick, black!50, -{Stealth[length=4pt]}]
+    ($(dpo.south)+(0,-0.42)$) -- ($(dpo.south)+(0,-0.7)$);
+
+% Condition boxes side by side
+\node[condbox=basegrey, minimum width=1.6cm] (ctrl)
+    at ($(condtop)+(-3.4, 0)$) {\textbf{Control}\\[-2pt]{\tiny No pressure}};
+\node[condbox=instblue, minimum width=3.4cm] (peer)
+    at ($(condtop)+(-0.3, 0)$) {\textbf{Peer consensus} (8 conds)\\[-2pt]
+    {\tiny Unanimous $\times$ 4 tones, diverse, DA, QD}};
+\node[condbox=sftred, minimum width=2.8cm] (auth)
+    at ($(condtop)+(3.0, 0)$) {\textbf{Authority} (3 conds)\\[-2pt]
+    {\tiny Bias, trust, trust+DA}};
+
+% Label above conditions
+\node[font=\scriptsize\itshape, above=0.35cm of condtop]
+    {Every variant evaluated under all 12 conditions};
+
+% ── Row 3: Scale ──
+\node[metricbox, below=0.45cm of condtop, minimum width=9.2cm] (scale) {%
+    400 items\;\;$\times$\;\;8 domains\;\;$\times$\;\;6 temperatures\;\;$=$\;\;\textbf{115{,}200 trials}\;\;\;$\mid$\;\;\;100\% LLM judge coverage
 };
-\node[condbox=sftred, right=0.25cm of midpipe, minimum width=3.0cm] (auth) {%
-    \textbf{Authority pressure}\\[-1pt]
-    {\tiny Authoritative bias, trust framing}
-};
-\node[condbox=basegrey, left=0.15cm of peer, minimum width=1.4cm] (ctrl) {%
-    \textbf{Control}\\[-1pt]
-    {\tiny No pressure}
-};
 
-% Curly brace label
-\node[font=\scriptsize\itshape, above=0.05cm of midpipe] {12 Asch-style conditions};
-
-% Arrows from pipeline to conditions
-\draw[thindarrow=black!40] (base.south) -- ++(0,-0.55) -| (ctrl.north);
-\draw[thindarrow=black!40] (inst.south) -- ++(0,-0.55) -| (peer.north);
-\draw[thindarrow=black!40] (sft.south)  -- ++(0,-0.55) -| (auth.north);
-\draw[thindarrow=black!40] (dpo.south)  -- ++(0,-0.55) -| (auth.north east);
-
-% ── Scale & metrics (bottom row) ──
-\node[metricbox, below=0.7cm of midpipe, minimum width=8.6cm] (scale) {%
-    \begin{tabular}{@{}c@{\;\;}c@{\;\;}c@{\;\;}c@{\;\;}c@{}}
-    400 items $\times$ 8 domains & $\times$ 6 temps &
-    \textbf{= 115{,}200 trials} & \quad scored by & LLM judge ensemble
-    \end{tabular}
-};
-
-% Metric badges below scale
-\foreach \lab/\xoff in {McNemar OR/-3.0, $T_c$/-1.2, URSP/0.4, Trace $\Delta$/2.0} {
-    \node[metricbox, minimum width=1.3cm, below=0.25cm of scale, xshift=\xoff cm,
+% ── Row 4: Metric badges ──
+\foreach \lab/\xoff in {McNemar OR/-3.2, $T_c$/-1.3, URSP/0.3, Trace $\Delta$/1.9, Judge/3.3} {
+    \node[metricbox, minimum width=1.1cm, below=0.25cm of scale, xshift=\xoff cm,
           font=\scriptsize\bfseries] {\lab};
 }
 
 \end{tikzpicture}%
 }
-\caption{Study overview. Four OLMo-3-7B checkpoints are evaluated under peer-consensus and authority-pressure conditions adapted from the Asch paradigm. Each variant is tested across 400 items, 8 domains, and 6 temperatures (115,200 trials), scored by a multi-model LLM judge ensemble.}
+\caption{Study overview. All four OLMo-3-7B checkpoints are evaluated under every condition---12 Asch-style paradigms spanning peer consensus and authority pressure. Each (variant, condition, item, temperature) cell is scored by a multi-model LLM judge ensemble.}
 \label{fig:pipeline}
 \end{figure}
 
