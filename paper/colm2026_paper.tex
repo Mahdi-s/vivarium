@@ -38,7 +38,7 @@
 \maketitle
 
 \begin{abstract}
-We study social conformity---capitulation to simulated peer pressure, distinct from user-directed sycophancy---across 215K trials spanning the OLMo-3-7B post-training pipeline (base, instruct, SFT, DPO), 12 Asch-style conditions, 8 domains, and 6 temperatures. Tracing four checkpoints of a single model family isolates each training stage's causal effect. SFT \emph{amplifies} conformity (McNemar OR\,=\,7.68 vs.\ 5.98 for instruct, $p<0.001$) while DPO partially \emph{mitigates} it---contradicting work reporting instruction-tuned models as uniformly less conformist~\citep{zhu2025conformity}. Prompt format overwhelms content ($+$22pp from structural framing alone); 53--54\% of conforming items yield deterministically at $T\!=\!0$; mathematical reasoning is nearly immune; and standard mitigations fail. Mechanistically, 18--26\% of conforming trials exhibit unfaithful reasoning---the model retrieves the correct answer but outputs the wrong one. Preliminary chain-of-thought results show no detectable peer conformity ($p\!=\!0.42$) yet persistent authority vulnerability (OR\,=\,7.20, $p<0.0001$), suggesting reasoning protects against consensus but not authority.
+We study social conformity---capitulation to simulated peer pressure, distinct from user-directed sycophancy---across 115,200 trials spanning the OLMo-3-7B post-training pipeline (base, instruct, SFT, DPO), 12 Asch-style conditions, 8 domains, and 6 temperatures. Tracing four checkpoints of a single model family isolates each training stage's causal effect. SFT \emph{amplifies} conformity (McNemar OR\,=\,7.68 vs.\ 5.98 for instruct, $p<0.001$) while DPO partially \emph{mitigates} it---contradicting work reporting instruction-tuned models as uniformly less conformist~\citep{zhu2025conformity}. Prompt format overwhelms content ($+$22pp from structural framing alone); 53--54\% of conforming items yield deterministically at $T\!=\!0$; mathematical reasoning is nearly immune; and standard mitigations fail. Mechanistically, 18--26\% of conforming trials exhibit unfaithful reasoning---the model retrieves the correct answer but outputs the wrong one. Preliminary chain-of-thought results (837 trials) show no detectable peer conformity ($p\!=\!0.42$) yet persistent authority vulnerability (OR\,=\,7.20, $p<0.0001$), suggesting extended reasoning protects against consensus but not authority.
 \end{abstract}
 
 
@@ -96,7 +96,7 @@ We evaluate four OLMo-3-7B variants with complete cross-temperature coverage:
     \item \textbf{Instruct-DPO} (allenai/OLMo-3-7B-Instruct-DPO): direct preference optimization.
 \end{itemize}
 
-The OLMo-3 family also includes chain-of-thought (think) variants. Initial data collection used an insufficient token budget (\texttt{max\_new\_tokens}=256), truncating reasoning traces. We reran the 7B think variant with \texttt{max\_new\_tokens}=2{,}048 (average output: 5{,}989 characters), collecting 210 items at $T\!=\!0.0$ across 4 core conditions. Preliminary results are reported in \S\ref{sec:think}; full temperature sweeps and 32B-scale runs are in progress.
+The OLMo-3 family also includes chain-of-thought (think) variants. Initial data collection used an insufficient token budget (\texttt{max\_new\_tokens}=256), truncating reasoning traces. We reran the 7B think variant with \texttt{max\_new\_tokens}=2{,}048 (average output: 5{,}989 characters), collecting 210 items across 4 core conditions at $T\!=\!0.0$ (837 trials). Preliminary results are reported in \S\ref{sec:think}.
 
 \subsection{Experimental Conditions}
 \label{sec:conditions}
@@ -120,16 +120,17 @@ Evaluation items are drawn from 8 domains: ARC~\citep{clark2018arc} (science rea
         \toprule
         Dimension & Value \\
         \midrule
-        Model variants (reported) & 4 \\
+        Model variants & 4 (+1 think, preliminary) \\
         Experimental conditions & 12 \\
         Knowledge domains & 8 \\
         Items per domain & 50 \\
         Temperatures & 6 ($T \in \{0.0, 0.2, \ldots, 1.0\}$) \\
-        Total trials (all 7 variants) & 215,288 \\
+        Total trials (4 main variants) & 115,200 \\
+        Think variant trials ($T\!=\!0.0$) & 837 \\
         Judge coverage & 100\% \\
         \bottomrule
     \end{tabular}
-    \caption{Experimental design summary. Scale exceeds prior conformity studies by an order of magnitude: \citet{zhu2025conformity} report $\sim$104 GPU-hours across 8 models; \citet{celebi2025parrot} use 1,302 items $\times$ 22 models.}
+    \caption{Experimental design. The 4 main variants yield 115,200 trials; an additional 837 think-variant trials at $T\!=\!0.0$ provide preliminary chain-of-thought results (\S\ref{sec:think}).}
     \label{tab:design}
 \end{table}
 
@@ -332,7 +333,7 @@ Two findings emerge. First, the think variant shows \textbf{no detectable peer c
 
 Second, \textbf{authority pressure still overcomes extended reasoning}: authority trust yields OR\,=\,7.20 ($p < 0.0001$) and authoritative bias yields OR\,=\,11.50 ($p\!=\!0.0001$). The think model can reason its way past peer pressure but not past authority framing---suggesting that authority cues operate on a different mechanism than consensus signals, potentially exploiting the model's training to defer to perceived expertise rather than to agree with peers.
 
-These results are preliminary (single temperature, 4 core conditions, 210 items). Full temperature sweeps and 32B-scale runs are in progress.
+These results are preliminary (single temperature, 4 core conditions, 210 items). We discuss planned extensions in \S\ref{sec:discussion}.
 
 
 %% ============================================================
@@ -351,8 +352,8 @@ The failure of devil's advocate and question distillation implies that conformit
 \paragraph{Conformity as a Pipeline Property.}
 The $T_c$ analysis reveals that conformity is not a stochastic phenomenon that can be ``tuned away'' with temperature. The majority of vulnerable items conform deterministically, indicating that the sycophantic response is the model's preferred output under pressure---a structural property of the learned distribution, not a sampling artifact.
 
-\paragraph{Limitations.}
-This study covers a single model family (OLMo-3-7B); generalization to other architectures requires further work. Preliminary think-variant results (\S\ref{sec:think}) cover $T\!=\!0.0$ only; full temperature sweeps at 7B and 32B scales are in progress. All outcomes depend on an LLM judge; residual label noise is possible.
+\paragraph{Limitations and Future Work.}
+This study covers a single model family (OLMo-3-7B); generalization to other architectures requires further work. All outcomes depend on an LLM judge; residual label noise is possible. We plan to extend this work along three axes: (1)~full 6-temperature sweeps for the think variant to enable $T_c$ analysis of chain-of-thought conformity; (2)~scaling to OLMo-3-32B to test whether the authority vulnerability observed in \S\ref{sec:think} persists at larger scale; and (3)~extending coverage to the think-SFT and think-DPO variants to determine whether the SFT amplification and DPO mitigation patterns replicate under extended reasoning.
 
 
 %% ============================================================
