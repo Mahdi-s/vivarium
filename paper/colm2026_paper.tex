@@ -35,7 +35,7 @@
 \maketitle
 
 \begin{abstract}
-We present a controlled study of \emph{social conformity}---capitulation to simulated peer pressure, distinct from user-directed sycophancy---in language models, spanning 215,288 trials across the OLMo-3-7B post-training pipeline (base, instruct, instruct-SFT, instruct-DPO), 12 experimental conditions adapted from classical social psychology, 8 knowledge domains, and 6 decoding temperatures. By tracing four checkpoints of a single model family sharing identical architecture and pretraining, we isolate each post-training stage's causal contribution---a level of control absent from prior cross-family comparisons. Our central finding is that supervised fine-tuning (SFT) and direct preference optimization (DPO) exert \emph{opposite} effects: SFT amplifies conformity (559 always-conform item-profiles vs.\ 378 for instruct, McNemar OR\,=\,7.68 vs.\ 5.98, $p < 0.001$) while DPO partially mitigates it, challenging recent work reporting instruction-tuned models as uniformly less conformist~\citep{zhu2025conformity}. Four additional findings emerge: (1)~prompt format overwhelms content, with a $+$22pp effect from structural framing alone; (2)~\emph{Conformity Temperature} ($T_c$), a novel per-item metric, reveals 53--54\% of conforming items yield deterministically at greedy decoding; (3)~mathematical reasoning shows near-complete immunity; and (4)~standard mitigations (devil's advocate, question distillation) provide negligible relief. We are extending this study to OLMo-3 chain-of-thought variants at 7B and 32B scales to test whether extended reasoning training amplifies or attenuates these patterns.
+We present a controlled study of \emph{social conformity}---capitulation to simulated peer pressure, distinct from user-directed sycophancy---in language models, spanning 215,288 trials across the OLMo-3-7B post-training pipeline (base, instruct, instruct-SFT, instruct-DPO), 12 experimental conditions adapted from classical social psychology, 8 knowledge domains, and 6 decoding temperatures. By tracing four checkpoints of a single model family sharing identical architecture and pretraining, we isolate each post-training stage's causal contribution---a level of control absent from prior cross-family comparisons. Our central finding is that supervised fine-tuning (SFT) and direct preference optimization (DPO) exert \emph{opposite} effects: SFT amplifies conformity (559 always-conform item-profiles vs.\ 378 for instruct, McNemar OR\,=\,7.68 vs.\ 5.98, $p < 0.001$) while DPO partially mitigates it, challenging recent work reporting instruction-tuned models as uniformly less conformist~\citep{zhu2025conformity}. Four additional findings emerge: (1)~prompt format overwhelms content, with a $+$22pp effect from structural framing alone; (2)~\emph{Conformity Temperature} ($T_c$), a novel per-item metric, reveals 53--54\% of conforming items yield deterministically at greedy decoding; (3)~mathematical reasoning shows near-complete immunity; and (4)~standard mitigations (devil's advocate, question distillation) provide negligible relief. Preliminary results from OLMo-3-7B chain-of-thought (think) variants (210 items, $T\!=\!0.0$) reveal the highest control accuracy of all variants (0.257 vs.\ 0.138 for instruct-SFT) and no detectable peer conformity (McNemar $p=0.42$), yet significant vulnerability to authority pressure persists (OR\,=\,7.20, $p < 0.0001$)---suggesting extended reasoning protects against peer consensus but not authority framing. Full temperature sweeps at 7B and 32B scales are in progress.
 \end{abstract}
 
 
@@ -93,7 +93,7 @@ We evaluate four OLMo-3-7B variants with complete cross-temperature coverage:
     \item \textbf{Instruct-DPO} (allenai/OLMo-3-7B-Instruct-DPO): direct preference optimization.
 \end{itemize}
 
-The OLMo-3 family also includes three chain-of-thought (think) variants at 7B scale. These were included in data collection but used an insufficient token budget (\texttt{max\_new\_tokens}=256), truncating 95--99\% of reasoning traces before completion. We are conducting extended-token reruns at both 7B ($\texttt{max\_new\_tokens}=2{,}048$) and 32B ($\texttt{max\_new\_tokens}=4{,}096$) scales to test whether extended reasoning training amplifies or attenuates the conformity patterns reported here.
+The OLMo-3 family also includes chain-of-thought (think) variants. Initial data collection used an insufficient token budget (\texttt{max\_new\_tokens}=256), truncating reasoning traces. We reran the 7B think variant with \texttt{max\_new\_tokens}=2{,}048 (average output: 5{,}989 characters), collecting 210 items at $T\!=\!0.0$ across 4 core conditions. Preliminary results are reported in \S\ref{sec:think}; full temperature sweeps and 32B-scale runs are in progress.
 
 \subsection{Experimental Conditions}
 \label{sec:conditions}
@@ -300,6 +300,37 @@ Neither strategy provides meaningful relief, contradicting \citet{zhu2025conform
 
 
 %% ============================================================
+\section{Preliminary: Chain-of-Thought Variants}
+\label{sec:think}
+
+We reran OLMo-3-7B-Think with an adequate token budget (\texttt{max\_new\_tokens}=2{,}048) on 210 items at $T\!=\!0.0$ across 4 core conditions. Table~\ref{tab:think} compares the think variant against the four standard variants.
+
+\begin{table}[t]
+    \centering
+    \small
+    \begin{tabular}{lrrrr}
+        \toprule
+        Variant & Ctrl Acc & Conf Acc & Auth.Trust & $\Delta_\text{peer}$ \\
+        \midrule
+        Base & 0.117 & 0.035 & 0.083 & +0.082 \\
+        Instruct & 0.102 & 0.037 & 0.083 & +0.065 \\
+        Instruct-SFT & 0.138 & 0.058 & 0.117 & +0.080 \\
+        Instruct-DPO & 0.098 & 0.117 & 0.083 & $-$0.019 \\
+        \textbf{Think} & \textbf{0.257} & \textbf{0.233} & 0.105 & \textbf{+0.024} \\
+        \bottomrule
+    \end{tabular}
+    \caption{Cross-variant comparison at $T\!=\!0.0$. Think shows the highest control accuracy and smallest peer-pressure delta. $\Delta_\text{peer}$ = control $-$ confident accuracy (higher = more conformity).}
+    \label{tab:think}
+\end{table}
+
+Two findings emerge. First, the think variant shows \textbf{no detectable peer conformity}: the McNemar test for unanimous confident pressure is non-significant ($b\!=\!15$, $c\!=\!10$, $\chi^2\!=\!0.64$, $p\!=\!0.42$), with the smallest $\Delta_\text{peer}$ of any variant (+0.024). Extended reasoning appears to provide enough internal consistency checking to resist peer consensus.
+
+Second, \textbf{authority pressure still overcomes extended reasoning}: authority trust yields OR\,=\,7.20 ($p < 0.0001$) and authoritative bias yields OR\,=\,11.50 ($p\!=\!0.0001$). The think model can reason its way past peer pressure but not past authority framing---suggesting that authority cues operate on a different mechanism than consensus signals, potentially exploiting the model's training to defer to perceived expertise rather than to agree with peers.
+
+These results are preliminary (single temperature, 4 core conditions, 210 items). Full temperature sweeps and 32B-scale runs are in progress.
+
+
+%% ============================================================
 \section{Discussion}
 \label{sec:discussion}
 
@@ -316,7 +347,7 @@ The failure of devil's advocate and question distillation implies that conformit
 The $T_c$ analysis reveals that conformity is not a stochastic phenomenon that can be ``tuned away'' with temperature. The majority of vulnerable items conform deterministically, indicating that the sycophantic response is the model's preferred output under pressure---a structural property of the learned distribution, not a sampling artifact.
 
 \paragraph{Limitations.}
-This study covers a single model family (OLMo-3-7B); generalization to other architectures requires further work. Think-variant reruns at 7B and 32B scales are in progress and may reveal whether extended reasoning attenuates or amplifies conformity. All outcomes depend on an LLM judge; residual label noise is possible.
+This study covers a single model family (OLMo-3-7B); generalization to other architectures requires further work. Preliminary think-variant results (\S\ref{sec:think}) cover $T\!=\!0.0$ only; full temperature sweeps at 7B and 32B scales are in progress. All outcomes depend on an LLM judge; residual label noise is possible.
 
 
 %% ============================================================
