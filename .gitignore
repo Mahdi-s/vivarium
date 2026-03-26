@@ -50,6 +50,8 @@ smoke*.db
 
 # Run artifacts (Phase 3+)
 runs/
+!runs/
+!runs/**
 !runs_latest/runs/
 !runs_latest/runs/**
 !runs_latest/mpl_cache/
