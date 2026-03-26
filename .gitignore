@@ -132,3 +132,14 @@ Comparing_Experiments/publication_analysis*/
 models/*
 
 .claude/
+
+# Local AI/dev workspace metadata (machine-specific)
+.windsurf/
+.windsurf.agent/
+.cursor/
+.codex/
+*.code-workspace
+
+.agents/
+
+.claude/

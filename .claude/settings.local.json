@@ -7,7 +7,10 @@
       "Bash(python scripts/merge_surgical_runs.py --commit)",
       "Bash(python scripts/analyze_think_traces.py --runs-dir runs_latest/runs --metadata Comparing_Experiments/runs_metadata_v6.json --item-set Comparing_Experiments/publication_V2/item_set.csv --out-dir Comparing_Experiments/publication_V2/mechanistic --n-boot 10000)",
       "Bash(git add -A)",
-      "Bash(git commit -m \"Redesign figM1 as decoupling scatter plot with training trajectories:*)"
+      "Bash(git commit -m \"Redesign figM1 as decoupling scatter plot with training trajectories:*)",
+      "Bash(npx skills:*)",
+      "Bash(npx -y skills add https://github.com/ailabs-393/ai-labs-claude-skills --skill research-paper-writer --yes)",
+      "Bash(npx -y skills add https://github.com/karpathy/nanochat --skill read-arxiv-paper --yes)"
     ]
   }
 }
