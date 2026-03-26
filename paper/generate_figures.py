@@ -135,7 +135,7 @@ ax1.invert_yaxis()
 # Legend below the left panel, anchored to the axes
 from matplotlib.patches import Patch
 tc_legend = [Patch(facecolor=c, label=f"$T_c$={t}") for c, t in zip(temp_colors, temps)]
-ax1.legend(handles=tc_legend, loc="upper center", bbox_to_anchor=(0.5, -0.15),
+ax1.legend(handles=tc_legend, loc="upper center", bbox_to_anchor=(0.5, -0.28),
            fontsize=6, frameon=False, ncol=6, handlelength=0.8, columnspacing=0.6)
 
 # ── Right panel: URSP rate + trace-length direction ──
