@@ -1,0 +1,17 @@
+variant,family,k_conditions,n_subjects,conditions,Q_stat,df,p_value
+base,tone,4,2389,Unanimous Plain; Unanimous Neutral; Unanimous Confident; Unanimous Uncertain,10.996,3,0.0117
+base,mitigation,3,2389,Asch: Devil's Advocate; Asch: Question Distillation; Diverse Plain,8.312,2,0.0157
+base,authority,3,2310,Authoritative Bias; Authority: Trust; Authority: Trust+DA,60.482,2,0.0
+base,peer_full,8,2329,Asch (5 Confederates); Unanimous Plain; Unanimous Neutral; Unanimous Confident; Unanimous Uncertain; Diverse Plain; Asch: Question Distillation; Asch: Devil's Advocate,113.777,7,0.0
+instruct,tone,4,2383,Unanimous Plain; Unanimous Neutral; Unanimous Confident; Unanimous Uncertain,26.06,3,0.0
+instruct,mitigation,3,2391,Asch: Devil's Advocate; Asch: Question Distillation; Diverse Plain,19.19,2,0.0001
+instruct,authority,3,2212,Authoritative Bias; Authority: Trust; Authority: Trust+DA,122.677,2,0.0
+instruct,peer_full,8,2244,Asch (5 Confederates); Unanimous Plain; Unanimous Neutral; Unanimous Confident; Unanimous Uncertain; Diverse Plain; Asch: Question Distillation; Asch: Devil's Advocate,25.851,7,0.0005
+instruct_dpo,tone,4,2375,Unanimous Plain; Unanimous Neutral; Unanimous Confident; Unanimous Uncertain,23.526,3,0.0
+instruct_dpo,mitigation,3,2388,Asch: Devil's Advocate; Asch: Question Distillation; Diverse Plain,12.082,2,0.0024
+instruct_dpo,authority,3,2218,Authoritative Bias; Authority: Trust; Authority: Trust+DA,122.982,2,0.0
+instruct_dpo,peer_full,8,2256,Asch (5 Confederates); Unanimous Plain; Unanimous Neutral; Unanimous Confident; Unanimous Uncertain; Diverse Plain; Asch: Question Distillation; Asch: Devil's Advocate,21.175,7,0.0035
+instruct_sft,tone,4,2388,Unanimous Plain; Unanimous Neutral; Unanimous Confident; Unanimous Uncertain,77.191,3,0.0
+instruct_sft,mitigation,3,2393,Asch: Devil's Advocate; Asch: Question Distillation; Diverse Plain,14.99,2,0.0006
+instruct_sft,authority,3,2244,Authoritative Bias; Authority: Trust; Authority: Trust+DA,298.663,2,0.0
+instruct_sft,peer_full,8,2306,Asch (5 Confederates); Unanimous Plain; Unanimous Neutral; Unanimous Confident; Unanimous Uncertain; Diverse Plain; Asch: Question Distillation; Asch: Devil's Advocate,265.104,7,0.0
