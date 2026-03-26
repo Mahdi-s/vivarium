@@ -116,6 +116,24 @@ if [[ "$VARIANT" == think* ]]; then
     HAS_THINK_TOKENS="true"
 fi
 
+# Normalize TEMPS into:
+#  - `TEMPS_JSON`: JSON array of numeric temps, e.g. [0.0,0.6]
+#  - `RUN_TEMPERATURE`: first temp (used as suite fallback)
+TEMPS_CLEAN="${TEMPS//[[:space:]]/}"
+TEMPS_JSON="[]"
+RUN_TEMPERATURE="0.0"
+if [[ -n "${TEMPS_CLEAN}" ]]; then
+    IFS=',' read -ra _TEMPS_ARR <<< "${TEMPS_CLEAN}"
+    if (( ${#_TEMPS_ARR[@]} > 0 )); then
+        RUN_TEMPERATURE="${_TEMPS_ARR[0]}"
+        TEMPS_JSON="[${_TEMPS_ARR[0]}"
+        for ((i=1; i<${#_TEMPS_ARR[@]}; i++)); do
+            TEMPS_JSON+=",${_TEMPS_ARR[i]}"
+        done
+        TEMPS_JSON+="]"
+    fi
+fi
+
 # ── Build conditions JSON ───────────────────────────────────────────────────
 build_conditions() {
     local cond_set="$1"
@@ -176,9 +194,10 @@ $(build_conditions "$CONDITIONS")
   "models": [
     { "variant": "${VARIANT}", "model_id": "${MODEL}", "max_new_tokens": ${MAX_TOKENS}, "has_think_tokens": ${HAS_THINK_TOKENS} }
   ],
+  "default_temperatures": ${TEMPS_JSON},
   "run": {
     "seed": ${SEED},
-    "temperature": 0.0,
+    "temperature": ${RUN_TEMPERATURE},
     "top_k": 50,
     "top_p": 0.9,
     "max_items_per_dataset": ${ITEMS}
