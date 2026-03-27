@@ -1,3 +1,93 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:2187df3859b6c86832af5c6b00de6dc5f9879a481ebcfbddc5c9a178dd48882c
-size 2458
+{
+  "sync_note": "Pulled from origin; includes additional 0.6 think traces.",
+  "runs": [
+    {
+      "variant": "think",
+      "model_id": "allenai/Olmo-3-7B-Think",
+      "temperatures": [
+        0.0,
+        0.6
+      ],
+      "max_new_tokens": 2048,
+      "conditions": "core",
+      "started_at": "2026-03-25T08:04:40Z",
+      "status": "failed",
+      "suite_config": "/Users/mahdi/repos/abstractAgentMachine/runs/think/suite_think_XXXXXX.json",
+      "log_path": "/Users/mahdi/repos/abstractAgentMachine/runs/think/run_20260325_010440.log"
+    },
+    {
+      "variant": "think",
+      "model_id": "allenai/Olmo-3-7B-Think",
+      "temperatures": [
+        0.0
+      ],
+      "max_new_tokens": 2048,
+      "conditions": "core",
+      "started_at": "2026-03-25T20:17:56Z",
+      "status": "failed",
+      "suite_config": "/Users/mahdi/repos/abstractAgentMachine/runs/think/suite_think_QDVZaC.json",
+      "log_path": "/Users/mahdi/repos/abstractAgentMachine/runs/think/run_20260325_131756.log"
+    },
+    {
+      "variant": "think",
+      "model_id": "allenai/Olmo-3-7B-Think",
+      "temperatures": [
+        0.0
+      ],
+      "max_new_tokens": 2048,
+      "conditions": "core",
+      "started_at": "2026-03-26T05:21:56Z",
+      "status": "running",
+      "suite_config": "/Users/mahdi/repos/abstractAgentMachine/runs/think/suite_think_N7FZsh.json"
+    },
+    {
+      "variant": "think",
+      "model_id": "allenai/Olmo-3-7B-Think",
+      "temperatures": [
+        0.0
+      ],
+      "max_new_tokens": 2048,
+      "conditions": "core",
+      "started_at": "2026-03-26T06:03:10Z",
+      "status": "running",
+      "suite_config": "/Users/mahdi/repos/abstractAgentMachine/runs/think/suite_think_UGTfDz.json"
+    },
+    {
+      "variant": "think",
+      "model_id": "allenai/Olmo-3-7B-Think",
+      "temperatures": [
+        0.0
+      ],
+      "max_new_tokens": 2048,
+      "conditions": "core",
+      "started_at": "2026-03-26T08:54:28Z",
+      "status": "running",
+      "suite_config": "/Users/mahdi/repos/abstractAgentMachine/runs/think/suite_think_G2NhyX.json"
+    },
+    {
+      "variant": "think",
+      "model_id": "allenai/Olmo-3-7B-Think",
+      "temperatures": [
+        0.0
+      ],
+      "max_new_tokens": 2048,
+      "conditions": "core",
+      "started_at": "2026-03-26T18:30:22Z",
+      "status": "failed",
+      "suite_config": "/Users/mahdi/repos/abstractAgentMachine/runs/think/suite_think_B6ALhY.json",
+      "log_path": "/Users/mahdi/repos/abstractAgentMachine/runs/think/run_20260326_113022.log"
+    },
+    {
+      "variant": "think",
+      "model_id": "allenai/Olmo-3-7B-Think",
+      "temperatures": [
+        0.0
+      ],
+      "max_new_tokens": 2048,
+      "conditions": "core",
+      "started_at": "2026-03-27T03:49:07Z",
+      "status": "running",
+      "suite_config": "/Users/mahdi/repos/abstractAgentMachine/runs/think/suite_think_OwXKnf.json"
+    }
+  ]
+}
