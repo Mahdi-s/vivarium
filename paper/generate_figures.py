@@ -188,17 +188,47 @@ plt.close(fig)
 # Figure 3: Combined — Tc distribution (left) + URSP & trace-length (right)
 # ═══════════════════════════════════════════════════════════════════════════
 
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(5.5, 2.8),
+# ── Load Tc and URSP data from CSVs ──────────────────────────────────────
+TC_CSV = os.path.join(
+    REPO_ROOT, "Comparing_Experiments", "publication_V2",
+    "mechanistic", "tc_summary_by_variant.csv",
+)
+URSP_CSV = os.path.join(
+    REPO_ROOT, "Comparing_Experiments", "publication_V2",
+    "mechanistic", "ursp_by_variant.csv",
+)
+
+FIG3_VAR_MAP = {
+    "Base":     "base",
+    "SFT":      "instruct_sft",
+    "DPO":      "instruct_dpo",
+    "Instruct": "instruct",
+}
+
+# Parse Tc summary
+tc_rows = {}
+with open(TC_CSV, newline="") as f:
+    for row in csv.DictReader(f):
+        tc_rows[row["variant"]] = row
+
+# Parse URSP
+ursp_rows = {}
+with open(URSP_CSV, newline="") as f:
+    for row in csv.DictReader(f):
+        ursp_rows[row["variant"]] = row
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(5.5, 3.0),
                                gridspec_kw={"wspace": 0.4, "bottom": 0.22})
 
 # ── Left panel: Tc distribution as stacked horizontal bars ──
-tc_data = {
-    # pct of conforming items at each Tc threshold
-    "Base":      [53.3, 13.6, 10.7, 8.7, 7.7, 5.9],
-    "SFT":       [61.8, 10.0,  7.8, 6.7,  7.3, 6.4],
-    "DPO":       [46.1, 10.5,  8.6, 8.9, 12.1, 13.8],
-    "Instruct":  [54.1, 10.4,  8.4, 7.4, 11.2, 8.4],
-}
+# Build Tc distribution from CSV counts
+tc_data = {}
+for var_fig, var_csv in FIG3_VAR_MAP.items():
+    row = tc_rows[var_csv]
+    counts = [float(row[f"tc_at_{t}"]) for t in ["0.0", "0.2", "0.4", "0.6", "0.8", "1.0"]]
+    total = sum(counts)
+    tc_data[var_fig] = [100.0 * c / total for c in counts]
+
 temps = ["0.0", "0.2", "0.4", "0.6", "0.8", "1.0"]
 temp_colors = ["#2c3e50", "#34495e", "#5d6d7e", "#85929e", "#aeb6bf", "#d5d8dc"]
 
@@ -213,6 +243,25 @@ for i, var in enumerate(VARIANT_ORDER):
                      ha="center", va="center", fontsize=6, color="white" if j < 3 else "#333")
         left += pct
 
+# Overlay mean Tc with 95% CI as diamond markers + horizontal error bars
+# Scale: Tc ∈ [0,1] maps to x ∈ [0,100] (percentage axis)
+for i, var in enumerate(VARIANT_ORDER):
+    row = tc_rows[FIG3_VAR_MAP[var]]
+    mean_tc = float(row["tc_mean"])
+    ci_lo   = float(row["tc_mean_ci_lower"])
+    ci_hi   = float(row["tc_mean_ci_upper"])
+    # Convert to percentage-axis scale (Tc=0→0%, Tc=1→100%)
+    x_mean = mean_tc * 100
+    x_lo   = (mean_tc - ci_lo) * 100
+    x_hi   = (ci_hi - mean_tc) * 100
+    ax1.errorbar(x_mean, y_pos[i], xerr=[[x_lo], [x_hi]],
+                 fmt="D", color=COLORS[var], markersize=4,
+                 markeredgecolor="white", markeredgewidth=0.6,
+                 ecolor=COLORS[var], elinewidth=1.2, capsize=3, capthick=0.8,
+                 zorder=5)
+    ax1.text(x_mean + x_hi + 1.5, y_pos[i], f"$\\bar{{T}}_c$={mean_tc:.2f}",
+             va="center", fontsize=5.5, color=COLORS[var], fontweight="bold")
+
 ax1.set_yticks(y_pos)
 ax1.set_yticklabels(VARIANT_ORDER, fontsize=8)
 ax1.set_xlabel("% of conforming items")
@@ -222,34 +271,47 @@ ax1.invert_yaxis()
 # Legend below the left panel, anchored to the axes
 from matplotlib.patches import Patch
 tc_legend = [Patch(facecolor=c, label=f"$T_c$={t}") for c, t in zip(temp_colors, temps)]
-ax1.legend(handles=tc_legend, loc="upper center", bbox_to_anchor=(0.5, -0.28),
+ax1.legend(handles=tc_legend, loc="upper center", bbox_to_anchor=(0.5, -0.22),
            fontsize=6, frameon=False, ncol=6, handlelength=0.8, columnspacing=0.6)
 
-# ── Right panel: URSP rate + trace-length direction ──
+# ── Right panel: URSP rate with 95% bootstrap CI + trace-length direction ──
 # Order: Base, SFT, DPO, Instruct (chronological)
-ursp_rates = [25.9, 19.1, 23.8, 17.9]  # % given conforming
+ursp_rates = []
+ursp_ci_lo = []
+ursp_ci_hi = []
+for var in VARIANT_ORDER:
+    row = ursp_rows[FIG3_VAR_MAP[var]]
+    rate = float(row["ursp_given_conforming"]) * 100
+    lo   = float(row["ursp_ci_lower"]) * 100
+    hi   = float(row["ursp_ci_upper"]) * 100
+    ursp_rates.append(rate)
+    ursp_ci_lo.append(rate - lo)
+    ursp_ci_hi.append(hi - rate)
+
 trace_d = [1.25, -0.66, 0.03, -0.35]   # Cohen's d (positive = longer when conforming)
 
-bars = ax2.bar(np.arange(4), ursp_rates, color=[COLORS[v] for v in VARIANT_ORDER],
+bars = ax2.bar(np.arange(4), ursp_rates,
+               yerr=[ursp_ci_lo, ursp_ci_hi],
+               capsize=3, error_kw=dict(lw=0.8, capthick=0.8, color="#444"),
+               color=[COLORS[v] for v in VARIANT_ORDER],
                edgecolor="white", linewidth=0.5, width=0.6)
 
-# Add trace-length annotation arrows
+# Add trace-length annotation arrows + percentage labels
 for i, (bar, d_val) in enumerate(zip(bars, trace_d)):
-    # Arrow showing direction of trace length change
-    y_base = bar.get_height() + 0.5
+    ci_top = ursp_rates[i] + ursp_ci_hi[i]
     if abs(d_val) > 0.1:
         direction = "↑" if d_val > 0 else "↓"
         label = f"trace {direction}"
         color = "#c0392b" if d_val > 0 else "#27ae60"
-        ax2.text(bar.get_x() + bar.get_width()/2, y_base + 1.5,
+        ax2.text(bar.get_x() + bar.get_width()/2, ci_top + 2.0,
                  label, ha="center", va="bottom", fontsize=6, color=color)
-    ax2.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.3,
+    ax2.text(bar.get_x() + bar.get_width()/2, ci_top + 0.3,
              f"{ursp_rates[i]:.1f}%", ha="center", va="bottom", fontsize=7)
 
 ax2.set_xticks(np.arange(4))
 ax2.set_xticklabels(["Base", "SFT", "DPO", "Inst."], fontsize=8)
 ax2.set_ylabel("URSP rate (%)")
-ax2.set_ylim(0, 33)
+ax2.set_ylim(0, 35)
 ax2.set_title("Unfaithful reasoning", fontsize=9, pad=6)
 
 fig.savefig("paper/figures/fig3_tc_ursp.pdf")
