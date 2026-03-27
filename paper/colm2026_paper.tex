@@ -304,8 +304,6 @@ SFT produces the most dramatic conformity amplification in the pipeline, OR jump
     \item Most extreme tone sensitivity: Cochran's $Q = 77.19$ ($p < 0.001$), meaning SFT's conformity rate varies more across tones than any other variant.
 \end{itemize}
 
-Despite having the highest OR (7.74), SFT produces fewer absolute conforming items ($n_\text{conf}\!=\!1{,}909$) than Base (2,585) because SFT's lower control error gives it a larger pool of ``correct'' items available to flip. SFT flips these items systematically with almost no ``rescues'' (incorrect$\to$correct transitions), driving the odds ratio up despite a lower raw volume of wrong answers.
-
 We hypothesize that SFT on human demonstrations introduces a \emph{deference prior}: annotators whose demonstrations form the SFT training set may exhibit patterns of agreeing with presented context, and this pattern may generalize to social pressure scenarios at inference time. This hypothesis is consistent with \citet{sharma2024sycophancy}'s finding that human preference data inherently favors sycophantic responses, but extends the locus from RLHF preference pairs to SFT demonstrations. Notably, SFT does not uniformly amplify conformity: under authority trust pressure, SFT's OR drops to 1.11 (non-significant; Table~\ref{tab:mcnemar_full}), suggesting SFT may reduce deference to trust-framed authority claims even as it massively amplifies peer-consensus conformity.
 
 \paragraph{Reconciling with \citet{zhu2025conformity}.}
@@ -332,7 +330,7 @@ Cochran's Q tests within the tone family (plain, neutral, confident, uncertain) 
         DPO (Stage 2) & 0.617 & 0.853 & $-$0.040 (ns) & +0.196 \\
         \bottomrule
     \end{tabular}
-    \caption{Format effect: classical Asch vs.\ structured (Zhu-style) framing. Under Asch-5, instruct shows \emph{no significant conformity}; the same content in structured format produces large effects.}
+    \caption{Format effect: classical Asch vs.\ structured (Zhu-style) framing. Under Asch-5, instruct shows \emph{no significant conformity}; the same content in structured format produces large effects. Control error rates implied by $\Delta$ subtraction differ slightly from Table~\ref{tab:pooled_error} (e.g., 0.675 vs.\ 0.669 for Instruct) because each condition is paired with its own condition-matched control subset; see Appendix~\ref{app:balance}.}
     \label{tab:format_effect}
 \end{table}
 
@@ -382,7 +380,9 @@ We define URSP as the rate at which a conforming trial's output text contains th
 \section{Domain Effects: Conformity and Baseline Accuracy}
 \label{sec:domain}
 
-Different knowledge domains show distinct conformity profiles, but the pattern is more nuanced than simple resistance or vulnerability. Under unanimous confident pressure, math and truthfulness items exhibit the largest absolute conformity deltas ($\Delta$=+0.23 and +0.24 for Base; Appendix~\ref{app:domains}). These domains have the \emph{lowest} control error rates (0.62--0.75), meaning the highest baseline accuracy, which provides the most room for pressure-induced degradation. Conversely, domains like knowledge and general have \emph{high} control error rates (0.83--0.89), meaning models are already wrong on most items, leaving little room for additional pressure-induced errors and compressing their deltas. Two hypothesized protective properties of mathematical reasoning---derivational structure (step-by-step derivation providing internal consistency checks) and verification asymmetry (self-verifiable answers)---may operate at the mechanistic level but are not sufficient to produce smaller absolute deltas once baseline accuracy is accounted for. Disentangling ceiling effects from genuine domain-specific resistance requires future work with difficulty-matched item sets across domains.
+Different knowledge domains show distinct conformity profiles, but the pattern is more nuanced than simple resistance or vulnerability. Under unanimous confident pressure, math, reasoning, and truthfulness items exhibit the largest absolute conformity deltas ($\Delta$=+0.23, +0.24, and +0.24 for Base, respectively; Appendix~\ref{app:domains}). These domains have the \emph{lowest} control error rates (0.62--0.75), meaning the highest baseline accuracy, which provides the most room for pressure-induced degradation. Conversely, domains like knowledge and general have \emph{high} control error rates (0.83--0.89), meaning models are already wrong on most items, leaving little room for additional pressure-induced errors and compressing their deltas.
+
+However, this ceiling-effect account does not fully explain the cross-domain variation. Science has a control error of 0.72, squarely within the ``vulnerable'' bracket, yet its delta is an anemic $+$0.12---substantially below what the baseline-accuracy hypothesis predicts. This suggests that domain-specific factors beyond raw difficulty modulate conformity susceptibility. Two hypothesized protective properties of mathematical reasoning---derivational structure (step-by-step derivation providing internal consistency checks) and verification asymmetry (self-verifiable answers)---may operate at the mechanistic level but are not sufficient to produce smaller absolute deltas once baseline accuracy is accounted for, and science's anomalous resistance deserves further investigation. Disentangling ceiling effects from genuine domain-specific resistance requires future work with difficulty-matched item sets across domains.
 
 
 %% ============================================================
@@ -827,7 +827,7 @@ Our experimental design targets equal trial counts across all (variant, conditio
 \section{Domain Breakdown Under Pressure}
 \label{app:domains}
 
-Table~\ref{tab:domain_breakdown} shows conformity deltas and error rates for all 7 domain categories under unanimous confident pressure, pooled over 6 temperatures. Math exhibits the largest deltas partly because its lower baseline accuracy (0.51--0.75) leaves more room for pressure-induced degradation. Domains with high baseline error (knowledge, general) show compressed deltas due to ceiling effects.
+Table~\ref{tab:domain_breakdown} shows conformity deltas and error rates for all 7 domain categories under unanimous confident pressure, pooled over 6 temperatures. Math exhibits the largest deltas partly because its highest baseline accuracy (lowest control error rates of 0.51--0.75) leaves the most room for pressure-induced degradation. Domains with high baseline error (knowledge, general) show compressed deltas due to ceiling effects. Science is a notable outlier: despite moderate control error (0.72), its delta (+0.12 for Base) is substantially lower than predicted by baseline accuracy alone.
 
 \begin{table*}[t]
     \centering
