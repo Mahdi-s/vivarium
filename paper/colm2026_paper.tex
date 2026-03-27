@@ -108,7 +108,7 @@ This paper provides three key contributions:
 \begin{enumerate}
     \item We show that SFT and DPO have \emph{opposite} effects on peer-consensus conformity: SFT amplifies it while DPO partially mitigates it, though these effects are condition-dependent (\S\ref{sec:sft_dpo}).
     \item We introduce \emph{Conformity Temperature} ($T_c$), a per-item metric demonstrating that conformity is predominantly deterministic, and release the full evaluation pipeline as open-source code to enable replication and extension (\S\ref{sec:temperature}).
-    \item We characterize how prompt format, domain, and mitigation strategies interact with post-training stage, showing that format dominates content and standard mitigations, while substantially reducing conformity, do not fully eliminate it for SFT and Instruct models (\S\ref{sec:format}--\ref{sec:mitigation}).
+    \item We characterize how prompt format, domain, and mitigation strategies interact with post-training stage, showing that format strongly influences conformity and standard mitigations, while substantially reducing conformity, do not fully eliminate it for SFT and Instruct models (\S\ref{sec:format}--\ref{sec:mitigation}).
 \end{enumerate}
 
 \begin{figure}[t]
@@ -307,17 +307,17 @@ SFT produces the most dramatic conformity amplification in the pipeline, OR jump
 We hypothesize that SFT on human demonstrations introduces a \emph{deference prior}: annotators whose demonstrations form the SFT training set may exhibit patterns of agreeing with presented context, and this pattern may generalize to social pressure scenarios at inference time. This hypothesis is consistent with \citet{sharma2024sycophancy}'s finding that human preference data inherently favors sycophantic responses, but extends the locus from RLHF preference pairs to SFT demonstrations. Notably, SFT does not uniformly amplify conformity: under authority trust pressure, SFT's OR drops to 1.11 (non-significant; Table~\ref{tab:mcnemar_full}), suggesting SFT may reduce deference to trust-framed authority claims even as it massively amplifies peer-consensus conformity.
 
 \paragraph{Reconciling with \citet{zhu2025conformity}.}
-Their finding that instruct models are less conformist does \emph{not} hold in our data. While Instruct has a lower baseline error (0.669) than Base (0.722), its behavioral shift under pressure is \emph{larger} ($\Delta\!=\!+0.253$, OR\,=\,6.01) than Base ($\Delta\!=\!+0.201$, OR\,=\,4.74). The apparent improvement in baseline accuracy masks increased conformity susceptibility, precisely the confound that within-family isolation reveals. The full pipeline trajectory (Base OR\,4.74 $\to$ SFT 7.74 $\to$ DPO 4.30 $\to$ Instruct 6.01) shows that post-training has separable stages with opposing effects, invisible when post-training is evaluated as a monolithic step without isolating intermediate stages.
+Their finding that instruct models are less conformist does \emph{not} hold in our data. While Instruct has a lower baseline error (0.669) than Base (0.722), its behavioral shift under pressure is \emph{larger} ($\Delta\!=\!+0.253$, OR\,=\,6.01) than Base ($\Delta\!=\!+0.201$, OR\,=\,4.74). The apparent improvement in baseline accuracy masks increased conformity susceptibility, precisely the confound that within-family isolation reveals. The full pipeline trajectory (Base OR\,4.74 $\to$ SFT 7.74 $\to$ DPO 4.30 $\to$ Instruct 6.01) shows that post-training has separable stages with opposing effects, invisible when intermediate stages are not isolated.
 
 \paragraph{DPO as Partial Correction (Stage 2).}
 DPO reverses the SFT spike, reducing OR from 7.74 to 4.30, the lowest of \emph{any} variant, falling below the Base level (4.74). DPO also produces the fewest ``always conforms'' items (233 vs.\ 559 for SFT). DPO training, which optimizes for preferred over dispreferred outputs, appears to counteract the sycophantic prior. The final RLVR stage (Instruct, Stage 3) then produces a substantial relapse (OR\,=\,6.01), though all variants remain significantly vulnerable under peer-consensus pressure ($p < 0.001$).
 
 
 %% ============================================================
-\section{Format Dominates Content}
+\section{Format Strongly Influences Conformity}
 \label{sec:format}
 
-Cochran's Q tests within the tone family (plain, neutral, confident, uncertain) are significant for all variants ($p < 0.05$; SFT: $Q = 77.19$), but the magnitude of tone differences is modest. The structural signal of consensus, not its epistemic quality, drives the effect. The most striking format contrast involves the classical Asch condition (free-text) vs.\ structured format (answer options;~\citealp{zhu2025conformity}):
+Cochran's Q tests within the tone family (plain, neutral, confident, uncertain) are significant for all variants ($p < 0.05$; SFT: $Q = 77.19$), but the magnitude of tone differences is modest. The structural signal of consensus, not its epistemic quality, drives the effect. The most striking format contrast involves the classical Asch condition (free-text) vs.\ structured format (answer options;~\citealp{zhu2025conformity}). We note that Table~\ref{tab:format_effect} shows only DPO and Instruct; the Asch-5 and structured conditions also differ in scaffolding beyond surface format (participant-role framing, answer presentation), so the comparison captures a bundle of formatting differences rather than a single clean variable:
 
 \begin{table}[t]
     \centering
@@ -407,7 +407,7 @@ We ran OLMo-3-7B-Think on 210 items at $T\!=\!0.0$ across 4 core conditions. Tab
         \textbf{Think} & \textbf{0.257} & \textbf{0.233} & 0.105 & \textbf{+0.024} \\
         \bottomrule
     \end{tabular}
-    \caption{Cross-variant comparison at $T\!=\!0.0$. Think shows the highest control accuracy and a near-zero peer-pressure delta. DPO also shows negligible peer conformity ($\Delta_\text{peer}\!=\!-0.019$). $\Delta_\text{peer}$ = control $-$ confident accuracy (higher = more conformity).}
+    \caption{Cross-variant comparison at $T\!=\!0.0$ across all 8 domains and 4 core conditions (control, unanimous confident, authority trust, authoritative bias). Low control accuracies reflect the base model's difficulty with the evaluation items at greedy decoding. Think shows the highest control accuracy and a near-zero peer-pressure delta. DPO also shows negligible peer conformity ($\Delta_\text{peer}\!=\!-0.019$). $\Delta_\text{peer}$ = control $-$ confident accuracy (higher = more conformity).}
     \label{tab:think}
 \end{table}
 
