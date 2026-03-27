@@ -217,7 +217,7 @@ with open(URSP_CSV, newline="") as f:
     for row in csv.DictReader(f):
         ursp_rows[row["variant"]] = row
 
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(5.5, 3.0),
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(5.5, 3.2),
                                gridspec_kw={"wspace": 0.4, "bottom": 0.22})
 
 # ── Left panel: Tc distribution as stacked horizontal bars ──
@@ -232,34 +232,37 @@ for var_fig, var_csv in FIG3_VAR_MAP.items():
 temps = ["0.0", "0.2", "0.4", "0.6", "0.8", "1.0"]
 temp_colors = ["#2c3e50", "#34495e", "#5d6d7e", "#85929e", "#aeb6bf", "#d5d8dc"]
 
-y_pos = np.arange(len(VARIANT_ORDER))
+bar_height = 0.45
+y_pos = np.arange(len(VARIANT_ORDER)) * 1.3  # extra vertical spacing
 for i, var in enumerate(VARIANT_ORDER):
     left = 0
     for j, (pct, tc_col) in enumerate(zip(tc_data[var], temp_colors)):
-        bar = ax1.barh(y_pos[i], pct, left=left, height=0.6,
+        bar = ax1.barh(y_pos[i], pct, left=left, height=bar_height,
                        color=tc_col, edgecolor="white", linewidth=0.3)
         if pct > 8:
             ax1.text(left + pct/2, y_pos[i], f"{pct:.0f}%",
                      ha="center", va="center", fontsize=6, color="white" if j < 3 else "#333")
         left += pct
 
-# Overlay mean Tc with 95% CI as diamond markers + horizontal error bars
+# Mean Tc with 95% CI — placed below each bar to avoid overlap
 # Scale: Tc ∈ [0,1] maps to x ∈ [0,100] (percentage axis)
+tc_row_offset = 0.38  # vertical offset below bar center
 for i, var in enumerate(VARIANT_ORDER):
     row = tc_rows[FIG3_VAR_MAP[var]]
     mean_tc = float(row["tc_mean"])
     ci_lo   = float(row["tc_mean_ci_lower"])
     ci_hi   = float(row["tc_mean_ci_upper"])
-    # Convert to percentage-axis scale (Tc=0→0%, Tc=1→100%)
     x_mean = mean_tc * 100
     x_lo   = (mean_tc - ci_lo) * 100
     x_hi   = (ci_hi - mean_tc) * 100
-    ax1.errorbar(x_mean, y_pos[i], xerr=[[x_lo], [x_hi]],
-                 fmt="D", color=COLORS[var], markersize=4,
-                 markeredgecolor="white", markeredgewidth=0.6,
-                 ecolor=COLORS[var], elinewidth=1.2, capsize=3, capthick=0.8,
+    y_marker = y_pos[i] + tc_row_offset
+    ax1.errorbar(x_mean, y_marker, xerr=[[x_lo], [x_hi]],
+                 fmt="D", color=COLORS[var], markersize=3.5,
+                 markeredgecolor="white", markeredgewidth=0.5,
+                 ecolor=COLORS[var], elinewidth=1.0, capsize=2.5, capthick=0.7,
                  zorder=5)
-    ax1.text(x_mean + x_hi + 1.5, y_pos[i], f"$\\bar{{T}}_c$={mean_tc:.2f}",
+    ax1.text(x_mean + x_hi + 1.0, y_marker,
+             f"$\\bar{{T}}_c$={mean_tc:.2f}",
              va="center", fontsize=5.5, color=COLORS[var], fontweight="bold")
 
 ax1.set_yticks(y_pos)
@@ -271,7 +274,7 @@ ax1.invert_yaxis()
 # Legend below the left panel, anchored to the axes
 from matplotlib.patches import Patch
 tc_legend = [Patch(facecolor=c, label=f"$T_c$={t}") for c, t in zip(temp_colors, temps)]
-ax1.legend(handles=tc_legend, loc="upper center", bbox_to_anchor=(0.5, -0.22),
+ax1.legend(handles=tc_legend, loc="upper center", bbox_to_anchor=(0.5, -0.15),
            fontsize=6, frameon=False, ncol=6, handlelength=0.8, columnspacing=0.6)
 
 # ── Right panel: URSP rate with 95% bootstrap CI + trace-length direction ──
