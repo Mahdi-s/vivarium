@@ -88,7 +88,7 @@ University of Southern California \\
 \maketitle
 
 \begin{abstract}
-We study social conformity, capitulation to simulated peer pressure, distinct from user-directed sycophancy, across 115,200 trials spanning the OLMo-3-7B post-training pipeline (base, SFT, DPO, instruct), 12 Asch-style conditions, 8 domains, and 6 temperatures. Tracing four checkpoints of a single model family isolates each training stage's causal effect. SFT \emph{amplifies} conformity (McNemar OR\,=\,7.74 vs.\ 4.74 for base, $p<0.001$) while DPO partially \emph{mitigates} it (OR\,=\,4.30, below the base level), contradicting work reporting instruction-tuned models as broadly less conformist~\citep{zhu2025conformity}. Prompt format dominates content ($+$22pp from structural framing alone); 53--54\% of conforming items yield deterministically at $T\!=\!0$; mathematical reasoning is comparatively resistant; and while devil's advocate mitigations significantly reduce conformity, they fail to fully eliminate it for any variant. Mechanistically, 18--26\% of conforming trials exhibit unfaithful reasoning, the model retrieves the correct answer but outputs the wrong one. Preliminary chain-of-thought results (837 trials) show no detectable peer conformity ($p\!=\!0.42$) yet persistent authority vulnerability (OR\,=\,7.20, $p<0.0001$), suggesting extended reasoning protects against consensus but not authority.
+We study social conformity, capitulation to simulated peer pressure, distinct from user-directed sycophancy, across 115,200 trials spanning the OLMo-3-7B post-training pipeline (base, SFT, DPO, instruct), 12 Asch-style conditions, 8 domains, and 6 temperatures. Tracing four checkpoints of a single model family isolates each training stage's behavioral effect. SFT \emph{amplifies} peer-consensus conformity (McNemar OR\,=\,7.74 vs.\ 4.74 for base, $p<0.001$) while DPO partially \emph{mitigates} it (OR\,=\,4.30, below the base level), contrasting with work reporting instruction-tuned models as less conformist in cross-family comparisons~\citep{zhu2025conformity}. Prompt format strongly influences conformity ($+$22pp from structural framing alone); 53--54\% of conforming items yield deterministically at $T\!=\!0$; and while devil's advocate mitigations significantly reduce conformity, they fail to fully eliminate it for any variant. Mechanistically, 19--24\% of conforming trials exhibit unfaithful reasoning: the model retrieves the correct answer but outputs the wrong one. Preliminary chain-of-thought results (837 trials) show no detectable peer conformity ($p\!=\!0.42$) yet persistent authority vulnerability (OR\,=\,7.20, $p<0.0001$), suggesting extended reasoning protects against consensus but not authority.
 \end{abstract}
 
 
@@ -101,12 +101,12 @@ The rapid deployment of large language models (LLMs) in decision-critical workfl
 We study \textbf{social conformity}: capitulation to simulated \emph{peer pressure} embedded in the prompt context, mechanistically distinct from \textbf{sycophancy} (deference to the \emph{user's} opinion;~\citealp{sharma2024sycophancy}). In conformity, pressure comes from fabricated third-party consensus; in sycophancy, from the user. We maintain this distinction throughout, following the classical paradigm of \citet{asch1956} where individuals endorse false statements under unanimous peer pressure.
 
 \paragraph{Why this study challenges the existing picture.}
-The most directly comparable work is \citet{zhu2025conformity}, who adapt Asch-style paradigms across four model families and report that instruction-tuned models are \emph{less} conformist than base models. Our findings contradict this: following the actual training chronology (Base $\to$ SFT $\to$ DPO $\to$ Instruct), the SFT stage \emph{amplifies} conformity far beyond the base level, and the final Instruct checkpoint remains more conformist than Base despite lower baseline error, an effect invisible when post-training is evaluated as a monolithic step. We also find that the mitigations proposed by \citet{zhu2025conformity} (devil's advocate, question distillation), while significantly reducing conformity, fail to fully cure SFT and Instruct models. One possible explanation is that their design evaluates the post-training pipeline as a monolithic step, comparing base to final instruct without isolating intermediate stages, which would make the opposing SFT and DPO effects invisible. We trace \emph{within} a single family, four OLMo-3-7B checkpoints sharing identical pretraining, isolating each stage's causal contribution.
+The most directly comparable work is \citet{zhu2025conformity}, who adapt Asch-style paradigms across four model families and report that instruction-tuned models are \emph{less} conformist than base models. Our findings contrast with this: following the actual training chronology (Base $\to$ SFT $\to$ DPO $\to$ Instruct), the SFT stage \emph{amplifies} conformity far beyond the base level, and the final Instruct checkpoint remains more conformist than Base despite lower baseline error. We also find that the mitigations proposed by \citet{zhu2025conformity} (devil's advocate, question distillation), while significantly reducing conformity, fail to fully cure SFT and Instruct models. One possible explanation for the discrepancy is that their design evaluates the post-training pipeline as a monolithic step, comparing base to final instruct without isolating intermediate stages, which would make the opposing SFT and DPO effects invisible. We trace \emph{within} a single family, four OLMo-3-7B checkpoints sharing identical pretraining, isolating each stage's behavioral contribution.
 
 \paragraph{Contributions.}
 This paper provides three key contributions:
 \begin{enumerate}
-    \item We show that SFT and DPO have \emph{opposite} effects on conformity: SFT amplifies it while DPO partially mitigates it (\S\ref{sec:sft_dpo}).
+    \item We show that SFT and DPO have \emph{opposite} effects on peer-consensus conformity: SFT amplifies it while DPO partially mitigates it, though these effects are condition-dependent (\S\ref{sec:sft_dpo}).
     \item We introduce \emph{Conformity Temperature} ($T_c$), a per-item metric demonstrating that conformity is predominantly deterministic, and release the full evaluation pipeline as open-source code to enable replication and extension (\S\ref{sec:temperature}).
     \item We characterize how prompt format, domain, and mitigation strategies interact with post-training stage, showing that format dominates content and standard mitigations, while substantially reducing conformity, do not fully eliminate it for SFT and Instruct models (\S\ref{sec:format}--\ref{sec:mitigation}).
 \end{enumerate}
@@ -181,15 +181,15 @@ This paper provides three key contributions:
 \label{sec:related}
 
 \paragraph{Sycophancy vs.\ Social Conformity.}
-Sycophancy studies \emph{user-directed} deference. \citet{sharma2024sycophancy} showed RLHF annotators prefer sycophantic responses; \citet{elephant2025} found LLMs preserve user face by 47\% more than humans; \citet{hong2025syconbench} showed alignment tuning amplifies the effect over multi-turn dialogue. \emph{Social conformity}, by contrast, studies \emph{peer-directed} deference to fabricated third-party consensus. The mechanisms differ: sycophancy exploits helpfulness training, while conformity exploits sensitivity to contextual consensus. A model resisting user sycophancy may still conform to peer pressure; our study targets the latter.
+Sycophancy studies \emph{user-directed} deference. \citet{sharma2024sycophancy} showed that human evaluators and preference models sometimes favor sycophantic responses; \citet{elephant2025} found that on personal advice queries, LLM action endorsement was 47\% higher than human responses; \citet{hong2025syconbench} showed alignment tuning amplifies the effect over multi-turn dialogue. \emph{Social conformity}, by contrast, studies \emph{peer-directed} deference to fabricated third-party consensus. The mechanisms differ: sycophancy exploits helpfulness training, while conformity exploits sensitivity to contextual consensus. A model resisting user sycophancy may still conform to peer pressure; our study targets the latter.
 
 \paragraph{LLM Conformity.}
-\citet{zhu2025conformity} is the most directly comparable work. They adapt Asch-style paradigms across four model families (Llama-3, Gemma, Mistral, Qwen2), test confederate unanimity and tone variation, and propose devil's advocate and question distillation as mitigations. Their central finding, that instruction-tuned models are less conformist than base models, contrasts with our result that SFT amplifies conformity within the OLMo-3 pipeline. One possible explanation for this discrepancy is that comparing base to instruct without isolating intermediate SFT and DPO stages treats post-training as a monolithic step, which would make the opposing effects invisible, since the SFT-induced conformity spike is partially reversed by DPO before the final checkpoint. Our within-family design (four OLMo-3-7B checkpoints with identical pretraining) resolves this confound by tracing each stage individually.
+\citet{zhu2025conformity} is the most directly comparable work. They adapt Asch-style paradigms across four model families (Llama-3, Gemma, Mistral, Qwen2), test confederate unanimity and tone variation, and propose devil's advocate and question distillation as mitigations. Their central finding, that instruction-tuned models are less conformist than base models, contrasts with our result that SFT amplifies peer-consensus conformity within the OLMo-3 pipeline. One possible explanation for this discrepancy is that comparing base to instruct without isolating intermediate SFT and DPO stages treats post-training as a monolithic step, which would make the opposing effects invisible, since the SFT-induced conformity spike is partially reversed by DPO before the final checkpoint. Our within-family design (four OLMo-3-7B checkpoints with identical pretraining) addresses this by tracing each stage individually.
 
 \citet{celebi2025parrot} evaluate 22 models on sycophancy under authority pressure across 13 MMLU domains with log-likelihood calibration, but do not decompose the post-training pipeline into stages. \citet{weng2025benchform} study conformity in multi-agent settings. \citet{shoval2025psychiatric} adapt Asch-style influence to psychiatric assessments using GPT-4o, but analyze a single model with no training-stage decomposition.
 
 \paragraph{Post-Training Effects on Behavior.}
-The RLHF pipeline reduces generation diversity and sharpens output distributions~\citep{rlhf_entropy}, potentially increasing the likelihood of sampling socially ``safe'' agreement modes. \citet{rafailov2023dpo} introduced DPO as an offline alternative to PPO~\citep{schulman2017ppo}. \citet{sharma2024sycophancy} showed that RLHF broadly amplifies sycophancy but did not isolate SFT from preference optimization as separate stages. Our design fills this gap: we show that SFT and DPO pull conformity in opposite directions, a finding that would be invisible in any study treating post-training as a monolithic step.
+The RLHF pipeline reduces generation diversity and sharpens output distributions~\citep{rlhf_entropy}, potentially increasing the likelihood of sampling socially ``safe'' agreement modes. \citet{rafailov2023dpo} introduced DPO as an offline alternative to PPO~\citep{schulman2017ppo}. \citet{sharma2024sycophancy} showed that RLHF broadly amplifies sycophancy but did not isolate SFT from preference optimization as separate stages. Our design fills this gap: we show that SFT and DPO pull conformity in opposite directions, a finding that would be invisible in any study treating post-training as a single step.
 
 \paragraph{Temperature and Conformity.}
 \citet{renze2024} find temperature changes (0.0--1.0) do not significantly impact problem-solving in neutral contexts. Our data shows this finding does not generalize to biased contexts: conformity effects are robust across the full temperature range, with the majority of vulnerability concentrated at $T\!=\!0.0$ (greedy decoding). The $T_c$ metric we introduce provides the first per-item characterization of this temperature--conformity interaction.
@@ -210,7 +210,7 @@ We evaluate four OLMo-3-7B checkpoints along the post-training pipeline, listed 
     \item \textbf{Stage 3 ,  Instruct} (\texttt{allenai/OLMo-3-7B-Instruct}): final checkpoint after reinforcement learning with verifiable rewards (RLVR).
 \end{itemize}
 
-The OLMo-3 family also includes chain-of-thought (think) variants. We ran the 7B think variant collecting 210 items across 4 core conditions at $T\!=\!0.0$ (837 trials). Preliminary results are reported in \S\ref{sec:think}.
+The OLMo-3 family also includes chain-of-thought (think) variants. We ran the 7B think variant collecting 210 items across 4 core conditions at $T\!=\!0.0$ (837 trials after 3 judge-parse exclusions). Preliminary results are reported in \S\ref{sec:think}.
 
 \subsection{Experimental Conditions}
 \label{sec:conditions}
@@ -250,7 +250,7 @@ Evaluation items are drawn from 8 domains: ARC~\citep{clark2018arc} (science rea
 
 \subsection{Metrics}
 
-Let $Y^{(c)} \in \{0,1\}$ denote correctness under control and $Y^{(p)}$ under pressure. Let $W \in \{0,1\}$ denote wrong-answer endorsement as determined by a post-hoc LLM judge (multi-model ensemble: Qwen3-1B/8B, Gemma-3-1B, GPT-oss-20).
+Let $Y^{(c)} \in \{0,1\}$ denote correctness under control and $Y^{(p)}$ under pressure. Let $W \in \{0,1\}$ denote wrong-answer endorsement as determined by a post-hoc LLM judge (multi-model ensemble: Qwen3-1B/8B, Gemma-3-1B, GPT-oss-20B).
 
 \begin{align*}
 \text{Truth Override} &= P(Y^{(p)}\!=\!0 \mid Y^{(c)}\!=\!1) \\
@@ -263,7 +263,7 @@ Truth override isolates ``knew then flipped'' and is our primary behavioral meas
 
 \subsection{Statistical Framework}
 
-We apply McNemar's test with Yates' continuity correction (Holm-Bonferroni corrected) for paired pressure-vs.-control comparisons, Cochran's Q for within-family condition comparisons, and BCa bootstrap confidence intervals (10,000 resamples) for effect size estimation. Cell-balance checks confirm all non-control cells are within 5\% of the median trial count.
+We apply McNemar's test with Yates' continuity correction (Holm-Bonferroni corrected) for paired pressure-vs.-control comparisons, Cochran's Q for within-family condition comparisons, and BCa bootstrap confidence intervals (10,000 resamples) for effect size estimation. Cell-balance checks confirm the mean absolute deviation of non-control cells is 1.0\% of the median trial count (Appendix~\ref{app:balance}).
 
 
 %% ============================================================
@@ -283,7 +283,7 @@ We apply McNemar's test with Yates' continuity correction (Holm-Bonferroni corre
         3 & Instruct & 0.669 & 0.922 & +0.253 & 6.01 \\
         \bottomrule
     \end{tabular}
-    \caption{Pooled error rates under unanimous confident pressure. All McNemar tests significant after Holm-Bonferroni correction ($p < 0.001$). OR = McNemar odds ratio.}
+    \caption{Pooled error rates under unanimous confident pressure. All McNemar tests significant after Holm-Bonferroni correction ($p < 0.001$). OR = McNemar odds ratio. Deltas computed from unrounded per-trial rates; minor discrepancies with column-level rounding are $\leq$0.001.}
     \label{tab:pooled_error}
 \end{table}
 
@@ -304,20 +304,20 @@ SFT produces the most dramatic conformity amplification in the pipeline, OR jump
     \item Most extreme tone sensitivity: Cochran's $Q = 77.19$ ($p < 0.001$), meaning SFT's conformity rate varies more across tones than any other variant.
 \end{itemize}
 
-We hypothesize that SFT on human demonstrations introduces a \emph{deference prior}: annotators whose demonstrations form the SFT training set may exhibit patterns of agreeing with presented context, and this pattern may generalize to social pressure scenarios at inference time. This hypothesis is consistent with \citet{sharma2024sycophancy}'s finding that human preference data inherently favors sycophantic responses, but extends the locus from RLHF preference pairs to SFT demonstrations.
+We hypothesize that SFT on human demonstrations introduces a \emph{deference prior}: annotators whose demonstrations form the SFT training set may exhibit patterns of agreeing with presented context, and this pattern may generalize to social pressure scenarios at inference time. This hypothesis is consistent with \citet{sharma2024sycophancy}'s finding that human preference data inherently favors sycophantic responses, but extends the locus from RLHF preference pairs to SFT demonstrations. Notably, SFT does not uniformly amplify conformity: under authority trust pressure, SFT's OR drops to 1.11 (non-significant; Table~\ref{tab:mcnemar_full}), suggesting SFT may reduce deference to trust-framed authority claims even as it massively amplifies peer-consensus conformity.
 
 \paragraph{Reconciling with \citet{zhu2025conformity}.}
 Their finding that instruct models are less conformist does \emph{not} hold in our data. While Instruct has a lower baseline error (0.669) than Base (0.722), its behavioral shift under pressure is \emph{larger} ($\Delta\!=\!+0.253$, OR\,=\,6.01) than Base ($\Delta\!=\!+0.201$, OR\,=\,4.74). The apparent improvement in baseline accuracy masks increased conformity susceptibility, precisely the confound that within-family isolation reveals. The full pipeline trajectory (Base OR\,4.74 $\to$ SFT 7.74 $\to$ DPO 4.30 $\to$ Instruct 6.01) shows that post-training has separable stages with opposing effects, invisible when post-training is evaluated as a monolithic step without isolating intermediate stages.
 
 \paragraph{DPO as Partial Correction (Stage 2).}
-DPO reverses the SFT spike, reducing OR from 7.74 to 4.30, the lowest of \emph{any} variant, falling below the Base level (4.74). DPO also produces the fewest ``always conforms'' items (233 vs.\ 559 for SFT). DPO training, which optimizes for preferred over dispreferred outputs, appears to counteract the sycophantic prior. The final RLVR stage (Instruct, Stage 3) then produces a substantial relapse (OR\,=\,6.01), though all variants remain significantly vulnerable ($p < 0.001$).
+DPO reverses the SFT spike, reducing OR from 7.74 to 4.30, the lowest of \emph{any} variant, falling below the Base level (4.74). DPO also produces the fewest ``always conforms'' items (233 vs.\ 559 for SFT). DPO training, which optimizes for preferred over dispreferred outputs, appears to counteract the sycophantic prior. The final RLVR stage (Instruct, Stage 3) then produces a substantial relapse (OR\,=\,6.01), though all variants remain significantly vulnerable under peer-consensus pressure ($p < 0.001$).
 
 
 %% ============================================================
 \section{Format Dominates Content}
 \label{sec:format}
 
-Cochran's Q tests within the tone family (plain, neutral, confident, uncertain) are significant for all variants ($p \leq 0.002$; SFT: $Q = 77.19$), but the magnitude of tone differences is modest. The structural signal of consensus, not its epistemic quality, drives the effect. The most striking format contrast involves the classical Asch condition (free-text) vs.\ structured format (answer options;~\citealp{zhu2025conformity}):
+Cochran's Q tests within the tone family (plain, neutral, confident, uncertain) are significant for all variants ($p < 0.05$; SFT: $Q = 77.19$), but the magnitude of tone differences is modest. The structural signal of consensus, not its epistemic quality, drives the effect. The most striking format contrast involves the classical Asch condition (free-text) vs.\ structured format (answer options;~\citealp{zhu2025conformity}):
 
 \begin{table}[t]
     \centering
@@ -350,13 +350,13 @@ A common objection is that conformity might be a sampling artifact, the model ``
         \toprule
         Variant & $\bar{T}_c$ [CI] & $T_c\!=\!0$ & $n_\text{conf}$ & $n_\text{never}$ & URSP \\
         \midrule
-        Base (Stage 0) & .24 [.23,.26] & 53.3\% & 2{,}585 & 1{,}815 & 25.9\% \\
-        SFT (Stage 1) & .22 [.21,.24] & 61.8\% & 1{,}909 & 2{,}491 & 19.1\% \\
+        Base (Stage 0) & .24 [.23,.26] & 53.3\% & 2{,}585 & 1{,}815 & 23.7\% \\
+        SFT (Stage 1) & .22 [.21,.24] & 61.8\% & 1{,}909 & 2{,}491 & 19.0\% \\
         DPO (Stage 2) & .31 [.30,.33] & 46.1\% & 1{,}811 & 2{,}589 & 23.8\% \\
         Instruct (Stage 3) & .27 [.26,.29] & 54.1\% & 1{,}718 & 2{,}682 & 17.9\% \\
         \bottomrule
     \end{tabular}
-    \caption{Conformity Temperature and URSP. $T_c\!=\!0$ = \% conforming at greedy decoding. URSP = \% of conforming trials where the model retrieved the correct answer but output the wrong one. SFT has the most deterministic conformity (61.8\% at $T_c\!=\!0$); DPO the least (46.1\%).}
+    \caption{Conformity Temperature and URSP. $T_c\!=\!0$ = \% conforming at greedy decoding. URSP = \% of conforming trials where ground-truth keywords appear in the output text despite wrong-answer endorsement (after prompt-echo stripping). Cross-variant URSP rates are confounded by output length (see text). SFT has the most deterministic conformity (61.8\% at $T_c\!=\!0$); DPO the least (46.1\%).}
     \label{tab:tc}
 \end{table}
 
@@ -365,19 +365,19 @@ For both base and instruct, \textbf{53--54\% of conforming items already conform
 \begin{figure}[t]
     \centering
     \includegraphics[width=\textwidth]{fig3_tc_ursp.pdf}
-    \caption{\textbf{Left:} $T_c$ distribution showing where conformity first appears. SFT concentrates conformity at greedy decoding (61.8\% at $T_c\!=\!0$); DPO spreads it across temperatures (46.1\%). Diamond markers show mean $T_c$ with 95\% bootstrap CI. \textbf{Right:} URSP rate with 95\% bootstrap CI, the fraction of conforming trials where the model retrieved the correct answer but output the wrong one. Base rationalizes the most (25.9\%); instruct-family models capitulate faster (17.9--23.8\%). Arrows indicate trace-length direction when conforming ($\uparrow$ = longer traces, i.e., rationalization; $\downarrow$ = shorter, i.e., fast capitulation).}
+    \caption{\textbf{Left:} $T_c$ distribution showing where conformity first appears. SFT concentrates conformity at greedy decoding (61.8\% at $T_c\!=\!0$); DPO spreads it across temperatures (46.1\%). Diamond markers show mean $T_c$ with 95\% bootstrap CI. \textbf{Right:} URSP rate with 95\% bootstrap CI, the fraction of conforming trials where ground-truth keywords appear in the output despite wrong-answer endorsement. Cross-variant differences are partly confounded by output verbosity (median trace length ranges from 66 to 509 chars; see \S\ref{sec:temperature}). Arrows indicate trace-length direction when conforming ($\uparrow$ = longer traces; $\downarrow$ = shorter).}
     \label{fig:tc_ursp}
 \end{figure}
 
 \paragraph{Unfaithful Reasoning Under Social Pressure (URSP).}
-We define URSP as the rate at which a model retrieves the correct answer but ultimately outputs the wrong one. Among conforming trials (Figure~\ref{fig:tc_ursp} right), base shows the highest URSP (25.9\% [24.9, 26.9]) with \emph{longer} traces when conforming ($d\!=\!1.25$, rationalization), while instruct-family models show lower URSP (17.9--23.8\%) with \emph{shorter} traces ($d\!=\!-0.35$ to $-0.66$, fast capitulation). Base-model URSP should be interpreted cautiously: unstructured completions may contain the correct answer incidentally rather than via deliberate retrieval, likely inflating the rate. We release the full evaluation pipeline as open-source code to enable replication and extension of this analysis.
+We define URSP as the rate at which a conforming trial's output text contains the ground-truth answer (detected via keyword matching with word-boundary constraints) despite endorsing the wrong answer. Among conforming trials (Figure~\ref{fig:tc_ursp} right), aggregate URSP rates range from 17.9\% (Instruct) to 23.8\% (DPO). However, cross-variant URSP comparisons must be interpreted with caution: output verbosity varies substantially across variants (median trace length: SFT 66 chars, Instruct 115, DPO 385, Base 509). Length-stratified analysis reveals that URSP rates for long traces ($\geq$ median) are similar across all non-think variants (26--28\%), while short-trace URSP is mechanically suppressed (9--10\% for SFT and Instruct) because short outputs provide insufficient text for keyword detection. Think-variant URSP ($\sim$41\%) is stable across trace lengths, consistent with genuine retrieval in extended reasoning. Logprob-based URSP validation, which would directly measure whether the model assigns non-trivial probability to the correct answer, remains future work.
 
 
 %% ============================================================
-\section{Domain Immunity: Why Mathematics Resists}
+\section{Domain Effects: Conformity and Baseline Accuracy}
 \label{sec:domain}
 
-Mathematical reasoning shows a structurally different response to social pressure: the smallest conformity deltas and lowest pressure-induced error rates across all instruct-family variants. Two properties likely contribute: (1)~\textbf{derivational structure}, mathematical answers require step-by-step derivation that provides internal consistency checks, making rationalization costly; and (2)~\textbf{verification asymmetry}, mathematical answers are self-verifiable, while general knowledge answers are susceptible to social reframing. This immunity weakens at $T\!\geq\!0.8$, where stochasticity can surface sycophantic tokens despite derivational chains.
+Different knowledge domains show distinct conformity profiles, but the pattern is more nuanced than simple resistance or vulnerability. Under unanimous confident pressure, math items exhibit the largest absolute conformity deltas ($\Delta$=+0.23 for Base, +0.40 for SFT; Appendix~\ref{app:domains}), while domains with high baseline error (0.83--0.89 for knowledge, general) show compressed deltas. This pattern is partly attributable to ceiling effects: models that are already wrong on most items under control have less room for pressure-induced degradation. Two hypothesized protective properties of mathematical reasoning---derivational structure (step-by-step derivation providing internal consistency checks) and verification asymmetry (self-verifiable answers)---may operate at the mechanistic level but are not sufficient to produce smaller absolute deltas once baseline difficulty is accounted for. Disentangling ceiling effects from genuine domain-specific resistance requires future work with difficulty-matched item sets across domains.
 
 
 %% ============================================================
@@ -426,7 +426,7 @@ These results are preliminary (single temperature, 4 core conditions, 210 items)
 SFT amplifying conformity while DPO mitigates it suggests human demonstration data carries an implicit \emph{deference signal}. This extends \citet{sharma2024sycophancy}'s finding beyond RLHF preference pairs to SFT demonstrations themselves. Training data curation should explicitly filter for deference patterns in both stages.
 
 \paragraph{Alignment Tax Is Not Monolithic.}
-Our finding that DPO mitigates \emph{peer conformity} does not imply it cures \emph{user sycophancy}, the mechanisms are distinct. Recent literature assumes preference tuning universally exacerbates alignment taxes~\citep{sharma2024sycophancy, hong2025syconbench}, but our data complicates this: DPO \emph{reduces} peer conformity even as prior work shows RLHF amplifies user sycophancy. Different post-training stages affect different behavioral dimensions in different directions; studies that aggregate across stages or conflate conformity with sycophancy risk misleading conclusions.
+Our finding that DPO mitigates \emph{peer conformity} does not imply it cures \emph{user sycophancy}; the mechanisms are distinct. Recent literature assumes preference tuning universally exacerbates alignment taxes~\citep{sharma2024sycophancy, hong2025syconbench}, but our data complicates this: DPO \emph{reduces} peer conformity even as prior work shows RLHF amplifies user sycophancy. Different post-training stages affect different behavioral dimensions in different directions; studies that aggregate across stages or conflate conformity with sycophancy risk misleading conclusions.
 
 \paragraph{Prompt-Level Mitigations Are Necessary but Insufficient.}
 Devil's advocate substantially reduces conformity across all variants, yet all mitigated ORs remain well above 1.0 (ORs of 3.3--3.8), while question distillation has limited effect (ORs of 4.6--5.3). No prompt-level mitigation eliminates conformity for any variant, including DPO. This implies that conformity operates at a level deeper than surface-level prompt processing. More fundamental interventions, at the training level (DPO shows the most promise, achieving the lowest baseline OR of 4.30) or representation level (activation steering), appear necessary to fully eliminate the sycophantic prior introduced by supervised fine-tuning.
@@ -442,7 +442,7 @@ This study covers a single model family (OLMo-3-7B); generalization to other arc
 \section{Conclusion}
 \label{sec:conclusion}
 
-In the OLMo-3-7B post-training pipeline, supervised fine-tuning amplifies social conformity while direct preference optimization counteracts it, a finding that challenges prior work reporting instruction-tuned models as broadly less conformist~\citep{zhu2025conformity}. The divergence is not predicted by baseline accuracy differences and represents an emergent behavioral property of each training stage. Conformity is predominantly deterministic (53--54\% of items at $T\!=\!0.0$), driven by prompt format rather than epistemic content, and resistant to standard mitigations: devil's advocate substantially reduces but does not eliminate conformity for any variant, and question distillation shows limited effect~\citep{zhu2025conformity}. Mathematical reasoning provides behavioral protection that other domains lack. These findings imply that conformity susceptibility should be measured as a multi-dimensional profile, over pressure type, domain, and decoding regime, and that alignment pipelines should explicitly evaluate and mitigate the sycophantic priors introduced by supervised fine-tuning. We release the full evaluation pipeline as open-source code to facilitate replication and community adoption of per-item conformity benchmarking.
+In the OLMo-3-7B post-training pipeline, supervised fine-tuning amplifies social conformity while direct preference optimization counteracts it, a finding that challenges prior work reporting instruction-tuned models as broadly less conformist~\citep{zhu2025conformity}. The divergence is not predicted by baseline accuracy differences and represents an emergent behavioral property of each training stage. Conformity is predominantly deterministic (53--54\% of items at $T\!=\!0.0$), driven by prompt format rather than epistemic content, and resistant to standard mitigations: devil's advocate substantially reduces but does not eliminate conformity for any variant, and question distillation shows limited effect~\citep{zhu2025conformity}. Domain-level conformity is shaped by ceiling effects that compress deltas where baseline accuracy is already low. These findings imply that conformity susceptibility should be measured as a multi-dimensional profile, over pressure type, domain, and decoding regime, and that alignment pipelines should explicitly evaluate and mitigate the sycophantic priors introduced by supervised fine-tuning. We release the full evaluation pipeline as open-source code to facilitate replication and community adoption of per-item conformity benchmarking.
 
 
 %% ============================================================
@@ -705,7 +705,7 @@ A revolving door serves as a security measure at a library. It is convenient for
 \section{LLM Judge Protocol}
 \label{app:judge}
 
-All reported behavioral metrics use a post-hoc multi-model LLM judge ensemble (Qwen3-1B/8B, Gemma-3-1B, GPT-oss-20) and require valid parsed judge JSON. The judge receives the question, ground truth, injected wrong answer, and model completion, and must return a structured decision.
+All reported behavioral metrics use a post-hoc multi-model LLM judge ensemble (Qwen3-1B/8B, Gemma-3-1B, GPT-oss-20B) and require valid parsed judge JSON. The judge receives the question, ground truth, injected wrong answer, and model completion, and must return a structured decision.
 
 \begin{promptbox}
 [Judge Prompt Template]
@@ -755,7 +755,7 @@ Table~\ref{tab:mcnemar_full} reports McNemar odds ratios with 95\% Wald confiden
         Unanimous Neutral & 4.68 [3.71,\,5.90]$^{***}$ & 5.32 [4.22,\,6.70]$^{***}$ & 3.85 [3.10,\,4.79]$^{***}$ & 4.12 [3.31,\,5.14]$^{***}$ \\
         Unanimous Confident & 4.74 [3.77,\,5.96]$^{***}$ & 7.74 [5.89,\,10.18]$^{***}$ & 4.30 [3.45,\,5.36]$^{***}$ & 6.01 [4.66,\,7.76]$^{***}$ \\
         Unanimous Uncertain & 7.12 [5.42,\,9.35]$^{***}$ & 5.25 [4.16,\,6.62]$^{***}$ & 2.60 [2.13,\,3.16]$^{***}$ & 3.41 [2.76,\,4.21]$^{***}$ \\
-        Diverse Plain & 4.49 [3.57,\,5.64]$^{***}$ & 5.88 [4.58,\,7.54]$^{***}$ & 4.37 [3.47,\,5.49]$^{***}$ & 5.35 [4.16,\,6.88]$^{***}$ \\
+        Diverse (No Majority) & 4.49 [3.57,\,5.64]$^{***}$ & 5.88 [4.58,\,7.54]$^{***}$ & 4.37 [3.47,\,5.49]$^{***}$ & 5.35 [4.16,\,6.88]$^{***}$ \\
         \midrule
         \multicolumn{5}{l}{\textit{Mitigations}} \\
         Question Distillation & 4.77 [3.77,\,6.04]$^{***}$ & 4.58 [3.64,\,5.75]$^{***}$ & 4.68 [3.70,\,5.92]$^{***}$ & 5.29 [4.14,\,6.74]$^{***}$ \\
@@ -816,6 +816,36 @@ Table~\ref{tab:cochran_q} reports Cochran's Q statistics testing whether conform
 \label{app:balance}
 
 Our experimental design targets equal trial counts across all (variant, condition, temperature) cells. We verified balance by computing the deviation of each cell's trial count from the per-temperature median. Across 264 non-control pressure cells, the maximum deviation is 10.5\% (authoritative bias at $T\!=\!0.2$ for instruct), and the mean absolute deviation is 1.0\%. The 18 cells exceeding the 5\% threshold are concentrated in two conditions (authoritative bias and Asch history) at low temperatures ($T \leq 0.6$), reflecting minor item-level filtering differences that do not affect the pooled statistical tests. Control cells have lower counts by design, as they are matched with each pressure condition separately.
+
+
+%% ============================================================
+\section{Domain Breakdown Under Pressure}
+\label{app:domains}
+
+Table~\ref{tab:domain_breakdown} shows conformity deltas and error rates for all 7 domain categories under unanimous confident pressure, pooled over 6 temperatures. Math exhibits the largest deltas partly because its lower baseline accuracy (0.51--0.75) leaves more room for pressure-induced degradation. Domains with high baseline error (knowledge, general) show compressed deltas due to ceiling effects.
+
+\begin{table*}[t]
+    \centering
+    \footnotesize
+    \setlength{\tabcolsep}{3pt}
+    \begin{tabular}{lcccccccc}
+        \toprule
+        & \multicolumn{2}{c}{Base} & \multicolumn{2}{c}{SFT} & \multicolumn{2}{c}{DPO} & \multicolumn{2}{c}{Instruct} \\
+        \cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7} \cmidrule(lr){8-9}
+        Domain & Ctrl$\to$Press & $\Delta$ & Ctrl$\to$Press & $\Delta$ & Ctrl$\to$Press & $\Delta$ & Ctrl$\to$Press & $\Delta$ \\
+        \midrule
+        Math & .75$\to$.98 & +.23 & .51$\to$.90 & +.40 & .58$\to$.86 & +.28 & .61$\to$.93 & +.32 \\
+        Truthfulness & .62$\to$.86 & +.24 & .59$\to$.92 & +.33 & .58$\to$.93 & +.35 & .60$\to$.96 & +.36 \\
+        Reasoning & .68$\to$.92 & +.24 & .82$\to$.96 & +.14 & .73$\to$.86 & +.13 & .76$\to$.92 & +.16 \\
+        Science & .72$\to$.84 & +.12 & .71$\to$.93 & +.22 & .70$\to$.88 & +.17 & .74$\to$.92 & +.18 \\
+        Knowledge & .83$\to$.95 & +.12 & .89$\to$.94 & +.05 & .84$\to$.90 & +.06 & .76$\to$.93 & +.16 \\
+        Opinion & .84$\to$.91 & +.07 & .77$\to$.96 & +.19 & .71$\to$.95 & +.24 & .71$\to$.94 & +.23 \\
+        General & .85$\to$.91 & +.06 & .85$\to$.97 & +.11 & .83$\to$.92 & +.09 & .83$\to$.91 & +.08 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Domain-level error rates and conformity deltas under unanimous confident pressure, pooled over 6 temperatures. Domains sorted by Base $\Delta$. Math and truthfulness show the largest deltas, consistent with their lower control error rates (more room for pressure-induced degradation). Knowledge and general show compressed deltas due to ceiling effects (control error already $\geq$0.83).}
+    \label{tab:domain_breakdown}
+\end{table*}
 
 
 \end{document}

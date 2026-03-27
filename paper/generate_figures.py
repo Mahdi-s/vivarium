@@ -49,7 +49,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(SCRIPT_DIR)
 MCNEMAR_CSV = os.path.join(
     REPO_ROOT,
-    "Comparing_Experiments", "publication_V2_column",
+    "Comparing_Experiments", "publication_V2_colm",
     "statistical_tests", "mcnemar_pressure_vs_control.csv",
 )
 

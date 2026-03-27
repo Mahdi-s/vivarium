@@ -1,26 +1,26 @@
 domain,variant,total_trials,conforming_trials,ursp_trials,ursp_given_conforming
-High School Geography,base,6600,2356,190,0.0806
+High School Geography,base,6600,2356,172,0.073
 High School Geography,instruct,6600,1650,131,0.0794
 High School Geography,instruct_sft,6600,2120,81,0.0382
 High School Geography,instruct_dpo,6600,1606,156,0.0971
 High School Geography,think,6600,2095,569,0.2716
 High School Geography,think_sft,6600,1950,535,0.2744
 High School Geography,think_dpo,6600,2124,498,0.2345
-High School Mathematics,base,3300,484,34,0.0702
+High School Mathematics,base,3300,484,29,0.0599
 High School Mathematics,instruct,3300,307,20,0.0651
 High School Mathematics,instruct_sft,3300,354,12,0.0339
 High School Mathematics,instruct_dpo,3300,265,12,0.0453
 High School Mathematics,think,3300,345,13,0.0377
 High School Mathematics,think_sft,3300,297,11,0.037
 High School Mathematics,think_dpo,3294,275,9,0.0327
-High School Physics,base,3300,1174,352,0.2998
+High School Physics,base,3300,1174,321,0.2734
 High School Physics,instruct,3300,1041,149,0.1431
-High School Physics,instruct_sft,3300,1244,253,0.2034
+High School Physics,instruct_sft,3300,1244,252,0.2026
 High School Physics,instruct_dpo,3300,941,164,0.1743
 High School Physics,think,3300,1473,311,0.2111
 High School Physics,think_sft,3300,1414,341,0.2412
 High School Physics,think_dpo,3300,1154,286,0.2478
-general,base,3102,1896,1083,0.5712
+general,base,3102,1896,977,0.5153
 general,instruct,3102,1330,456,0.3429
 general,instruct_sft,3102,1629,736,0.4518
 general,instruct_dpo,3102,1332,589,0.4422
@@ -48,7 +48,7 @@ preference,instruct_dpo,3300,0,0,0
 preference,think,3300,0,0,0
 preference,think_sft,3300,0,0,0
 preference,think_dpo,3300,376,37,0.0984
-science,base,3300,1351,273,0.2021
+science,base,3300,1351,260,0.1925
 science,instruct,3300,934,181,0.1938
 science,instruct_sft,3300,1315,202,0.1536
 science,instruct_dpo,3300,875,249,0.2846

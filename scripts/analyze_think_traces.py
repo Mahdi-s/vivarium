@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 """
 Experiments A, B, C: Zero-compute analysis of existing think model traces.
 
@@ -125,6 +126,21 @@ def get_condition_map(conn: sqlite3.Connection) -> dict:
     """Return {condition_name: condition_id}."""
     cur = conn.execute("SELECT condition_id, name FROM conformity_conditions")
     return {row["name"]: row["condition_id"] for row in cur.fetchall()}
+
+
+def strip_prompt_echo(raw_text: str) -> str:
+    """Strip echoed prompt text from base model completions.
+
+    Base models often generate: <answer>\nUSER:\n<echoed prompt>
+    This inflates URSP by finding GT keywords in the echoed question.
+    We cut at the first echo marker appearing after the initial 30 chars
+    to preserve the actual model answer while removing prompt echoes.
+    """
+    for marker in ["USER:", "\nOrganiser:", "\nQuestion:"]:
+        idx = raw_text.find(marker, 30)
+        if idx > 0:
+            return raw_text[:idx].strip()
+    return raw_text
 
 
 def normalize_answer(text: str) -> str:
@@ -491,12 +507,15 @@ def run_experiment_a(
             # Only analyze conforming trials for URSP
             is_conforming = (row["is_correct"] == 0 and wrong_endorsed == 1)
 
+            # Strip prompt echoes to avoid inflating URSP for verbose models
+            cleaned_text = strip_prompt_echo(row["raw_text"])
+
             # For all variants, detect ground truth and social references
             gt_keywords = ground_truth_keywords(gt_text)
             gt_info = detect_ground_truth_in_trace(
-                row["raw_text"], gt_text, gt_keywords
+                cleaned_text, gt_text, gt_keywords
             )
-            social_info = detect_social_references(row["raw_text"])
+            social_info = detect_social_references(cleaned_text)
             reasoning_order = detect_reasoning_order(
                 gt_info["match_position"], social_info["first_social_position"]
             )
@@ -510,7 +529,7 @@ def run_experiment_a(
                 "is_correct": row["is_correct"],
                 "wrong_endorsed": wrong_endorsed,
                 "is_conforming": is_conforming,
-                "trace_length": len(row["raw_text"]),
+                "trace_length": len(cleaned_text),
                 "is_ursp": gt_info["is_ursp"] and is_conforming,
                 "gt_exact_match": gt_info["exact_match"],
                 "gt_keyword_ratio": gt_info["keyword_match_ratio"],
@@ -591,13 +610,38 @@ def run_experiment_a(
 
         ursp_by_variant_rows.append(row)
 
+    # Length-stratified URSP: compute per-variant median trace length,
+    # then report URSP rate for short (<median) vs long (>=median) traces
+    for row in ursp_by_variant_rows:
+        v = row["variant"]
+        conforming_results = [r for r in all_results
+                              if r["variant"] == v and r["is_conforming"]]
+        if not conforming_results:
+            row["median_trace_length"] = 0
+            row["ursp_short_traces"] = None
+            row["ursp_long_traces"] = None
+            continue
+        lengths = [r["trace_length"] for r in conforming_results]
+        median_len = float(np.median(lengths))
+        row["median_trace_length"] = int(median_len)
+        short = [r for r in conforming_results if r["trace_length"] < median_len]
+        long = [r for r in conforming_results if r["trace_length"] >= median_len]
+        short_ursp = sum(1 for r in short if r["is_ursp"])
+        long_ursp = sum(1 for r in long if r["is_ursp"])
+        row["ursp_short_traces"] = round(short_ursp / len(short), 4) if short else None
+        row["ursp_long_traces"] = round(long_ursp / len(long), 4) if long else None
+
     # Print CIs
     if HAS_SCIPY:
-        print(f"\n{'Variant':<16} {'URSP/Conf':>10} {'95% CI':>20}")
-        print("-" * 50)
+        print(f"\n{'Variant':<16} {'URSP/Conf':>10} {'95% CI':>20} "
+              f"{'Short':>7} {'Long':>7} {'MedLen':>7}")
+        print("-" * 80)
         for row in ursp_by_variant_rows:
             ci = f"[{row['ursp_ci_lower']}, {row['ursp_ci_upper']}]"
-            print(f"{row['variant']:<16} {row['ursp_given_conforming']:>9.1%} {ci:>20}")
+            short_s = f"{row['ursp_short_traces']:.1%}" if row.get('ursp_short_traces') is not None else "N/A"
+            long_s = f"{row['ursp_long_traces']:.1%}" if row.get('ursp_long_traces') is not None else "N/A"
+            print(f"{row['variant']:<16} {row['ursp_given_conforming']:>9.1%} {ci:>20} "
+                  f"{short_s:>7} {long_s:>7} {row.get('median_trace_length', 0):>7}")
 
     # Save URSP by variant
     csv_path = os.path.join(out_dir, "ursp_by_variant.csv")
@@ -996,9 +1040,11 @@ def run_experiment_b(all_results: list, out_dir: str, n_boot: int = 10000):
         row["delta_ci_lower"] = round(float(np.percentile(boot_deltas, 2.5)), 1)
         row["delta_ci_upper"] = round(float(np.percentile(boot_deltas, 97.5)), 1)
 
+        d_val = row.get('cohens_d')
+        d_str = f"{d_val:>8.3f}" if d_val is not None else "     N/A"
         print(
             f"{v:<16} {conform_mean:>10.1f} {resist_mean:>10.1f} "
-            f"{delta:>+8.1f} {row.get('cohens_d', 0):>8.3f} {p_str:>12}"
+            f"{delta:>+8.1f} {d_str} {p_str:>12}"
         )
         length_rows.append(row)
 
