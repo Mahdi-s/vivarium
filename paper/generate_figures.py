@@ -120,7 +120,7 @@ def _sig_star(label):
 
 
 # ── Plot ──────────────────────────────────────────────────────────────────
-fig, ax = plt.subplots(figsize=(5.5, 3.0))
+fig, ax = plt.subplots(figsize=(5.5, 3.3))
 
 x = np.arange(len(conditions))
 width = 0.19
@@ -140,12 +140,12 @@ for i, var in enumerate(VARIANT_ORDER):
     # Significance stars above error bars
     for j, (bar, h_val, sig) in enumerate(zip(bars, hi, sig_label[var])):
         star_txt = _sig_star(sig)
-        y_pos = h_val + 0.15
+        y_pos = h_val + 0.2
         ax.text(bar.get_x() + bar.get_width() / 2, y_pos,
                 star_txt, ha="center", va="bottom",
-                fontsize=5.5 if star_txt != "ns" else 5,
+                fontsize=7 if star_txt != "ns" else 6,
                 fontweight="bold" if star_txt != "ns" else "normal",
-                color="#222" if star_txt != "ns" else "#999")
+                color="#000" if star_txt != "ns" else "#888")
 
 ax.axhline(y=1.0, color="#bbb", linewidth=0.8, linestyle="--", zorder=0)
 ax.set_ylabel("McNemar Odds Ratio")
