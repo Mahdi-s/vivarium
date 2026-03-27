@@ -6,6 +6,9 @@ Produces:
   figures/fig3_tc_ursp.pdf         – Combined Tc distribution + URSP bar
 """
 
+import os
+import csv
+import math
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -41,17 +44,83 @@ COLORS = {
 # Figure 2: McNemar OR across conditions — the headline result
 # ═══════════════════════════════════════════════════════════════════════════
 
-# Pooled McNemar OR from the analysis (all 6 temperatures)
-# Unan. Confident values match Table 2 exactly; other conditions from per-condition analysis
-conditions = ["Unan.\nConfident", "Auth.\nBias", "Auth.\nTrust", "Devil's\nAdvocate", "Question\nDistill."]
-or_data = {
-    "Base":      [4.76, 1.58, 1.75, 3.51, 2.01],
-    "SFT":       [7.68, 2.01, 1.89, 2.95, 2.29],
-    "DPO":       [5.13, 3.28, 1.85, 1.01, 1.02],
-    "Instruct":  [5.98, 3.65, 1.67, 2.38, 2.00],
+# ── Load McNemar data from CSV ────────────────────────────────────────────
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+REPO_ROOT = os.path.dirname(SCRIPT_DIR)
+MCNEMAR_CSV = os.path.join(
+    REPO_ROOT,
+    "Comparing_Experiments", "publication_V2_column",
+    "statistical_tests", "mcnemar_pressure_vs_control.csv",
+)
+
+# Map figure labels → CSV condition_name, and figure variant → CSV variant
+COND_MAP = [
+    ("Unan.\nConfident", "asch_zhu_unbiased_unanimous_confident"),
+    ("Auth.\nBias",       "authoritative_bias"),
+    ("Auth.\nTrust",      "authority_zhu_unbiased_trust"),
+    ("Devil's\nAdvocate", "asch_zhu_unbiased_da"),
+    ("Question\nDistill.","asch_zhu_unbiased_qd"),
+]
+VAR_MAP = {
+    "Base":     "base",
+    "SFT":      "instruct_sft",
+    "DPO":      "instruct_dpo",
+    "Instruct": "instruct",
 }
 
-fig, ax = plt.subplots(figsize=(5.5, 2.5))
+conditions = [label for label, _ in COND_MAP]
+cond_keys  = [key   for _, key in COND_MAP]
+
+# Parse CSV into a lookup: (csv_variant, csv_condition) → row dict
+mcnemar_rows = {}
+with open(MCNEMAR_CSV, newline="") as f:
+    for row in csv.DictReader(f):
+        mcnemar_rows[(row["variant"], row["condition_name"])] = row
+
+# Build arrays: OR, CI_lo, CI_hi, significance label
+or_data   = {}
+ci_lo     = {}
+ci_hi     = {}
+sig_label = {}
+
+for var_fig, var_csv in VAR_MAP.items():
+    or_data[var_fig]   = []
+    ci_lo[var_fig]     = []
+    ci_hi[var_fig]     = []
+    sig_label[var_fig] = []
+    for cond_csv in cond_keys:
+        row = mcnemar_rows[(var_csv, cond_csv)]
+        b = float(row["b_ctrl_correct_pres_wrong"])
+        c = float(row["c_ctrl_wrong_pres_correct"])
+        OR = b / c if c > 0 else float("inf")
+        # Wald 95 % CI on log(OR)
+        if b > 0 and c > 0:
+            log_or = math.log(OR)
+            se = math.sqrt(1.0 / b + 1.0 / c)
+            lo = math.exp(log_or - 1.96 * se)
+            hi = math.exp(log_or + 1.96 * se)
+        else:
+            lo, hi = OR, OR
+        or_data[var_fig].append(OR)
+        ci_lo[var_fig].append(lo)
+        ci_hi[var_fig].append(hi)
+        # Holm-corrected significance
+        sig_label[var_fig].append(row["sig_adjusted"])
+
+
+def _sig_star(label):
+    """Convert sig_adjusted string to display text."""
+    if label == "***":
+        return "***"
+    elif label == "**":
+        return "**"
+    elif label == "*":
+        return "*"
+    return "ns"
+
+
+# ── Plot ──────────────────────────────────────────────────────────────────
+fig, ax = plt.subplots(figsize=(5.5, 3.0))
 
 x = np.arange(len(conditions))
 width = 0.19
@@ -59,35 +128,53 @@ offsets = [-1.5, -0.5, 0.5, 1.5]
 
 for i, var in enumerate(VARIANT_ORDER):
     ors = or_data[var]
-    bars = ax.bar(x + offsets[i] * width, ors, width,
+    lo  = ci_lo[var]
+    hi  = ci_hi[var]
+    yerr_lo = [o - l for o, l in zip(ors, lo)]
+    yerr_hi = [h - o for o, h in zip(ors, hi)]
+    positions = x + offsets[i] * width
+    bars = ax.bar(positions, ors, width,
+                  yerr=[yerr_lo, yerr_hi],
+                  capsize=1.5, error_kw=dict(lw=0.7, capthick=0.7, color="#444"),
                   label=var, color=COLORS[var], edgecolor="white", linewidth=0.5)
-    # Mark non-significant bars
-    for j, (bar, orval) in enumerate(zip(bars, ors)):
-        if orval < 1.5:  # approximately non-significant
-            ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.08,
-                    "ns", ha="center", va="bottom", fontsize=6, color="#888")
+    # Significance stars above error bars
+    for j, (bar, h_val, sig) in enumerate(zip(bars, hi, sig_label[var])):
+        star_txt = _sig_star(sig)
+        y_pos = h_val + 0.15
+        ax.text(bar.get_x() + bar.get_width() / 2, y_pos,
+                star_txt, ha="center", va="bottom",
+                fontsize=5.5 if star_txt != "ns" else 5,
+                fontweight="bold" if star_txt != "ns" else "normal",
+                color="#222" if star_txt != "ns" else "#999")
 
 ax.axhline(y=1.0, color="#bbb", linewidth=0.8, linestyle="--", zorder=0)
 ax.set_ylabel("McNemar Odds Ratio")
 ax.set_xticks(x)
 ax.set_xticklabels(conditions)
-ax.set_ylim(0, 9.5)
-# Legend outside the plot area, below title, to avoid any bar overlap
+
+# Dynamic y-limit based on data
+max_hi = max(h for var in VARIANT_ORDER for h in ci_hi[var])
+ax.set_ylim(0, max_hi + 2.5)
+
 ax.legend(loc="upper right", ncol=2, frameon=True, fancybox=False,
           edgecolor="#ddd", facecolor="white", framealpha=0.85, fontsize=6,
           handlelength=0.7, handletextpad=0.3, borderpad=0.2, columnspacing=0.4,
           bbox_to_anchor=(1.0, 0.85))
 ax.set_title("Conformity susceptibility across the post-training pipeline", fontsize=10, pad=8)
 
-# SFT arrow: text at top-left, arrow down to the RED (SFT) bar
+# SFT arrow — point to the tallest SFT bar (Unan. Confident)
 sft_bar_x = x[0] + offsets[1] * width
-ax.annotate("SFT amplifies", xy=(sft_bar_x, 7.75), xytext=(-0.2, 9.0),
+sft_top = ci_hi["SFT"][0]
+ax.annotate("SFT amplifies", xy=(sft_bar_x, sft_top + 0.6),
+            xytext=(-0.15, max_hi + 1.8),
             fontsize=7.5, fontweight="bold", color=COLORS["SFT"],
             arrowprops=dict(arrowstyle="->", color=COLORS["SFT"], lw=1.0))
 
-# DPO arrow: text at top-center, arrow down to the GREEN (DPO) bar
+# DPO arrow — point to the DPO Unan. Confident bar
 dpo_bar_x = x[0] + offsets[2] * width
-ax.annotate("DPO mitigates", xy=(dpo_bar_x, 5.25), xytext=(1.2, 9.0),
+dpo_top = ci_hi["DPO"][0]
+ax.annotate("DPO mitigates", xy=(dpo_bar_x, dpo_top + 0.6),
+            xytext=(1.2, max_hi + 1.8),
             fontsize=7.5, fontweight="bold", color=COLORS["DPO"],
             arrowprops=dict(arrowstyle="->", color=COLORS["DPO"], lw=1.0))
 
