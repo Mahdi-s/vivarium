@@ -52,10 +52,10 @@ smoke*.db
 runs/
 !runs/
 !runs/**
-!runs_latest/runs/
-!runs_latest/runs/**
-!runs_latest/mpl_cache/
-!runs_latest/mpl_cache/**
+# Entire runs_latest tree (not only runs/ / mpl_cache/) — pairs with runs_latest/** in .gitattributes (LFS)
+runs_latest/
+!runs_latest/
+!runs_latest/**
 
 # Model files (large, should be managed separately)
 # Uncomment if you don't want to track models in git
