@@ -1,0 +1,46 @@
+{
+  "pooled_error_rates": {
+    "base":         {"control": 0.896, "unan_confident": 0.943, "auth_bias": 0.917, "auth_trust": 0.918, "da": 0.945, "qd": 0.926},
+    "instruct":     {"control": 0.890, "unan_confident": 0.963, "auth_bias": 0.945, "auth_trust": 0.912, "da": 0.935, "qd": 0.919},
+    "instruct_sft": {"control": 0.865, "unan_confident": 0.949, "auth_bias": 0.896, "auth_trust": 0.892, "da": 0.919, "qd": 0.908},
+    "instruct_dpo": {"control": 0.895, "unan_confident": 0.903, "auth_bias": 0.939, "auth_trust": 0.917, "da": 0.895, "qd": 0.896}
+  },
+  "mcnemar_pooled": {
+    "base":         {"unan_conf": {"b": 164, "c": 52, "OR": 3.15, "p": "<0.0001"}, "da": {"b": 165, "c": 47, "OR": 3.51, "p": "<0.0001"}},
+    "instruct":     {"unan_conf": {"b": 212, "c": 38, "OR": 5.58, "p": "<0.0001"}, "da": {"b": 186, "c": 78, "OR": 2.38, "p": "<0.0001"}},
+    "instruct_sft": {"unan_conf": {"b": 243, "c": 42, "OR": 5.79, "p": "<0.0001"}, "da": {"b": 195, "c": 66, "OR": 2.95, "p": "<0.0001"}},
+    "instruct_dpo": {"unan_conf": {"b": 114, "c": 93, "OR": 1.23, "p": "0.1645"}, "da": {"b": 118, "c": 117, "OR": 1.01, "p": "1.0"}}
+  },
+  "tc_summary": {
+    "base":         {"mean": 0.2434, "pct_tc0": 53.3, "n_conforming": 2585, "ci": [0.231, 0.256]},
+    "instruct":     {"mean": 0.2726, "pct_tc0": 54.1, "n_conforming": 1718, "ci": [0.256, 0.289]},
+    "instruct_sft": {"mean": 0.2205, "pct_tc0": 61.8, "n_conforming": 1909, "ci": [0.206, 0.236]},
+    "instruct_dpo": {"mean": 0.3135, "pct_tc0": 46.1, "n_conforming": 1811, "ci": [0.297, 0.330]}
+  },
+  "ursp": {
+    "base":         {"rate_given_conforming": 0.259, "conformity_rate": 0.295, "ci": [0.250, 0.269]},
+    "instruct":     {"rate_given_conforming": 0.179, "conformity_rate": 0.214, "ci": [0.169, 0.189]},
+    "instruct_sft": {"rate_given_conforming": 0.191, "conformity_rate": 0.272, "ci": [0.182, 0.200]},
+    "instruct_dpo": {"rate_given_conforming": 0.238, "conformity_rate": 0.201, "ci": [0.226, 0.249]}
+  },
+  "trace_length": {
+    "base":         {"conforming": 590.7, "resisting": 486.6, "delta": 104.1, "d": 1.25, "direction": "LONGER when conforming"},
+    "instruct":     {"conforming": 257.0, "resisting": 341.2, "delta": -84.2, "d": -0.35, "direction": "SHORTER when conforming"},
+    "instruct_sft": {"conforming": 168.7, "resisting": 290.0, "delta": -121.3, "d": -0.66, "direction": "SHORTER when conforming"},
+    "instruct_dpo": {"conforming": 359.9, "resisting": 352.6, "delta": 7.3, "d": 0.03, "direction": "no difference"}
+  },
+  "think_preliminary": {
+    "control_acc": 0.257,
+    "confident_acc": 0.233,
+    "auth_bias_acc": 0.157,
+    "auth_trust_acc": 0.105,
+    "peer_delta": 0.024,
+    "peer_mcnemar_p": 0.42,
+    "auth_trust_OR": 7.20,
+    "auth_trust_p": "<0.0001",
+    "auth_bias_OR": 11.50,
+    "auth_bias_p": "0.0001",
+    "n_items": 210,
+    "n_trials": 840
+  }
+}

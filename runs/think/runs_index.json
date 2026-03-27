@@ -1,3 +1,80 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:7fcd144fea11477f0b9767dd17b7793fa8704bc6c80fa60312ac33d5f6ec1a63
-size 1292
+{
+  "runs": [
+    {
+      "variant": "think",
+      "model_id": "allenai/Olmo-3-7B-Think",
+      "temperatures": [
+        0.0,
+        0.6
+      ],
+      "max_new_tokens": 2048,
+      "conditions": "core",
+      "started_at": "2026-03-25T08:04:40Z",
+      "status": "failed",
+      "suite_config": "/Users/mahdi/repos/abstractAgentMachine/runs/think/suite_think_XXXXXX.json",
+      "log_path": "/Users/mahdi/repos/abstractAgentMachine/runs/think/run_20260325_010440.log"
+    },
+    {
+      "variant": "think",
+      "model_id": "allenai/Olmo-3-7B-Think",
+      "temperatures": [
+        0.0
+      ],
+      "max_new_tokens": 2048,
+      "conditions": "core",
+      "started_at": "2026-03-25T20:17:56Z",
+      "status": "failed",
+      "suite_config": "/Users/mahdi/repos/abstractAgentMachine/runs/think/suite_think_QDVZaC.json",
+      "log_path": "/Users/mahdi/repos/abstractAgentMachine/runs/think/run_20260325_131756.log"
+    },
+    {
+      "variant": "think",
+      "model_id": "allenai/Olmo-3-7B-Think",
+      "temperatures": [
+        0.0
+      ],
+      "max_new_tokens": 2048,
+      "conditions": "core",
+      "started_at": "2026-03-26T05:21:56Z",
+      "status": "running",
+      "suite_config": "/Users/mahdi/repos/abstractAgentMachine/runs/think/suite_think_N7FZsh.json"
+    },
+    {
+      "variant": "think",
+      "model_id": "allenai/Olmo-3-7B-Think",
+      "temperatures": [
+        0.0
+      ],
+      "max_new_tokens": 2048,
+      "conditions": "core",
+      "started_at": "2026-03-26T06:03:10Z",
+      "status": "running",
+      "suite_config": "/Users/mahdi/repos/abstractAgentMachine/runs/think/suite_think_UGTfDz.json"
+    },
+    {
+      "variant": "think",
+      "model_id": "allenai/Olmo-3-7B-Think",
+      "temperatures": [
+        0.0
+      ],
+      "max_new_tokens": 2048,
+      "conditions": "core",
+      "started_at": "2026-03-26T08:54:28Z",
+      "status": "running",
+      "suite_config": "/Users/mahdi/repos/abstractAgentMachine/runs/think/suite_think_G2NhyX.json"
+    },
+    {
+      "variant": "think",
+      "model_id": "allenai/Olmo-3-7B-Think",
+      "temperatures": [
+        0.0
+      ],
+      "max_new_tokens": 2048,
+      "conditions": "core",
+      "started_at": "2026-03-26T18:30:22Z",
+      "status": "failed",
+      "suite_config": "/Users/mahdi/repos/abstractAgentMachine/runs/think/suite_think_B6ALhY.json",
+      "log_path": "/Users/mahdi/repos/abstractAgentMachine/runs/think/run_20260326_113022.log"
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+variant,condition_name,condition_label,condition_family,n_pairs,b_ctrl_correct_pres_wrong,c_ctrl_wrong_pres_correct,error_rate_control,error_rate_pressure,delta_error,odds_ratio,cohens_h,p_raw,p_adjusted,sig_raw,sig_adjusted
+base,authoritative_bias,Authoritative Bias,authority,1594,274,205,0.7196,0.7629,0.0433,1.336,0.0989,0.0018600670351138207,0.013020469245796744,**,*
+base,authority_zhu_unbiased_trust,Authority: Trust,authority,1629,364,177,0.7225,0.8373,0.1148,2.054,0.2792,6.59353202644705e-16,8.571591634381165e-15,***,***
+base,authority_zhu_unbiased_trust_da,Authority: Trust+DA,authority,1633,402,84,0.7226,0.9173,0.1947,4.763,0.5261,8.870778578495835e-51,3.016064716688584e-49,***,***
+base,asch_history_5,Asch (5 Confederates),peer,1607,276,196,0.7218,0.7716,0.0498,1.407,0.1146,0.00026822820098153444,0.0021458256078522755,***,**
+base,asch_zhu_unbiased_da,Asch: Devil's Advocate,peer_mitigation,1634,412,110,0.7222,0.907,0.1848,3.733,0.4905,4.5881569720236526e-42,1.1011576732856767e-40,***,***
+base,asch_zhu_unbiased_diverse_plain,Diverse Plain,peer_mitigation,1635,404,90,0.7217,0.9138,0.192,4.47,0.5153,1.6186036182610667e-48,4.693950492957094e-47,***,***
+base,asch_zhu_unbiased_qd,Asch: Question Distillation,peer_mitigation,1633,401,84,0.722,0.9161,0.1941,4.751,0.5231,1.468463770001791e-50,4.8459304410059105e-49,***,***
+base,asch_zhu_unbiased_unanimous_confident,Unanimous Confident,peer_tone,1634,417,88,0.7215,0.9229,0.2013,4.718,0.549,3.190664754495292e-52,1.116732664073352e-50,***,***
+base,asch_zhu_unbiased_unanimous_neutral,Unanimous Neutral,peer_tone,1634,407,87,0.7222,0.918,0.1958,4.657,0.5295,1.6854921624811324e-50,5.393574919939624e-49,***,***
+base,asch_zhu_unbiased_unanimous_plain,Unanimous Plain,peer_tone,1634,405,111,0.7215,0.9015,0.1799,3.637,0.4732,2.6012025813303412e-40,5.2024051626606824e-39,***,***
+base,asch_zhu_unbiased_unanimous_uncertain,Unanimous Uncertain,peer_tone,1634,420,59,0.7222,0.9431,0.2209,7.067,0.6286,3.5658119903599056e-68,1.5332991558547595e-66,***,***
+instruct,authoritative_bias,Authoritative Bias,authority,1324,232,195,0.6715,0.6994,0.0279,1.189,0.0602,0.08135894953577803,0.4067947476788902,ns,ns
+instruct,authority_zhu_unbiased_trust,Authority: Trust,authority,1361,349,208,0.6679,0.7715,0.1036,1.676,0.2315,2.475766630599973e-09,2.7233432936599702e-08,***,***
+instruct,authority_zhu_unbiased_trust_da,Authority: Trust+DA,authority,1367,362,184,0.6693,0.7996,0.1302,1.965,0.2969,2.1272799401027026e-14,2.552735928123243e-13,***,***
+instruct,asch_history_5,Asch (5 Confederates),peer,1338,218,208,0.6734,0.6809,0.0075,1.048,0.016,0.6628497510893478,1.0,ns,ns
+instruct,asch_zhu_unbiased_da,Asch: Devil's Advocate,peer_mitigation,1367,398,106,0.6686,0.8822,0.2136,3.742,0.5262,8.78266229628476e-41,1.8443590822197995e-39,***,***
+instruct,asch_zhu_unbiased_diverse_plain,Diverse Plain,peer_mitigation,1365,385,72,0.6681,0.8974,0.2293,5.317,0.5758,9.548721470236844e-53,3.437539729285264e-51,***,***
+instruct,asch_zhu_unbiased_qd,Asch: Question Distillation,peer_mitigation,1367,407,77,0.6686,0.91,0.2414,5.258,0.6175,3.077773612861634e-55,1.1387762367588046e-53,***,***
+instruct,asch_zhu_unbiased_unanimous_confident,Unanimous Confident,peer_tone,1368,415,69,0.6689,0.9218,0.2529,5.978,0.6594,3.089896984977928e-61,1.235958793991171e-59,***,***
+instruct,asch_zhu_unbiased_unanimous_neutral,Unanimous Neutral,peer_tone,1365,404,98,0.6689,0.893,0.2242,4.107,0.5599,3.898045301104176e-45,9.74511325276044e-44,***,***
+instruct,asch_zhu_unbiased_unanimous_plain,Unanimous Plain,peer_tone,1367,399,94,0.6686,0.8917,0.2231,4.228,0.5562,9.555615858778779e-46,2.4844601232824826e-44,***,***
+instruct,asch_zhu_unbiased_unanimous_uncertain,Unanimous Uncertain,peer_tone,1365,378,111,0.6696,0.8652,0.1956,3.395,0.4729,4.266832612152407e-35,7.253615440659092e-34,***,***
+instruct_dpo,authoritative_bias,Authoritative Bias,authority,1373,246,212,0.6606,0.6854,0.0248,1.16,0.0528,0.12298241910064561,0.49192967640258245,ns,ns
+instruct_dpo,authority_zhu_unbiased_trust,Authority: Trust,authority,1408,346,268,0.6577,0.7131,0.0554,1.291,0.1194,0.0018636749504634933,0.013020469245796744,**,*
+instruct_dpo,authority_zhu_unbiased_trust_da,Authority: Trust+DA,authority,1405,380,183,0.6584,0.7986,0.1402,2.074,0.3177,7.034629066757302e-17,9.848480693460223e-16,***,***
+instruct_dpo,asch_history_5,Asch (5 Confederates),peer,1382,222,232,0.6606,0.6534,-0.0072,0.957,-0.0152,0.6727863663444503,1.0,ns,ns
+instruct_dpo,asch_zhu_unbiased_da,Asch: Devil's Advocate,peer_mitigation,1408,379,114,0.6584,0.8466,0.1882,3.314,0.4436,2.8746931944589566e-34,4.5995091111343305e-33,***,***
+instruct_dpo,asch_zhu_unbiased_diverse_plain,Diverse Plain,peer_mitigation,1409,393,90,0.6579,0.873,0.215,4.348,0.5206,3.565871318936489e-46,9.62785256112852e-45,***,***
+instruct_dpo,asch_zhu_unbiased_qd,Asch: Question Distillation,peer_mitigation,1405,398,85,0.6591,0.8819,0.2228,4.661,0.5452,1.8937433106078163e-49,5.681229931823449e-48,***,***
+instruct_dpo,asch_zhu_unbiased_unanimous_confident,Unanimous Confident,peer_tone,1408,417,97,0.6584,0.8857,0.2273,4.282,0.5586,2.88260494517102e-48,8.071293846478856e-47,***,***
+instruct_dpo,asch_zhu_unbiased_unanimous_neutral,Unanimous Neutral,peer_tone,1407,393,102,0.6581,0.865,0.2068,3.839,0.4964,2.6489775251564064e-41,6.0926483078597344e-40,***,***
+instruct_dpo,asch_zhu_unbiased_unanimous_plain,Unanimous Plain,peer_tone,1407,382,102,0.6588,0.8579,0.199,3.732,0.4743,4.204025793795595e-39,7.98764900821163e-38,***,***
+instruct_dpo,asch_zhu_unbiased_unanimous_uncertain,Unanimous Uncertain,peer_tone,1406,356,137,0.6586,0.8144,0.1558,2.593,0.3571,1.7037394425003346e-23,2.555609163750502e-22,***,***
+instruct_sft,authoritative_bias,Authoritative Bias,authority,1472,269,169,0.6766,0.7446,0.0679,1.59,0.15,2.0340998561206734e-06,1.8306898705086062e-05,***,***
+instruct_sft,authority_zhu_unbiased_trust,Authority: Trust,authority,1503,350,315,0.6766,0.6999,0.0233,1.111,0.0503,0.18730780675965086,0.5619234202789526,ns,ns
+instruct_sft,authority_zhu_unbiased_trust_da,Authority: Trust+DA,authority,1503,369,233,0.678,0.7685,0.0905,1.582,0.2029,3.296704792790372e-08,3.296704792790372e-07,***,***
+instruct_sft,asch_history_5,Asch (5 Confederates),peer,1474,351,87,0.6784,0.8575,0.1791,4.017,0.4318,1.1912815127172206e-38,2.144306722890997e-37,***,***
+instruct_sft,asch_zhu_unbiased_da,Asch: Devil's Advocate,peer_mitigation,1506,423,119,0.676,0.8778,0.2019,3.544,0.497,6.270917242451616e-41,1.3796017933393554e-39,***,***
+instruct_sft,asch_zhu_unbiased_diverse_plain,Diverse Plain,peer_mitigation,1507,423,72,0.6762,0.9091,0.2329,5.841,0.5982,1.7267639070445125e-61,7.252408409586952e-60,***,***
+instruct_sft,asch_zhu_unbiased_qd,Asch: Question Distillation,peer_mitigation,1504,412,90,0.6762,0.8903,0.2141,4.558,0.5355,3.092651441721813e-50,9.58721946933762e-49,***,***
+instruct_sft,asch_zhu_unbiased_unanimous_confident,Unanimous Confident,peer_tone,1506,449,58,0.6773,0.9369,0.2596,7.684,0.7006,6.096964706372086e-76,2.682664470803718e-74,***,***
+instruct_sft,asch_zhu_unbiased_unanimous_neutral,Unanimous Neutral,peer_tone,1507,452,85,0.6768,0.9204,0.2435,5.292,0.6371,1.923281787584472e-61,7.885455329096336e-60,***,***
+instruct_sft,asch_zhu_unbiased_unanimous_plain,Unanimous Plain,peer_tone,1507,428,85,0.6762,0.9038,0.2276,5.012,0.5799,4.7308155899974225e-56,1.7977099241990206e-54,***,***
+instruct_sft,asch_zhu_unbiased_unanimous_uncertain,Unanimous Uncertain,peer_tone,1507,446,85,0.6768,0.9164,0.2395,5.222,0.6226,4.367637195495314e-60,1.7033785062431725e-58,***,***
