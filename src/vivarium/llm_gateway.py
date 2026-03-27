@@ -197,9 +197,16 @@ def create_gateway(
             api_key=api_key,
             rate_limit_config=rate_limit_config,
         )
-        # For Ollama, strip org prefix and lowercase for the API model name
+        # Determine model ID format based on API provider.
+        # OpenRouter expects full org/model slugs (e.g. "allenai/olmo-3-32b-think").
+        # Local servers (Ollama, vLLM, llama.cpp) expect just the model name.
+        _is_openrouter = api_base and "openrouter" in api_base.lower()
         model_id_for_api = model_id
-        if "/" in model_id:
+        if _is_openrouter:
+            # OpenRouter uses lowercase org/model slugs
+            model_id_for_api = model_id.lower()
+        elif "/" in model_id:
+            # Local servers: strip org prefix and lowercase
             model_id_for_api = model_id.split("/", 1)[1].lower()
         return gw, model_id_for_api
 
@@ -462,8 +469,19 @@ class LiteLLMGateway:
             kwargs["seed"] = seed
         if self.api_base:
             kwargs["api_base"] = self.api_base
-            # For OpenAI-compatible local servers (e.g. llama-server), force provider resolution.
-            kwargs["custom_llm_provider"] = "openai"
+            _is_openrouter = "openrouter" in self.api_base.lower()
+            if _is_openrouter:
+                # OpenRouter is OpenAI-compatible; use "openai" provider so litellm
+                # sends the request to our api_base rather than its own routing.
+                kwargs["custom_llm_provider"] = "openai"
+                # Optional attribution headers for OpenRouter leaderboards.
+                kwargs["extra_headers"] = {
+                    "HTTP-Referer": "https://github.com/vivarium-project",
+                    "X-OpenRouter-Title": "Vivarium OLMo Conformity",
+                }
+            else:
+                # For other OpenAI-compatible local servers (e.g. llama-server).
+                kwargs["custom_llm_provider"] = "openai"
         if self.api_key is not None:
             kwargs["api_key"] = self.api_key
         elif self.api_base:
