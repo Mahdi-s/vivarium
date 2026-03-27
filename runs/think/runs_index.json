@@ -88,6 +88,30 @@
       "started_at": "2026-03-27T03:49:07Z",
       "status": "running",
       "suite_config": "/Users/mahdi/repos/abstractAgentMachine/runs/think/suite_think_OwXKnf.json"
+    },
+    {
+      "variant": "think",
+      "model_id": "allenai/Olmo-3-7B-Think",
+      "temperatures": [
+        0.0
+      ],
+      "max_new_tokens": 2048,
+      "conditions": "core",
+      "started_at": "2026-03-27T08:30:58Z",
+      "status": "running",
+      "suite_config": "/Users/mahdi/repos/abstractAgentMachine/runs/think/suite_think_RMD4kh.json"
+    },
+    {
+      "variant": "think",
+      "model_id": "allenai/Olmo-3-7B-Think",
+      "temperatures": [
+        0.0
+      ],
+      "max_new_tokens": 2048,
+      "conditions": "core",
+      "started_at": "2026-03-27T17:48:02Z",
+      "status": "running",
+      "suite_config": "/Users/mahdi/repos/abstractAgentMachine/runs/think/suite_think_VG4s3f.json"
     }
   ]
 }
