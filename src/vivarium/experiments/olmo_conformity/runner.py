@@ -970,7 +970,17 @@ def run_suite(
                 # Extract text best-effort
                 raw_text = ""
                 try:
-                    raw_text = str(resp["choices"][0]["message"].get("content") or "")
+                    msg = resp["choices"][0]["message"]
+                    content = str(msg.get("content") or "")
+                    # OpenRouter returns reasoning/thinking tokens in a separate
+                    # 'reasoning' field (or 'reasoning_content') rather than inline
+                    # <think> tags.  Reconstruct the full output so downstream
+                    # think-token extraction works identically to local inference.
+                    reasoning = msg.get("reasoning") or msg.get("reasoning_content") or ""
+                    if reasoning:
+                        raw_text = f"<think>{reasoning}</think>{content}"
+                    else:
+                        raw_text = content
                 except Exception:
                     raw_text = str(resp)
 

@@ -479,6 +479,9 @@ class LiteLLMGateway:
                     "HTTP-Referer": "https://github.com/vivarium-project",
                     "X-OpenRouter-Title": "Vivarium OLMo Conformity",
                 }
+                # Request reasoning/thinking tokens from Think models.
+                # OpenRouter returns these in message.reasoning, separate from content.
+                kwargs["reasoning"] = {"effort": "high", "exclude": False}
             else:
                 # For other OpenAI-compatible local servers (e.g. llama-server).
                 kwargs["custom_llm_provider"] = "openai"
