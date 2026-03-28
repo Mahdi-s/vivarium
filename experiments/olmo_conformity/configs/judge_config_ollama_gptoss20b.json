@@ -1,0 +1,12 @@
+{
+  "_comment": "Judge config for local Ollama inference using GPT-OSS 20B. Provider is explicitly Ollama so requests use format=json. Keep prompt_version updated whenever judge prompts change.",
+  "judge_model": "gpt-oss:20b",
+  "ollama_base": "http://localhost:11434/v1",
+  "provider": "ollama",
+  "use_json_format": true,
+  "prompt_version": "2026-03-27_ollama_gptoss20b_v1",
+  "temperature": 0.0,
+  "max_tokens": 768,
+  "timeout_s": 120.0,
+  "max_retries": 3
+}

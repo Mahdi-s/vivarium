@@ -1,64 +1,34 @@
 #!/usr/bin/env python3
 """
-Parallel LLM judge runner for OpenRouter (and any OpenAI-compatible provider).
+Parallel LLM judge runner for local Ollama (GPT-OSS 20B by default).
 
-Discovers every ``simulation.db`` under one or more ``--runs-dir`` trees,
-deduplicates by run_id (UUID), and calls ``python -m vivarium
-olmo-conformity-judgeval`` once per database — up to ``--max-parallel-dbs``
-databases at a time.
+This script mirrors scripts/run_judge_openrouter.py and adds:
+1) pre-flight run inspection (model id, total rows, judged, missing, parse errors)
+2) Ollama health check (GET /api/tags) before dispatching judge subprocesses
 
 Default behavior
 ----------------
-- Targets rows that were never LLM-judged (``--no-llm-judge`` flag forwarded
-  to the subprocess) — this correctly handles the common case where all rows
-  already have *heuristic* ``parsed_answer_json`` but lack the ``_llm_judge``
-  key from a real judge model.
-- Retries rows that previously produced parse errors (``--retry-parse-errors``
-  forwarded automatically).
-- Processes both ``runs/`` and ``runs/think/`` trees in one invocation by
-  listing them in ``--runs-dir``.
-- Parallelises at the database level (each DB gets its own subprocess), so
-  SQLite write-contention is avoided.  In-DB concurrency is controlled
-  separately via ``--max-concurrency``.
-
-Quick-start
------------
-  # Dry run — see what would execute
-  python scripts/run_judge_openrouter.py \\
-      --runs-dir runs --runs-dir runs/think \\
-      --judge-model qwen/qwen3-8b \\
-      --api-base https://openrouter.ai/api/v1 \\
-      --dry-run
-
-  # Real run (API key from env var OPENROUTER_API_KEY)
-  python scripts/run_judge_openrouter.py \\
-      --runs-dir runs --runs-dir runs/think \\
-      --judge-config experiments/olmo_conformity/configs/judge_config_openrouter.json \\
-      --max-parallel-dbs 3 \\
-      --max-concurrency 8
-
-  # Force re-judge everything (e.g. after prompt update)
-  python scripts/run_judge_openrouter.py \\
-      --runs-dir runs --runs-dir runs/think \\
-      --judge-config experiments/olmo_conformity/configs/judge_config_openrouter.json \\
-      --force
-
-  # Single database (useful for testing)
-  python scripts/run_judge_openrouter.py \\
-      --runs-dir runs/20260327_152738_a34ad9b1-abd0-4119-96c6-7b1cd61d7f4d \\
-      --judge-model qwen/qwen3-8b \\
-      --api-base https://openrouter.ai/api/v1 \\
-      --verbose
+- Targets rows that were never LLM-judged (forwards --no-llm-judge by default).
+- Retries rows that previously produced parse errors (forwards --retry-parse-errors).
+- Parallelises at the database level with a conservative default of 1 DB at a time.
+- Uses local Ollama by default:
+    model    = gpt-oss:20b
+    api_base = http://localhost:11434/v1
 """
 
 from __future__ import annotations
 
 import argparse
 import asyncio
+import json
 import os
 import re
+import sqlite3
 import sys
 import time
+import urllib.error
+import urllib.request
+from collections import namedtuple
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -68,22 +38,24 @@ REPO_ROOT = SCRIPT_DIR.parent
 SRC_DIR = REPO_ROOT / "src"
 sys.path.insert(0, str(SRC_DIR))
 
-# Matches the standard run directory name: YYYYMMDD_HHMMSS_<uuid>
 _RUN_DIR_RE = re.compile(r"^\d{8}_\d{6}_[0-9a-f\-]{36}$")
 
+RunInfo = namedtuple(
+    "RunInfo",
+    [
+        "run_id",
+        "db_path",
+        "model_id",
+        "total_rows",
+        "judged_rows",
+        "missing_rows",
+        "parse_error_rows",
+    ],
+)
 
-# ---------------------------------------------------------------------------
-# Discovery
-# ---------------------------------------------------------------------------
 
 def discover_runs(runs_dirs: List[Path]) -> List[Tuple[str, Path]]:
-    """Return deduplicated [(run_id, db_path), ...] from all supplied roots.
-
-    Iterates each directory recursively one level deep looking for folders
-    matching the YYYYMMDD_HHMMSS_<uuid> pattern that contain a simulation.db.
-    When the same run_id (UUID) appears under multiple roots, the first
-    occurrence wins (roots are processed in argument order).
-    """
+    """Return deduplicated [(run_id, db_path), ...] from supplied roots."""
     seen: Dict[str, Path] = {}
     results: List[Tuple[str, Path]] = []
 
@@ -92,7 +64,6 @@ def discover_runs(runs_dirs: List[Path]) -> List[Tuple[str, Path]]:
             print(f"  [warn] runs-dir not found, skipping: {runs_dir}")
             continue
 
-        # The directory itself might BE a run folder (single-run mode)
         if _RUN_DIR_RE.match(runs_dir.name):
             db = runs_dir / "simulation.db"
             if db.exists():
@@ -101,9 +72,8 @@ def discover_runs(runs_dirs: List[Path]) -> List[Tuple[str, Path]]:
                     seen[run_id] = db
                     results.append((run_id, db))
                     continue
-                else:
-                    print(f"  [dedup] run_id={run_id[:8]}… already seen, skipping {runs_dir}")
-                    continue
+                print(f"  [dedup] run_id={run_id[:8]}... already seen, skipping {runs_dir}")
+                continue
 
         for entry in sorted(runs_dir.iterdir()):
             if not entry.is_dir():
@@ -112,11 +82,11 @@ def discover_runs(runs_dirs: List[Path]) -> List[Tuple[str, Path]]:
                 continue
             db = entry / "simulation.db"
             if not db.exists():
-                print(f"  [skip] {entry.name} — simulation.db not found")
+                print(f"  [skip] {entry.name} - simulation.db not found")
                 continue
             run_id = entry.name.split("_", 2)[-1]
             if run_id in seen:
-                print(f"  [dedup] run_id={run_id[:8]}… already seen (in {seen[run_id].parent.parent.name}), skipping {entry}")
+                print(f"  [dedup] run_id={run_id[:8]}... already seen, skipping {entry}")
                 continue
             seen[run_id] = db
             results.append((run_id, db))
@@ -124,9 +94,104 @@ def discover_runs(runs_dirs: List[Path]) -> List[Tuple[str, Path]]:
     return results
 
 
-# ---------------------------------------------------------------------------
-# Subprocess runner
-# ---------------------------------------------------------------------------
+def _extract_model_id_from_config_json(config_json: Optional[str]) -> str:
+    if not config_json:
+        return "unknown"
+    try:
+        cfg = json.loads(config_json)
+        models = cfg.get("suite_config", {}).get("models", [])
+        if isinstance(models, list) and models:
+            model_id = models[0].get("model_id")
+            if isinstance(model_id, str) and model_id.strip():
+                return model_id
+        return "unknown"
+    except Exception:
+        return "unknown"
+
+
+def inspect_run_db(run_id: str, db_path: Path) -> RunInfo:
+    """Inspect DB for model ID and judge coverage counters."""
+    model_id = "unknown"
+    total_rows = 0
+    judged_rows = 0
+    parse_error_rows = 0
+
+    conn = sqlite3.connect(str(db_path))
+    try:
+        run_row = conn.execute("SELECT config_json FROM runs LIMIT 1").fetchone()
+        model_id = _extract_model_id_from_config_json(run_row[0] if run_row else None)
+
+        total_rows = conn.execute("SELECT COUNT(*) FROM conformity_outputs").fetchone()[0]
+        rows = conn.execute("SELECT parsed_answer_json FROM conformity_outputs").fetchall()
+        for row in rows:
+            parsed = row[0]
+            if not parsed:
+                continue
+            if '"_llm_judge"' in parsed:
+                judged_rows += 1
+            if "[parse_error]" in parsed:
+                parse_error_rows += 1
+    finally:
+        conn.close()
+
+    missing_rows = total_rows - judged_rows
+    return RunInfo(
+        run_id=run_id,
+        db_path=db_path,
+        model_id=model_id,
+        total_rows=total_rows,
+        judged_rows=judged_rows,
+        missing_rows=missing_rows,
+        parse_error_rows=parse_error_rows,
+    )
+
+
+def _print_inspection_table(infos: List[RunInfo]) -> None:
+    print("\nPre-flight run inspection")
+    print("Run ID       Model evaluated                           Total  Judged  Missing  ParseErr")
+    print("------------ ---------------------------------------- ------ ------- -------- --------")
+    for info in infos:
+        print(
+            f"{info.run_id[:8] + '...':<12} "
+            f"{info.model_id[:40]:<40} "
+            f"{info.total_rows:>6} "
+            f"{info.judged_rows:>7} "
+            f"{info.missing_rows:>8} "
+            f"{info.parse_error_rows:>8}"
+        )
+    print("------------ ---------------------------------------- ------ ------- -------- --------")
+    print(
+        f"{'TOTAL':<12} {'':<40} "
+        f"{sum(i.total_rows for i in infos):>6} "
+        f"{sum(i.judged_rows for i in infos):>7} "
+        f"{sum(i.missing_rows for i in infos):>8} "
+        f"{sum(i.parse_error_rows for i in infos):>8}"
+    )
+
+
+def _is_localhost_api_base(api_base: str) -> bool:
+    base = api_base.lower()
+    return ("localhost" in base) or ("127.0.0.1" in base) or ("::1" in base)
+
+
+def _to_ollama_tags_url(api_base: str) -> str:
+    base = api_base.rstrip("/")
+    if base.endswith("/v1"):
+        base = base[:-3]
+    return f"{base}/api/tags"
+
+
+def check_ollama_health(api_base: str, timeout_s: float = 3.0) -> bool:
+    """Ping Ollama /api/tags. Return True on healthy response."""
+    url = _to_ollama_tags_url(api_base)
+    req = urllib.request.Request(url, method="GET")
+    try:
+        with urllib.request.urlopen(req, timeout=timeout_s) as resp:
+            _ = resp.read()
+            return 200 <= resp.status < 300
+    except (urllib.error.URLError, TimeoutError, ConnectionError):
+        return False
+
 
 async def run_one(
     *,
@@ -146,17 +211,22 @@ async def run_one(
     dry_run: bool,
     extra_env: dict,
 ) -> Tuple[str, int, str]:
-    """Spawn ``olmo-conformity-judgeval`` for one run and wait for it.
-
-    Returns (run_id, returncode, combined_output).
-    """
+    """Spawn olmo-conformity-judgeval for one run and wait for completion."""
     cmd: List[str] = [
-        sys.executable, "-m", "vivarium", "olmo-conformity-judgeval",
-        "--run-id", run_id,
-        "--db", str(db_path),
-        "--max-concurrency", str(max_concurrency),
-        "--trial-scope", trial_scope,
-        "--parse-error-retries", "5",
+        sys.executable,
+        "-m",
+        "vivarium",
+        "olmo-conformity-judgeval",
+        "--run-id",
+        run_id,
+        "--db",
+        str(db_path),
+        "--max-concurrency",
+        str(max_concurrency),
+        "--trial-scope",
+        trial_scope,
+        "--parse-error-retries",
+        "5",
     ]
     if judge_config is not None:
         cmd += ["--judge-config", str(judge_config)]
@@ -181,13 +251,10 @@ async def run_one(
         print(f"  [dry-run] {' '.join(cmd)}")
         return (run_id, 0, "[dry-run]")
 
-    print(f"  [start] run_id={run_id[:8]}…  db={db_path}")
+    print(f"  [start] run_id={run_id[:8]}...  db={db_path}")
     t0 = time.monotonic()
-
     env = {**os.environ, **extra_env}
-    # With --verbose, inherit stdio so judgeval prints (per-row judge output,
-    # progress) stream live.  PIPE + communicate() buffers until exit and
-    # we discard non-summary lines on success — so verbose appeared "stuck".
+
     if verbose:
         env = {**env, "PYTHONUNBUFFERED": "1"}
         proc = await asyncio.create_subprocess_exec(
@@ -214,7 +281,7 @@ async def run_one(
     rc = proc.returncode or 0
 
     status = "OK" if rc == 0 else f"FAILED(rc={rc})"
-    print(f"  [{status}] run_id={run_id[:8]}…  elapsed={elapsed:.1f}s")
+    print(f"  [{status}] run_id={run_id[:8]}...  elapsed={elapsed:.1f}s")
     if rc != 0 and not verbose:
         tail = "\n".join(output.splitlines()[-20:])
         print(f"    --- output tail ---\n{tail}\n    ---")
@@ -228,15 +295,15 @@ async def run_one(
     return (run_id, rc, output)
 
 
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
-
 def main() -> int:
+    default_judge_config = (
+        REPO_ROOT / "experiments" / "olmo_conformity" / "configs" / "judge_config_qwen35_9b_local.json"
+    )
+
     ap = argparse.ArgumentParser(
         description=(
             "Run olmo-conformity-judgeval in parallel across all run databases "
-            "found under one or more --runs-dir paths."
+            "found under one or more --runs-dir paths, targeting local Ollama."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
@@ -250,48 +317,48 @@ def main() -> int:
         metavar="DIR",
         help=(
             "Directory (or individual run folder) to search for simulation.db files. "
-            "Can be specified multiple times: e.g. --runs-dir runs --runs-dir runs/think. "
-            "Default: runs"
+            "Can be specified multiple times. Default: runs"
         ),
     )
     ap.add_argument(
         "--judge-config",
         type=str,
-        default=None,
-        help="Path to judge config JSON (model, api_base, temperature, etc.)",
+        default=str(default_judge_config),
+        help="Path to judge config JSON (default: local gpt-oss:20b config).",
     )
     ap.add_argument(
         "--judge-model",
         type=str,
-        default=None,
-        help="Judge model id, e.g. qwen/qwen3-8b or gemma-3-1b-it (overrides --judge-config)",
+        default="qwen3.5:9b",
+        help="Judge model id (default: qwen3.5:9b).",
     )
     ap.add_argument(
         "--api-base",
         type=str,
-        default=None,
-        help="API base URL, e.g. https://openrouter.ai/api/v1 (overrides --judge-config)",
+        default="http://localhost:11434/v1",
+        help="API base URL — Ollama local or any OpenAI-compatible endpoint (default: http://localhost:11434/v1).",
     )
     ap.add_argument(
         "--api-key",
         type=str,
         default=None,
         help=(
-            "Bearer API key. If omitted, falls back to OPENROUTER_API_KEY / "
-            "JUDGE_API_KEY environment variables."
+            "Bearer API key for remote providers (e.g. OpenRouter sk-or-v1-…). "
+            "Falls back to OPENROUTER_API_KEY / JUDGE_API_KEY env vars. "
+            "Not needed for local Ollama."
         ),
     )
     ap.add_argument(
         "--max-parallel-dbs",
         type=int,
-        default=3,
-        help="Maximum number of databases to judge concurrently (default: 3).",
+        default=1,
+        help="Maximum databases to judge concurrently (default: 1).",
     )
     ap.add_argument(
         "--max-concurrency",
         type=int,
-        default=8,
-        help="Max concurrent judge requests per database subprocess (default: 8).",
+        default=4,
+        help="Max concurrent judge requests per DB subprocess (default: 4).",
     )
     ap.add_argument(
         "--trial-scope",
@@ -303,7 +370,7 @@ def main() -> int:
     ap.add_argument(
         "--force",
         action="store_true",
-        help="Pass --force to every subprocess — overwrites ALL existing judge labels.",
+        help="Pass --force to every subprocess (overwrite all existing judge labels).",
     )
     ap.add_argument(
         "--no-no-llm-judge",
@@ -311,9 +378,8 @@ def main() -> int:
         action="store_false",
         default=True,
         help=(
-            "Disable the --no-llm-judge filter. By default, rows that have heuristic "
-            "parsed_answer_json but lack the _llm_judge key are targeted. Pass this "
-            "flag to skip that filter (only NULL/empty rows will be targeted)."
+            "Disable the --no-llm-judge filter. By default, rows missing the "
+            "_llm_judge key are targeted."
         ),
     )
     ap.add_argument(
@@ -321,7 +387,7 @@ def main() -> int:
         dest="retry_parse_errors",
         action="store_false",
         default=True,
-        help="Disable automatic retry of [parse_error] rows (enabled by default).",
+        help="Disable retry of [parse_error] rows (enabled by default).",
     )
     ap.add_argument(
         "--resume-auto",
@@ -346,25 +412,27 @@ def main() -> int:
     ap.add_argument(
         "--verbose",
         action="store_true",
-        help="Pass --verbose to subprocesses (prints raw judge output per row).",
+        help="Pass --verbose to subprocesses.",
     )
     ap.add_argument(
         "--dry-run",
         action="store_true",
-        help="Print the commands that would run without executing them.",
+        help="Print commands that would run without executing them.",
     )
     args = ap.parse_args()
 
-    # Resolve runs dirs
     runs_dirs_raw: List[str] = args.runs_dirs or ["runs"]
     runs_dirs = [Path(d).expanduser().resolve() for d in runs_dirs_raw]
 
-    # Resolve API key
+    # Resolve API key (only needed when pointing at a remote provider)
     api_key: Optional[str] = args.api_key
     if api_key is None:
         api_key = os.environ.get("OPENROUTER_API_KEY") or os.environ.get("JUDGE_API_KEY") or None
 
     judge_config = Path(args.judge_config).expanduser().resolve() if args.judge_config else None
+    if judge_config is not None and not judge_config.exists():
+        print(f"[error] judge-config not found: {judge_config}")
+        return 1
 
     print(f"Discovering runs under: {[str(d) for d in runs_dirs]}")
     runs = discover_runs(runs_dirs)
@@ -372,14 +440,27 @@ def main() -> int:
         print("No valid run directories found. Exiting.")
         return 1
 
-    judge_label = args.judge_model or (str(judge_config) if judge_config else "default")
-    base_label = args.api_base or "default"
-    auth_label = "yes" if api_key else "from-env-or-none"
+    inspection: List[RunInfo] = []
+    for run_id, db_path in runs:
+        try:
+            inspection.append(inspect_run_db(run_id, db_path))
+        except Exception as exc:
+            print(f"  [warn] failed to inspect run_id={run_id[:8]}... ({exc})")
+            inspection.append(
+                RunInfo(run_id, db_path, "unknown", 0, 0, 0, 0)
+            )
+    _print_inspection_table(inspection)
+
+    if _is_localhost_api_base(args.api_base):
+        if not check_ollama_health(args.api_base):
+            print("\n[error] Ollama is not running. Start it with: ollama serve")
+            print("        Then re-run this script.")
+            return 1
+
     print(
         f"\n{len(runs)} run(s) found.\n"
-        f"  judge_model    : {judge_label}\n"
-        f"  api_base       : {base_label}\n"
-        f"  auth           : {auth_label}\n"
+        f"  judge_model    : {args.judge_model}\n"
+        f"  api_base       : {args.api_base}\n"
         f"  parallel_dbs   : {args.max_parallel_dbs}\n"
         f"  concurrency    : {args.max_concurrency}/db\n"
         f"  trial_scope    : {args.trial_scope}\n"
@@ -390,6 +471,11 @@ def main() -> int:
     )
 
     sem = asyncio.Semaphore(args.max_parallel_dbs)
+
+    # Let Ollama use per-request parallelism unless caller explicitly set it.
+    extra_env: Dict[str, str] = {}
+    if os.environ.get("OLLAMA_NUM_PARALLEL") is None:
+        extra_env["OLLAMA_NUM_PARALLEL"] = str(args.max_concurrency)
 
     async def _bounded(run_id: str, db_path: Path) -> Tuple[str, int, str]:
         async with sem:
@@ -408,7 +494,7 @@ def main() -> int:
                 variant_filter=args.variant_filter or None,
                 verbose=args.verbose,
                 dry_run=args.dry_run,
-                extra_env={},
+                extra_env=extra_env,
             )
 
     async def _run_all() -> List[Tuple[str, int, str]]:
@@ -422,10 +508,10 @@ def main() -> int:
     ok = sum(1 for _, rc, _ in all_results if rc == 0)
     failed = [(r, rc) for r, rc, _ in all_results if rc != 0]
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Done in {wall_elapsed:.1f}s.  OK={ok}  FAILED={len(failed)}")
     for run_id, rc in failed:
-        print(f"  FAILED: run_id={run_id[:8]}…  rc={rc}")
+        print(f"  FAILED: run_id={run_id[:8]}...  rc={rc}")
 
     return 0 if not failed else 1
 

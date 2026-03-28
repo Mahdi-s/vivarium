@@ -1454,15 +1454,17 @@ class HuggingFaceHookedGateway:
 
         do_sample = float(temperature) > 0.0
         pad_token_id = getattr(self._tokenizer, "eos_token_id", None)
-        # Build an explicit GenerationConfig so temperature/top_p are applied and Transformers
-        # does not warn "The following generation flags are not valid and may be ignored".
+        # Build an explicit GenerationConfig that fully overrides the model's
+        # baked-in generation_config.json (which may set do_sample=True /
+        # temperature=0.6).  We always set temperature explicitly so the
+        # model defaults cannot leak through.
         generation_config = GenerationConfig(
             max_new_tokens=int(self.max_new_tokens),
             do_sample=do_sample,
+            temperature=float(temperature),
             pad_token_id=pad_token_id,
         )
         if do_sample:
-            generation_config.temperature = float(temperature)
             if top_k is not None and int(top_k) > 0:
                 generation_config.top_k = int(top_k)
             if top_p is not None:
@@ -1482,8 +1484,9 @@ class HuggingFaceHookedGateway:
         # Pass sampling kwargs directly in addition to generation_config, because some
         # model implementations (e.g. OLMo3) ignore them when read from the config object.
         generate_kwargs: Dict[str, Any] = dict(generation_config=generation_config)
+        generate_kwargs["temperature"] = float(temperature)
+        generate_kwargs["do_sample"] = do_sample
         if do_sample:
-            generate_kwargs["temperature"] = float(temperature)
             if top_k is not None and int(top_k) > 0:
                 generate_kwargs["top_k"] = int(top_k)
             if top_p is not None:
@@ -1727,7 +1730,7 @@ class HuggingFaceTransformersGateway:
             outputs = self._model.generate(
                 **inputs,
                 max_new_tokens=self.max_new_tokens,
-                temperature=temperature if temperature > 0 else None,
+                temperature=float(temperature),
                 top_k=(int(top_k) if (temperature > 0 and top_k is not None and int(top_k) > 0) else None),
                 top_p=top_p_value,
                 do_sample=temperature > 0,

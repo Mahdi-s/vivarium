@@ -130,6 +130,16 @@ def register_subparsers(subparsers: Any) -> None:
         default=5,
         help="Per-row retry limit when the judge returns an unparseable response (default: 5).",
     )
+    pj.add_argument(
+        "--variant-filter",
+        type=str,
+        default=None,
+        help=(
+            "Comma-separated list of variant names to judge (e.g. 'base,instruct,instruct_sft,instruct_dpo'). "
+            "When set, only trials whose variant matches one of the listed names are scored. "
+            "Default: score all variants."
+        ),
+    )
 
     pl = subparsers.add_parser("olmo-conformity-logit-lens", help="Compute logit-lens top-k across layers for each trial")
     pl.add_argument("--run-id", type=str, required=True)
@@ -528,6 +538,13 @@ def _handle_judgeval(args: Any) -> int:
     params: list[object] = [str(args.run_id)]
     if str(args.trial_scope) == "behavioral-only":
         where += " AND c.name IN ('control', 'asch_history_5', 'authoritative_bias')"
+    variant_filter = getattr(args, "variant_filter", None)
+    if variant_filter:
+        allowed_variants = [v.strip() for v in str(variant_filter).split(",") if v.strip()]
+        if allowed_variants:
+            placeholders = ",".join("?" * len(allowed_variants))
+            where += f" AND t.variant IN ({placeholders})"
+            params.extend(allowed_variants)
     if not bool(args.force):
         # --no-llm-judge: target rows that have non-empty content but were never
         # LLM-judged (no _llm_judge key — typically heuristic-only labels).

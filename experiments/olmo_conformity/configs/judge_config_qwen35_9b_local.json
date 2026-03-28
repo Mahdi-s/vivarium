@@ -1,0 +1,13 @@
+{
+  "_comment": "Judge config for local Ollama inference using Qwen3.5 9B. Set model with: ollama pull qwen3.5:9b. use_json_format=true works for this model size. Adjust max_tokens upward if you see parse errors due to truncation.",
+
+  "judge_model": "qwen3.5:9b",
+  "ollama_base": "http://localhost:11434/v1",
+  "provider": "ollama",
+  "use_json_format": true,
+  "prompt_version": "2026-03-28_qwen35_9b_local_v1",
+  "temperature": 0.3,
+  "max_tokens": 4096,
+  "timeout_s": 180.0,
+  "max_retries": 3
+}
