@@ -1,0 +1,13 @@
+{
+  "_comment": "Judge config for OpenRouter inference. Set OPENROUTER_API_KEY env var or pass --api-key on the CLI — do NOT commit the key here. Use any OpenRouter model id for judge_model (see openrouter.ai/models). Provider is auto-detected from api_base (non-localhost = openai_compatible), which selects response_format={type:json_object} instead of the Ollama format=json field.",
+
+  "judge_model": "openai/gpt-oss-20b",
+  "api_base": "https://openrouter.ai/api/v1",
+  "provider": "openai_compatible",
+  "use_json_format": true,
+  "prompt_version": "2026-03-27_openrouter_v1",
+  "temperature": 0.0,
+  "max_tokens": 768,
+  "timeout_s": 60.0,
+  "max_retries": 3
+}

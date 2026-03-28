@@ -69,18 +69,36 @@ def register_subparsers(subparsers: Any) -> None:
 
     pj = subparsers.add_parser(
         "olmo-conformity-judgeval",
-        help="Backfill Judge Eval scores into conformity_outputs.parsed_answer_json for an existing run",
+        help="Backfill LLM judge scores into conformity_outputs.parsed_answer_json for an existing run",
     )
     pj.add_argument("--run-id", type=str, required=True)
     pj.add_argument("--db", type=str, required=True, help="Path to simulation.db for the run")
     pj.add_argument("--judge-config", type=str, default=None, help="Path to judge config JSON (model, prompt templates, temperature, etc.)")
-    pj.add_argument("--judge-model", type=str, default=None, help="Ollama model to use as judge (overrides --judge-config)")
-    pj.add_argument("--ollama-base", type=str, default=None, help="Ollama API base URL (overrides --judge-config)")
-    pj.add_argument("--force", action="store_true", help="Overwrite existing parsed_answer_json if present")
+    pj.add_argument("--judge-model", type=str, default=None, help="Judge model id (overrides --judge-config; also accepts OpenRouter model ids)")
+    pj.add_argument("--ollama-base", type=str, default=None, help="API base URL — Ollama local or OpenRouter (overrides --judge-config)")
+    pj.add_argument(
+        "--api-key",
+        type=str,
+        default=None,
+        help=(
+            "Bearer API key for the judge provider (e.g. OpenRouter sk-or-v1-…). "
+            "Falls back to the OPENROUTER_API_KEY / JUDGE_API_KEY env vars when not set."
+        ),
+    )
+    pj.add_argument("--force", action="store_true", help="Overwrite existing parsed_answer_json regardless of current content")
+    pj.add_argument(
+        "--no-llm-judge",
+        action="store_true",
+        help=(
+            "Target rows that have non-empty parsed_answer_json but were NEVER LLM-judged "
+            "(i.e. the heuristic rule-based parser ran but no _llm_judge key is present). "
+            "Useful for backfilling new runs that already have heuristic labels."
+        ),
+    )
     pj.add_argument(
         "--retry-parse-errors",
         action="store_true",
-        help="Re-judge rows that have parse_error in parsed_answer_json (empty or unparseable judge output)",
+        help="Re-judge rows that have [parse_error] in parsed_answer_json",
     )
     pj.add_argument("--limit", type=int, default=None, help="Optional cap on number of trials to score")
     pj.add_argument("--max-concurrency", type=int, default=4, help="Max concurrent judge requests (default: 4)")
@@ -92,7 +110,7 @@ def register_subparsers(subparsers: Any) -> None:
     pj.add_argument(
         "--no-json-format",
         action="store_true",
-        help="Disable Ollama format=json (use if format causes issues with your judge model)",
+        help="Disable JSON-mode constraint (use if the provider does not support it)",
     )
     pj.add_argument(
         "--trial-scope",
@@ -469,23 +487,37 @@ def _handle_judgeval(args: Any) -> int:
     )
 
     # Build judge config: start from JSON file (if given), then apply any
-    # explicit CLI overrides on top so the user can tweak without editing the
-    # file each time.
+    # explicit CLI overrides.
     if args.judge_config:
         cfg = OllamaJudgeConfig.from_json_file(str(args.judge_config))
         print(f"Loaded judge config from {args.judge_config} (prompt_version={cfg.prompt_version})")
     else:
         cfg = OllamaJudgeConfig()
 
+    # Resolve API key: CLI flag > env vars > config file value
+    api_key = getattr(args, "api_key", None) or None
+    if api_key is None:
+        import os as _os
+        api_key = _os.environ.get("OPENROUTER_API_KEY") or _os.environ.get("JUDGE_API_KEY") or None
+
     cfg = cfg.merge_cli(
         judge_model=args.judge_model if args.judge_model else None,
         ollama_base=args.ollama_base if args.ollama_base else None,
+        api_key=api_key,
         verbose=bool(args.verbose),
         use_json_format=False if args.no_json_format else None,
     )
+    # Disable inner parse-error retries; the outer loop in score_one handles them.
+    import dataclasses as _dc
+    cfg = _dc.replace(cfg, max_retries=0)
     max_conc = max(1, int(args.max_concurrency))
     max_parse_error_retries = max(1, int(args.parse_error_retries))
-    print(f"Judge: model={cfg.model}  base={cfg.ollama_base}  max_concurrency={max_conc}  parse_error_retries={max_parse_error_retries}")
+    provider_label = "openai-compatible" if cfg.is_openai_compatible else "ollama"
+    print(
+        f"Judge: model={cfg.model}  base={cfg.api_base}  provider={provider_label}"
+        f"  auth={'yes' if cfg.api_key else 'no'}"
+        f"  max_concurrency={max_conc}  parse_error_retries={max_parse_error_retries}"
+    )
 
     trace_db = TraceDb(TraceDbConfig(db_path=str(args.db)))
     trace_db.connect()
@@ -497,7 +529,16 @@ def _handle_judgeval(args: Any) -> int:
     if str(args.trial_scope) == "behavioral-only":
         where += " AND c.name IN ('control', 'asch_history_5', 'authoritative_bias')"
     if not bool(args.force):
+        # --no-llm-judge: target rows that have non-empty content but were never
+        # LLM-judged (no _llm_judge key — typically heuristic-only labels).
+        no_llm_judge = getattr(args, "no_llm_judge", False)
         needs_judge = "(o.parsed_answer_json IS NULL OR o.parsed_answer_json = '')"
+        if no_llm_judge:
+            needs_judge = (
+                f"({needs_judge}"
+                " OR (o.parsed_answer_json IS NOT NULL AND o.parsed_answer_json != ''"
+                " AND json_extract(o.parsed_answer_json, '$._llm_judge') IS NULL))"
+            )
         if bool(args.retry_parse_errors):
             needs_judge = f"({needs_judge} OR o.parsed_answer_json LIKE '%[parse_error]%')"
         where += f" AND {needs_judge}"
@@ -557,7 +598,10 @@ def _handle_judgeval(args: Any) -> int:
     ).fetchall()
 
     if not rows:
-        print("No trials to score (either none exist, or all already have parsed_answer_json).")
+        print(
+            "No trials to score (none exist, or all already have LLM judge labels — "
+            "use --no-llm-judge to target heuristic-only rows, or --force to overwrite all)."
+        )
         trace_db.close()
         return 0
 
