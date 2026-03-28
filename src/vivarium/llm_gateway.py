@@ -455,6 +455,7 @@ class LiteLLMGateway:
             "model": model,
             "messages": messages,
             "temperature": temperature,
+            "stream": False,
         }
         if top_k is not None and int(top_k) > 0:
             kwargs["top_k"] = int(top_k)
@@ -537,6 +538,27 @@ class LiteLLMGateway:
         )
 
     @staticmethod
+    def _is_json_parse_error(err: Exception) -> bool:
+        """Detect JSONDecodeError buried in LiteLLM exception chains."""
+        import json as _json
+
+        for exc in (err, getattr(err, "__cause__", None), getattr(err, "__context__", None)):
+            if isinstance(exc, _json.JSONDecodeError):
+                return True
+        s = str(err).lower()
+        return "jsondecode" in s or "expecting value" in s
+
+    @staticmethod
+    def _extract_body_hint(err: Exception) -> str:
+        """Best-effort extraction of the first 500 chars of the response body for diagnostics."""
+        for exc in (err, getattr(err, "__cause__", None), getattr(err, "__context__", None)):
+            doc = getattr(exc, "doc", None)
+            if isinstance(doc, (str, bytes)):
+                return repr(doc[:500])
+        s = str(err)
+        return s[:500] if len(s) > 500 else s
+
+    @staticmethod
     def _strip_top_k_if_known_unsupported(*, litellm_mod: Any, kwargs: Dict[str, Any]) -> None:
         """
         Avoid sending top_k to providers that almost certainly reject it (e.g., OpenAI/Azure),
@@ -608,6 +630,11 @@ class LiteLLMGateway:
                         resp.setdefault("_vvm_meta", {})["top_p_ignored"] = True
                 except Exception:
                     pass
+            elif self._is_json_parse_error(e):
+                body_hint = self._extract_body_hint(e)
+                raise type(e)(
+                    f"{e} | body_prefix(500): {body_hint}"
+                ) from e
             else:
                 raise
         # Keep full response for downstream parsing.
@@ -684,6 +711,11 @@ class LiteLLMGateway:
                     except Exception:
                         pass
                     return resp
+                if self._is_json_parse_error(e):
+                    body_hint = self._extract_body_hint(e)
+                    raise type(e)(
+                        f"{e} | body_prefix(500): {body_hint}"
+                    ) from e
                 raise
 
         # Apply rate limiting if configured

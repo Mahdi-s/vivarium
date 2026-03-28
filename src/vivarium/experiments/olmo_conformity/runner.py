@@ -86,6 +86,113 @@ def _find_existing_run_dir(runs_dir: str, run_id: str) -> Optional[str]:
     return None
 
 
+def _normalize_suite_identity(cfg: JsonDict) -> str:
+    """Deterministic string capturing suite identity: models + conditions + datasets + run params."""
+    identity = {
+        "suite_name": cfg.get("suite_name", ""),
+        "models": sorted(
+            [{"model_id": m.get("model_id"), "variant": m.get("variant")} for m in cfg.get("models", [])],
+            key=lambda x: str(x.get("model_id", "")),
+        ),
+        "conditions": sorted([c.get("name", "") for c in cfg.get("conditions", [])]),
+        "datasets": sorted([d.get("name", "") for d in cfg.get("datasets", [])]),
+        "run": {
+            "temperature": cfg.get("run", {}).get("temperature"),
+            "seed": cfg.get("run", {}).get("seed"),
+        },
+    }
+    return json.dumps(identity, sort_keys=True, separators=(",", ":"))
+
+
+def _find_incomplete_run_for_suite(
+    runs_dir: str,
+    suite_config_sha256: str,
+    current_cfg: JsonDict,
+    model_ids: List[str],
+    condition_names: List[str],
+    expected_item_count: int,
+) -> Optional[Tuple[str, str]]:
+    """Scan runs_dir for an incomplete run matching the current suite config.
+
+    Matching strategy:
+      1. Exact match on suite_config_sha256 (new runs store this).
+      2. Fallback: compare normalized suite identity (models, conditions, datasets,
+         temperature, seed) extracted from the stored suite_config. This covers
+         runs created before the sha256 field was introduced.
+
+    Returns (run_id, run_dir_path) for the most recent incomplete match, or None.
+    """
+    if not os.path.isdir(runs_dir):
+        return None
+
+    current_identity = _normalize_suite_identity(current_cfg)
+    candidates: List[Tuple[int, float, str, str]] = []  # (completed_count, mtime, run_id, run_dir)
+
+    for name in os.listdir(runs_dir):
+        run_path = os.path.join(runs_dir, name)
+        db_path = os.path.join(run_path, "simulation.db")
+        if not os.path.isdir(run_path) or not os.path.isfile(db_path):
+            continue
+
+        try:
+            tmp_db = TraceDb(TraceDbConfig(db_path=db_path))
+            tmp_db.connect()
+
+            row = tmp_db.conn.execute("SELECT run_id, config_json FROM runs LIMIT 1;").fetchone()
+            if not row:
+                tmp_db.close()
+                continue
+
+            db_run_id = str(row["run_id"])
+            config = json.loads(row["config_json"]) if row["config_json"] else {}
+
+            # Match 1: exact SHA (fast path for runs created after this feature)
+            stored_sha = config.get("suite_config_sha256")
+            matched = (stored_sha is not None and stored_sha == suite_config_sha256)
+
+            # Match 2: normalized identity comparison (covers pre-existing runs)
+            if not matched:
+                stored_suite_cfg = config.get("suite_config")
+                if isinstance(stored_suite_cfg, dict):
+                    stored_identity = _normalize_suite_identity(stored_suite_cfg)
+                    matched = (stored_identity == current_identity)
+
+            if not matched:
+                tmp_db.close()
+                continue
+
+            expected_cells = expected_item_count * len(condition_names) * len(model_ids)
+            completed = tmp_db.conn.execute(
+                "SELECT COUNT(*) AS n FROM conformity_trials t "
+                "JOIN conformity_outputs o ON o.trial_id = t.trial_id "
+                "WHERE t.run_id = ?;",
+                (db_run_id,),
+            ).fetchone()["n"]
+
+            if completed >= expected_cells:
+                tmp_db.close()
+                continue
+
+            mtime = os.path.getmtime(db_path)
+            candidates.append((completed, mtime, db_run_id, run_path))
+            tmp_db.close()
+        except Exception:
+            continue
+
+    if not candidates:
+        return None
+
+    # Prefer the run with the most completed work (then newest mtime as tiebreaker)
+    candidates.sort(key=lambda t: (t[0], t[1]), reverse=True)
+    best_completed, best_mtime, best_run_id, best_path = candidates[0]
+    if len(candidates) > 1:
+        print(f"[Runner] WARNING: found {len(candidates)} incomplete runs matching this suite config:")
+        for _cnt, _mt, _rid, _rp in candidates:
+            print(f"  - {_rp}  (run_id={_rid}, completed={_cnt})")
+        print(f"  Using run with most progress ({best_completed} outputs): {best_path}")
+    return (best_run_id, best_path)
+
+
 def _get_wrong_answer(item: JsonDict, condition_type: str) -> str:
     """
     Get the wrong answer for pressure conditions (Asch, authoritative_bias).
@@ -483,6 +590,7 @@ def run_suite(
     use_judgeval: bool = False,
     judgeval_judge_model: str = "llama3.2",
     judgeval_ollama_base: str = "http://localhost:11434/v1",
+    resume_auto: bool = False,
 ) -> RunPaths:
     cfg = load_suite_config(suite_config_path)
 
@@ -515,9 +623,43 @@ def run_suite(
     if runs_dir == "./runs" and config_runs_dir:
         effective_runs_dir = config_runs_dir
 
+    suite_model_ids = [str(m.get("model_id") or "mock") for m in cfg.get("models", [])]
+    suite_condition_names = [str(c.get("name") or "") for c in cfg.get("conditions", [])]
+
+    # Count expected items per dataset (respecting max_items_per_dataset)
+    _expected_item_count = 0
+    for ds in cfg.get("datasets", []):
+        rel_path = str(ds["path"])
+        p = Path(rel_path)
+        if not p.is_absolute():
+            suite_rel = (suite_dir / p).resolve()
+            abs_path = str(suite_rel) if suite_rel.exists() else str((Path(str(settings.PROJECT_ROOT)) / p).resolve())
+        else:
+            abs_path = str(p)
+        try:
+            _expected_item_count += len(clamp_items(read_jsonl(abs_path), cfg.get("run", {}).get("max_items_per_dataset")))
+        except Exception:
+            pass
+
     run_id_final = str(run_id or str(uuid.uuid4()))
     existing_run_dir = _find_existing_run_dir(effective_runs_dir, run_id_final) if run_id else None
     is_resume = existing_run_dir is not None
+
+    # --resume-auto: discover an incomplete run for the same suite config
+    if not is_resume and not run_id and resume_auto:
+        _auto_sha = sha256_file(str(suite_path))
+        _auto_result = _find_incomplete_run_for_suite(
+            runs_dir=effective_runs_dir,
+            suite_config_sha256=_auto_sha,
+            current_cfg=cfg,
+            model_ids=suite_model_ids,
+            condition_names=suite_condition_names,
+            expected_item_count=_expected_item_count,
+        )
+        if _auto_result:
+            run_id_final, existing_run_dir = _auto_result
+            is_resume = True
+            print(f"[Runner] --resume-auto: found incomplete run to continue")
 
     if is_resume:
         run_dir = existing_run_dir
@@ -550,6 +692,7 @@ def run_suite(
     run_exists = (
         trace_db.conn.execute("SELECT 1 FROM runs WHERE run_id = ?;", (run_id_final,)).fetchone() is not None
     )
+    suite_config_sha256 = sha256_file(str(suite_path))
     if not run_exists:
         trace_db.insert_run(
             RunMetadata(
@@ -559,6 +702,7 @@ def run_suite(
                 config={
                     "mode": "olmo_conformity",
                     "suite_config": cfg,
+                    "suite_config_sha256": suite_config_sha256,
                     "prompt_renderer_version": PROMPT_RENDERER_VERSION,
                     "repo_state": repo_state,
                 },
@@ -844,86 +988,113 @@ def run_suite(
 
                 trial_num += 1
 
-                # On resume: skip item×condition pairs that already have a completed output
+                # On resume: check per-(model, item, condition) whether work already exists.
+                _reuse_trial_id: Optional[str] = None
                 if is_resume:
-                    _existing = trace_db.conn.execute(
-                        "SELECT 1 FROM conformity_trials t "
-                        "JOIN conformity_outputs o ON t.trial_id = o.trial_id "
-                        "WHERE t.run_id = ? AND t.item_id = ? AND t.condition_id = ?",
-                        (run_id_final, str(item["item_id"]), cond_id),
+                    _existing_row = trace_db.conn.execute(
+                        "SELECT t.trial_id, o.output_id FROM conformity_trials t "
+                        "LEFT JOIN conformity_outputs o ON t.trial_id = o.trial_id "
+                        "WHERE t.run_id = ? AND t.model_id = ? AND t.item_id = ? AND t.condition_id = ?",
+                        (run_id_final, model_id, str(item["item_id"]), cond_id),
                     ).fetchone()
-                    if _existing:
-                        continue
+                    if _existing_row:
+                        if _existing_row["output_id"] is not None:
+                            continue
+                        _reuse_trial_id = str(_existing_row["trial_id"])
 
-                trial_id = str(uuid.uuid4())
-                print(f"  [Runner] Trial {trial_num}/{total_trials}: item={item['item_id']}, condition={cond_name}")
-                trace_db.insert_conformity_trial(
-                    trial_id=trial_id,
-                    run_id=run_id_final,
-                    model_id=model_id,
-                    variant=variant,
-                    item_id=str(item["item_id"]),
-                    condition_id=cond_id,
-                    seed=seed,
-                    temperature=temperature,
-                )
-                
-                # Trial-level metadata: generation config + gateway + model config (for full traceability)
-                try:
-                    trace_db.upsert_conformity_trial_metadata(
+                if _reuse_trial_id:
+                    trial_id = _reuse_trial_id
+                    print(f"  [Runner] Trial {trial_num}/{total_trials}: item={item['item_id']}, condition={cond_name} (resuming orphaned trial {trial_id[:8]})")
+                else:
+                    trial_id = str(uuid.uuid4())
+                    print(f"  [Runner] Trial {trial_num}/{total_trials}: item={item['item_id']}, condition={cond_name}")
+                    trace_db.insert_conformity_trial(
                         trial_id=trial_id,
-                        metadata={
-                            "prompt_renderer_version": PROMPT_RENDERER_VERSION,
-                            "suite_name": str(cfg.get("suite_name") or ""),
-                            "suite_version": str(cfg.get("suite_version") or ""),
-                            "generation": {
-                                "seed": int(seed),
-                                "temperature": float(temperature),
-                                "top_k": (None if top_k is None else int(top_k)),
-                                "top_p": (None if top_p is None else float(top_p)),
-                            },
-                            "model": {
-                                "model_id": str(model_id),
-                                "variant": str(variant),
-                                "model_config": (model_config if isinstance(model_config, dict) else {}),
-                            },
-                            "gateway": {
-                                "class": gateway.__class__.__name__,
-                                "api_base": (str(api_base) if api_base else None),
-                            },
-                        },
+                        run_id=run_id_final,
+                        model_id=model_id,
+                        variant=variant,
+                        item_id=str(item["item_id"]),
+                        condition_id=cond_id,
+                        seed=seed,
+                        temperature=temperature,
                     )
-                except Exception as e:
-                    print(f"Warning: failed to write trial metadata: {e}")
-
-                print(f"    [Runner] Building prompt...")
-                system, user, history, prompt_meta = _build_prompt_for_condition(
-                    condition=condition, item=item, prompts_root=prompts_root
-                )
-                prompt_hash = deterministic_prompt_hash(system=system, user=user, history=history)
-                prompt_id = str(uuid.uuid4())
-                trace_db.insert_conformity_prompt(
-                    prompt_id=prompt_id,
-                    trial_id=trial_id,
-                    system_prompt=system,
-                    user_prompt=user,
-                    chat_history=history,
-                    rendered_prompt_hash=prompt_hash,
-                )
                 
-                # Prompt-level structured metadata for traceability (tone, consensus mode, DA/QD settings, etc.)
-                try:
-                    meta_to_store = dict(prompt_meta or {})
-                    meta_to_store.update(
-                        {
-                            "prompt_id": prompt_id,
-                            "trial_id": trial_id,
-                            "rendered_prompt_hash": prompt_hash,
-                        }
+                    # Trial-level metadata: generation config + gateway + model config (for full traceability)
+                    try:
+                        trace_db.upsert_conformity_trial_metadata(
+                            trial_id=trial_id,
+                            metadata={
+                                "prompt_renderer_version": PROMPT_RENDERER_VERSION,
+                                "suite_name": str(cfg.get("suite_name") or ""),
+                                "suite_version": str(cfg.get("suite_version") or ""),
+                                "generation": {
+                                    "seed": int(seed),
+                                    "temperature": float(temperature),
+                                    "top_k": (None if top_k is None else int(top_k)),
+                                    "top_p": (None if top_p is None else float(top_p)),
+                                },
+                                "model": {
+                                    "model_id": str(model_id),
+                                    "variant": str(variant),
+                                    "model_config": (model_config if isinstance(model_config, dict) else {}),
+                                },
+                                "gateway": {
+                                    "class": gateway.__class__.__name__,
+                                    "api_base": (str(api_base) if api_base else None),
+                                },
+                            },
+                        )
+                    except Exception as e:
+                        print(f"Warning: failed to write trial metadata: {e}")
+
+                # Build prompt (or reuse existing for orphaned trials)
+                _existing_prompt = None
+                if _reuse_trial_id:
+                    _existing_prompt = trace_db.conn.execute(
+                        "SELECT system_prompt, user_prompt, chat_history_json FROM conformity_prompts "
+                        "WHERE trial_id = ? ORDER BY created_at ASC LIMIT 1;",
+                        (trial_id,),
+                    ).fetchone()
+
+                if _existing_prompt:
+                    system = str(_existing_prompt["system_prompt"] or "")
+                    user = str(_existing_prompt["user_prompt"] or "")
+                    history: List[JsonDict] = []
+                    try:
+                        raw_hist = _existing_prompt["chat_history_json"]
+                        if raw_hist:
+                            history = json.loads(raw_hist)
+                    except Exception:
+                        history = []
+                    prompt_meta = None
+                else:
+                    print(f"    [Runner] Building prompt...")
+                    system, user, history, prompt_meta = _build_prompt_for_condition(
+                        condition=condition, item=item, prompts_root=prompts_root
                     )
-                    trace_db.upsert_conformity_prompt_metadata(prompt_id=prompt_id, metadata=meta_to_store)
-                except Exception as e:
-                    print(f"Warning: failed to write prompt metadata: {e}")
+                    prompt_hash = deterministic_prompt_hash(system=system, user=user, history=history)
+                    prompt_id = str(uuid.uuid4())
+                    trace_db.insert_conformity_prompt(
+                        prompt_id=prompt_id,
+                        trial_id=trial_id,
+                        system_prompt=system,
+                        user_prompt=user,
+                        chat_history=history,
+                        rendered_prompt_hash=prompt_hash,
+                    )
+
+                    try:
+                        meta_to_store = dict(prompt_meta or {})
+                        meta_to_store.update(
+                            {
+                                "prompt_id": prompt_id,
+                                "trial_id": trial_id,
+                                "rendered_prompt_hash": prompt_hash,
+                            }
+                        )
+                        trace_db.upsert_conformity_prompt_metadata(prompt_id=prompt_id, metadata=meta_to_store)
+                    except Exception as e:
+                        print(f"Warning: failed to write prompt metadata: {e}")
 
                 messages = build_messages(system=system, user=user, history=history)
 

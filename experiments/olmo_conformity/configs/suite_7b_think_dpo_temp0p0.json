@@ -1,8 +1,8 @@
 {
   "paths_config": "paths.json",
-  "suite_name": "olmo_conformity_32b_think_sft_temp0.6",
+  "suite_name": "olmo_conformity_7b_think_dpo_temp0.0",
   "suite_version": "v1",
-  "description": "OLMo 3 32B Think-SFT (Supervised Fine-Tuning) conformity experiment at temperature 0.6 for sampling-based decoding.",
+  "description": "OLMo 3 7B Think-DPO conformity experiment at temperature 0.0 with max_new_tokens=5000 for full think-trace completion (HPC).",
   "datasets": [
     {
       "name": "immutable_facts_minimal",
@@ -84,19 +84,18 @@
     }
   ],
   "models": [
-    { "variant": "think_sft", "model_id": "allenai/Olmo-3-32B-Think-SFT", "max_new_tokens": 5000, "has_think_tokens": true, "notes": "32B Think pipeline: Supervised Fine-Tuning stage; HPC extended generation" }
+    { "variant": "think_dpo", "model_id": "allenai/Olmo-3-7B-Think-DPO", "max_new_tokens": 5000, "has_think_tokens": true, "notes": "7B Think-DPO; HPC run with extended generation" }
   ],
   "run": {
     "seed": 42,
-    "temperature": 0.6,
+    "temperature": 0.0,
     "top_k": 50,
-    "top_p": 0.95,
+    "top_p": 0.9,
     "max_items_per_dataset": 50,
-    "notes": "temperature=0.6 (recommended for Think models); 32B models use 2x A100 tensor parallelism; max_new_tokens=5000"
+    "notes": "temperature=0.0 greedy; 7B fits one GPU; pair with Think-SFT on second GPU in same node"
   },
   "scientific_notes": {
-    "stage": "Think-SFT: Supervised fine-tuning on Dolci-Think-SFT dataset (math, code, chat, general knowledge)",
-    "hypothesis": "SFT stage with sampling should show moderate reasoning capability with baseline conformity pressure resistance; temperature=0.6 for natural response diversity",
+    "stage": "Think-DPO: DPO stage of think pipeline",
     "categories": ["general", "opinion", "math", "science", "knowledge", "truthfulness", "reasoning"]
   }
 }

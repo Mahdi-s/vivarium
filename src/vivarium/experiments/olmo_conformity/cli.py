@@ -46,6 +46,7 @@ def register_subparsers(subparsers: Any) -> None:
     pc.add_argument("--use-judgeval", action="store_true", help="Enable Judge Eval evaluation during trials")
     pc.add_argument("--judgeval-judge-model", type=str, default="gpt-oss:20b", help="Ollama model to use as judge")
     pc.add_argument("--judgeval-ollama-base", type=str, default="http://localhost:11434/v1", help="Ollama API base URL")
+    pc.add_argument("--resume-auto", action="store_true", help="Auto-detect and resume the most recent incomplete run for this suite config instead of starting fresh")
 
     pp = subparsers.add_parser("olmo-conformity-probe", help="Capture activations for probe dataset, train probe, and compute projections")
     pp.add_argument("--run-id", type=str, required=True, help="Existing run_id in runs/<ts>_<run_id>/simulation.db")
@@ -373,6 +374,7 @@ def _handle_olmo_conformity(args: Any) -> int:
         use_judgeval=bool(args.use_judgeval),
         judgeval_judge_model=str(args.judgeval_judge_model),
         judgeval_ollama_base=str(args.judgeval_ollama_base),
+        resume_auto=bool(args.resume_auto),
     )
     print(f"run_dir={paths.run_dir}")
     print(f"db={paths.db_path}")
