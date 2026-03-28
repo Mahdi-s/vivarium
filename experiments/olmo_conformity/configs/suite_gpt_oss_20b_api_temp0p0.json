@@ -1,8 +1,8 @@
 {
   "paths_config": "paths.json",
-  "suite_name": "olmo_conformity_deepseek_v3.1_base_api_temp0p0",
+  "suite_name": "olmo_conformity_gpt_oss_20b_api_temp0p0",
   "suite_version": "v1",
-  "description": "deepseek/deepseek-v3.1-base via OpenRouter API at temperature 0.0.",
+  "description": "openai/gpt-oss-20b via OpenRouter API at temperature 0.0.",
   "datasets": [
     {
       "name": "immutable_facts_minimal",
@@ -89,12 +89,12 @@
   ],
   "models": [
     {
-      "variant": "deepseek_v31_base",
-      "model_id": "deepseek/deepseek-v3.1-base",
+      "variant": "gpt_oss_20b",
+      "model_id": "openai/gpt-oss-20b",
       "max_new_tokens": 256,
       "has_think_tokens": false,
       "backend": "litellm",
-      "notes": "DeepSeek V3.1 base via OpenRouter \u2014 cross-family base model comparison"
+      "notes": "GPT-OSS 20B via OpenRouter \u2014 cross-family open-weight comparison (OpenAI)"
     }
   ],
   "run": {

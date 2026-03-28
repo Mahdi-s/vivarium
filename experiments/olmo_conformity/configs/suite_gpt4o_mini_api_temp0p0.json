@@ -1,8 +1,8 @@
 {
   "paths_config": "paths.json",
-  "suite_name": "olmo_conformity_mixtral_8x22b_api_temp0p0",
+  "suite_name": "olmo_conformity_gpt4o_mini_api_temp0p0",
   "suite_version": "v1",
-  "description": "mistralai/mixtral-8x22b via OpenRouter API at temperature 0.0.",
+  "description": "openai/gpt-4o-mini via OpenRouter API at temperature 0.0.",
   "datasets": [
     {
       "name": "immutable_facts_minimal",
@@ -89,12 +89,12 @@
   ],
   "models": [
     {
-      "variant": "mixtral_8x22b",
-      "model_id": "mistralai/mixtral-8x22b",
+      "variant": "gpt4o_mini",
+      "model_id": "openai/gpt-4o-mini",
       "max_new_tokens": 256,
       "has_think_tokens": false,
       "backend": "litellm",
-      "notes": "Mixtral 8x22B via OpenRouter \u2014 cross-family MoE base model comparison"
+      "notes": "GPT-4o Mini via OpenRouter \u2014 cross-family comparison (OpenAI)"
     }
   ],
   "run": {

@@ -1,8 +1,8 @@
 {
   "paths_config": "paths.json",
-  "suite_name": "olmo_conformity_llama3_8b_base_api_temp0p6",
+  "suite_name": "olmo_conformity_gpt_oss_20b_api_temp0p6",
   "suite_version": "v1",
-  "description": "meta-llama/llama-3-8b via OpenRouter API at temperature 0.6.",
+  "description": "openai/gpt-oss-20b via OpenRouter API at temperature 0.6.",
   "datasets": [
     {
       "name": "immutable_facts_minimal",
@@ -89,12 +89,12 @@
   ],
   "models": [
     {
-      "variant": "llama3_8b_base",
-      "model_id": "meta-llama/llama-3-8b",
+      "variant": "gpt_oss_20b",
+      "model_id": "openai/gpt-oss-20b",
       "max_new_tokens": 256,
       "has_think_tokens": false,
       "backend": "litellm",
-      "notes": "Llama 3 8B base via OpenRouter \u2014 cross-family base model comparison"
+      "notes": "GPT-OSS 20B via OpenRouter \u2014 cross-family open-weight comparison (OpenAI)"
     }
   ],
   "run": {

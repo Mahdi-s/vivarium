@@ -1,8 +1,8 @@
 {
   "paths_config": "paths.json",
-  "suite_name": "olmo_conformity_llama3_70b_base_api_temp0p0",
+  "suite_name": "olmo_conformity_gemini_2.5_flash_lite_api_temp0p0",
   "suite_version": "v1",
-  "description": "meta-llama/llama-3-70b via OpenRouter API at temperature 0.0.",
+  "description": "google/gemini-2.5-flash-lite via OpenRouter API at temperature 0.0.",
   "datasets": [
     {
       "name": "immutable_facts_minimal",
@@ -89,12 +89,12 @@
   ],
   "models": [
     {
-      "variant": "llama3_70b_base",
-      "model_id": "meta-llama/llama-3-70b",
+      "variant": "gemini_25_flash_lite",
+      "model_id": "google/gemini-2.5-flash-lite",
       "max_new_tokens": 256,
       "has_think_tokens": false,
       "backend": "litellm",
-      "notes": "Llama 3 70B base via OpenRouter \u2014 cross-family large base model comparison"
+      "notes": "Gemini 2.5 Flash Lite via OpenRouter \u2014 cross-family comparison (Google)"
     }
   ],
   "run": {

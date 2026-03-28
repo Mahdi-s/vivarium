@@ -1,8 +1,8 @@
 {
   "paths_config": "paths.json",
-  "suite_name": "olmo_conformity_llama3_8b_base_api_temp0p0",
+  "suite_name": "olmo_conformity_grok_4.1_fast_api_temp0p6",
   "suite_version": "v1",
-  "description": "meta-llama/llama-3-8b via OpenRouter API at temperature 0.0.",
+  "description": "x-ai/grok-4.1-fast via OpenRouter API at temperature 0.6.",
   "datasets": [
     {
       "name": "immutable_facts_minimal",
@@ -89,20 +89,20 @@
   ],
   "models": [
     {
-      "variant": "llama3_8b_base",
-      "model_id": "meta-llama/llama-3-8b",
+      "variant": "grok_41_fast",
+      "model_id": "x-ai/grok-4.1-fast",
       "max_new_tokens": 256,
       "has_think_tokens": false,
       "backend": "litellm",
-      "notes": "Llama 3 8B base via OpenRouter \u2014 cross-family base model comparison"
+      "notes": "Grok 4.1 Fast via OpenRouter \u2014 cross-family comparison (xAI)"
     }
   ],
   "run": {
     "seed": 42,
-    "temperature": 0.0,
+    "temperature": 0.6,
     "top_k": 50,
-    "top_p": 0.9,
+    "top_p": 0.95,
     "max_items_per_dataset": 50,
-    "notes": "OpenRouter API run \u2014 temperature=0.0 for deterministic decoding"
+    "notes": "OpenRouter API run \u2014 temperature=0.6 for sampling"
   }
 }

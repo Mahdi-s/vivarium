@@ -1,8 +1,8 @@
 {
   "paths_config": "paths.json",
-  "suite_name": "olmo_conformity_deepseek_v3.1_base_api_temp0p6",
+  "suite_name": "olmo_conformity_gpt4o_mini_api_temp0p6",
   "suite_version": "v1",
-  "description": "deepseek/deepseek-v3.1-base via OpenRouter API at temperature 0.6.",
+  "description": "openai/gpt-4o-mini via OpenRouter API at temperature 0.6.",
   "datasets": [
     {
       "name": "immutable_facts_minimal",
@@ -89,12 +89,12 @@
   ],
   "models": [
     {
-      "variant": "deepseek_v31_base",
-      "model_id": "deepseek/deepseek-v3.1-base",
+      "variant": "gpt4o_mini",
+      "model_id": "openai/gpt-4o-mini",
       "max_new_tokens": 256,
       "has_think_tokens": false,
       "backend": "litellm",
-      "notes": "DeepSeek V3.1 base via OpenRouter \u2014 cross-family base model comparison"
+      "notes": "GPT-4o Mini via OpenRouter \u2014 cross-family comparison (OpenAI)"
     }
   ],
   "run": {
