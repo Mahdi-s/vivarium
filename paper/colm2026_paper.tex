@@ -88,7 +88,7 @@ University of Southern California \\
 \maketitle
 
 \begin{abstract}
-We study social conformity in large language models---capitulation to fabricated peer consensus, distinct from user-directed sycophancy---across 144,008 trials spanning 10 model families. By tracing four OLMo-3-7B checkpoints that share identical pretraining, we causally show that supervised fine-tuning amplifies conformity (McNemar OR\,=\,15.5 vs.\ 8.8 for base, $p<0.001$) while direct preference optimization partially mitigates it (OR\,=\,8.7). Extending to 10 diverse model families tested on 400 shared items under identical Asch-style pressure, we find that conformity varies by two orders of magnitude (OR\,=\,44 for Llama-3.1-70B to OR\,$\approx$\,1 for GPT-OSS-20B) and splits into three distinct behavioral modes: sycophantic endorsement, safety-driven refusal, and genuine epistemic resistance. Peer consensus is universally more effective than authority framing (significant for 7/10 families vs.\ 2/10). Models with chain-of-thought reasoning largely resist conformity, while standard instruct models do not. A calibration bridge on identical items confirms that OLMo's conformity is typical of instruct-tuned models, not an artifact of its training data. These results show that alignment does not uniformly reduce conformity---it reshapes it into behavioral modes that reflect the dominant training objective.
+We study social conformity in large language models---capitulation to fabricated peer consensus, distinct from user-directed sycophancy---across 144,008 trials spanning 10 model families. By evaluating four sequential OLMo-3-7B checkpoints that share identical pretraining, we observe that conformity to structured peer-consensus prompts increases following supervised fine-tuning (McNemar OR\,=\,15.5 vs.\ 8.8 for base, $p<0.001$) and partially decreases after direct preference optimization (OR\,=\,8.7). Extending to 10 diverse model families tested on 400 shared items under identical Asch-style pressure, we find that conformity susceptibility varies over 40-fold (OR\,=\,44 for Llama-3.1-70B to OR\,$\approx$\,1 for GPT-OSS-20B) and that models exhibit three distinct behavioral responses: endorsement of the wrong answer, refusal to answer, or insensitivity to the consensus context. In our sample, peer consensus induced significant conformity in a larger proportion of families (7/10) than authority framing (2/10). Models with chain-of-thought reasoning largely resist conformity on these prompts. A calibration bridge on identical items confirms that OLMo's conformity level is typical of instruct-tuned models. We note important caveats: the structured prompt format conflates social pressure with autoregressive pattern completion (\S\ref{sec:sft_dpo}), one evaluated model (GPT-OSS-20B) also serves as the judge for Study~2 (\S\ref{sec:discussion}), and error rates exclude refusals from the denominator, which inflates odds ratios for high-refusal models (Appendix~\ref{app:refusal}).
 \end{abstract}
 
 
@@ -101,16 +101,16 @@ The rapid deployment of large language models (LLMs) in decision-critical workfl
 We study \textbf{social conformity}: capitulation to simulated \emph{peer pressure} embedded in the prompt context, mechanistically distinct from \textbf{sycophancy} (deference to the \emph{user's} opinion;~\citealp{sharma2024sycophancy}). Following the classical paradigm of \citet{asch1956}, we subject models to fabricated unanimous peer consensus and measure whether they abandon correct answers to agree with the majority.
 
 \paragraph{Two complementary studies.}
-Prior cross-family comparisons~\citep{zhu2025conformity} found instruction-tuned models \emph{less} conformist than base models, but could not determine whether this reflects alignment effects or architectural differences. We address this through two interlocking experiments. \textbf{Study~1} traces four OLMo-3-7B checkpoints sharing identical pretraining across 115,200~trials, causally isolating each post-training stage's contribution: SFT \emph{amplifies} conformity while DPO partially \emph{mitigates} it. \textbf{Study~2} evaluates 10~diverse model families on 400~shared items under identical Asch-style conditions (28,808~trials), revealing that conformity susceptibility varies by two orders of magnitude (OR\,=\,44 to OR\,$\approx$\,1) and that models respond to pressure through qualitatively different behavioral modes. A calibration bridge on identical items connects the two studies, confirming that OLMo's conformity level is typical of instruction-tuned models, not an idiosyncratic artifact.
+Prior cross-family comparisons~\citep{zhu2025conformity} found instruction-tuned models \emph{less} conformist than base models, but could not determine whether this reflects alignment effects or architectural differences. We address this through two interlocking experiments. \textbf{Study~1} traces four sequential OLMo-3-7B checkpoints sharing identical pretraining across 115,200~trials, isolating how each post-training stage correlates with conformity changes: SFT is associated with \emph{increased} conformity while DPO is associated with a partial \emph{decrease}. \textbf{Study~2} evaluates 10~diverse model families on 400~shared items under identical Asch-style conditions (28,808~trials), revealing that conformity susceptibility varies over 40-fold (OR\,=\,44 to OR\,$\approx$\,1) and that models respond to pressure through qualitatively different behavioral patterns. A calibration bridge on identical items connects the two studies. An important caveat is that the structured prompt format used for peer consensus conflates social pressure with autoregressive pattern completion (\S\ref{sec:sft_dpo}).
 
 \paragraph{Contributions.}
 This paper provides five contributions:
 \begin{enumerate}
-    \item \textbf{Causal decomposition}: SFT and DPO exert \emph{opposite} effects on conformity within a single model family. The deference prior introduced by SFT is visible in the cross-family calibration, confirming it is not specific to OLMo (\S\ref{sec:sft_dpo}).
-    \item \textbf{Cross-family behavioral taxonomy}: Under identical pressure, models split into three distinct modes---sycophantic endorsement, safety-driven refusal, or epistemic resistance---reflecting the dominant training objective rather than a generic ``conformity'' (\S\ref{sec:cross_family}).
-    \item \textbf{Think models resist peer conformity}: Three of four reasoning-capable models show non-significant McNemar tests; the fourth (OLMo-7B-Think, OR\,=\,2.9) shows a marginal effect far below its instruct sibling (\S\ref{sec:cross_family}).
-    \item \textbf{Peer $\gg$ authority}: Peer consensus significantly increases errors for 7 of 10 families; authority framing for only 2 (after Holm--Bonferroni correction; \S\ref{sec:cross_family}).
-    \item \textbf{The conformity spectrum}: Susceptibility spans OR\,=\,44.3 to OR\,$\approx$\,1.0 across families on identical items, demonstrating that conformity is a function of specific design choices, not a generic LLM property (\S\ref{sec:cross_family}).
+    \item \textbf{Within-family decomposition}: SFT and DPO are associated with \emph{opposite} changes in conformity within the OLMo-3-7B pipeline. Because DPO is applied to SFT weights, these effects are not independently identifiable; we report the sequential trajectory (\S\ref{sec:sft_dpo}).
+    \item \textbf{Cross-family behavioral patterns}: Under identical pressure, models exhibit three distinct response modes---endorsement of the wrong answer, refusal to answer, or insensitivity to the consensus context (\S\ref{sec:cross_family}).
+    \item \textbf{Reasoning models show reduced conformity}: Three of four reasoning-capable models show non-significant McNemar tests on these prompts; the fourth (OLMo-7B-Think, OR\,=\,2.9) shows a small effect below its instruct sibling (\S\ref{sec:cross_family}).
+    \item \textbf{Peer $>$ authority in our sample}: Peer consensus significantly increases errors for 7 of 10 families; authority framing for only 2 (Holm--Bonferroni corrected; \S\ref{sec:cross_family}).
+    \item \textbf{Large cross-family variation}: Susceptibility spans OR\,=\,44.3 to OR\,$\approx$\,1.0 across families on identical items, though the comparison is complicated by differential refusal rates and the use of one evaluated model as the judge (\S\ref{sec:cross_family}, \S\ref{sec:discussion}).
 \end{enumerate}
 
 \begin{figure}[t]
@@ -224,21 +224,21 @@ This paper provides five contributions:
       font=\small\bfseries, line width=0.8pt]
     (endorse) at (1.8, -6.2) {%
     \textcolor{warmred}{Endorse}\\[-2pt]
-    {\tiny\normalfont Sycophantic compliance}};
+    {\tiny\normalfont Endorsement-dominant}};
 
 \node[rectangle, rounded corners=5pt, draw=warnyellow!70, fill=warnyellow!8,
       minimum height=0.9cm, minimum width=3.2cm, align=center,
       font=\small\bfseries, line width=0.8pt]
     (refuse) at (7.0, -6.2) {%
     \textcolor{warnyellow!80!black}{Refuse}\\[-2pt]
-    {\tiny\normalfont Safety-driven avoidance}};
+    {\tiny\normalfont Refusal-dominant}};
 
 \node[rectangle, rounded corners=5pt, draw=okgreen!70, fill=okgreen!8,
       minimum height=0.9cm, minimum width=3.2cm, align=center,
       font=\small\bfseries, line width=0.8pt]
     (resist) at (12.2, -6.2) {%
     \textcolor{okgreen!80!black}{Resist}\\[-2pt]
-    {\tiny\normalfont Epistemic integrity}};
+    {\tiny\normalfont Context-insensitive}};
 
 % Connecting arrows (from bottom of studies to response boxes)
 \draw[arrow=warmred!40, line width=0.7pt]
@@ -270,7 +270,7 @@ This paper provides five contributions:
 
 \end{tikzpicture}%
 }
-\caption{Study overview. \textbf{Study~1} traces four OLMo-3-7B checkpoints (identical pretraining) to causally isolate how each post-training stage affects conformity. \textbf{Study~2} evaluates 10~model families on 400~shared items, revealing three distinct behavioral modes under social pressure. A calibration bridge on identical items connects the two studies. OR = McNemar odds ratio; ns = non-significant after Holm--Bonferroni correction.}
+\caption{Study overview. \textbf{Study~1} traces four OLMo-3-7B checkpoints (identical pretraining) to isolate how each post-training stage correlates with conformity changes. \textbf{Study~2} evaluates 10~model families on 400~shared items, revealing three distinct behavioral modes under social pressure. A calibration bridge on identical items connects the two studies. OR = McNemar odds ratio; ns = non-significant after Holm--Bonferroni correction.}
 \label{fig:pipeline}
 \end{figure}
 
@@ -306,7 +306,7 @@ We evaluate four OLMo-3-7B checkpoints along the post-training pipeline, sharing
 \textbf{Stage 1, SFT} (supervised fine-tuning on human demonstrations);
 \textbf{Stage 2, DPO} (direct preference optimization);
 \textbf{Stage 3, Instruct} (final checkpoint after RLVR).
-Because all four share the same architecture and pretraining data, behavioral differences are causally attributable to the post-training stage. Each variant is evaluated on 12 Asch-style conditions (8~peer consensus, 3~authority, 1~control; Appendix~\ref{app:conditions}) at 6~temperatures ($T \in \{0.0, 0.2, \ldots, 1.0\}$), yielding 115,200~trials.
+Because all four share the same architecture and pretraining data, behavioral differences can be attributed to changes introduced during post-training, though the sequential application of stages means individual contributions are not independently identifiable. Each variant is evaluated on 12 Asch-style conditions (8~peer consensus, 3~authority, 1~control; Appendix~\ref{app:conditions}) at 6~temperatures ($T \in \{0.0, 0.2, \ldots, 1.0\}$), yielding 115,200~trials.
 
 \subsection{Study 2: Cross-Family Observational Survey}
 \label{sec:study2_method}
@@ -334,7 +334,7 @@ OLMo-7B-Instruct appears in both studies, tested on the same 400~items under the
         Judge coverage & 100\% & 100\% \\
         \bottomrule
     \end{tabular}
-    \caption{Experimental design. Study~1 provides causal decomposition within OLMo; Study~2 provides cross-family generalization. All models share the same 400 evaluation items.}
+    \caption{Experimental design. Study~1 provides within-family decomposition for OLMo; Study~2 provides cross-family generalization. All models share the same 400 evaluation items.}
     \label{tab:design}
 \end{table}
 
@@ -374,15 +374,15 @@ The training trajectory reveals opposing forces (Figure~\ref{fig:or}). Following
 \end{figure}
 
 \paragraph{The SFT Spike (Stage 1).}
-SFT produces the most dramatic conformity amplification: OR jumps from 8.79 (Base) to 15.50, with the highest wrong-answer endorsement rate of any variant (39.2\%) and the \emph{lowest} refusal rate (19.3\%). SFT simultaneously suppresses the model's tendency to refuse and amplifies its tendency to comply---the worst combination for epistemic integrity. We hypothesize that SFT introduces a \emph{deference prior}: annotators whose demonstrations form the SFT training set exhibit patterns of conversational accommodation, which the model internalizes and applies under social pressure. This extends \citet{sharma2024sycophancy}'s finding beyond RLHF preference pairs to SFT demonstrations.
+SFT is associated with the largest conformity increase: OR jumps from 8.79 (Base) to 15.50, with the highest wrong-answer endorsement rate of any variant (39.2\%) and the \emph{lowest} refusal rate (19.3\%). SFT simultaneously suppresses the model's tendency to refuse and amplifies its tendency to comply. We hypothesize that SFT on human demonstrations may introduce a deference bias: if annotators exhibit patterns of conversational accommodation~\citep{giles1991cac}, the model may internalize and overgeneralize these patterns under social pressure. This hypothesis is consistent with \citet{sharma2024sycophancy}'s finding that human preference data favors sycophantic responses, but we have not empirically audited OLMo's SFT dataset to confirm this mechanism.
 
 \paragraph{DPO as Partial Correction (Stage 2).}
 DPO reverses the SFT spike, reducing OR from 15.50 to 8.69 and endorsement from 39.2\% to 20.7\%, while restoring a higher refusal rate (42.8\%). DPO training, which optimizes for preferred over dispreferred outputs, appears to counteract the sycophantic prior. The final RLVR stage (Instruct) produces a partial relapse (OR\,=\,12.24), though all variants remain significantly vulnerable ($p < 0.001$).
 
 
-\paragraph{Format and mitigations.} Prompt format strongly modulates conformity within OLMo: under the classical free-text Asch-5 format, Instruct and DPO show no significant conformity ($\Delta=-0.040$, ns), while the structured participant-role format produces $\Delta=+0.219$ for the same content. Devil's advocate mitigations reduce but do not eliminate conformity (ORs remain 3.3--3.8 after DA). Full format and mitigation results appear in Appendix~\ref{app:format} and~\ref{app:mitigation}.
+\paragraph{Format confound and mitigations.} An important caveat: under the classical free-text Asch-5 format, Instruct and DPO show \textbf{no significant conformity} ($\Delta=-0.040$, ns). Conformity emerges only under the structured participant-role format ($\Delta=+0.219$), which enforces a 5-shot n-gram repetition pattern (``Participant 1: X $\ldots$ Participant 5: X''). What we measure may therefore partly reflect autoregressive pattern completion rather than sensitivity to social consensus per se. We did not run a non-social pattern-completion baseline, which limits the construct validity of our ``conformity'' label. Devil's advocate mitigations~\citep{zhu2025conformity} reduce but do not eliminate the effect (Appendix~\ref{app:format},~\ref{app:mitigation}).
 
-\paragraph{Conformity is predominantly deterministic.} We introduce \emph{Conformity Temperature} ($T_c$), the lowest temperature at which each item first conforms: 53--54\% of conforming items yield at $T\!=\!0$ (greedy decoding), rising to 61.8\% for SFT and dropping to 46.1\% for DPO. Conformity is the model's highest-probability output, not a sampling artifact (Appendix~\ref{app:tc}).
+\paragraph{Temperature analysis.} We introduce \emph{Conformity Temperature} ($T_c$), the lowest temperature at which each item first conforms. A narrow majority of conforming items (53--54\%) yield at $T\!=\!0$ (greedy decoding), rising to 61.8\% for SFT and dropping to 46.1\% for DPO. This suggests the conforming response is the model's highest-probability output for these items, though 46--47\% require stochastic sampling to manifest (Appendix~\ref{app:tc}).
 
 
 %% ============================================================
@@ -404,20 +404,20 @@ Figure~\ref{fig:forest} ranks all models by their mean peer-pressure effect ($\D
 
 \subsection{Behavioral Taxonomy: Endorse, Refuse, or Resist}
 
-Models respond to identical social pressure through three qualitatively distinct behavioral modes (Figure~\ref{fig:scatter}):
+Models respond to identical social pressure through three qualitatively distinct behavioral patterns (Figure~\ref{fig:scatter}):
 
 \begin{itemize}
-    \item \textbf{Sycophantic endorsement.} GPT-4o-Mini endorses the wrong answer 41\% of the time while refusing on only 4\% of trials. OLMo-32B-Instruct shows a similar profile (44\% endorsement, 31\% refusal). These models comply with social pressure without resistance.
-    \item \textbf{Safety-driven refusal.} Llama-3.1-70B refuses to answer on 84\% of peer-pressure trials, endorsing the wrong answer on only 6\%. Llama-3-8B shows the same pattern (70\% refusal, 29\% endorsement). These models detect social pressure and shut down rather than engage.
-    \item \textbf{Epistemic resistance.} Grok-4.1-Fast (8\% endorsement, 5\% refusal, OR\,=\,1.1) and GPT-OSS-20B (19\% endorsement, 3\% refusal, OR\,=\,1.0) neither endorse nor refuse at elevated rates. They simply give their answer regardless of social context.
+    \item \textbf{Endorsement-dominant.} GPT-4o-Mini endorses the wrong answer on 42\% of trials while refusing on only 4\%. OLMo-32B-Instruct shows a similar profile (45\% endorsement, 31\% refusal).
+    \item \textbf{Refusal-dominant.} Llama-3.1-70B triggers a refusal response on 84\% of peer-pressure trials (avg.\ across $T=0.0$ and $T=0.6$), endorsing the wrong answer on only 5\%. This high refusal rate means that the model's McNemar OR (44.3 at $T=0.0$) is computed on a reduced subset of items where it actually answered in both conditions ($n=259$ of 400; see Appendix~\ref{app:refusal} for the impact of this denominator choice).
+    \item \textbf{Context-insensitive.} Grok-4.1-Fast (8\% endorsement, 5\% refusal, OR\,=\,1.1) and GPT-OSS-20B (19\% endorsement, 3\% refusal, OR\,=\,1.0) neither endorse nor refuse at elevated rates. \emph{Important caveat:} GPT-OSS-20B also serves as the judge for Study~2 (\S\ref{sec:discussion}), so its apparent insensitivity may partly reflect self-preference bias in the judging process.
 \end{itemize}
 
-These modes are \emph{not} a function of overall capability: Grok-4.1-Fast has the lowest control error (0.317) but so does Llama-3.1-70B (0.352), yet they respond to pressure in opposite ways. The behavioral mode reflects the dominant training objective---helpfulness training (GPT-4o-Mini) produces compliance, safety training (Llama) produces avoidance, and RL-dominant or reasoning-equipped training (Grok, GPT-OSS) produces resistance.
+These patterns are \emph{not} a simple function of overall capability: Grok-4.1-Fast has the lowest control error (0.317) while Llama-3.1-70B has a similar control error (0.352), yet they respond to pressure in opposite ways. The behavioral pattern may correlate with the post-training approach, though we cannot establish this for closed-source models whose training details are not fully disclosed.
 
 \begin{figure}[t]
     \centering
     \includegraphics[width=0.65\textwidth]{fig4_refusal_endorsement.pdf}
-    \caption{Behavioral response taxonomy under peer consensus pressure. Each model plotted by endorsement rate (x-axis) vs.\ refusal rate (y-axis) at $T=0.0$. Point size proportional to $|\Delta_\text{peer}|$. McNemar OR and significance annotated per model. Dashed lines delineate three behavioral quadrants: sycophantic compliance (high endorsement), safety-driven avoidance (high refusal), and epistemic resistance (low both).}
+    \caption{Behavioral response taxonomy under peer consensus pressure. Each model plotted by endorsement rate (x-axis) vs.\ refusal rate (y-axis) at $T=0.0$. Point size proportional to $|\Delta_\text{peer}|$. McNemar OR and significance annotated per model. Dashed lines delineate three behavioral quadrants: endorsement-dominant (high endorsement), refusal-dominant (high refusal), and context-insensitive (low both).}
     \label{fig:scatter}
 \end{figure}
 
@@ -438,44 +438,44 @@ Figure~\ref{fig:peer_auth} compares pressure effects across two mechanisms. Peer
 
 \subsection{Bridge Validation: OLMo Is Not Idiosyncratic}
 
-The OLMo-7B-Instruct variant, which appears in both studies on identical items, ranks 3rd in the cross-family conformity ranking ($\Delta_\text{peer}=+0.430$), between Llama-3.1-70B ($+0.457$) and Llama-3-8B ($+0.374$). The within-family SFT amplification is visible in the ranking: OLMo-SFT ($+0.416$) sits above OLMo-Base ($+0.341$), and OLMo-DPO ($+0.399$) sits below OLMo-SFT, consistent with the causal decomposition in Study~1. This placement confirms that OLMo's conformity level is typical of instruct-tuned models and that the SFT deference prior is not an artifact of OLMo's specific training data.
+The OLMo-7B-Instruct variant, which appears in both studies on identical items, ranks 3rd in the cross-family conformity ranking ($\Delta_\text{peer}=+0.430$), between Llama-3.1-70B ($+0.457$) and Llama-3-8B ($+0.374$). The within-family SFT amplification is visible in the ranking: OLMo-SFT ($+0.416$) sits above OLMo-Base ($+0.341$), and OLMo-DPO ($+0.399$) sits below OLMo-SFT, consistent with the within-family trajectory in Study~1. This placement confirms that OLMo's conformity level is typical of instruct-tuned models and that the SFT-associated conformity increase observed in Study~1 is not idiosyncratic to OLMo.
 
 
 %% ============================================================
 \section{Architectural and Alignment Correlates}
 \label{sec:arch}
 
-The cross-family data reveals suggestive patterns that warrant discussion, though the observational design prevents causal attribution.
+The cross-family data reveals suggestive patterns that warrant discussion, though the observational design prevents attribution to any single factor.
 
-\paragraph{MoE models trend toward lower conformity.} All three MoE models (Llama-4-Maverick, Gemini-Flash-Lite, GPT-OSS-20B) show $\Delta_\text{peer} < +0.14$, while all dense non-think instruct models show $\Delta > +0.24$. A Mann--Whitney U test yields $p = 0.07$---a trend that does not reach conventional significance and is confounded with alignment strategy (MoE models in our sample also tend to use lighter SFT + stronger RL).
+\paragraph{MoE models show lower conformity in our sample.} All three MoE models (Llama-4-Maverick, Gemini-Flash-Lite, GPT-OSS-20B) show $\Delta_\text{peer} < +0.14$, while all dense non-think instruct models show $\Delta > +0.24$. With only 3 MoE and 5 dense models, this sample is too small for meaningful statistical testing, and the pattern is fully confounded with alignment strategy, model size, and training data. We report it as a descriptive observation.
 
-\paragraph{Models with reasoning capability show lower conformity.} The four think/reasoning models ($\Delta$ mean $= +0.04$) all fall below the six non-think models ($\Delta$ mean $= +0.30$). This is consistent with Study~1's finding that OLMo-Think resists peer pressure, and extends it across families. However, with only four reasoning models, the sample is too small for robust group-level inference.
+\paragraph{Models with reasoning capability show lower conformity.} The four think/reasoning models ($\Delta$ mean $= +0.04$) all fall below the six non-think models ($\Delta$ mean $= +0.30$). With only four reasoning models and no formal group test, this is a descriptive pattern consistent with Study~1's OLMo-Think results.
 
-\paragraph{SFT-to-RL gradient.} Across families, models known to use heavy SFT (Llama-3.x, OLMo-Instruct: $\Delta \approx +0.42$) are more conformist than those with lightweight SFT + strong RL (Llama-4-Maverick: $\Delta = +0.13$) or RL-dominant alignment (Grok, GPT-OSS: $\Delta \approx +0.02$). This gradient is consistent with the causal finding from Study~1 that SFT amplifies conformity, but the cross-family evidence is observational and confounded by architecture, model size, and training data differences.
+\paragraph{Alignment strategy correlates.} Across families, models whose published documentation describes heavy SFT~\citep{meta2024llama3} show higher conformity than those with lighter SFT~\citep{meta2025llama4} or RL-dominant approaches~\citep{openai2025gptoss, xai2025grok41}. This gradient is consistent with Study~1's within-family observation, but the cross-family evidence is observational. We cannot attribute differences to alignment strategy alone because architecture, model size, training data, and undisclosed engineering choices all differ simultaneously. Furthermore, the training recipes of closed-source models are only partially disclosed.
 
 
 %% ============================================================
 \section{Discussion}
 \label{sec:discussion}
 
-\paragraph{The SFT deference prior generalizes.}
-Study~1 causally showed that SFT amplifies conformity within OLMo. Study~2 provides cross-family corroboration: models with heavy SFT exposure (Llama-3.x, OLMo-Instruct) cluster at the top of the conformity ranking ($\Delta \approx +0.42$), while models with RL-dominant alignment (Grok, GPT-OSS) sit at the bottom ($\Delta \approx +0.02$). The calibration bridge confirms OLMo-Instruct's conformity is typical, not idiosyncratic. We propose that human demonstration data used in SFT carries an implicit \emph{deference signal}---annotators naturally exhibit patterns of accommodating presented context---which the model internalizes and incorrectly applies under social pressure. This extends \citet{sharma2024sycophancy}'s finding beyond RLHF to SFT demonstrations.
+\paragraph{SFT correlates with increased conformity.}
+Study~1 observed that conformity increased following SFT and partially decreased following DPO within OLMo. Because DPO is applied to SFT weights, the DPO effect is confounded by SFT initialization and cannot be interpreted as an independent contribution. Furthermore, the observed changes may reflect OLMo's specific training datasets rather than universal properties of SFT or DPO algorithms. Study~2 provides cross-family corroboration: models whose published documentation describes heavy SFT cluster at the top of the conformity ranking, while those with RL-dominant alignment sit at the bottom. The bridge confirms OLMo-Instruct is typical, not idiosyncratic.
 
-\paragraph{Alignment does not uniformly reduce or increase conformity.}
-\citet{zhu2025conformity}'s finding that instruct models are less conformist is not wrong---it is incomplete. Our data shows that alignment \emph{reshapes} the behavioral response rather than eliminating it. Llama-3.1-70B's safety training creates a refusal response (84\% refusal rate); GPT-4o-Mini's helpfulness training creates a compliance response (42\% endorsement). Neither model achieves genuine epistemic resistance. Only models with extended reasoning (think variants, Grok, GPT-OSS) or the lightest SFT exposure (Llama-4-Maverick) maintain factual accuracy under pressure without resorting to refusal.
+\paragraph{Different post-training approaches produce distinct behavioral responses.}
+\citet{zhu2025conformity}'s finding that instruct models are less conformist is not wrong---it is incomplete. Our data shows that different post-training pipelines produce distinct behavioral responses to identical prompts. Llama-3.1-70B primarily refuses (84\% refusal rate); GPT-4o-Mini primarily endorses (42\% endorsement). We cannot determine from behavioral data alone whether these patterns ``reflect'' the dominant training objective, as the training objectives and reward functions of closed-source models are not publicly disclosed. The correlation between published alignment approach and behavioral pattern is suggestive but not definitive.
 
-\paragraph{Chain-of-thought as a natural defense.}
-Three of four reasoning-capable models show non-significant peer conformity, and the fourth shows a greatly attenuated effect, consistent with the hypothesis that generating intermediate logical steps anchors the model's epistemic state before it encounters social pressure. This finding is practically significant: deploying models in reasoning mode may be a more robust defense than prompt-level mitigations like devil's advocate, which reduce but do not eliminate conformity.
+\paragraph{Reasoning models and conformity.}
+Three of four reasoning-capable models show non-significant peer conformity, and the fourth shows a reduced effect. This is consistent with the hypothesis that generating intermediate logical steps may anchor the model before encountering social pressure, though we cannot rule out other explanations (e.g., reasoning models may simply be less sensitive to in-context patterns generally). We did not test whether a non-social pattern-completion task would produce the same result.
 
 \paragraph{Limitations.}
-Study~2 uses 4~conditions and 2~temperatures, limiting the granularity of cross-family comparisons. The cross-family design is observational; behavioral differences may reflect architecture, training data, or model size in addition to alignment strategy. Error rates exclude refusals from the denominator (Appendix~\ref{app:refusal}), which affects models with high refusal rates. All outcomes depend on an LLM judge; residual label noise is possible. We do not observe MoE routing behavior directly.
+\textbf{Self-judge bias}: GPT-OSS-20B serves as the sole judge for Study~2 while also being evaluated as one of the 10 target models. Its apparent insensitivity to social pressure (OR\,$\approx$\,1) may partly reflect self-preference bias---a documented phenomenon in LLM-as-judge evaluations. This is the most serious threat to our cross-family ranking. Future work should use an independent judge or human annotation for this model. \textbf{Denominator exclusion}: error rates exclude refusals, inflating ORs for high-refusal models (e.g., Llama-3.1-70B's OR=44.3 is computed on 259/400 paired items). Appendix~\ref{app:refusal} shows the qualitative ranking is preserved under alternative denominators, but quantitative ORs differ substantially. \textbf{Construct validity}: the structured prompt conflates social pressure with n-gram pattern completion; under the classical Asch format, post-training models show no significant conformity. Without a non-social pattern-completion baseline, we cannot determine how much of the measured effect is ``social conformity'' versus autoregressive completion. \textbf{Sequential design}: Study~1 traces a single pipeline; observed changes may reflect OLMo's specific datasets. \textbf{Scope}: we evaluated 10 model families but excluded Anthropic's Claude models, which pioneered Constitutional AI for sycophancy mitigation. Study~2 uses 4~conditions and 2~temperatures. \textbf{Missing baselines}: we did not test whether a simple system prompt (e.g., ``maintain strict factual accuracy'') eliminates the effect, which would distinguish deep alignment failure from trivial instruction-following artifacts.
 
 
 %% ============================================================
 \section{Conclusion}
 \label{sec:conclusion}
 
-Alignment does not uniformly reduce social conformity in language models---it reshapes it. Within the OLMo-7B pipeline, SFT amplifies and DPO mitigates peer-consensus conformity, establishing that post-training stages have separable and opposing effects. Across 10~model families tested on identical items, conformity susceptibility spans two orders of magnitude (McNemar OR\,=\,44 to OR\,$\approx$\,1), and models respond to pressure through three distinct behavioral modes: sycophantic endorsement, safety-driven refusal, or genuine epistemic resistance. Peer consensus is more broadly effective than authority framing (significant for 7/10 vs.\ 2/10 families), and reasoning-capable models largely resist peer conformity. These findings imply that conformity should be measured as a multi-dimensional behavioral profile rather than a single scalar, and that alignment pipelines should explicitly evaluate the interaction between training objectives and social pressure to avoid producing either sycophantic compliance or reflexive avoidance. We release the full evaluation pipeline and all data as open-source code.
+Within the OLMo-7B pipeline, conformity to structured peer-consensus prompts increases following SFT and partially decreases following DPO, though these effects are confounded by sequential application and OLMo-specific training data. Across 10~model families tested on identical items, conformity susceptibility varies over 40-fold (McNemar OR\,=\,44 to OR\,$\approx$\,1), and models exhibit three distinct behavioral responses: endorsement, refusal, or insensitivity to the consensus context. In our sample, peer consensus induced significant conformity in more families (7/10) than authority framing (2/10), and reasoning-capable models showed reduced susceptibility. These findings are subject to important caveats: the structured prompt format conflates social pressure with autoregressive pattern completion, one evaluated model serves as its own judge, and error rates exclude refusals from the denominator. Despite these limitations, the results suggest that vulnerability to in-context consensus is not a generic LLM property but varies substantially across models and may correlate with post-training approach. We release the full evaluation pipeline and all data as open-source code.
 
 
 %% ============================================================
@@ -899,14 +899,20 @@ Devil's advocate (DA) significantly reduces conformity for all variants: SFT agr
 \section{Refusal Handling}
 \label{app:refusal}
 
-When the judge sets \texttt{is\_correct=null} (typically for refusals), that trial is excluded from the error rate denominator. Error rates thus reflect ``accuracy among substantive answers,'' not ``accuracy among all trials.'' For models with high refusal rates (e.g., Llama-3.1-70B: 89\% refusal under peer pressure), this reduces the McNemar paired sample (259/400 items paired vs.\ 380/400 for GPT-4o-Mini). Refusal rates are reported alongside error rates throughout the paper. If refusals are instead counted as errors, the qualitative ranking is unchanged ($\Delta$ increases from $+$0.533 to $+$0.542 for Llama-3.1-70B); if counted as correct, $\Delta$ decreases to $+$0.260. The behavioral taxonomy (refusal vs.\ endorsement) is unaffected by this choice.
+\paragraph{Two separate fields.} \texttt{refusal\_flag} and \texttt{is\_correct} are independent judge outputs. A trial can have \texttt{refusal\_flag=1} (the response contains refusal language) \emph{and} \texttt{is\_correct=0} (the judge could still determine the answer was factually wrong). For Llama-3.1-70B at $T=0.0$: 356/400 peer-pressure trials have \texttt{refusal\_flag=1}, but 226 of those 356 also have a valid \texttt{is\_correct} score. Only 130/400 have \texttt{is\_correct=null}, yielding 270 valid items for error rate computation and 259 paired items for McNemar (after intersection with control). Thus the 89\% refusal rate and the $n=259$ McNemar sample are \emph{not} contradictory.
+
+\paragraph{Denominator choice and selection bias.} When the judge sets \texttt{is\_correct=null}, that trial is excluded from the error rate denominator. Error rates thus reflect ``accuracy among trials where the judge could determine correctness,'' not ``accuracy among all trials.'' This creates a \textbf{selection bias}: for high-refusal models, the McNemar test operates on a non-representative subset of items where the safety filter did not fully suppress the response. This inflates Odds Ratios for evasive models (e.g., Llama-3.1-70B's OR=44.3 is computed on 259 items, not 400) while models with near-complete response rates (GPT-4o-Mini: 380/400 paired) face no such inflation.
+
+We report three alternative denominator treatments for Llama-3.1-70B at $T=0.0$: (a) excluding nulls (current; $\Delta=+0.533$), (b) counting refusals as errors ($\Delta=+0.542$), (c) counting refusals as correct ($\Delta=+0.260$). The qualitative ranking is preserved under (a) and (b); under (c) the effect is substantially attenuated. Refusal rates are reported alongside all error rates so readers can assess the impact of this choice.
 
 
 \section{Judge Protocol Details}
 \label{app:judge_details}
 
-\subsection{Judge Model Selection}
-Study~1 (OLMo family) uses a multi-model judge ensemble: Gemma-3-1B, Gemma-3-12B, Qwen3-0.6B, and GPT-OSS-20B, applied incrementally as each judge became available. Study~2 (cross-family) uses a single judge model: GPT-OSS-20B~\citep{openai2025gptoss} via OpenRouter, with \texttt{temperature=0.0} and \texttt{reasoning.effort=low} (suppresses extended thinking). The judge config specifies \texttt{response\_format=\{type: json\_object\}} to enforce structured output.
+\subsection{Judge Model Selection and Self-Evaluation Caveat}
+Study~1 (OLMo family) uses a multi-model judge ensemble: Gemma-3-1B, Gemma-3-12B, Qwen3-0.6B, and GPT-OSS-20B, applied incrementally as each judge became available. Study~2 (cross-family) uses a single judge model: GPT-OSS-20B~\citep{openai2025gptoss} via OpenRouter, with \texttt{temperature=0.0} and \texttt{reasoning.effort=low}.
+
+\textbf{Self-evaluation conflict:} GPT-OSS-20B is simultaneously one of the 10 evaluated target models \emph{and} the sole judge for Study~2. Self-preference bias in LLM-as-judge settings is a documented phenomenon~\citep{zheng2023judging}. GPT-OSS-20B emerges as the most conformity-resistant model in our ranking (OR\,$\approx$\,1.0). We cannot rule out that this result is inflated by self-preference. This is the most serious validity threat to the cross-family ranking. Future work should validate GPT-OSS-20B's results using an independent judge or human annotation.
 
 \subsection{Heuristic Scoring Pipeline}
 Before judge labels are applied, each trial undergoes a four-phase heuristic extraction cascade:
