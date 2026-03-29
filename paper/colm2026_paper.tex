@@ -118,95 +118,152 @@ This paper provides five contributions:
 \resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[
     every node/.style={font=\sffamily},
-    studybox/.style={rectangle, rounded corners=5pt, draw=#1!70, fill=#1!6,
-                     minimum height=1.6cm, align=center, line width=0.8pt},
-    respbox/.style={rectangle, rounded corners=4pt, draw=#1!80, fill=#1!12,
-                    minimum height=0.65cm, minimum width=2.0cm, align=center,
-                    font=\small\bfseries, line width=0.7pt},
-    metricbox/.style={rectangle, rounded corners=2pt, draw=black!25,
-                      fill=black!3, minimum height=0.38cm, align=center,
-                      font=\scriptsize\bfseries, line width=0.4pt},
-    arrow/.style={-{Stealth[length=4pt]}, line width=0.8pt, #1},
+    arrow/.style={-{Stealth[length=5pt]}, line width=1pt, #1},
 ]
 
-% ── Row 1: The Pressure ──
-\node[rectangle, rounded corners=4pt, draw=black!35, fill=black!3,
-      minimum width=11.5cm, minimum height=1.1cm, line width=0.5pt] (pbox) at (5.75, 0) {};
-\node[font=\footnotesize\bfseries, anchor=north west] at (0.2, 0.42) {\textsc{Social Pressure}};
-\node[circle, draw=instblue, fill=instblue!15, minimum size=0.55cm,
-      font=\normalsize\bfseries, line width=0.8pt] (model) at (3.2, 0) {?};
-\node[font=\tiny, below=0pt of model] {Model};
-\foreach \a in {120, 90, 60, 30, 0} {
-    \node[circle, draw=sftred!60, fill=sftred!12, minimum size=0.35cm,
-          font=\tiny\bfseries, line width=0.4pt] at ($(model) + (\a:0.9cm)$) {X};
-}
-\node[font=\scriptsize, text=black!55, align=left] at (8.2, 0.1) {%
-    5 fabricated peers unanimously\\[-2pt]
-    endorse a \textbf{wrong answer}\\[-2pt]
-    {\tiny (structured Asch paradigm, 400 shared items)}
-};
-
-% ── Row 2: Two Studies ──
-\node[studybox=basegrey, minimum width=4.8cm] (s1) at (2.6, -2.35) {};
-\node[font=\footnotesize\bfseries, anchor=north] at (2.6, -1.6) {\textsc{Study 1: Causal}};
-\node[font=\scriptsize, align=center] at (2.6, -2.35) {%
-    OLMo-7B pipeline\\[1pt]
-    {\tiny Base $\xrightarrow{\textcolor{sftred}{\uparrow}}$ SFT $\xrightarrow{\textcolor{dpogreen}{\downarrow}}$ DPO $\to$ Instruct}\\[2pt]
-    {\tiny 12 conditions $\times$ 6 temps}\\[-1pt]
-    {\tiny \textbf{115,200 trials}}
-};
-
-\node[studybox=instblue, minimum width=4.8cm] (s2) at (8.9, -2.35) {};
-\node[font=\footnotesize\bfseries, anchor=north] at (8.9, -1.6) {\textsc{Study 2: Cross-Family}};
-\node[font=\scriptsize, align=center] at (8.9, -2.35) {%
-    10 model families\\[1pt]
-    {\tiny Dense $\mid$ MoE $\mid$ Think/Reasoning}\\[2pt]
-    {\tiny 4 conditions $\times$ 2 temps}\\[-1pt]
-    {\tiny \textbf{28,808 trials}}
-};
-
-% Bridge
-\draw[arrow=black!50, dashed] (s1.east) -- (s2.west)
-    node[midway, above, font=\tiny\bfseries, text=black!65] {Bridge}
-    node[midway, below, font=\tiny, text=black!45] {400 shared items};
-
-% Arrows from pressure
-\draw[arrow=black!25] (pbox.south -| s1.north) -- (s1.north);
-\draw[arrow=black!25] (pbox.south -| s2.north) -- (s2.north);
-
-% ── Row 3: Three Behavioral Responses ──
 \definecolor{warmred}{RGB}{192,57,43}
 \definecolor{warnyellow}{RGB}{243,156,18}
 \definecolor{okgreen}{RGB}{39,174,96}
+\definecolor{moeteal}{RGB}{26,188,156}
 
-\node[respbox=warmred] (endorse) at (1.2, -4.5) {%
-    \textcolor{warmred}{\small Endorse}\\[-3pt]
-    {\tiny Sycophantic compliance}
+% ══════════════════════════════════════════════════════════════
+% ROW 1: THE PRESSURE (top banner)
+% ══════════════════════════════════════════════════════════════
+\node[rectangle, rounded corners=5pt, draw=black!30, fill=black!2,
+      minimum width=14cm, minimum height=1.6cm, line width=0.6pt]
+    (pbox) at (7, 0) {};
+
+% Model icon (left side of pressure box)
+\node[circle, draw=instblue, fill=instblue!20, minimum size=0.8cm,
+      font=\large\bfseries, line width=1pt] (model) at (2.5, 0) {\textcolor{instblue}{?}};
+\node[font=\scriptsize, below=2pt of model, text=black!60] {Model};
+
+% Peer icons (semicircle above-right of model, larger radius to avoid overlap)
+\foreach \a/\d in {140/1.4, 110/1.4, 80/1.4, 50/1.4, 20/1.4} {
+    \node[circle, draw=sftred!50, fill=sftred!10, minimum size=0.5cm,
+          font=\scriptsize\bfseries, line width=0.5pt]
+        at ($(model) + (\a:\d cm)$) {\textcolor{sftred!70}{X}};
+}
+
+% Description text (right side, well separated)
+\node[font=\small, text=black!70, align=left, anchor=west] at (5.5, 0.15) {%
+    5 fabricated peers unanimously endorse a \textbf{wrong answer}};
+\node[font=\scriptsize, text=black!45, anchor=west] at (5.5, -0.25) {%
+    Structured Asch paradigm\;\;$\cdot$\;\;400 shared items across all models};
+
+% ══════════════════════════════════════════════════════════════
+% ROW 2: THE TWO STUDIES (side by side, generous spacing)
+% ══════════════════════════════════════════════════════════════
+
+% Study 1
+\node[rectangle, rounded corners=6pt, draw=basegrey!60, fill=basegrey!4,
+      minimum width=5.8cm, minimum height=2.4cm, line width=0.8pt]
+    (s1) at (3.2, -3.0) {};
+\node[font=\small\bfseries, text=basegrey!80!black, anchor=north]
+    at (3.2, -1.85) {\textsc{Study 1: Causal Decomposition}};
+\node[font=\scriptsize, align=center, anchor=north] at (3.2, -2.3) {%
+    OLMo-7B post-training pipeline\\[4pt]
+    \begin{tikzpicture}[baseline=-0.5ex]
+        \node[rectangle, rounded corners=2pt, draw=basegrey, fill=basegrey!15,
+              minimum height=0.4cm, minimum width=0.85cm, font=\tiny\bfseries] (b) at (0,0) {Base};
+        \node[rectangle, rounded corners=2pt, draw=sftred, fill=sftred!12,
+              minimum height=0.4cm, minimum width=0.85cm, font=\tiny\bfseries] (s) at (1.4,0) {SFT};
+        \node[rectangle, rounded corners=2pt, draw=dpogreen, fill=dpogreen!12,
+              minimum height=0.4cm, minimum width=0.85cm, font=\tiny\bfseries] (d) at (2.8,0) {DPO};
+        \node[rectangle, rounded corners=2pt, draw=instblue, fill=instblue!12,
+              minimum height=0.4cm, minimum width=0.85cm, font=\tiny\bfseries] (i) at (4.2,0) {Inst};
+        \draw[-{Stealth[length=3pt]}, line width=0.6pt, black!40] (b) -- (s);
+        \draw[-{Stealth[length=3pt]}, line width=0.6pt, black!40] (s) -- (d);
+        \draw[-{Stealth[length=3pt]}, line width=0.6pt, black!40] (d) -- (i);
+        \node[font=\tiny\bfseries, sftred, above=1pt of s] {$\uparrow$};
+        \node[font=\tiny\bfseries, dpogreen, above=1pt of d] {$\downarrow$};
+    \end{tikzpicture}\\[5pt]
+    {\scriptsize 12 conditions\;\;$\times$\;\;6 temperatures}\\[1pt]
+    {\scriptsize\bfseries 115,200 trials}
 };
-\node[respbox=warnyellow] (refuse) at (5.75, -4.5) {%
-    \textcolor{warnyellow!85!black}{\small Refuse}\\[-3pt]
-    {\tiny Safety-driven avoidance}
+
+% Study 2
+\node[rectangle, rounded corners=6pt, draw=instblue!50, fill=instblue!3,
+      minimum width=5.8cm, minimum height=2.4cm, line width=0.8pt]
+    (s2) at (10.8, -3.0) {};
+\node[font=\small\bfseries, text=instblue!80!black, anchor=north]
+    at (10.8, -1.85) {\textsc{Study 2: Cross-Family Survey}};
+\node[font=\scriptsize, align=center, anchor=north] at (10.8, -2.3) {%
+    10 model families\\[4pt]
+    \begin{tikzpicture}[baseline=-0.5ex]
+        \node[rectangle, rounded corners=2pt, draw=warmred!60, fill=warmred!8,
+              minimum height=0.35cm, minimum width=2cm, font=\tiny\bfseries]
+            at (0,0.35) {Dense Instruct};
+        \node[rectangle, rounded corners=2pt, draw=moeteal!60, fill=moeteal!8,
+              minimum height=0.35cm, minimum width=2cm, font=\tiny\bfseries]
+            at (0,0) {Mixture-of-Experts};
+        \node[rectangle, rounded corners=2pt, draw=violet!60, fill=violet!6,
+              minimum height=0.35cm, minimum width=2cm, font=\tiny\bfseries]
+            at (0,-0.35) {Think / Reasoning};
+    \end{tikzpicture}\\[5pt]
+    {\scriptsize 4 conditions\;\;$\times$\;\;2 temperatures}\\[1pt]
+    {\scriptsize\bfseries 28,808 trials}
 };
-\node[respbox=okgreen] (resist) at (10.3, -4.5) {%
-    \textcolor{okgreen!85!black}{\small Resist}\\[-3pt]
-    {\tiny Epistemic integrity}
-};
 
-% Arrows from studies to responses
-\draw[arrow=warmred!50, line width=0.6pt] (s1.south) -- ++(0,-0.3) -| (endorse.north)
-    node[pos=0.25, right, font=\tiny, text=sftred] {Heavy SFT};
-\draw[arrow=warnyellow!50, line width=0.6pt] (s2.south) -- ++(0,-0.25) -| (refuse.north)
-    node[pos=0.25, left, font=\tiny, text=black!45] {Safety RL};
-\draw[arrow=okgreen!50, line width=0.6pt] (s2.south) -- ++(0,-0.45) -| (resist.north)
-    node[pos=0.25, right, font=\tiny, text={rgb,255:red,142;green,68;blue,173}] {Think / RL-dominant};
+% Bridge connection
+\draw[arrow=black!40, dashed, line width=0.9pt]
+    (s1.east) -- (s2.west)
+    node[midway, above=3pt, font=\scriptsize\bfseries, text=black!60] {Bridge}
+    node[midway, below=3pt, font=\tiny, text=black!40] {400 identical items};
 
-\node[font=\tiny\bfseries, text=warmred] at (1.2, -5.1) {OR\,=\,7.7--44.3};
-\node[font=\tiny\bfseries, text=warnyellow!85!black] at (5.75, -5.1) {OR\,=\,3.3--20.8};
-\node[font=\tiny\bfseries, text=okgreen!85!black] at (10.3, -5.1) {OR\,$\approx$\,1.0 (ns)};
+% Arrows from pressure to studies
+\draw[arrow=black!20, line width=0.7pt] (2.5, -0.85) -- (s1.north);
+\draw[arrow=black!20, line width=0.7pt] ($(pbox.south) + (3.8,0)$) -- (s2.north);
 
-% ── Row 4: Scale bar ──
-\node[metricbox, minimum width=11.5cm] at (5.75, -5.75) {%
-    \textbf{144,008 total trials}\;\;$\mid$\;\;10 model families\;\;$\mid$\;\;
+% ══════════════════════════════════════════════════════════════
+% ROW 3: THREE BEHAVIORAL OUTCOMES (well-spaced)
+% ══════════════════════════════════════════════════════════════
+
+\node[rectangle, rounded corners=5pt, draw=warmred!70, fill=warmred!8,
+      minimum height=0.9cm, minimum width=3.2cm, align=center,
+      font=\small\bfseries, line width=0.8pt]
+    (endorse) at (1.8, -6.2) {%
+    \textcolor{warmred}{Endorse}\\[-2pt]
+    {\tiny\normalfont Sycophantic compliance}};
+
+\node[rectangle, rounded corners=5pt, draw=warnyellow!70, fill=warnyellow!8,
+      minimum height=0.9cm, minimum width=3.2cm, align=center,
+      font=\small\bfseries, line width=0.8pt]
+    (refuse) at (7.0, -6.2) {%
+    \textcolor{warnyellow!80!black}{Refuse}\\[-2pt]
+    {\tiny\normalfont Safety-driven avoidance}};
+
+\node[rectangle, rounded corners=5pt, draw=okgreen!70, fill=okgreen!8,
+      minimum height=0.9cm, minimum width=3.2cm, align=center,
+      font=\small\bfseries, line width=0.8pt]
+    (resist) at (12.2, -6.2) {%
+    \textcolor{okgreen!80!black}{Resist}\\[-2pt]
+    {\tiny\normalfont Epistemic integrity}};
+
+% Connecting arrows (from bottom of studies to response boxes)
+\draw[arrow=warmred!40, line width=0.7pt]
+    ($(s1.south) + (-0.5,0)$) -- ++(0,-0.5) -| (endorse.north)
+    node[pos=0.25, right=2pt, font=\tiny, text=sftred] {Heavy SFT};
+\draw[arrow=warnyellow!40, line width=0.7pt]
+    ($(s2.south) + (-1.2,0)$) -- ++(0,-0.4) -| (refuse.north)
+    node[pos=0.25, left=2pt, font=\tiny, text=black!40] {Safety RL};
+\draw[arrow=okgreen!40, line width=0.7pt]
+    ($(s2.south) + (0.8,0)$) -- ++(0,-0.6) -| (resist.north)
+    node[pos=0.25, right=2pt, font=\tiny, text=violet] {Think / RL};
+
+% OR annotations below response boxes
+\node[font=\scriptsize\bfseries, text=warmred] at (1.8, -6.9) {OR\,=\,7.7--44.3};
+\node[font=\scriptsize\bfseries, text=warnyellow!80!black] at (7.0, -6.9) {OR\,=\,3.3--20.8};
+\node[font=\scriptsize\bfseries, text=okgreen!80!black] at (12.2, -6.9) {OR\,$\approx$\,1.0 (ns)};
+
+% ══════════════════════════════════════════════════════════════
+% ROW 4: SCALE BAR (bottom)
+% ══════════════════════════════════════════════════════════════
+\node[rectangle, rounded corners=3pt, draw=black!20, fill=black!2,
+      minimum width=14cm, minimum height=0.5cm, align=center,
+      font=\scriptsize\bfseries, line width=0.4pt]
+    at (7, -7.6) {%
+    144,008 total trials\;\;$\mid$\;\;10 model families\;\;$\mid$\;\;
     McNemar paired tests (Holm corrected)\;\;$\mid$\;\;
     100\% LLM judge coverage
 };
@@ -902,9 +959,24 @@ OLMo-32B-Think & 0.6 & peer & 383 & 34 & 29 & 1.17 & \textsuperscript{ns} \\
 Grok-4.1-Fast & 0.0 & peer & 365 & 29 & 25 & 1.16 & \textsuperscript{ns} \\
 Grok-4.1-Fast & 0.6 & peer & 370 & 32 & 29 & 1.10 & \textsuperscript{ns} \\
 GPT-OSS-20B & 0.6 & peer & 346 & 40 & 41 & 0.98 & \textsuperscript{ns} \\
+\midrule
+\multicolumn{8}{l}{\textit{Authority framing (authoritative bias)}} \\
+\midrule
+Llama-3.1-70B & 0.0 & authority & 381 & 65 & 26 & 2.50 & $^{**}$ \\
+Llama-3.1-70B & 0.6 & authority & 384 & 60 & 28 & 2.14 & $^{*}$ \\
+Llama-3-8B & 0.6 & authority & 354 & 30 & 67 & 0.45 & $^{*}$ \\
+Llama-4-Maverick & 0.0 & authority & 389 & 47 & 20 & 2.35 & \textsuperscript{ns} \\
+GPT-OSS-20B & 0.6 & authority & 355 & 56 & 34 & 1.65 & \textsuperscript{ns} \\
+GPT-4o-Mini & 0.6 & authority & 383 & 41 & 33 & 1.24 & \textsuperscript{ns} \\
+OLMo-32B-Instruct & 0.6 & authority & 371 & 40 & 33 & 1.21 & \textsuperscript{ns} \\
+Gemini-Flash-Lite & 0.0 & authority & 336 & 34 & 26 & 1.31 & \textsuperscript{ns} \\
+OLMo-7B-Think & 0.0 & authority & 314 & 30 & 24 & 1.25 & \textsuperscript{ns} \\
+OLMo-32B-Think & 0.0 & authority & 386 & 33 & 53 & 0.62 & \textsuperscript{ns} \\
+Grok-4.1-Fast & 0.6 & authority & 367 & 27 & 35 & 0.77 & \textsuperscript{ns} \\
+Llama-3-8B & 0.0 & authority & 365 & 34 & 65 & 0.52 & \textsuperscript{ns} \\
 \bottomrule
 \end{tabular}
-\caption{Full McNemar results for Study~2 (cross-family), peer consensus condition. $b$ = truth override (control correct $\to$ pressure incorrect); $c$ = truth rescue (control incorrect $\to$ pressure correct). OR = $b/c$. Significance: Holm--Bonferroni corrected ($^{***}p<0.001$, $^{**}p<0.01$, $^{*}p<0.05$, ns = non-significant). All authority conditions are non-significant after correction (not shown; see supplementary materials).}
+\caption{Full McNemar results for Study~2 (cross-family). \textbf{Top}: peer consensus (structured Asch-style). \textbf{Bottom}: authority framing (authoritative bias). $b$ = truth override; $c$ = truth rescue. Significance: Holm--Bonferroni corrected across all 57 tests ($^{***}p<0.001$, $^{**}p<0.01$, $^{*}p<0.05$, ns = non-significant). Only the most informative temperature per model shown for authority; see supplementary for full table. Note: Llama-3-8B authority OR\,$<$\,1 indicates pressure \emph{reduces} errors (the model performs better under authority framing).}
 \label{tab:cross_mcnemar_full}
 \end{table*}
 
@@ -946,23 +1018,23 @@ GPT-OSS-20B & instruct & 0.341 & 0.341 & $-$0.001 & 19.4\% & 3.0\% & 1.0 & \text
 \begin{table*}[H]
 \centering
 \footnotesize
-\begin{tabular}{lllrl}
+\begin{tabular}{lllrll}
 \toprule
-Model & Architecture & Alignment Approach & Params & Key Feature \\
+Model & Arch & Alignment & Params & Attention & Notes \\
 \midrule
-Llama-3-8B-Instruct & Dense & SFT + RLHF & 8B & Standard instruct pipeline \\
-Llama-3.1-70B-Instruct & Dense & SFT + RLHF & 70B & Extended context (128K) \\
-OLMo-3.1-32B-Instruct & Dense & SFT + DPO + RLVR & 32B & Grouped-query attention \\
-OLMo-3.1-32B-Think & Dense & SFT + DPO + RLVR + 21d RL & 32B & Supervised chain-of-thought \\
-GPT-4o-Mini & Dense (multimodal) & RLHF + Instruction Hierarchy & -- & Early-fusion multimodal \\
-Llama-4-Maverick & MoE (128 experts) & Lightweight SFT + online RL + GOAT & $\sim$400B (17B active) & iRoPE, early-fusion \\
-Gemini-2.5-Flash-Lite & MoE (sparse) & Distillation + optional think & -- & 1M token context \\
-GPT-OSS-20B & MoE (32 experts) & RL + unsupervised CoT & 20.9B (3.6B active) & Reasoning traces not aligned \\
-Grok-4.1-Fast & -- & Simulation RL + tool-focused & -- & 2M token context, dual mode \\
-OLMo-3-7B-Think & Dense & SFT + DPO + RLVR + RL & 7B & Supervised chain-of-thought \\
+Llama-3-8B & Dense & SFT + RLHF & 8B & MHA, 128K ctx & All params active \\
+Llama-3.1-70B & Dense & SFT + RLHF & 70B & GQA (8 KV), 128K ctx & All params active \\
+OLMo-3.1-32B-Inst & Dense & SFT + DPO + RLVR & 32B & GQA (8 KV), 65K ctx & Glass-box (open weights/data) \\
+OLMo-3.1-32B-Think & Dense & +21 days RL & 32B & GQA (8 KV), 65K ctx & Supervised CoT traces \\
+GPT-4o-Mini & Dense & RLHF + Instr.\ Hierarchy & -- & Early-fusion multimodal & Prompt priority isolation \\
+Llama-4-Maverick & MoE & Light SFT + RL + GOAT & 400B/17B & iRoPE, 1M ctx & 128 experts, top-1 routing \\
+Gemini-2.5-Flash & MoE & Distillation & -- & Sparse, 1M ctx & Distilled from larger teacher \\
+GPT-OSS-20B & MoE & RL, unsupervised CoT & 20.9B/3.6B & GMQ (64Q/8KV), 128K & 32 experts; CoT not aligned \\
+Grok-4.1-Fast & -- & Simulation RL & -- & 2M ctx, dual mode & Tool-use focused RL \\
+OLMo-3-7B-Think & Dense & SFT + DPO + RLVR + RL & 7B & MHA, 65K ctx & Supervised CoT traces \\
 \bottomrule
 \end{tabular}
-\caption{Architecture and alignment summary for Study~2 models. ``--'' indicates undisclosed specifications. MoE = Mixture of Experts. GOAT = Generative Offensive Agent Testing (automated red-teaming). Architectural details from published model cards and technical reports; see references for sources.}
+\caption{Architecture and alignment summary for Study~2 models. ``--'' = undisclosed. MoE = Mixture of Experts; GQA/GMQ = Grouped-Query/Multi-Query Attention; MHA = Multi-Head Attention; iRoPE = interleaved Rotary Position Embeddings; GOAT = Generative Offensive Agent Testing. ``$X$B/$Y$B'' = total/active parameters. Architectural details from published model cards and technical reports~\citep{meta2024llama3, meta2025llama4, openai2024gpt4omini, openai2025gptoss, google2025gemini25, xai2025grok41}.}
 \label{tab:arch_summary}
 \end{table*}
 
