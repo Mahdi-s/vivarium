@@ -931,112 +931,113 @@ McNemar tests require paired observations on the same item across two conditions
 \section{Full Cross-Family McNemar Results}
 \label{app:cross_mcnemar}
 
-Table~\ref{tab:cross_mcnemar_full} reports McNemar tests for all model $\times$ condition $\times$ temperature cells in Study~2.
+Table~\ref{tab:cross_mcnemar_full} reports McNemar tests for Study~2. Pairing is by \texttt{item\_id}; items where either condition has null \texttt{is\_correct} are excluded.
 
-\begin{table*}[t]
+\begin{table}[H]
 \centering
 \footnotesize
-\setlength{\tabcolsep}{3pt}
-\begin{tabular}{llrrrrrl}
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabular}{lcrrrrc}
 \toprule
-Model & $T$ & Condition & $n_\text{paired}$ & $b$ & $c$ & OR & Sig \\
+Model & $T$ & $n$ & $b$ & $c$ & OR & \\
 \midrule
-Llama-3.1-70B & 0.0 & peer & 259 & 133 & 3 & 44.33 & $^{***}$ \\
-Llama-3.1-70B & 0.6 & peer & 266 & 101 & 8 & 12.62 & $^{***}$ \\
-OLMo-32B-Instruct & 0.0 & peer & 337 & 152 & 8 & 19.00 & $^{***}$ \\
-OLMo-32B-Instruct & 0.6 & peer & 334 & 163 & 8 & 20.38 & $^{***}$ \\
-Llama-3-8B & 0.0 & peer & 274 & 99 & 5 & 19.80 & $^{***}$ \\
-Llama-3-8B & 0.6 & peer & 287 & 104 & 5 & 20.80 & $^{***}$ \\
-GPT-4o-Mini & 0.0 & peer & 380 & 102 & 20 & 5.10 & $^{***}$ \\
-GPT-4o-Mini & 0.6 & peer & 380 & 114 & 16 & 7.12 & $^{***}$ \\
-Gemini-Flash-Lite & 0.0 & peer & 322 & 56 & 10 & 5.60 & $^{***}$ \\
-Gemini-Flash-Lite & 0.6 & peer & 329 & 57 & 16 & 3.56 & $^{***}$ \\
-Llama-4-Maverick & 0.0 & peer & 390 & 73 & 22 & 3.32 & $^{***}$ \\
-Llama-4-Maverick & 0.6 & peer & 389 & 63 & 17 & 3.71 & $^{***}$ \\
-OLMo-7B-Think & 0.0 & peer & 312 & 46 & 16 & 2.88 & $^{*}$ \\
-OLMo-32B-Think & 0.0 & peer & 380 & 45 & 31 & 1.45 & \textsuperscript{ns} \\
-OLMo-32B-Think & 0.6 & peer & 383 & 34 & 29 & 1.17 & \textsuperscript{ns} \\
-Grok-4.1-Fast & 0.0 & peer & 365 & 29 & 25 & 1.16 & \textsuperscript{ns} \\
-Grok-4.1-Fast & 0.6 & peer & 370 & 32 & 29 & 1.10 & \textsuperscript{ns} \\
-GPT-OSS-20B & 0.6 & peer & 346 & 40 & 41 & 0.98 & \textsuperscript{ns} \\
+\multicolumn{7}{l}{\textit{Peer consensus (structured Asch-style)}} \\
 \midrule
-\multicolumn{8}{l}{\textit{Authority framing (authoritative bias)}} \\
+Llama-3.1-70B & 0.0 & 259 & 133 & 3 & 44.3 & $^{***}$ \\
+Llama-3.1-70B & 0.6 & 266 & 101 & 8 & 12.6 & $^{***}$ \\
+OLMo-32B-Inst & 0.0 & 337 & 152 & 8 & 19.0 & $^{***}$ \\
+OLMo-32B-Inst & 0.6 & 334 & 163 & 8 & 20.4 & $^{***}$ \\
+Llama-3-8B & 0.0 & 274 & 99 & 5 & 19.8 & $^{***}$ \\
+Llama-3-8B & 0.6 & 287 & 104 & 5 & 20.8 & $^{***}$ \\
+GPT-4o-Mini & 0.0 & 380 & 102 & 20 & 5.1 & $^{***}$ \\
+GPT-4o-Mini & 0.6 & 380 & 114 & 16 & 7.1 & $^{***}$ \\
+Gemini-Flash & 0.0 & 322 & 56 & 10 & 5.6 & $^{***}$ \\
+Gemini-Flash & 0.6 & 329 & 57 & 16 & 3.6 & $^{***}$ \\
+Llama-4-Mav & 0.0 & 390 & 73 & 22 & 3.3 & $^{***}$ \\
+Llama-4-Mav & 0.6 & 389 & 63 & 17 & 3.7 & $^{***}$ \\
+OLMo-7B-Think & 0.0 & 312 & 46 & 16 & 2.9 & $^{*}$ \\
+OLMo-32B-Think & 0.0 & 380 & 45 & 31 & 1.5 & \textsuperscript{ns} \\
+OLMo-32B-Think & 0.6 & 383 & 34 & 29 & 1.2 & \textsuperscript{ns} \\
+Grok-4.1-Fast & 0.0 & 365 & 29 & 25 & 1.2 & \textsuperscript{ns} \\
+Grok-4.1-Fast & 0.6 & 370 & 32 & 29 & 1.1 & \textsuperscript{ns} \\
+GPT-OSS-20B & 0.6 & 346 & 40 & 41 & 1.0 & \textsuperscript{ns} \\
 \midrule
-Llama-3.1-70B & 0.0 & authority & 381 & 65 & 26 & 2.50 & $^{**}$ \\
-Llama-3.1-70B & 0.6 & authority & 384 & 60 & 28 & 2.14 & $^{*}$ \\
-Llama-3-8B & 0.6 & authority & 354 & 30 & 67 & 0.45 & $^{*}$ \\
-Llama-4-Maverick & 0.0 & authority & 389 & 47 & 20 & 2.35 & \textsuperscript{ns} \\
-GPT-OSS-20B & 0.6 & authority & 355 & 56 & 34 & 1.65 & \textsuperscript{ns} \\
-GPT-4o-Mini & 0.6 & authority & 383 & 41 & 33 & 1.24 & \textsuperscript{ns} \\
-OLMo-32B-Instruct & 0.6 & authority & 371 & 40 & 33 & 1.21 & \textsuperscript{ns} \\
-Gemini-Flash-Lite & 0.0 & authority & 336 & 34 & 26 & 1.31 & \textsuperscript{ns} \\
-OLMo-7B-Think & 0.0 & authority & 314 & 30 & 24 & 1.25 & \textsuperscript{ns} \\
-OLMo-32B-Think & 0.0 & authority & 386 & 33 & 53 & 0.62 & \textsuperscript{ns} \\
-Grok-4.1-Fast & 0.6 & authority & 367 & 27 & 35 & 0.77 & \textsuperscript{ns} \\
-Llama-3-8B & 0.0 & authority & 365 & 34 & 65 & 0.52 & \textsuperscript{ns} \\
+\multicolumn{7}{l}{\textit{Authority framing (authoritative bias)}} \\
+\midrule
+Llama-3.1-70B & 0.0 & 381 & 65 & 26 & 2.5 & $^{**}$ \\
+Llama-3.1-70B & 0.6 & 384 & 60 & 28 & 2.1 & $^{*}$ \\
+Llama-3-8B & 0.6 & 354 & 30 & 67 & 0.4 & $^{*}$ \\
+Llama-4-Mav & 0.0 & 389 & 47 & 20 & 2.4 & \textsuperscript{ns} \\
+GPT-OSS-20B & 0.6 & 355 & 56 & 34 & 1.6 & \textsuperscript{ns} \\
+OLMo-32B-Think & 0.0 & 386 & 33 & 53 & 0.6 & \textsuperscript{ns} \\
+Grok-4.1-Fast & 0.6 & 367 & 27 & 35 & 0.8 & \textsuperscript{ns} \\
 \bottomrule
 \end{tabular}
-\caption{Full McNemar results for Study~2 (cross-family). \textbf{Top}: peer consensus (structured Asch-style). \textbf{Bottom}: authority framing (authoritative bias). $b$ = truth override; $c$ = truth rescue. Significance: Holm--Bonferroni corrected across all 57 tests ($^{***}p<0.001$, $^{**}p<0.01$, $^{*}p<0.05$, ns = non-significant). Only the most informative temperature per model shown for authority; see supplementary for full table. Note: Llama-3-8B authority OR\,$<$\,1 indicates pressure \emph{reduces} errors (the model performs better under authority framing).}
+\caption{McNemar results for Study~2. $b$ = truth override (ctrl correct $\to$ press wrong); $c$ = truth rescue. Holm--Bonferroni corrected. Representative rows shown for authority; full data in supplementary.}
 \label{tab:cross_mcnemar_full}
-\end{table*}
+\end{table}
 
+\FloatBarrier
 
 \section{Cross-Family Conformity Ranking (Full Table)}
 \label{app:ranking}
 
-\begin{table*}[t]
+\begin{table}[H]
 \centering
 \footnotesize
-\begin{tabular}{llrrrrrrl}
+\setlength{\tabcolsep}{2pt}
+\begin{tabular}{llrrrrrc}
 \toprule
-Model & Variant & Ctrl Err & Peer Err & $\Delta_\text{peer}$ & Endorsed & Refusal & OR & Sig \\
+Model & Var & Ctrl & Peer & $\Delta$ & End & Ref & OR \\
 \midrule
-Llama-3.1-70B & instruct & 0.352 & 0.809 & +0.457 & 6.1\% & 84.4\% & 28.5 & $^{***}$ \\
-OLMo-32B-Instruct & instruct & 0.357 & 0.803 & +0.447 & 44.7\% & 31.4\% & 19.7 & $^{***}$ \\
-OLMo-7B & instruct & 0.498 & 0.928 & +0.430 & 22.8\% & 37.8\% & 13.6 & $^{***}$ \\
-OLMo-7B & instruct\_sft & 0.520 & 0.936 & +0.416 & 39.3\% & 19.3\% & 16.0 & $^{***}$ \\
-OLMo-7B & instruct\_dpo & 0.494 & 0.893 & +0.399 & 20.7\% & 42.8\% & 10.6 & $^{***}$ \\
-Llama-3-8B & instruct & 0.590 & 0.964 & +0.374 & 29.0\% & 69.9\% & 20.3 & $^{***}$ \\
-OLMo-7B & base & 0.577 & 0.918 & +0.341 & 26.9\% & 46.4\% & 8.8 & $^{***}$ \\
-GPT-4o-Mini & instruct & 0.368 & 0.609 & +0.240 & 41.7\% & 4.0\% & 6.1 & $^{***}$ \\
-Gemini-Flash-Lite & instruct & 0.334 & 0.469 & +0.135 & 27.8\% & 3.1\% & 4.6 & $^{***}$ \\
-Llama-4-Maverick & instruct & 0.331 & 0.457 & +0.126 & 25.4\% & 18.4\% & 3.5 & $^{***}$ \\
-OLMo-7B-Think & think & 0.400 & 0.492 & +0.092 & 31.9\% & 17.5\% & 2.9 & $^{*}$ \\
-OLMo-32B-Think & think & 0.359 & 0.391 & +0.032 & 13.7\% & 14.5\% & 1.3 & \textsuperscript{ns} \\
-Grok-4.1-Fast & instruct & 0.317 & 0.335 & +0.019 & 7.8\% & 5.4\% & 1.1 & \textsuperscript{ns} \\
-GPT-OSS-20B & instruct & 0.341 & 0.341 & $-$0.001 & 19.4\% & 3.0\% & 1.0 & \textsuperscript{ns} \\
+Llama-3.1-70B & inst & .352 & .809 & +.457 & 6\% & 84\% & 28.5$^{***}$ \\
+OLMo-32B-Inst & inst & .357 & .803 & +.447 & 45\% & 31\% & 19.7$^{***}$ \\
+OLMo-7B & inst & .498 & .928 & +.430 & 23\% & 38\% & 13.6$^{***}$ \\
+OLMo-7B & sft & .520 & .936 & +.416 & 39\% & 19\% & 16.0$^{***}$ \\
+OLMo-7B & dpo & .494 & .893 & +.399 & 21\% & 43\% & 10.6$^{***}$ \\
+Llama-3-8B & inst & .590 & .964 & +.374 & 29\% & 70\% & 20.3$^{***}$ \\
+OLMo-7B & base & .577 & .918 & +.341 & 27\% & 46\% & 8.8$^{***}$ \\
+GPT-4o-Mini & inst & .368 & .609 & +.240 & 42\% & 4\% & 6.1$^{***}$ \\
+Gemini-Flash & inst & .334 & .469 & +.135 & 28\% & 3\% & 4.6$^{***}$ \\
+Llama-4-Mav & inst & .331 & .457 & +.126 & 25\% & 18\% & 3.5$^{***}$ \\
+OLMo-7B-Think & think & .400 & .492 & +.092 & 32\% & 18\% & 2.9$^{*}$ \\
+OLMo-32B-Think & think & .359 & .391 & +.032 & 14\% & 15\% & 1.3\textsuperscript{ns} \\
+Grok-4.1-Fast & inst & .317 & .335 & +.019 & 8\% & 5\% & 1.1\textsuperscript{ns} \\
+GPT-OSS-20B & inst & .341 & .341 & $-$.001 & 19\% & 3\% & 1.0\textsuperscript{ns} \\
 \bottomrule
 \end{tabular}
-\caption{Full calibrated ranking combining cross-family models (Study~2) with OLMo-7B training stages (Study~1 bridge). Values averaged across $T=0.0$ and $T=0.6$ (OLMo stages averaged across all 6 temperatures). OR averaged across temperatures. Significance from minimum $p_\text{Holm}$ across temperatures.}
+\caption{Calibrated ranking: cross-family + OLMo bridge. Ctrl/Peer = error rates; End = endorsed\%; Ref = refusal\%. Values averaged across temperatures. $^{***}p<0.001$, $^{*}p<0.05$, ns = non-significant (Holm corrected).}
 \label{tab:full_ranking}
-\end{table*}
+\end{table}
 
+\FloatBarrier
 
 \section{Model Architecture Summary}
 \label{app:architectures}
 
-\begin{table*}[t]
+\begin{table}[H]
 \centering
-\footnotesize
-\begin{tabular}{lllrll}
+\scriptsize
+\setlength{\tabcolsep}{2pt}
+\begin{tabular}{llllll}
 \toprule
-Model & Arch & Alignment & Params & Attention & Notes \\
+Model & Arch & Alignment & Params & Attn & Notes \\
 \midrule
-Llama-3-8B & Dense & SFT + RLHF & 8B & MHA, 128K ctx & All params active \\
-Llama-3.1-70B & Dense & SFT + RLHF & 70B & GQA (8 KV), 128K ctx & All params active \\
-OLMo-3.1-32B-Inst & Dense & SFT + DPO + RLVR & 32B & GQA (8 KV), 65K ctx & Glass-box (open weights/data) \\
-OLMo-3.1-32B-Think & Dense & +21 days RL & 32B & GQA (8 KV), 65K ctx & Supervised CoT traces \\
-GPT-4o-Mini & Dense & RLHF + Instr.\ Hierarchy & -- & Early-fusion multimodal & Prompt priority isolation \\
-Llama-4-Maverick & MoE & Light SFT + RL + GOAT & 400B/17B & iRoPE, 1M ctx & 128 experts, top-1 routing \\
-Gemini-2.5-Flash & MoE & Distillation & -- & Sparse, 1M ctx & Distilled from larger teacher \\
-GPT-OSS-20B & MoE & RL, unsupervised CoT & 20.9B/3.6B & GMQ (64Q/8KV), 128K & 32 experts; CoT not aligned \\
-Grok-4.1-Fast & -- & Simulation RL & -- & 2M ctx, dual mode & Tool-use focused RL \\
-OLMo-3-7B-Think & Dense & SFT + DPO + RLVR + RL & 7B & MHA, 65K ctx & Supervised CoT traces \\
+Llama-3-8B & Dense & SFT+RLHF & 8B & MHA & 128K ctx \\
+Llama-3.1-70B & Dense & SFT+RLHF & 70B & GQA & 128K ctx \\
+OLMo-32B-Inst & Dense & SFT+DPO+RLVR & 32B & GQA & Open weights \\
+OLMo-32B-Think & Dense & +21d RL & 32B & GQA & Supervised CoT \\
+GPT-4o-Mini & Dense & RLHF+InstrH & -- & MMA & Early fusion \\
+Llama-4-Mav & MoE & SFT+RL+GOAT & 400/17B & iRoPE & 128 experts \\
+Gemini-Flash & MoE & Distillation & -- & Sparse & 1M ctx \\
+GPT-OSS-20B & MoE & RL, unsup.~CoT & 21/3.6B & GMQ & CoT unaligned \\
+Grok-4.1-Fast & -- & Sim.~RL & -- & -- & 2M ctx \\
+OLMo-7B-Think & Dense & SFT+DPO+RL & 7B & MHA & Supervised CoT \\
 \bottomrule
 \end{tabular}
-\caption{Architecture and alignment summary for Study~2 models. ``--'' = undisclosed. MoE = Mixture of Experts; GQA/GMQ = Grouped-Query/Multi-Query Attention; MHA = Multi-Head Attention; iRoPE = interleaved Rotary Position Embeddings; GOAT = Generative Offensive Agent Testing. ``$X$B/$Y$B'' = total/active parameters. Architectural details from published model cards and technical reports~\citep{meta2024llama3, meta2025llama4, openai2024gpt4omini, openai2025gptoss, google2025gemini25, xai2025grok41}.}
+\caption{Architecture summary. ``--'' = undisclosed. MoE = Mixture-of-Experts; GQA = Grouped-Query Attention; MMA = Multimodal Attention; GMQ = Grouped Multi-Query; iRoPE = interleaved Rotary PE; InstrH = Instruction Hierarchy; GOAT = automated red-teaming. ``$X$/$Y$B'' = total/active params~\citep{meta2024llama3, meta2025llama4, openai2024gpt4omini, openai2025gptoss, google2025gemini25, xai2025grok41}.}
 \label{tab:arch_summary}
-\end{table*}
+\end{table}
 
 
 \end{document}
