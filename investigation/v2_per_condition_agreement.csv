@@ -1,0 +1,15 @@
+condition,total_trials,comparable,agree,disagree,agreement_%
+authoritative_bias,26437,21871,14175,7696,64.8
+control,26441,19251,10979,8272,57.0
+asch_history_5,19200,16104,11340,4764,70.4
+asch_zhu_unbiased_unanimous_confident,17522,15385,13189,2196,85.7
+asch_zhu_unbiased_unanimous_uncertain,17521,15384,12857,2527,83.6
+asch_zhu_unbiased_unanimous_neutral,17522,15382,12956,2426,84.2
+asch_zhu_unbiased_unanimous_plain,17523,15379,12961,2418,84.3
+authority_zhu_unbiased_trust_da,17520,15375,12343,3032,80.3
+asch_zhu_unbiased_da,17520,15369,12903,2466,84.0
+asch_zhu_unbiased_qd,17520,15368,12763,2605,83.0
+asch_zhu_unbiased_diverse_plain,17520,15361,12997,2364,84.6
+authority_zhu_unbiased_trust,17520,15361,11958,3403,77.8
+authority_trust,7236,6102,3663,2439,60.0
+asch_zhu_unanimous_confident,7238,5630,3869,1761,68.7

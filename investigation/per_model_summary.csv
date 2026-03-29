@@ -1,0 +1,12 @@
+model_id,n_runs,temperatures,total_trials,has_manual,has_judge,judge_cov_%,match,mismatch,agreement_%
+allenai/Olmo-3-1025-7B,6,"0.0, 0.2, 0.4, 0.6, 0.8, 1.0",215288,189188,215288,100.0,0,0,N/A
+allenai/olmo-3.1-32b-think,2,"0.0, 0.6",3200,2800,0,0.0,0,0,N/A
+allenai/olmo-3.1-32b-instruct,2,"0.0, 0.6",3200,2800,3197,99.9,0,0,N/A
+meta-llama/llama-3-8b-instruct,2,"0.0, 0.6",3200,2800,3194,99.8,0,0,N/A
+meta-llama/llama-3.1-70b-instruct,2,"0.0, 0.6",3200,2800,1592,49.8,0,0,N/A
+meta-llama/llama-4-maverick,2,"0.0, 0.6",3200,2800,3195,99.8,0,0,N/A
+google/gemini-2.5-flash-lite,2,"0.0, 0.6",3200,2800,0,0.0,0,0,N/A
+x-ai/grok-4.1-fast,2,"0.0, 0.6",3200,2800,0,0.0,0,0,N/A
+openai/gpt-4o-mini,2,"0.0, 0.6",3200,2800,0,0.0,0,0,N/A
+openai/gpt-oss-20b,2,"0.0, 0.6",1743,1542,0,0.0,0,0,N/A
+allenai/Olmo-3-7B-Think,1,0.0,1609,1408,1135,70.5,0,0,N/A

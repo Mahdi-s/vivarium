@@ -1,0 +1,9 @@
+dataset,total_trials,comparable,agree,disagree,agreement_%
+truthfulqa,30546,30236,22441,7795,74.2
+arc,30743,30217,22389,7828,74.1
+mmlu_knowledge,30602,29648,24757,4891,83.5
+immutable_facts_minimal,30601,29646,24853,4793,83.8
+gsm8k,30603,29526,20699,8827,70.1
+mmlu_science,30181,29030,21576,7454,74.3
+mmlu_math,30364,28121,21568,6553,76.7
+social_conventions_minimal,30600,898,670,228,74.6

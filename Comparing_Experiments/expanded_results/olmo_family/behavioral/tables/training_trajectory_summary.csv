@@ -1,0 +1,9 @@
+variant,pressure_condition,truth_override_rate
+base,asch_history_5,0.6174496644295302
+base,authoritative_bias,0.6129753914988815
+instruct,asch_history_5,0.4988558352402746
+instruct,authoritative_bias,0.5333333333333333
+instruct_sft,asch_history_5,0.740506329113924
+instruct_sft,authoritative_bias,0.5651260504201681
+instruct_dpo,asch_history_5,0.47334754797441364
+instruct_dpo,authoritative_bias,0.5278969957081545
