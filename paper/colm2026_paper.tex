@@ -59,7 +59,7 @@
 
 \graphicspath{{figures/}}
 
-\title{How Alignment Shapes Social Conformity:\\ From Causal Decomposition to Cross-Architecture Taxonomy}
+\title{How Alignment Shapes Social Conformity:\\ From Training-Stage Decomposition to Cross-Architecture Taxonomy}
 
 % Double-blind: no author info
 \author{
@@ -160,7 +160,7 @@ This paper provides five contributions:
       minimum width=5.8cm, minimum height=2.4cm, line width=0.8pt]
     (s1) at (3.2, -3.0) {};
 \node[font=\small\bfseries, text=basegrey!80!black, anchor=north]
-    at (3.2, -1.85) {\textsc{Study 1: Causal Decomposition}};
+    at (3.2, -1.85) {\textsc{Study 1: Training-Stage Decomposition}};
 \node[font=\scriptsize, align=center, anchor=north] at (3.2, -2.3) {%
     OLMo-7B post-training pipeline\\[4pt]
     \begin{tikzpicture}[baseline=-0.5ex]
@@ -270,7 +270,7 @@ This paper provides five contributions:
 
 \end{tikzpicture}%
 }
-\caption{Study overview. \textbf{Study~1} traces four OLMo-3-7B checkpoints (identical pretraining) to isolate how each post-training stage correlates with conformity changes. \textbf{Study~2} evaluates 10~model families on 400~shared items, revealing three distinct behavioral modes under social pressure. A calibration bridge on identical items connects the two studies. OR = McNemar odds ratio; ns = non-significant after Holm--Bonferroni correction.}
+\caption{Study overview. \textbf{Study~1} traces four sequential OLMo-3-7B checkpoints (identical pretraining) to observe how each post-training stage correlates with conformity changes. \textbf{Study~2} evaluates 10~model families on 400~shared items, revealing three distinct behavioral modes under social pressure. A calibration bridge on identical items connects the two studies. OR = McNemar odds ratio; ns = non-significant after Holm--Bonferroni correction.}
 \label{fig:pipeline}
 \end{figure}
 
@@ -298,7 +298,7 @@ The RLHF pipeline reduces generation diversity and sharpens output distributions
 \section{Methodology}
 \label{sec:method}
 
-\subsection{Study 1: Within-Family Causal Design (OLMo-7B)}
+\subsection{Study 1: Within-Family Sequential Design (OLMo-7B)}
 \label{sec:study1_method}
 
 We evaluate four OLMo-3-7B checkpoints along the post-training pipeline, sharing identical pretraining:
@@ -344,7 +344,7 @@ Correctness is determined by a post-hoc LLM judge (GPT-OSS-20B for Study~2; mult
 
 
 %% ============================================================
-\section{SFT Amplifies Conformity; DPO Mitigates It}
+\section{Conformity Changes Across Post-Training Stages}
 \label{sec:sft_dpo}
 
 \begin{table}[t]
@@ -360,7 +360,7 @@ Correctness is determined by a post-hoc LLM judge (GPT-OSS-20B for Study~2; mult
         3 & Instruct & 0.509 & 0.928 & +0.419 & 12.24 & 22.8\% \\
         \bottomrule
     \end{tabular}
-    \caption{Pooled error rates under unanimous confident pressure (Study~1, 6~temperatures, LLM judge labels). All McNemar tests significant ($p < 0.001$, Holm corrected). OR = McNemar odds ratio. SFT produces the highest OR (15.50) and the highest endorsement rate (39.2\%); DPO produces the lowest OR (8.69). Error rates exclude refusals from denominator; refusal rates: Base 46.4\%, SFT 19.3\%, DPO 42.8\%, Instruct 37.8\%.}
+    \caption{Pooled error rates under unanimous confident pressure (Study~1, 6~temperatures, LLM judge labels). All McNemar tests significant ($p < 0.001$, Holm corrected). OR = McNemar odds ratio. SFT produces the highest OR (15.50) and the highest endorsement rate (39.2\%); DPO produces the lowest OR (8.69). Error rates exclude refusals from denominator; refusal rates: Base 46.4\%, SFT 19.3\%, DPO 42.8\%, Instruct 37.8\%. \textbf{Caveat:} Pooling over 6 temperatures treats the same items at different temperatures as independent trials, which may inflate effective sample sizes and produce overly narrow confidence intervals. Per-temperature results (Appendix~\ref{app:cross_mcnemar}) confirm the qualitative ordering.}
     \label{tab:pooled_error}
 \end{table}
 
@@ -425,7 +425,7 @@ These patterns are \emph{not} a simple function of overall capability: Grok-4.1-
 
 Three of four models with chain-of-thought reasoning capability show non-significant peer conformity after Holm--Bonferroni correction: OLMo-32B-Think (OR\,=\,1.45, $p_\text{Holm}=1.0$), Grok-4.1-Fast (OR\,=\,1.16, $p_\text{Holm}=1.0$), and GPT-OSS-20B (OR\,=\,0.98, $p_\text{Holm}=1.0$). OLMo-7B-Think shows a small but significant effect (OR\,=\,2.88, $p_\text{Holm}=0.01$), substantially lower than its non-think sibling OLMo-7B-Instruct ($\Delta=+0.430$). In contrast, instruct variants of the same families are highly vulnerable: OLMo-32B-Instruct (OR\,=\,19.0, $p<0.001$). Extended reasoning---generating intermediate logical steps before committing to a final answer---appears to provide substantial defense against social consensus, though the smallest think model (7B) retains marginal vulnerability.
 
-\subsection{Peer Consensus $\gg$ Authority Framing}
+\subsection{Peer Consensus $>$ Authority Framing in Our Sample}
 
 Figure~\ref{fig:peer_auth} compares pressure effects across two mechanisms. Peer consensus ($\Delta_\text{peer}$) is statistically significant for 7 of 10 families after Holm--Bonferroni correction. Authority framing ($\Delta_\text{auth}$) is significant for only 2 of 10 families (Llama-3-8B and Llama-3.1-70B, both dense models with heavy SFT). The structured peer consensus prompt, which establishes an explicit n-gram repetition pattern across 5~fabricated participants, exploits autoregressive pattern-completion in a way that authority framing (a single user claim) cannot.
 
@@ -809,7 +809,7 @@ Table~\ref{tab:mcnemar_full} reports McNemar odds ratios with 95\% Wald confiden
 \section{Cochran's Q Within-Family Tests}
 \label{app:cochran}
 
-Table~\ref{tab:cochran_q} reports Cochran's Q statistics testing whether conformity rates differ significantly across conditions within each condition family, for each model variant. All families show significant heterogeneity, confirming that the specific prompt format matters beyond the mere presence of social pressure.
+Table~\ref{tab:cochran_q} reports Cochran's Q statistics testing whether error rates differ significantly across conditions within each condition family, for each model variant. All families show significant heterogeneity, indicating that models produce different error rates under different prompt wordings. We note that this is expected---different prompt texts are different inputs---so the primary utility of Cochran's Q here is to quantify \emph{which} variants show the largest condition sensitivity, not to establish that conditions differ per se.
 
 \begin{table}[H]
     \centering
@@ -839,7 +839,7 @@ Table~\ref{tab:cochran_q} reports Cochran's Q statistics testing whether conform
         Instruct & Peer full (8) & 25.9 & 7 & $<$.001 \\
         \bottomrule
     \end{tabular}
-    \caption{Cochran's Q tests for within-family condition heterogeneity. Tone = 4 unanimous tone variants; Mitigation = DA, QD, Diverse; Authority = 3 authority variants; Peer full = all 8 peer conditions. SFT shows the largest $Q$ values, indicating the most condition-sensitive conformity.}
+    \caption{Cochran's Q tests for within-family condition heterogeneity. Tone = 4 unanimous tone variants; Mitigation = DA, QD, Diverse; Authority = 3 authority variants; Peer full = all 8 peer conditions. Significant $Q$ is expected since different prompt texts are different inputs; the value of this test is comparative: SFT shows the largest $Q$ values, indicating the most condition-sensitive error rates.}
     \label{tab:cochran_q}
 \end{table}
 
@@ -894,7 +894,7 @@ We define \emph{Conformity Temperature} ($T_c$) as the lowest temperature at whi
 \section{Mitigation Effectiveness}
 \label{app:mitigation}
 
-Devil's advocate (DA) significantly reduces conformity for all variants: SFT agreement rate drops by 5.5pp ($p < 10^{-12}$), Base by 3.9pp ($p < 10^{-4}$), and Instruct by 3.7pp ($p < 10^{-6}$). Question distillation (QD) is less effective and shows no significant effect for Instruct ($p \approx 1.0$). No prompt-level mitigation eliminates conformity for any variant.
+Following \citet{zhu2025conformity}, who proposed devil's advocate (DA) and question distillation (QD) as conformity mitigations, we evaluate both within our structured prompt framework. DA significantly reduces conformity for all variants: SFT agreement rate drops by 5.5pp ($p < 10^{-12}$), Base by 3.9pp ($p < 10^{-4}$), and Instruct by 3.7pp ($p < 10^{-6}$). QD is less effective and shows no significant effect for Instruct ($p \approx 1.0$). No prompt-level mitigation eliminates conformity for any variant.
 
 \section{Refusal Handling}
 \label{app:refusal}
@@ -1012,7 +1012,7 @@ Grok-4.1-Fast & inst & .317 & .335 & +.019 & 8\% & 5\% & 1.1\textsuperscript{ns}
 GPT-OSS-20B & inst & .341 & .341 & $-$.001 & 19\% & 3\% & 1.0\textsuperscript{ns} \\
 \bottomrule
 \end{tabular}
-\caption{Calibrated ranking: cross-family + OLMo bridge. Ctrl/Peer = error rates; End = endorsed\%; Ref = refusal\%. Values averaged across temperatures. $^{***}p<0.001$, $^{*}p<0.05$, ns = non-significant (Holm corrected).}
+\caption{Calibrated ranking: cross-family + OLMo bridge. Ctrl/Peer = error rates; End = endorsed\%; Ref = refusal\%. Values averaged across temperatures. $^{***}p<0.001$, $^{*}p<0.05$, ns = non-significant (Holm corrected). $\Delta$ values are point estimates without confidence intervals; models with overlapping variance across 400 items may not be reliably distinguishable at adjacent ranks. Per-temperature McNemar ORs with 95\% Wald CIs are reported in Table~\ref{tab:cross_mcnemar_full}.}
 \label{tab:full_ranking}
 \end{table}
 
