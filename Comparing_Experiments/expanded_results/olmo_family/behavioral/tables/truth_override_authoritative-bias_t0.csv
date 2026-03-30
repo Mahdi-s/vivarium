@@ -1,0 +1,5 @@
+model_id,model_short,variant,pressure_condition,n_items,n_overridden,truth_override_rate,ci_lo,ci_hi
+allenai/Olmo-3-1025-7B,OLMo-7B,base,authoritative_bias,99,68,0.6869,0.59,0.7698
+allenai/Olmo-3-7B-Instruct,Olmo-3-7B-Instruct,instruct,authoritative_bias,128,74,0.5781,0.4915,0.6602
+allenai/Olmo-3-7B-Instruct-DPO,Olmo-3-7B-Instruct-DPO,instruct_dpo,authoritative_bias,142,90,0.6338,0.552,0.7085
+allenai/Olmo-3-7B-Instruct-SFT,Olmo-3-7B-Instruct-SFT,instruct_sft,authoritative_bias,146,89,0.6096,0.5286,0.6849

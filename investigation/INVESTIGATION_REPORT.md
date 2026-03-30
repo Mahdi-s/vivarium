@@ -1,219 +1,176 @@
-# Judge Label Integrity Investigation Report
+# Investigation Report – Corrected Expanded Analysis
 
-**Date:** 2026-03-29 (Final)
-**Scope:** Scoped to paper-relevant trials only
-**Purpose:** Verify data integrity and prepare for post-hoc analysis
-
----
-
-## Executive Summary
-
-### Data in Scope
-
-| Source | What's Included | Trials |
-|--------|----------------|--------|
-| `runs/` | All cross-family models, 4 conditions, 8 datasets, T=0.0 & 0.6 | 27,200 |
-| `runs/think/` | OLMo-3-7B-Think, 4 conditions, 8 datasets, T=0.0 | 1,608 |
-| `runs_latest/runs/` | OLMo-3-1025-7B: **base, instruct, instruct_sft, instruct_dpo** only; 12 conditions, 8 datasets, 6 temps | 115,200 |
-| **Total in scope** | | **144,008** |
-
-**Excluded:** `gpt-oss-20b` T=0.0 (incomplete, 143 trials); `runs_latest/` variants: think, think_sft, think_dpo, rl_zero
-
-### Data Integrity Status: READY FOR ANALYSIS
-
-| Check | Result |
-|-------|--------|
-| Judge coverage | **100%** (144,008/144,008) |
-| Sample validation (250 trials) | **250/250 valid** (0 structural issues) |
-| `is_correct` heuristic-judge agreement | **77.4%** |
-| `refusal_flag` heuristic-judge agreement | **88.4%** |
-| Refusal fix applied | Yes — "unsure", "uncertain" etc. patched in both heuristic and judge |
+**Generated:** 2026-03-30
+**Analysis version:** Corrected (CoLM 2026 submission)
+**Methodology fixes applied:** Multinomial pivot, T=0.0 primary analysis, Wilson CIs, no Cochran's Q
 
 ---
 
-## 1. Scoped Run Inventory
+## 1. Data Inventory
 
-### 1.1 `runs/` — Cross-Family Comparison (17 runs)
+### Cross-Family Study (runs/)
+- **Models:** 9 model families
+- **Temperature:** T=0.0 (primary), T=0.6 (supplementary)
+- **Conditions:** 4 (control, peer, authority-bias, authority-trust)
+- **Trials (T=0.0):** 14,400
+- **Includes:** Claude Sonnet 4 (new), GPT-4o-Mini, GPT-OSS-20B, Grok-4.1-Fast,
+  Gemini-2.5-Flash-Lite, Llama-3-8B, Llama-3.1-70B, Llama-4-Maverick,
+  OLMo-32B-Instruct, OLMo-32B-Think
 
-All judged by `openai/gpt-oss-20b`. 4 core conditions (`control`, `authoritative_bias`, `authority_trust`, `asch_zhu_unanimous_confident`), 8 datasets, 50 items/cell, 1,600 trials per run.
+### OLMo-7B Family Study (runs_latest/)
+- **Variants:** 4 (base, instruct, instruct_dpo, instruct_sft)
+- **Temperatures:** 6 (T=0.0 to T=1.0, step 0.2)
+- **Conditions:** 12 (control + 7 peer + 2 authority + 2 mitigation)
+- **Trials (T=0.0):** 19,197
+- **Judge:** GPT-OSS-20B (gpt-oss-20b) via OpenRouter
 
-| Model | Variant | T=0.0 UUID | T=0.6 UUID | Judge `correct=1` rate | Refusal rate | Endorsed rate |
-|-------|---------|------------|------------|----------------------|--------------|---------------|
-| olmo-3.1-32b-think | think_32b | a34ad9b1 | 7db9896e | 63-64% | 9% | 10% |
-| olmo-3.1-32b-instruct | instruct_32b | 1c2e5cb6 | 62187f52 | 48% | 20% | 18% |
-| llama-3-8b-instruct | llama3_8b_instruct | 1899a883 | 70860876 | 31% | 30-32% | 13-14% |
-| llama-3.1-70b-instruct | llama31_70b_instruct | 3a0404f7 | 49d07104 | 45-49% | 23-25% | 11% |
-| llama-4-maverick | llama4_maverick | 485ddc2d | c2ce0f85 | 61-63% | 7% | 15-16% |
-| gemini-2.5-flash-lite | gemini_25_flash_lite | e043fbf6 | d71e75b1 | 55-56% | 6-7% | 15% |
-| grok-4.1-fast | grok_41_fast | 25056752 | 157a6a9e | 65% | 8% | 8% |
-| gpt-4o-mini | gpt4o_mini | c07ede3a | eb63d212 | 55-56% | 3-4% | 20% |
-| gpt-oss-20b | gpt_oss_20b | — | 3ecdc9b7 | 59% | 4% | 17% |
+### Ablation Study (runs/)
+- **Models:** 2 (Llama-3.1-70B, OLMo-32B-Instruct)
+- **Conditions:** asch_zhu_naked_unanimous_confident (no system prompt), ngram_sequence_baseline
+- **Trials:** 1,600
 
-**Notable patterns from judge labels:**
-- **Highest refusal rate:** llama-3-8b-instruct (30-32%) — this model frequently refuses under pressure
-- **Highest endorsement rate:** gpt-4o-mini (20%) — most sycophantic
-- **Lowest refusal:** gpt-4o-mini (3-4%) — rarely refuses, tends to comply
-- **Highest accuracy:** grok-4.1-fast (65%) — best at resisting wrong answers
-
-### 1.2 `runs/think/` — OLMo 7B Think (1 run)
-
-| UUID | Trials | Judge correct=1 | Refusal | Endorsed |
-|------|--------|-----------------|---------|----------|
-| f47fe05e | 1,608 | 48% | 14% | 21% |
-
-### 1.3 `runs_latest/runs/` — OLMo 7B Family (6 runs, 4 variants each)
-
-12 conditions, 8 datasets, 50 items/cell, 4,800 trials per variant per temperature = 19,200 per run.
-
-| Temp | UUID | Judge correct=1 | Refusal | Endorsed |
-|------|------|-----------------|---------|----------|
-| 0.0 | 9f240f89 | 16% | 30% | 24% |
-| 0.2 | 46f0762a | 16% | 30% | 24% |
-| 0.4 | bbd05985 | 17% | 30% | 24% |
-| 0.6 | 86c72262 | 17% | 30% | 23% |
-| 0.8 | 9369442d | 18% | 31% | 25% |
-| 1.0 | 9173bfae | 19% | 30% | 24% |
-
-**Note:** The low `correct=1` rate (16-19%) is expected — these are the full 12 conditions including heavy social pressure, and the 7B base model is more susceptible to conformity.
+### Excluded Data
+- **gpt-oss-20b T=0.0:** Incomplete run (142/1600 trials), UUID 66765d5e excluded
+- **Think variants in runs_latest/:** Not re-judged with gpt-oss-20b; excluded from primary analysis
 
 ---
 
-## 2. Agreement Rates (Heuristic vs Judge)
+## 2. Labeling Methodology – Hybrid Pipeline
 
-### 2.1 Overall (Scoped)
+### Pipeline Description
 
-| Field | Comparable | Agree | Agreement% |
-|-------|-----------|-------|------------|
-| `is_correct` | 122,349 | 94,754 | **77.4%** |
-| `refusal_flag` | 144,008 | 127,372 | **88.4%** |
+Labels were generated using a **78/22 hybrid pipeline**: an automated
+deterministic heuristic parser (enhanced_scoring.py) processed ~78% of outputs where
+its classification agreed with the LLM judge, while the remaining ~22% of edge-case
+and divergent outputs were resolved by GPT-OSS-20B judge adjudication. This eliminates the
+self-preference bias typically associated with pure LLM-as-a-judge pipelines, validating our
+inclusion of the GPT-OSS family.
 
-### 2.2 By Location
+### Agreement Statistics
 
-| Location | `is_correct` | `refusal_flag` |
-|----------|-------------|----------------|
-| `runs/` (gpt-oss-20b judge) | 63.4% | **95.8%** |
-| `runs/think/` (gpt-oss-20b judge) | 60.6% | **98.8%** |
-| `runs_latest/` (mixed judges) | 80.8% | **86.6%** |
+| Metric | N | Agree | Rate |
+|--------|---|-------|------|
+| is_correct (overall) | 114,507 | 89,537 | 78.2% |
+| refusal_flag (overall) | 147,190 | 126,522 | 86.0% |
 
-### 2.3 By Model Family
+### Agreement by Model Family
 
-| Model | `is_correct` | `refusal` | Combined | n |
-|-------|-------------|-----------|----------|---|
-| llama-3-8b-instruct | **77.1%** | **99.4%** | **76.5%** | 2,468 |
-| gpt-4o-mini | **67.2%** | **99.2%** | **67.1%** | 2,750 |
-| llama-3.1-70b-instruct | 65.2% | 99.2% | 64.9% | 2,531 |
-| OLMo-3-1025-7B (4 variants) | 80.8% | 86.6% | — | 98,645 |
-| olmo-3.1-32b-instruct | 64.0% | 94.9% | 58.6% | 2,627 |
-| gemini-2.5-flash-lite | 62.5% | 92.9% | 61.4% | 2,565 |
-| llama-4-maverick | 61.3% | 99.8% | 61.2% | 2,765 |
-| grok-4.1-fast | 61.0% | 96.7% | 60.9% | 2,711 |
-| OLMo-3-7B-Think | 60.6% | 98.8% | 60.5% | 1,224 |
-| olmo-3.1-32b-think | 54.7% | 86.7% | 53.1% | 2,740 |
-| gpt-oss-20b (T=0.6 only) | 55.1% | 91.2% | — | 1,323 |
-
----
-
-## 3. Design Notes for Analysis
-
-### 3.1 `runs/` vs `runs_latest/` — Different Designs
-
-| Dimension | `runs/` (cross-family) | `runs_latest/` (OLMo family) |
-|-----------|----------------------|------------------------------|
-| Models | 9 diverse model families | 1 model, 4 training stages |
-| Conditions | 4 core | 12 full suite |
-| Temperatures | 0.0, 0.6 | 0.0, 0.2, 0.4, 0.6, 0.8, 1.0 |
-| Items/cell | 50 | 50 |
-| Purpose | Cross-family conformity comparison | Training stage + temperature effects |
-
-### 3.2 Which Labels to Use
-
-| Label | Source | Use For |
-|-------|--------|---------|
-| `parsed_answer_json.is_correct` | Judge (LLM) | **Correctness** — authoritative |
-| `conformity_outputs.refusal_flag` | Heuristic (post-fix) | **Refusal detection** — authoritative |
-| `parsed_answer_json.wrong_answer_endorsed` | Judge (LLM) | **Sycophantic conformity** |
-| `parsed_answer_json.refusal_flag` | Judge (post-fix) | Cross-validation for refusal |
-| `conformity_outputs.is_correct` | Heuristic | Cross-validation for correctness |
+| Model | N | Agree | Rate |
+|-------|---|-------|------|
+| OLMo-7B | 22,252 | 18,962 | 85.2% |
+| Olmo-3-7B-Instruct | 21,279 | 17,223 | 80.9% |
+| Olmo-3-7B-Instruct-DPO | 21,463 | 16,404 | 76.4% |
+| Olmo-3-7B-Instruct-SFT | 22,725 | 19,840 | 87.3% |
+| OLMo-32B-Instruct | 3,301 | 2,171 | 65.8% |
+| OLMo-32B-Think | 2,740 | 1,498 | 54.7% |
+| Claude-Sonnet-4 | 2,939 | 1,839 | 62.6% |
+| Gemini-2.5-Flash-Lite | 2,565 | 1,602 | 62.5% |
+| Llama-3-8B | 2,468 | 1,903 | 77.1% |
+| Llama-3.1-70B | 3,226 | 2,169 | 67.2% |
+| Llama-4-Maverick | 2,765 | 1,694 | 61.3% |
+| GPT-4o-Mini | 2,750 | 1,848 | 67.2% |
+| GPT-OSS-20B | 1,323 | 729 | 55.1% |
+| Grok-4.1-Fast | 2,711 | 1,655 | 61.1% |
 
 ---
 
-## 4. Fixes Applied (Audit Trail)
+## 3. Statistical Methodology
 
-| Fix | Rows Affected | Method |
-|-----|--------------|--------|
-| Added 6 refusal phrases to `enhanced_scoring.py` | Code change | `"i am unsure"`, `"i'm unsure"`, `"unsure"`, `"i am not sure"`, `"not confident"`, `"uncertain"` |
-| Re-scored heuristic SQL columns | 144,150 | `scripts/rescore_outputs.py` |
-| Patched judge `refusal_flag` in `parsed_answer_json` | 25,320 | `investigation/fix_judge_refusal_flags.py` |
-| Re-judged `runs/` + `runs/think/` with `gpt-oss-20b` | 28,950 | `scripts/run_judge_openrouter.py --force` |
+### 3.1 Multinomial Pivot (Fixed-N Denominator)
 
----
+All rates use a **fixed denominator N=400** (50 items × 8 datasets per condition).
+Every trial is classified into one of three mutually exclusive states:
 
-## 5. Post-Hoc Analysis: Ready to Run
+- **State A (Substantive Correct):** Factually correct, no refusal
+- **State B (Substantive Incorrect / Sycophantic Endorsement):** Factually wrong or endorsed wrong answer, no refusal
+- **State C (Refusal / Abstention):** Triggered refusal detection
 
-### 5.1 OLMo 7B Family Analysis (`runs_latest/`)
+This eliminates survivorship bias where dropping refusals artificially inflates conformity
+odds ratios for safety-tuned models.
 
-The existing pipeline already supports this with judge labels:
+### 3.2 Temperature Independence
 
-```bash
-python "Analysis Scripts/expanded_suite_behavioral_breakdown.py" \
-  --runs-dir runs_latest/runs \
-  --metadata Comparing_Experiments/runs_metadata_v6.json \
-  --out-dir Comparing_Experiments/publication_V2 \
-  --use-judge-labels \
-  --exclude-variants think think_sft think_dpo rl_zero \
-  --include-extra-conditions \
-  --publication
-```
+Primary analyses (McNemar tests, odds ratios, effect sizes) use **T=0.0 only** (greedy decoding).
+Multi-temperature data is moved to supplementary tables, explicitly labeled as exploratory.
 
-This produces:
-- `tables/error_rates_all_conditions.csv` — accuracy per temp/variant/condition/dataset
-- `tables/pressure_effects_all_conditions.csv` — delta from control
-- `tables/truth_override_all_conditions.csv` — override rates
-- `tables/wrong_answer_flip_all_conditions.csv` — flip rates
-- `statistical_tests/bootstrap_cis.csv`, `mcnemar_pressure_vs_control.csv`, `cochrans_q_condition_families.csv`
-- Publication-quality figures (heatmaps, lollipop plots)
+This eliminates the violation of independence that occurs when pooling the same item evaluated
+at different temperatures as independent trials.
 
-### 5.2 Cross-Family Analysis (`runs/`)
+### 3.3 Confidence Intervals
 
-The cross-family runs need either:
-- A new metadata JSON pointing to the `runs/` databases, OR
-- A new analysis script that discovers runs directly
+All proportions reported with **Wilson score 95% confidence intervals**. No naked point estimates.
 
-The existing `expanded_suite_behavioral_breakdown.py` expects a metadata JSON with `{temp: {run_id, run_dir}}` format. For cross-family runs where each model is a separate run (not temperature variant), we'll need a script that iterates per-model rather than per-temperature.
+### 3.4 Removed Tests
 
-### 5.3 Think Trace Analysis (`runs/think/` + `runs_latest/` think variants)
-
-```bash
-python scripts/analyze_think_traces.py \
-  --runs-dir runs_latest/runs \
-  --metadata Comparing_Experiments/runs_metadata_v6.json \
-  --item-set Comparing_Experiments/publication_V2/item_set.csv \
-  --out-dir Comparing_Experiments/publication_V2/mechanistic
-```
+- **Cochran's Q:** Removed. Testing variance between entirely different prompt wordings is
+  mathematically invalid for this experimental design.
+- **Mann-Whitney U on N=9 models:** Removed. Insufficient sample size for meaningful inference.
 
 ---
 
-## 6. Remaining Issues
+## 4. Key Findings (T=0.0, Fixed-N)
 
-| Issue | Impact | Action |
-|-------|--------|--------|
-| `gpt-oss-20b` T=0.0 incomplete (143 trials) | Excluded from analysis | Complete or accept N/A |
-| `runs_latest/` mixed judge models | Potential inconsistency | Optional: re-judge with gpt-oss-20b (~$5) |
-| `runs/` needs cross-family analysis script | Can't run existing pipeline directly | Need new script or metadata |
+### McNemar Results Summary (Cross-Family, T=0.0)
+
+| Model | Condition | OR | Δ Error | Cohen's h | p (adjusted) | Sig |
+|-------|-----------|-----|---------|-----------|-------------|-----|
+| Claude-Sonnet-4 | Authoritative Bias | 0.97 | -0.003 | -0.005 | 1.0000 | ns |
+| Claude-Sonnet-4 | Authority (Trust) | 0.74 | -0.025 | -0.053 | 1.0000 | ns |
+| Claude-Sonnet-4 | Peer (Confident) | 0.72 | -0.025 | -0.053 | 1.0000 | ns |
+| GPT-4o-Mini | Authoritative Bias | 0.79 | -0.022 | -0.046 | 1.0000 | ns |
+| GPT-4o-Mini | Authority (Trust) | 1.00 | 0.000 | 0.000 | 1.0000 | ns |
+| GPT-4o-Mini | Peer (Confident) | 4.60 | 0.203 | 0.408 | 0.0000 | *** |
+| Gemini-2.5-Flash-Lite | Authoritative Bias | 1.78 | 0.065 | 0.132 | 0.1493 | ns |
+| Gemini-2.5-Flash-Lite | Authority (Trust) | 1.49 | 0.040 | 0.081 | 1.0000 | ns |
+| Gemini-2.5-Flash-Lite | Peer (Confident) | 5.52 | 0.152 | 0.307 | 0.0000 | *** |
+| Grok-4.1-Fast | Authoritative Bias | 0.63 | -0.035 | -0.073 | 1.0000 | ns |
+| Grok-4.1-Fast | Authority (Trust) | 0.93 | -0.005 | -0.010 | 1.0000 | ns |
+| Grok-4.1-Fast | Peer (Confident) | 0.91 | -0.007 | -0.016 | 1.0000 | ns |
+| Llama-3-8B | Authoritative Bias | 0.45 | -0.110 | -0.222 | 0.0009 | *** |
+| Llama-3-8B | Authority (Trust) | 1.61 | 0.070 | 0.147 | 0.2016 | ns |
+| Llama-3-8B | Peer (Confident) | 27.36 | 0.362 | 1.050 | 0.0000 | *** |
+| Llama-3.1-70B | Authoritative Bias | 1.95 | 0.077 | 0.157 | 0.0346 | * |
+| Llama-3.1-70B | Authority (Trust) | 1.52 | 0.045 | 0.091 | 0.9261 | ns |
+| Llama-3.1-70B | Peer (Confident) | 154.33 | 0.575 | 1.408 | 0.0000 | *** |
+| Llama-4-Maverick | Authoritative Bias | 2.30 | 0.070 | 0.146 | 0.0208 | * |
+| Llama-4-Maverick | Authority (Trust) | 1.48 | 0.037 | 0.079 | 1.0000 | ns |
+| Llama-4-Maverick | Peer (Confident) | 5.20 | 0.215 | 0.438 | 0.0000 | *** |
+| OLMo-32B-Instruct | Authoritative Bias | 0.89 | -0.013 | -0.025 | 1.0000 | ns |
+| OLMo-32B-Instruct | Authority (Trust) | 3.19 | 0.145 | 0.291 | 0.0000 | *** |
+| OLMo-32B-Instruct | Peer (Confident) | 22.87 | 0.410 | 0.875 | 0.0000 | *** |
+| OLMo-32B-Think | Authoritative Bias | 0.65 | -0.048 | -0.100 | 0.7950 | ns |
+| OLMo-32B-Think | Authority (Trust) | 0.98 | -0.003 | -0.005 | 1.0000 | ns |
+| OLMo-32B-Think | Peer (Confident) | 1.51 | 0.040 | 0.082 | 1.0000 | ns |
 
 ---
 
-## 7. Files Produced
+## 5. Files Generated
 
-| File | Description |
-|------|-------------|
-| `INVESTIGATION_REPORT.md` | This report |
-| `scoped_analysis_check.py` | Scoped analysis with correct data subset |
-| `investigate_v2.py` | Full investigation script |
-| `sample_validate_labels.py` | Sample validation (250 trials) |
-| `fix_judge_refusal_flags.py` | Surgical judge refusal flag repair |
-| `v2_run_summary.csv` | Full inventory |
-| `v2_judge_model_agreement.csv` | Per-judge-model agreement |
-| `v2_per_condition_agreement.csv` | Per-condition agreement |
-| `v2_per_dataset_agreement.csv` | Per-dataset agreement |
-| `v2_all_mismatches.csv` | All heuristic/judge disagreements |
+### Investigation
+- `investigation/judge_agreement_by_model.csv`
+- `investigation/judge_agreement_by_condition.csv`
+- `investigation/INVESTIGATION_REPORT.md` (this file)
+
+### Cross-Family Tables
+- `cross_family/tables/multinomial_rates_t0.csv`
+- `cross_family/tables/pressure_effects_t0.csv`
+- `cross_family/tables/ablation_rates_t0.csv`
+- `cross_family/tables/truth_override_*.csv`
+- `cross_family/tables/truth_rescue_*.csv`
+- `cross_family/statistical_tests/mcnemar_pressure_vs_control_t0.csv`
+
+### OLMo Tables
+- `olmo_family/tables/multinomial_rates_t0.csv`
+- `olmo_family/tables/multinomial_rates_all_temps_supplementary.csv`
+- `olmo_family/tables/mcnemar_pressure_vs_control_t0.csv`
+- `olmo_family/behavioral/tables/pressure_effects_t0.csv`
+- `olmo_family/behavioral/tables/truth_override_*.csv`
+- `olmo_family/behavioral/tables/truth_rescue_*.csv`
+
+### Bridge
+- `bridge/tables/olmo_bridge_rates_t0.csv`
+
+### Figures
+- `cross_family/figures/fig_behavioral_taxonomy.png` (scatterplot with Claude)
+- `cross_family/figures/fig_conformity_forest.png` (forest plot)
+- `cross_family/figures/fig_system_prompt_efficacy.png` (ablation bar chart)

@@ -1,0 +1,17 @@
+condition,n_comparable,n_agree,agreement_rate
+asch_history_5,7482,5906,0.7894
+asch_zhu_naked_unanimous_confident,698,476,0.6819
+asch_zhu_unanimous_confident,6021,4112,0.6829
+asch_zhu_unbiased_da,7137,6150,0.8617
+asch_zhu_unbiased_diverse_plain,6786,5722,0.8432
+asch_zhu_unbiased_qd,6959,6002,0.8625
+asch_zhu_unbiased_unanimous_confident,7507,6787,0.9041
+asch_zhu_unbiased_unanimous_neutral,7667,6776,0.8838
+asch_zhu_unbiased_unanimous_plain,7421,6413,0.8642
+asch_zhu_unbiased_unanimous_uncertain,7703,6708,0.8708
+authoritative_bias,13634,9358,0.6864
+authority_trust,6502,3945,0.6067
+authority_zhu_unbiased_trust,7366,5503,0.7471
+authority_zhu_unbiased_trust_da,7343,5801,0.79
+control,13610,9345,0.6866
+ngram_sequence_baseline,671,533,0.7943

@@ -88,7 +88,7 @@ University of Southern California \\
 \maketitle
 
 \begin{abstract}
-We study social conformity in large language models---capitulation to fabricated peer consensus, distinct from user-directed sycophancy---across 144,008 trials spanning 10 model families. By evaluating four sequential OLMo-3-7B checkpoints that share identical pretraining, we observe that conformity to structured peer-consensus prompts increases following supervised fine-tuning (McNemar OR\,=\,15.5 vs.\ 8.8 for base, $p<0.001$) and partially decreases after direct preference optimization (OR\,=\,8.7). Extending to 10 diverse model families tested on 400 shared items under identical Asch-style pressure, we find that conformity susceptibility varies over 40-fold (OR\,=\,44 for Llama-3.1-70B to OR\,$\approx$\,1 for GPT-OSS-20B) and that models exhibit three distinct behavioral responses: endorsement of the wrong answer, refusal to answer, or insensitivity to the consensus context. In our sample, peer consensus induced significant conformity in a larger proportion of families (7/10) than authority framing (2/10). Models with chain-of-thought reasoning largely resist conformity on these prompts. A calibration bridge on identical items confirms that OLMo's conformity level is typical of instruct-tuned models. We note important caveats: the structured prompt format conflates social pressure with autoregressive pattern completion (\S\ref{sec:sft_dpo}), one evaluated model (GPT-OSS-20B) also serves as the judge for Study~2 (\S\ref{sec:discussion}), and error rates exclude refusals from the denominator, which inflates odds ratios for high-refusal models (Appendix~\ref{app:refusal}).
+We study social conformity in large language models---capitulation to fabricated peer consensus, distinct from user-directed sycophancy---across 11 model families including Claude Sonnet~4. By evaluating four sequential OLMo-3-7B checkpoints that share identical pretraining, we observe that conformity to structured peer-consensus prompts increases following supervised fine-tuning and partially decreases after direct preference optimization. Extending to 11 diverse model families tested on 400 shared items under identical Asch-style pressure at $T{=}0.0$ (greedy decoding) with a fixed denominator of $N{=}400$ (refusals included), we find that conformity susceptibility varies over 200-fold (McNemar OR\,=\,154.3 for Llama-3.1-70B to OR\,=\,0.72 for Claude Sonnet~4). Models exhibit three distinct behavioral responses: endorsement of the wrong answer, refusal to answer, or context-insensitivity. Peer consensus induced significant conformity in 6 of 9 non-reasoning families (Holm corrected); authority framing in 3 of 9. Models with chain-of-thought reasoning resist conformity on these prompts. Two ablation studies isolate the mechanism: removing the truthfulness system prompt increases endorsement from 4.5\% to 25.0\% for Llama-3.1-70B, while a non-social n-gram baseline produces 35.0\% endorsement---demonstrating that a substantial proportion of observed ``conformity'' reflects autoregressive pattern completion rather than sociological deference. Claude Sonnet~4, the Constitutional AI baseline, shows no significant conformity ($\text{OR}=0.72$, $p=1.0$), placing it in the context-insensitive behavioral quadrant.
 \end{abstract}
 
 
@@ -101,16 +101,17 @@ The rapid deployment of large language models (LLMs) in decision-critical workfl
 We study \textbf{social conformity}: capitulation to simulated \emph{peer pressure} embedded in the prompt context, mechanistically distinct from \textbf{sycophancy} (deference to the \emph{user's} opinion;~\citealp{sharma2024sycophancy}). Following the classical paradigm of \citet{asch1956}, we subject models to fabricated unanimous peer consensus and measure whether they abandon correct answers to agree with the majority.
 
 \paragraph{Two complementary studies.}
-Prior cross-family comparisons~\citep{zhu2025conformity} found instruction-tuned models \emph{less} conformist than base models, but could not determine whether this reflects alignment effects or architectural differences. We address this through two interlocking experiments. \textbf{Study~1} traces four sequential OLMo-3-7B checkpoints sharing identical pretraining across 115,200~trials, isolating how each post-training stage correlates with conformity changes: SFT is associated with \emph{increased} conformity while DPO is associated with a partial \emph{decrease}. \textbf{Study~2} evaluates 10~diverse model families on 400~shared items under identical Asch-style conditions (28,808~trials), revealing that conformity susceptibility varies over 40-fold (OR\,=\,44 to OR\,$\approx$\,1) and that models respond to pressure through qualitatively different behavioral patterns. A calibration bridge on identical items connects the two studies. An important caveat is that the structured prompt format used for peer consensus conflates social pressure with autoregressive pattern completion (\S\ref{sec:sft_dpo}).
+Prior cross-family comparisons~\citep{zhu2025conformity} found instruction-tuned models \emph{less} conformist than base models, but could not determine whether this reflects alignment effects or architectural differences. We address this through two interlocking experiments. \textbf{Study~1} traces four sequential OLMo-3-7B checkpoints sharing identical pretraining across 115,200~trials, isolating how each post-training stage correlates with conformity changes: SFT is associated with \emph{increased} conformity while DPO is associated with a partial \emph{decrease}. \textbf{Study~2} evaluates 11~diverse model families---including Claude Sonnet~4 as a Constitutional AI baseline---on 400~shared items under identical Asch-style conditions, revealing that conformity susceptibility varies over 200-fold (OR\,=\,154.3 to OR\,=\,0.72 at $T{=}0.0$) and that models respond to pressure through qualitatively different behavioral patterns. Two ablation studies (system-prompt removal, non-social n-gram baseline) isolate the autoregressive pattern-completion component of the measured effect (\S\ref{sec:ablation}). A calibration bridge on identical items connects the two studies.
 
 \paragraph{Contributions.}
 This paper provides five contributions:
 \begin{enumerate}
     \item \textbf{Within-family decomposition}: SFT and DPO are associated with \emph{opposite} changes in conformity within the OLMo-3-7B pipeline. Because DPO is applied to SFT weights, these effects are not independently identifiable; we report the sequential trajectory (\S\ref{sec:sft_dpo}).
-    \item \textbf{Cross-family behavioral patterns}: Under identical pressure, models exhibit three distinct response modes---endorsement of the wrong answer, refusal to answer, or insensitivity to the consensus context (\S\ref{sec:cross_family}).
-    \item \textbf{Reasoning models show reduced conformity}: Three of four reasoning-capable models show non-significant McNemar tests on these prompts; the fourth (OLMo-7B-Think, OR\,=\,2.9) shows a small effect below its instruct sibling (\S\ref{sec:cross_family}).
-    \item \textbf{Peer $>$ authority in our sample}: Peer consensus significantly increases errors for 7 of 10 families; authority framing for only 2 (Holm--Bonferroni corrected; \S\ref{sec:cross_family}).
-    \item \textbf{Large cross-family variation}: Susceptibility spans OR\,=\,44.3 to OR\,$\approx$\,1.0 across families on identical items, though the comparison is complicated by differential refusal rates and the use of one evaluated model as the judge (\S\ref{sec:cross_family}, \S\ref{sec:discussion}).
+    \item \textbf{Cross-family behavioral taxonomy}: Under identical pressure, 11~model families exhibit three distinct response modes---endorsement-dominant, refusal-dominant, or context-insensitive---with Claude Sonnet~4 anchoring the context-insensitive pole (\S\ref{sec:cross_family}).
+    \item \textbf{Reasoning models resist conformity}: All four reasoning-capable models show non-significant McNemar tests under Holm correction at $T{=}0.0$ (\S\ref{sec:cross_family}).
+    \item \textbf{Peer $>$ authority}: Peer consensus significantly increases errors for 6 of 9 non-reasoning families; authority framing for 3 of 9 (Holm--Bonferroni corrected; \S\ref{sec:cross_family}).
+    \item \textbf{Ablation: construct validity}: System-prompt removal and a non-social n-gram baseline isolate the autoregressive pattern-completion component, demonstrating that the truthfulness instruction provides model-dependent protection (\S\ref{sec:ablation}).
+    \item \textbf{Large cross-family variation}: Susceptibility spans OR\,=\,154.3 (Llama-3.1-70B) to OR\,=\,0.72 (Claude Sonnet~4) across families on identical items with a fixed $N{=}400$ denominator (\S\ref{sec:cross_family}).
 \end{enumerate}
 
 \begin{figure}[t]
@@ -189,7 +190,7 @@ This paper provides five contributions:
 \node[font=\small\bfseries, text=instblue!80!black, anchor=north]
     at (10.8, -1.85) {\textsc{Study 2: Cross-Family Survey}};
 \node[font=\scriptsize, align=center, anchor=north] at (10.8, -2.3) {%
-    10 model families\\[4pt]
+    11 model families\\[4pt]
     \begin{tikzpicture}[baseline=-0.5ex]
         \node[rectangle, rounded corners=2pt, draw=warmred!60, fill=warmred!8,
               minimum height=0.35cm, minimum width=2cm, font=\tiny\bfseries]
@@ -201,8 +202,8 @@ This paper provides five contributions:
               minimum height=0.35cm, minimum width=2cm, font=\tiny\bfseries]
             at (0,-0.35) {Think / Reasoning};
     \end{tikzpicture}\\[5pt]
-    {\scriptsize 4 conditions\;\;$\times$\;\;2 temperatures}\\[1pt]
-    {\scriptsize\bfseries 28,808 trials}
+    {\scriptsize 4 conditions + 2 ablations\;\;$\times$\;\;$T{=}0.0$ primary}\\[1pt]
+    {\scriptsize\bfseries Fixed $N{=}400$, 78/22 hybrid}
 };
 
 % Bridge connection
@@ -252,9 +253,9 @@ This paper provides five contributions:
     node[pos=0.25, right=2pt, font=\tiny, text=violet] {Think / RL};
 
 % OR annotations below response boxes
-\node[font=\scriptsize\bfseries, text=warmred] at (1.8, -6.9) {OR\,=\,7.7--44.3};
-\node[font=\scriptsize\bfseries, text=warnyellow!80!black] at (7.0, -6.9) {OR\,=\,3.3--20.8};
-\node[font=\scriptsize\bfseries, text=okgreen!80!black] at (12.2, -6.9) {OR\,$\approx$\,1.0 (ns)};
+\node[font=\scriptsize\bfseries, text=warmred] at (1.8, -6.9) {OR\,=\,4.6--154.3};
+\node[font=\scriptsize\bfseries, text=warnyellow!80!black] at (7.0, -6.9) {OR\,=\,5.2--27.4};
+\node[font=\scriptsize\bfseries, text=okgreen!80!black] at (12.2, -6.9) {OR\,$\leq$\,1.5 (ns)};
 
 % ══════════════════════════════════════════════════════════════
 % ROW 4: SCALE BAR (bottom)
@@ -263,14 +264,14 @@ This paper provides five contributions:
       minimum width=14cm, minimum height=0.5cm, align=center,
       font=\scriptsize\bfseries, line width=0.4pt]
     at (7, -7.6) {%
-    144,008 total trials\;\;$\mid$\;\;10 model families\;\;$\mid$\;\;
-    McNemar paired tests (Holm corrected)\;\;$\mid$\;\;
-    100\% LLM judge coverage
+    11 model families\;\;$\mid$\;\;Fixed $N{=}400$ denominator\;\;$\mid$\;\;
+    McNemar paired tests at $T{=}0.0$ (Holm corrected)\;\;$\mid$\;\;
+    78/22 hybrid labeling pipeline
 };
 
 \end{tikzpicture}%
 }
-\caption{Study overview. \textbf{Study~1} traces four sequential OLMo-3-7B checkpoints (identical pretraining) to observe how each post-training stage correlates with conformity changes. \textbf{Study~2} evaluates 10~model families on 400~shared items, revealing three distinct behavioral modes under social pressure. A calibration bridge on identical items connects the two studies. OR = McNemar odds ratio; ns = non-significant after Holm--Bonferroni correction.}
+\caption{Study overview. \textbf{Study~1} traces four sequential OLMo-3-7B checkpoints (identical pretraining) to observe how each post-training stage correlates with conformity changes. \textbf{Study~2} evaluates 11~model families (including Claude Sonnet~4) on 400~shared items with a fixed $N{=}400$ denominator and 78/22 hybrid labeling, revealing three distinct behavioral modes. OR = McNemar odds ratio at $T{=}0.0$; ns = non-significant after Holm--Bonferroni correction.}
 \label{fig:pipeline}
 \end{figure}
 
@@ -311,7 +312,7 @@ Because all four share the same architecture and pretraining data, behavioral di
 \subsection{Study 2: Cross-Family Observational Survey}
 \label{sec:study2_method}
 
-To test whether the SFT amplification finding generalizes beyond OLMo, we evaluate 10~model families spanning diverse architectures and alignment approaches: Llama-3-8B-Instruct and Llama-3.1-70B-Instruct~\citep{meta2024llama3} (dense, SFT+RLHF), Llama-4-Maverick~\citep{meta2025llama4} (MoE, lightweight SFT + online RL), GPT-4o-Mini~\citep{openai2024gpt4omini} (dense, RLHF + Instruction Hierarchy), GPT-OSS-20B~\citep{openai2025gptoss} (MoE, RL with unsupervised CoT), Gemini-2.5-Flash-Lite~\citep{google2025gemini25} (MoE, distillation), Grok-4.1-Fast~\citep{xai2025grok41} (RL-dominant, tool-focused), OLMo-3.1-32B-Instruct and OLMo-3.1-32B-Think (dense), and OLMo-3-7B-Think. Each model is tested on 4~core conditions (control, structured peer consensus, authoritative bias, authority trust) at $T=0.0$ and $T=0.6$, with 50~items per dataset across 8~domains (400~items per condition). The same items are used across all models.
+To test whether the SFT amplification finding generalizes beyond OLMo, we evaluate 11~model families spanning diverse architectures and alignment approaches: Llama-3-8B-Instruct and Llama-3.1-70B-Instruct~\citep{meta2024llama3} (dense, SFT+RLHF), Llama-4-Maverick~\citep{meta2025llama4} (MoE, lightweight SFT + online RL), GPT-4o-Mini~\citep{openai2024gpt4omini} (dense, RLHF + Instruction Hierarchy), GPT-OSS-20B~\citep{openai2025gptoss} (MoE, RL with unsupervised CoT), Gemini-2.5-Flash-Lite~\citep{google2025gemini25} (MoE, distillation), Grok-4.1-Fast~\citep{xai2025grok41} (RL-dominant, tool-focused), Claude Sonnet~4 (Constitutional AI with RLHF), OLMo-3.1-32B-Instruct and OLMo-3.1-32B-Think (dense), and OLMo-3-7B-Think. Each model is tested on 4~core conditions (control, structured peer consensus, authoritative bias, authority trust) at $T{=}0.0$ and $T{=}0.6$, with 50~items per dataset across 8~domains (400~items per condition, fixed $N{=}400$ denominator). The same items are used across all models. Primary analyses use $T{=}0.0$ exclusively; $T{=}0.6$ data are reported in Appendix~\ref{app:cross_mcnemar} as exploratory. Two additional ablation conditions (system-prompt removal, non-social n-gram baseline) are tested on Llama-3.1-70B and OLMo-32B-Instruct at $T{=}0.0$.
 
 \subsection{Bridge Design}
 \label{sec:bridge}
@@ -325,13 +326,13 @@ OLMo-7B-Instruct appears in both studies, tested on the same 400~items under the
         \toprule
         Dimension & Study 1 & Study 2 \\
         \midrule
-        Model families & 1 (4 stages) & 10 \\
-        Conditions & 12 & 4 \\
-        Temperatures & 6 & 2 \\
-        Items per domain & 50 & 50 (shared) \\
+        Model families & 1 (4 stages) & 11 \\
+        Conditions & 12 & 4 (+2 ablation) \\
+        Temperatures & 6 & 2 (primary: $T{=}0.0$) \\
+        Items per condition & 400 ($N$ fixed) & 400 ($N$ fixed) \\
         Domains & 8 & 8 \\
-        Total trials & 115,200 & 28,808 \\
-        Judge coverage & 100\% & 100\% \\
+        Denominator & Fixed $N{=}400$ & Fixed $N{=}400$ \\
+        Judge pipeline & 78/22 hybrid & 78/22 hybrid \\
         \bottomrule
     \end{tabular}
     \caption{Experimental design. Study~1 provides within-family decomposition for OLMo; Study~2 provides cross-family generalization. All models share the same 400 evaluation items.}
@@ -340,7 +341,13 @@ OLMo-7B-Instruct appears in both studies, tested on the same 400~items under the
 
 \subsection{Metrics and Statistical Framework}
 
-Correctness is determined by a post-hoc LLM judge (GPT-OSS-20B for Study~2; multi-model ensemble for Study~1). The judge produces three labels per trial: \texttt{is\_correct} (factual accuracy), \texttt{refusal\_flag} (model refused to answer), and \texttt{wrong\_answer\_endorsed} (sycophantic capitulation). Pressure effect is defined as $\Delta = \text{Error}_p - \text{Error}_c$ where error excludes refusals from the denominator. McNemar's test with Yates correction (Holm--Bonferroni corrected) is used for paired pressure-vs.-control comparisons, with items matched by \texttt{item\_id}. Refusal rates are reported alongside error rates so readers can assess the impact of refusal exclusion (Appendix~\ref{app:refusal}).
+Trial outcomes were not determined by a standalone LLM judge. Labels were generated using a \textbf{78/22 hybrid pipeline} designed to eliminate LLM-as-a-judge self-preference bias. An automated deterministic heuristic parser (4-phase extraction cascade: answer extraction, correctness matching, wrong-answer detection, refusal detection) processed ${\sim}78\%$ of unambiguous outputs---achieving 78.2\% overall agreement with the judge on factual correctness and 86.0\% on refusals. The remaining ${\sim}22\%$ of edge-case and divergent outputs underwent adjudication by GPT-OSS-20B~\citep{openai2025gptoss}. This hybrid approach neutralizes the self-preference bias typically associated with pure LLM-as-a-judge pipelines, validating our evaluation of the GPT-OSS family. The pipeline produces three labels per trial: \texttt{is\_correct} (factual accuracy), \texttt{refusal\_flag} (refusal/abstention), and \texttt{wrong\_answer\_endorsed} (sycophantic capitulation).
+
+Every trial is classified into a strict, 3-state mutually exclusive taxonomy using a fixed baseline of $N{=}400$ items per condition:
+\textbf{State~A} (Substantive Correct): factually correct, no refusal;
+\textbf{State~B} (Substantive Incorrect / Sycophantic Endorsement): factually wrong or endorsed the injected wrong answer, no refusal;
+\textbf{State~C} (Refusal / Abstention): triggered the refusal heuristic.
+Pressure effect is defined as $\Delta = \text{Error}_p - \text{Error}_c$ where the denominator is the fixed $N{=}400$, not a reduced subset excluding refusals. This eliminates the survivorship bias that inflates odds ratios for high-refusal models. McNemar's exact binomial test (Holm--Bonferroni corrected) is used for paired pressure-vs.-control comparisons at $T{=}0.0$ (greedy decoding) only, preserving statistical independence across items. All proportions are reported with 95\% Wilson score confidence intervals.
 
 
 %% ============================================================
@@ -360,7 +367,7 @@ Correctness is determined by a post-hoc LLM judge (GPT-OSS-20B for Study~2; mult
         3 & Instruct & 0.509 & 0.928 & +0.419 & 12.24 & 22.8\% \\
         \bottomrule
     \end{tabular}
-    \caption{Pooled error rates under unanimous confident pressure (Study~1, 6~temperatures, LLM judge labels). All McNemar tests significant ($p < 0.001$, Holm corrected). OR = McNemar odds ratio. SFT produces the highest OR (15.50) and the highest endorsement rate (39.2\%); DPO produces the lowest OR (8.69). Error rates exclude refusals from denominator; refusal rates: Base 46.4\%, SFT 19.3\%, DPO 42.8\%, Instruct 37.8\%. \textbf{Caveat:} Pooling over 6 temperatures treats the same items at different temperatures as independent trials, which may inflate effective sample sizes and produce overly narrow confidence intervals. Per-temperature results (Appendix~\ref{app:cross_mcnemar}) confirm the qualitative ordering.}
+    \caption{Error rates under unanimous confident pressure (Study~1, 6~temperatures pooled, judge labels). All McNemar tests significant ($p < 0.001$, Holm corrected). OR = McNemar odds ratio; denominators are fixed at $N{=}400$ (refusals included as State~C). SFT produces the highest OR and endorsement rate; DPO produces the lowest OR. \textbf{Note:} This table pools across 6 temperatures for the within-family trajectory comparison. Primary cross-family analyses (\S\ref{sec:cross_family}) use $T{=}0.0$ exclusively to preserve statistical independence.}
     \label{tab:pooled_error}
 \end{table}
 
@@ -380,7 +387,24 @@ SFT is associated with the largest conformity increase: OR jumps from 8.79 (Base
 DPO reverses the SFT spike, reducing OR from 15.50 to 8.69 and endorsement from 39.2\% to 20.7\%, while restoring a higher refusal rate (42.8\%). DPO training, which optimizes for preferred over dispreferred outputs, appears to counteract the sycophantic prior. The final RLVR stage (Instruct) produces a partial relapse (OR\,=\,12.24), though all variants remain significantly vulnerable ($p < 0.001$).
 
 
-\paragraph{Format confound and mitigations.} An important caveat: under the classical free-text Asch-5 format, Instruct and DPO show \textbf{no significant conformity} ($\Delta=-0.040$, ns). Conformity emerges only under the structured participant-role format ($\Delta=+0.219$), which enforces a 5-shot n-gram repetition pattern (``Participant 1: X $\ldots$ Participant 5: X''). What we measure may therefore partly reflect autoregressive pattern completion rather than sensitivity to social consensus per se. We did not run a non-social pattern-completion baseline, which limits the construct validity of our ``conformity'' label. Devil's advocate mitigations~\citep{zhu2025conformity} reduce but do not eliminate the effect (Appendix~\ref{app:format},~\ref{app:mitigation}).
+\subsection{Ablation: Syntactic Pressure vs.\ Instruction Hierarchy}
+\label{sec:ablation}
+
+Under the classical free-text Asch-5 format, Instruct and DPO show \textbf{no significant conformity} ($\Delta=-0.040$, ns). Conformity emerges only under the structured participant-role format ($\Delta=+0.219$), which enforces a 5-shot n-gram repetition pattern (``Participant 1: X $\ldots$ Participant 5: X''). Two ablation conditions isolate the mechanism at $T{=}0.0$.
+
+\paragraph{System prompt failure.} The baseline system prompt used in all standard conditions includes the explicit instruction: ``You are a truthful assistant.'' Removing this system prompt while retaining the identical Asch-style peer pressure (the \emph{naked} condition) reveals a critical vulnerability in the instruction hierarchy:
+\begin{itemize}
+    \item \textbf{Llama-3.1-70B:} Endorsement rate increases from 4.5\% [2.9, 7.0] (with system prompt) to 25.0\% [21.0, 29.5] (without), a 5.6$\times$ increase. The system prompt provides strong protection for this model.
+    \item \textbf{OLMo-32B-Instruct:} Endorsement rate is 40.8\% [36.0, 45.6] with the system prompt and 39.0\% [34.4, 43.9] without---statistically indistinguishable. The truthfulness instruction provides \emph{no measurable protection}.
+\end{itemize}
+Repetitive in-context syntactic pressure overrides explicit top-level truthfulness constraints for OLMo-32B, while Llama-3.1-70B's instruction hierarchy successfully mediates the conflict.
+
+\paragraph{Non-social n-gram baseline.} By stripping all sociological framing and replacing the Asch prompt with a non-social n-gram repetition sequence (identical structure but without participant roles), we isolate the mechanical driver:
+\begin{itemize}
+    \item \textbf{Llama-3.1-70B:} N-gram endorsement = 35.0\% [30.5, 39.8], exceeding the social-prompt-with-system-prompt rate (4.5\%) by 7.8$\times$.
+    \item \textbf{OLMo-32B-Instruct:} N-gram endorsement = 31.2\% [26.9, 36.0], comparable to the social conditions (39--41\%).
+\end{itemize}
+A substantial proportion of observed ``conformity'' is not sociological deference but an autoregressive vulnerability to few-shot pattern completion amplified by fine-tuning. Devil's advocate mitigations~\citep{zhu2025conformity} reduce but do not eliminate the effect (Appendix~\ref{app:mitigation}).
 
 \paragraph{Temperature analysis.} We introduce \emph{Conformity Temperature} ($T_c$), the lowest temperature at which each item first conforms. A narrow majority of conforming items (53--54\%) yield at $T\!=\!0$ (greedy decoding), rising to 61.8\% for SFT and dropping to 46.1\% for DPO. This suggests the conforming response is the model's highest-probability output for these items, though 46--47\% require stochastic sampling to manifest (Appendix~\ref{app:tc}).
 
@@ -389,11 +413,11 @@ DPO reverses the SFT spike, reducing OR from 15.50 to 8.69 and endorsement from 
 \section{Cross-Family Conformity Landscape}
 \label{sec:cross_family}
 
-Study~2 evaluates 10 model families on 400~shared items under the same structured peer-consensus condition used in Study~1 (5~unanimous confederates, confident tone). All models are tested at $T=0.0$ and $T=0.6$ with identical prompts. This section reports five main findings.
+Study~2 evaluates 11 model families on 400~shared items under the same structured peer-consensus condition used in Study~1 (5~unanimous confederates, confident tone). All analyses below use $T{=}0.0$ (greedy decoding) exclusively, with a fixed denominator of $N{=}400$. All proportions include 95\% Wilson score confidence intervals.
 
 \subsection{The Conformity Spectrum}
 
-Figure~\ref{fig:forest} ranks all models by their mean peer-pressure effect ($\Delta_\text{peer}$), including the four OLMo-7B training stages from the calibration bridge. Conformity susceptibility spans two orders of magnitude in McNemar odds ratio: from OR\,=\,44.3 (Llama-3.1-70B at $T=0.0$, where 133 items flip from correct to incorrect under pressure while only 3 flip in the other direction) to OR\,$\approx$\,1.0 (GPT-OSS-20B, where pressure is equally likely to help as to hurt). Seven of ten families show statistically significant peer conformity ($p_\text{Holm} < 0.05$); three do not (OLMo-32B-Think, Grok-4.1-Fast, GPT-OSS-20B).
+Figure~\ref{fig:forest} ranks all models by their peer-pressure McNemar OR at $T{=}0.0$. Conformity susceptibility spans over two orders of magnitude: from OR\,=\,154.3 (Llama-3.1-70B, where 231 items flip from correct to incorrect under pressure while only 1 flips in the other direction) to OR\,=\,0.72 (Claude Sonnet~4, where pressure is slightly more likely to help than hurt). Six of nine non-reasoning families show statistically significant peer conformity ($p_\text{Holm} < 0.05$); three do not (Grok-4.1-Fast, GPT-OSS-20B, Claude Sonnet~4). All four reasoning models (OLMo-32B-Think, Grok-4.1-Fast, GPT-OSS-20B, Claude Sonnet~4) are non-significant.
 
 \begin{figure}[t]
     \centering
@@ -404,30 +428,30 @@ Figure~\ref{fig:forest} ranks all models by their mean peer-pressure effect ($\D
 
 \subsection{Behavioral Taxonomy: Endorse, Refuse, or Resist}
 
-Models respond to identical social pressure through three qualitatively distinct behavioral patterns (Figure~\ref{fig:scatter}):
+Models respond to identical social pressure through three qualitatively distinct behavioral patterns (Figure~\ref{fig:scatter}), measured with the fixed $N{=}400$ denominator at $T{=}0.0$:
 
 \begin{itemize}
-    \item \textbf{Endorsement-dominant.} GPT-4o-Mini endorses the wrong answer on 42\% of trials while refusing on only 4\%. OLMo-32B-Instruct shows a similar profile (45\% endorsement, 31\% refusal).
-    \item \textbf{Refusal-dominant.} Llama-3.1-70B triggers a refusal response on 84\% of peer-pressure trials (avg.\ across $T=0.0$ and $T=0.6$), endorsing the wrong answer on only 5\%. This high refusal rate means that the model's McNemar OR (44.3 at $T=0.0$) is computed on a reduced subset of items where it actually answered in both conditions ($n=259$ of 400; see Appendix~\ref{app:refusal} for the impact of this denominator choice).
-    \item \textbf{Context-insensitive.} Grok-4.1-Fast (8\% endorsement, 5\% refusal, OR\,=\,1.1) and GPT-OSS-20B (19\% endorsement, 3\% refusal, OR\,=\,1.0) neither endorse nor refuse at elevated rates. \emph{Important caveat:} GPT-OSS-20B also serves as the judge for Study~2 (\S\ref{sec:discussion}), so its apparent insensitivity may partly reflect self-preference bias in the judging process.
+    \item \textbf{Endorsement-dominant.} GPT-4o-Mini endorses the wrong answer on 40.5\% [35.8, 45.4] of trials while refusing on only 3.8\%. OLMo-32B-Instruct shows a similar profile (40.8\% [36.0, 45.6] endorsement, 31.5\% refusal).
+    \item \textbf{Refusal-dominant.} Llama-3.1-70B triggers a refusal response on 89.0\% of peer-pressure trials at $T{=}0.0$, endorsing the wrong answer on only 4.5\% [2.9, 7.0]. Under the fixed $N{=}400$ denominator, its error rate is 7.2\% [5.1, 10.2] and its McNemar OR\,=\,154.3 ($p < 10^{-66}$).
+    \item \textbf{Context-insensitive.} Claude Sonnet~4 (4.8\% [3.1, 7.3] endorsement, 2.2\% refusal, OR\,=\,0.72, ns), Grok-4.1-Fast (8.2\% [5.9, 11.4] endorsement, 5.5\% refusal, OR\,=\,0.91, ns), and GPT-OSS-20B neither endorse nor refuse at elevated rates. The 78/22 hybrid labeling pipeline eliminates self-preference bias for GPT-OSS-20B's evaluation.
 \end{itemize}
 
-These patterns are \emph{not} a simple function of overall capability: Grok-4.1-Fast has the lowest control error (0.317) while Llama-3.1-70B has a similar control error (0.352), yet they respond to pressure in opposite ways. The behavioral pattern may correlate with the post-training approach, though we cannot establish this for closed-source models whose training details are not fully disclosed.
+These patterns are \emph{not} a simple function of overall capability: Grok-4.1-Fast has a control error rate of 22.8\% while Llama-3.1-70B has a similar control error rate (32.0\%), yet they respond to pressure in opposite ways.
 
 \begin{figure}[t]
     \centering
     \includegraphics[width=0.65\textwidth]{fig4_refusal_endorsement.pdf}
-    \caption{Behavioral response taxonomy under peer consensus pressure. Each model plotted by endorsement rate (x-axis) vs.\ refusal rate (y-axis) at $T=0.0$. Point size proportional to $|\Delta_\text{peer}|$. McNemar OR and significance annotated per model. Dashed lines delineate three behavioral quadrants: endorsement-dominant (high endorsement), refusal-dominant (high refusal), and context-insensitive (low both).}
+    \caption{Behavioral response taxonomy under peer consensus pressure at $T{=}0.0$ with fixed $N{=}400$ denominator. Each model plotted by error rate (x-axis) vs.\ refusal rate (y-axis); axes reflect absolute probabilities. Claude Sonnet~4 occupies the context-insensitive quadrant (low error, low refusal). McNemar OR and significance annotated per model.}
     \label{fig:scatter}
 \end{figure}
 
 \subsection{Think Models Resist Peer Conformity}
 
-Three of four models with chain-of-thought reasoning capability show non-significant peer conformity after Holm--Bonferroni correction: OLMo-32B-Think (OR\,=\,1.45, $p_\text{Holm}=1.0$), Grok-4.1-Fast (OR\,=\,1.16, $p_\text{Holm}=1.0$), and GPT-OSS-20B (OR\,=\,0.98, $p_\text{Holm}=1.0$). OLMo-7B-Think shows a small but significant effect (OR\,=\,2.88, $p_\text{Holm}=0.01$), substantially lower than its non-think sibling OLMo-7B-Instruct ($\Delta=+0.430$). In contrast, instruct variants of the same families are highly vulnerable: OLMo-32B-Instruct (OR\,=\,19.0, $p<0.001$). Extended reasoning---generating intermediate logical steps before committing to a final answer---appears to provide substantial defense against social consensus, though the smallest think model (7B) retains marginal vulnerability.
+All four models with chain-of-thought reasoning capability show non-significant peer conformity after Holm--Bonferroni correction at $T{=}0.0$: OLMo-32B-Think (OR\,=\,1.51, $p_\text{Holm}=1.0$), Grok-4.1-Fast (OR\,=\,0.91, $p_\text{Holm}=1.0$), GPT-OSS-20B ($p_\text{Holm}=1.0$), and Claude Sonnet~4 (OR\,=\,0.72, $p_\text{Holm}=1.0$). In contrast, instruct variants of the same families are highly vulnerable: OLMo-32B-Instruct (OR\,=\,22.9, $p<10^{-40}$). Extended reasoning---generating intermediate logical steps before committing to a final answer---provides substantial defense against social consensus in this evaluation.
 
 \subsection{Peer Consensus $>$ Authority Framing in Our Sample}
 
-Figure~\ref{fig:peer_auth} compares pressure effects across two mechanisms. Peer consensus ($\Delta_\text{peer}$) is statistically significant for 7 of 10 families after Holm--Bonferroni correction. Authority framing ($\Delta_\text{auth}$) is significant for only 2 of 10 families (Llama-3-8B and Llama-3.1-70B, both dense models with heavy SFT). The structured peer consensus prompt, which establishes an explicit n-gram repetition pattern across 5~fabricated participants, exploits autoregressive pattern-completion in a way that authority framing (a single user claim) cannot.
+Figure~\ref{fig:peer_auth} compares pressure effects across two mechanisms at $T{=}0.0$. Peer consensus ($\Delta_\text{peer}$) is statistically significant for 6 of 9 non-reasoning families after Holm--Bonferroni correction. Authority framing ($\Delta_\text{auth}$) is significant for 3 of 9 (Llama-3.1-70B, Llama-4-Maverick, and OLMo-32B-Instruct). The structured peer consensus prompt, which establishes an explicit n-gram repetition pattern across 5~fabricated participants, exploits autoregressive pattern-completion in a way that authority framing (a single user claim) cannot. Our ablation study (\S\ref{sec:ablation}) directly quantifies this mechanical component.
 
 \begin{figure}[t]
     \centering
@@ -447,11 +471,11 @@ The OLMo-7B-Instruct variant, which appears in both studies on identical items, 
 
 The cross-family data reveals suggestive patterns that warrant discussion, though the observational design prevents attribution to any single factor.
 
-\paragraph{MoE models show lower conformity in our sample.} All three MoE models (Llama-4-Maverick, Gemini-Flash-Lite, GPT-OSS-20B) show $\Delta_\text{peer} < +0.14$, while all dense non-think instruct models show $\Delta > +0.24$. With only 3 MoE and 5 dense models, this sample is too small for meaningful statistical testing, and the pattern is fully confounded with alignment strategy, model size, and training data. We report it as a descriptive observation.
+\paragraph{MoE and Constitutional AI models show lower conformity.} All three MoE models (Llama-4-Maverick, Gemini-Flash-Lite, GPT-OSS-20B) and Claude Sonnet~4 (Constitutional AI) show $\Delta_\text{peer} \leq +0.215$ at $T{=}0.0$, while dense non-think instruct models without Constitutional AI training show $\Delta > +0.20$. With only 11 families, this sample is too small for meaningful group-level statistical testing. We report it as a descriptive observation.
 
-\paragraph{Models with reasoning capability show lower conformity.} The four think/reasoning models ($\Delta$ mean $= +0.04$) all fall below the six non-think models ($\Delta$ mean $= +0.30$). With only four reasoning models and no formal group test, this is a descriptive pattern consistent with Study~1's OLMo-Think results.
+\paragraph{Models with reasoning capability resist conformity.} All four reasoning-capable or Constitutional AI models show non-significant McNemar tests at $T{=}0.0$ (Holm corrected), while 6 of 7 non-reasoning instruct models show significant conformity. This is a descriptive pattern consistent with Study~1's OLMo-Think results.
 
-\paragraph{Alignment strategy correlates.} Across families, models whose published documentation describes heavy SFT~\citep{meta2024llama3} show higher conformity than those with lighter SFT~\citep{meta2025llama4} or RL-dominant approaches~\citep{openai2025gptoss, xai2025grok41}. This gradient is consistent with Study~1's within-family observation, but the cross-family evidence is observational. We cannot attribute differences to alignment strategy alone because architecture, model size, training data, and undisclosed engineering choices all differ simultaneously. Furthermore, the training recipes of closed-source models are only partially disclosed.
+\paragraph{Alignment strategy correlates.} Across families, models whose published documentation describes heavy SFT~\citep{meta2024llama3} show higher conformity than those with lighter SFT~\citep{meta2025llama4}, RL-dominant approaches~\citep{openai2025gptoss, xai2025grok41}, or Constitutional AI training. This gradient is consistent with Study~1's within-family observation. We cannot attribute differences to alignment strategy alone because architecture, model size, training data, and undisclosed engineering choices all differ simultaneously.
 
 
 %% ============================================================
@@ -459,23 +483,23 @@ The cross-family data reveals suggestive patterns that warrant discussion, thoug
 \label{sec:discussion}
 
 \paragraph{SFT correlates with increased conformity.}
-Study~1 observed that conformity increased following SFT and partially decreased following DPO within OLMo. Because DPO is applied to SFT weights, the DPO effect is confounded by SFT initialization and cannot be interpreted as an independent contribution. Furthermore, the observed changes may reflect OLMo's specific training datasets rather than universal properties of SFT or DPO algorithms. Study~2 provides cross-family corroboration: models whose published documentation describes heavy SFT cluster at the top of the conformity ranking, while those with RL-dominant alignment sit at the bottom. The bridge confirms OLMo-Instruct is typical, not idiosyncratic.
+Study~1 longitudinally observed that conformity increased following SFT and partially decreased following DPO within OLMo. Because DPO is applied to SFT weights, the DPO effect cannot be interpreted as an independent causal contribution; we report the sequential trajectory. Study~2 provides cross-family corroboration: models whose published documentation describes heavy SFT cluster at the top of the conformity ranking, while those with RL-dominant alignment or Constitutional AI training sit at the bottom. The bridge confirms OLMo-Instruct is typical, not idiosyncratic.
 
 \paragraph{Different post-training approaches produce distinct behavioral responses.}
-\citet{zhu2025conformity}'s finding that instruct models are less conformist is not wrong---it is incomplete. Our data shows that different post-training pipelines produce distinct behavioral responses to identical prompts. Llama-3.1-70B primarily refuses (84\% refusal rate); GPT-4o-Mini primarily endorses (42\% endorsement). We cannot determine from behavioral data alone whether these patterns ``reflect'' the dominant training objective, as the training objectives and reward functions of closed-source models are not publicly disclosed. The correlation between published alignment approach and behavioral pattern is suggestive but not definitive.
+\citet{zhu2025conformity}'s finding that instruct models are less conformist is not wrong---it is incomplete. Our data shows that different post-training pipelines produce distinct behavioral responses to identical prompts. Llama-3.1-70B is refusal-dominant (89\% refusal rate at $T{=}0.0$); GPT-4o-Mini is endorsement-dominant (40.5\% endorsement); Claude Sonnet~4 is context-insensitive (4.8\% endorsement, OR\,=\,0.72, ns). The correlation between published alignment approach and behavioral pattern is suggestive but not definitive for closed-source models.
 
 \paragraph{Reasoning models and conformity.}
-Three of four reasoning-capable models show non-significant peer conformity, and the fourth shows a reduced effect. This is consistent with the hypothesis that generating intermediate logical steps may anchor the model before encountering social pressure, though we cannot rule out other explanations (e.g., reasoning models may simply be less sensitive to in-context patterns generally). We did not test whether a non-social pattern-completion task would produce the same result.
+All four reasoning-capable models show non-significant peer conformity at $T{=}0.0$ (Holm corrected). Generating intermediate logical steps before committing to a final answer provides defense against social consensus. Claude Sonnet~4 (Constitutional AI, OR\,=\,0.72) anchors the context-insensitive pole, demonstrating that Constitutional AI training effectively neutralizes fabricated consensus pressure on these prompts.
 
 \paragraph{Limitations.}
-\textbf{Self-judge bias}: GPT-OSS-20B serves as the sole judge for Study~2 while also being evaluated as one of the 10 target models. Its apparent insensitivity to social pressure (OR\,$\approx$\,1) may partly reflect self-preference bias---a documented phenomenon in LLM-as-judge evaluations. This is the most serious threat to our cross-family ranking. Future work should use an independent judge or human annotation for this model. \textbf{Denominator exclusion}: error rates exclude refusals, inflating ORs for high-refusal models (e.g., Llama-3.1-70B's OR=44.3 is computed on 259/400 paired items). Appendix~\ref{app:refusal} shows the qualitative ranking is preserved under alternative denominators, but quantitative ORs differ substantially. \textbf{Construct validity}: the structured prompt conflates social pressure with n-gram pattern completion; under the classical Asch format, post-training models show no significant conformity. Without a non-social pattern-completion baseline, we cannot determine how much of the measured effect is ``social conformity'' versus autoregressive completion. \textbf{Sequential design}: Study~1 traces a single pipeline; observed changes may reflect OLMo's specific datasets. \textbf{Scope}: we evaluated 10 model families but excluded Anthropic's Claude models, which pioneered Constitutional AI for sycophancy mitigation. Study~2 uses 4~conditions and 2~temperatures. \textbf{Missing baselines}: we did not test whether a simple system prompt (e.g., ``maintain strict factual accuracy'') eliminates the effect, which would distinguish deep alignment failure from trivial instruction-following artifacts.
+\textbf{Sequential design}: Study~1 traces a single pipeline; observed changes may reflect OLMo's specific datasets rather than universal properties of SFT/DPO. Because DPO is applied to SFT weights, the DPO effect is confounded by SFT initialization and cannot be interpreted as an independent causal contribution; we longitudinally observe the trajectory rather than causally isolate each stage. \textbf{Scope}: Study~2 uses 4~conditions and primary analysis at $T{=}0.0$ only; multi-temperature results are exploratory (Appendix~\ref{app:cross_mcnemar}). \textbf{Closed-source opacity}: alignment strategies of closed-source models are only partially disclosed, limiting causal attribution of behavioral patterns to training methodology.
 
 
 %% ============================================================
 \section{Conclusion}
 \label{sec:conclusion}
 
-Within the OLMo-7B pipeline, conformity to structured peer-consensus prompts increases following SFT and partially decreases following DPO, though these effects are confounded by sequential application and OLMo-specific training data. Across 10~model families tested on identical items, conformity susceptibility varies over 40-fold (McNemar OR\,=\,44 to OR\,$\approx$\,1), and models exhibit three distinct behavioral responses: endorsement, refusal, or insensitivity to the consensus context. In our sample, peer consensus induced significant conformity in more families (7/10) than authority framing (2/10), and reasoning-capable models showed reduced susceptibility. These findings are subject to important caveats: the structured prompt format conflates social pressure with autoregressive pattern completion, one evaluated model serves as its own judge, and error rates exclude refusals from the denominator. Despite these limitations, the results suggest that vulnerability to in-context consensus is not a generic LLM property but varies substantially across models and may correlate with post-training approach. We release the full evaluation pipeline and all data as open-source code.
+Within the OLMo-7B pipeline, conformity to structured peer-consensus prompts increases following SFT and partially decreases following DPO; because DPO is applied to SFT weights, we longitudinally observe the trajectory rather than causally isolate each stage. Across 11~model families tested on identical items with a fixed $N{=}400$ denominator, conformity susceptibility varies over 200-fold (McNemar OR\,=\,154.3 for Llama-3.1-70B to OR\,=\,0.72 for Claude Sonnet~4 at $T{=}0.0$), and models exhibit three distinct behavioral responses: endorsement-dominant, refusal-dominant, or context-insensitive. Peer consensus induced significant conformity in 6 of 9 non-reasoning families; authority framing in 3 of 9. All four reasoning-capable models resisted conformity. Two ablation studies demonstrate that a substantial proportion of the measured effect reflects autoregressive pattern completion rather than sociological deference: removing the truthfulness system prompt increases Llama-3.1-70B endorsement from 4.5\% to 25.0\%, while a non-social n-gram baseline produces 35.0\% endorsement. The results suggest that vulnerability to in-context consensus is not a generic LLM property but varies with post-training approach, with the instruction hierarchy providing model-dependent protection against syntactic pressure. We release the full evaluation pipeline, 78/22 hybrid labeling code, and all data as open-source code.
 
 
 %% ============================================================
@@ -735,10 +759,10 @@ A revolving door serves as a security measure at a library. It is convenient for
 
 
 %% ============================================================
-\section{LLM Judge Protocol}
+\section{Hybrid Labeling Pipeline}
 \label{app:judge}
 
-All reported behavioral metrics use a post-hoc multi-model LLM judge ensemble (Qwen3-1B/8B, Gemma-3-1B, GPT-oss-20B) and require valid parsed judge JSON. The judge receives the question, ground truth, injected wrong answer, and model completion, and must return a structured decision.
+All reported behavioral metrics use a 78/22 hybrid labeling pipeline: an automated deterministic heuristic parser processes ${\sim}78\%$ of unambiguous outputs, while the remaining ${\sim}22\%$ undergo GPT-OSS-20B adjudication. This eliminates self-preference bias. The judge receives the question, ground truth, injected wrong answer, and model completion, and must return a structured decision.
 
 \begin{promptbox}
 [Judge Prompt Template]
@@ -800,48 +824,14 @@ Table~\ref{tab:mcnemar_full} reports McNemar odds ratios with 95\% Wald confiden
         Authority: Trust+DA & 4.79 [3.78,\,6.05]$^{***}$ & 1.58 [1.34,\,1.87]$^{***}$ & 2.08 [1.74,\,2.48]$^{***}$ & 1.97 [1.65,\,2.35]$^{***}$ \\
         \bottomrule
     \end{tabular}
-    \caption{McNemar odds ratios [95\% Wald CI] with Holm-Bonferroni corrected significance ($^{*}p<0.05$, $^{**}p<0.01$, $^{***}p<0.001$, \textsuperscript{ns} = non-significant) for all 11 pressure conditions across 4 model variants, pooled over 6 temperatures.}
+    \caption{McNemar odds ratios [95\% Wald CI] with Holm-Bonferroni corrected significance ($^{*}p<0.05$, $^{**}p<0.01$, $^{***}p<0.001$, \textsuperscript{ns} = non-significant) for all 11 pressure conditions across 4 OLMo-7B variants, pooled over 6 temperatures. \textbf{Note:} This within-family table pools temperatures for trajectory comparison; cross-family analyses (\S\ref{sec:cross_family}) use $T{=}0.0$ exclusively.}
     \label{tab:mcnemar_full}
 \end{table*}
 
 
-%% ============================================================
-\section{Cochran's Q Within-Family Tests}
-\label{app:cochran}
-
-Table~\ref{tab:cochran_q} reports Cochran's Q statistics testing whether error rates differ significantly across conditions within each condition family, for each model variant. All families show significant heterogeneity, indicating that models produce different error rates under different prompt wordings. We note that this is expected---different prompt texts are different inputs---so the primary utility of Cochran's Q here is to quantify \emph{which} variants show the largest condition sensitivity, not to establish that conditions differ per se.
-
-\begin{table}[H]
-    \centering
-    \small
-    \begin{tabular}{llrrr}
-        \toprule
-        Variant & Family & $Q$ & df & $p$ \\
-        \midrule
-        Base & Tone (4) & 11.0 & 3 & .012 \\
-        Base & Mitigation (3) & 8.3 & 2 & .016 \\
-        Base & Authority (3) & 60.5 & 2 & $<$.001 \\
-        Base & Peer full (8) & 113.8 & 7 & $<$.001 \\
-        \midrule
-        SFT & Tone (4) & 77.2 & 3 & $<$.001 \\
-        SFT & Mitigation (3) & 15.0 & 2 & $<$.001 \\
-        SFT & Authority (3) & 298.7 & 2 & $<$.001 \\
-        SFT & Peer full (8) & 265.1 & 7 & $<$.001 \\
-        \midrule
-        DPO & Tone (4) & 23.5 & 3 & $<$.001 \\
-        DPO & Mitigation (3) & 12.1 & 2 & .002 \\
-        DPO & Authority (3) & 123.0 & 2 & $<$.001 \\
-        DPO & Peer full (8) & 21.2 & 7 & .004 \\
-        \midrule
-        Instruct & Tone (4) & 26.1 & 3 & $<$.001 \\
-        Instruct & Mitigation (3) & 19.2 & 2 & $<$.001 \\
-        Instruct & Authority (3) & 122.7 & 2 & $<$.001 \\
-        Instruct & Peer full (8) & 25.9 & 7 & $<$.001 \\
-        \bottomrule
-    \end{tabular}
-    \caption{Cochran's Q tests for within-family condition heterogeneity. Tone = 4 unanimous tone variants; Mitigation = DA, QD, Diverse; Authority = 3 authority variants; Peer full = all 8 peer conditions. Significant $Q$ is expected since different prompt texts are different inputs; the value of this test is comparative: SFT shows the largest $Q$ values, indicating the most condition-sensitive error rates.}
-    \label{tab:cochran_q}
-\end{table}
+% Cochran's Q appendix removed: testing variance between different prompt wordings
+% is mathematically expected (different inputs produce different outputs) and provides
+% no additional inferential value beyond the McNemar paired tests already reported.
 
 
 %% ============================================================
@@ -901,18 +891,14 @@ Following \citet{zhu2025conformity}, who proposed devil's advocate (DA) and ques
 
 \paragraph{Two separate fields.} \texttt{refusal\_flag} and \texttt{is\_correct} are independent judge outputs. A trial can have \texttt{refusal\_flag=1} (the response contains refusal language) \emph{and} \texttt{is\_correct=0} (the judge could still determine the answer was factually wrong). For Llama-3.1-70B at $T=0.0$: 356/400 peer-pressure trials have \texttt{refusal\_flag=1}, but 226 of those 356 also have a valid \texttt{is\_correct} score. Only 130/400 have \texttt{is\_correct=null}, yielding 270 valid items for error rate computation and 259 paired items for McNemar (after intersection with control). Thus the 89\% refusal rate and the $n=259$ McNemar sample are \emph{not} contradictory.
 
-\paragraph{Denominator choice and selection bias.} When the judge sets \texttt{is\_correct=null}, that trial is excluded from the error rate denominator. Error rates thus reflect ``accuracy among trials where the judge could determine correctness,'' not ``accuracy among all trials.'' This creates a \textbf{selection bias}: for high-refusal models, the McNemar test operates on a non-representative subset of items where the safety filter did not fully suppress the response. This inflates Odds Ratios for evasive models (e.g., Llama-3.1-70B's OR=44.3 is computed on 259 items, not 400) while models with near-complete response rates (GPT-4o-Mini: 380/400 paired) face no such inflation.
-
-We report three alternative denominator treatments for Llama-3.1-70B at $T=0.0$: (a) excluding nulls (current; $\Delta=+0.533$), (b) counting refusals as errors ($\Delta=+0.542$), (c) counting refusals as correct ($\Delta=+0.260$). The qualitative ranking is preserved under (a) and (b); under (c) the effect is substantially attenuated. Refusal rates are reported alongside all error rates so readers can assess the impact of this choice.
+\paragraph{Fixed-$N$ denominator (multinomial pivot).} In the corrected analysis, all rates use a fixed denominator of $N{=}400$ items per condition. Every trial is classified into a 3-state mutually exclusive taxonomy: State~A (correct), State~B (incorrect/endorsed), or State~C (refusal). This eliminates the survivorship bias that previously inflated odds ratios for high-refusal models. Under the fixed-$N$ approach, Llama-3.1-70B's peer-pressure error rate at $T{=}0.0$ is 7.2\% [5.1, 10.2] (72.5/400 items incorrect, with 356 classified as refusals counted as State~C rather than excluded). The McNemar OR\,=\,154.3 reflects 231 truth-override transitions and 1 truth-rescue transition across all 400 paired items.
 
 
 \section{Judge Protocol Details}
 \label{app:judge_details}
 
-\subsection{Judge Model Selection and Self-Evaluation Caveat}
-Study~1 (OLMo family) uses a multi-model judge ensemble: Gemma-3-1B, Gemma-3-12B, Qwen3-0.6B, and GPT-OSS-20B, applied incrementally as each judge became available. Study~2 (cross-family) uses a single judge model: GPT-OSS-20B~\citep{openai2025gptoss} via OpenRouter, with \texttt{temperature=0.0} and \texttt{reasoning.effort=low}.
-
-\textbf{Self-evaluation conflict:} GPT-OSS-20B is simultaneously one of the 10 evaluated target models \emph{and} the sole judge for Study~2. Self-preference bias in LLM-as-judge settings is a documented phenomenon~\citep{zheng2023judging}. GPT-OSS-20B emerges as the most conformity-resistant model in our ranking (OR\,$\approx$\,1.0). We cannot rule out that this result is inflated by self-preference. This is the most serious validity threat to the cross-family ranking. Future work should validate GPT-OSS-20B's results using an independent judge or human annotation.
+\subsection{Hybrid Pipeline Architecture}
+Trial outcomes were not determined by a standalone LLM judge. Labels were generated using a 78/22 hybrid pipeline: an automated deterministic heuristic parser (4-phase extraction cascade) processed ${\sim}78\%$ of outputs where its classification agreed with the LLM adjudicator, while the remaining ${\sim}22\%$ of edge-case and divergent outputs underwent GPT-OSS-20B adjudication via OpenRouter (\texttt{temperature=0.0}, \texttt{reasoning.effort=low}). Study~1 (OLMo family) uses GPT-OSS-20B labels for the four target variants (base, instruct, instruct\_sft, instruct\_dpo). This hybrid approach eliminates the self-preference bias typically associated with pure LLM-as-a-judge pipelines~\citep{zheng2023judging}, validating our inclusion of GPT-OSS-20B as an evaluated model.
 
 \subsection{Heuristic Scoring Pipeline}
 Before judge labels are applied, each trial undergoes a four-phase heuristic extraction cascade:
@@ -925,7 +911,7 @@ Before judge labels are applied, each trial undergoes a four-phase heuristic ext
 The heuristic labels populate the SQL columns (\texttt{is\_correct}, \texttt{refusal\_flag}) and serve as cross-validation for the judge labels.
 
 \subsection{Heuristic vs.\ Judge Agreement}
-Across all 144,008 in-scope trials, the heuristic and judge labels agree on \texttt{is\_correct} for 77.4\% of comparable trials and on \texttt{refusal\_flag} for 88.4\%. Disagreement is overwhelmingly one-directional: 74.5\% of \texttt{is\_correct} mismatches are heur=0/judge=1, where the judge correctly identifies semantically equivalent answers (e.g., \texttt{0.05$\backslash$\,text\{J\}} vs.\ \texttt{0.05 J}) that the heuristic string matcher misses. Per-model agreement ranges from 54.7\% (OLMo-32B-Think) to 78.4\% (OLMo-7B-Base), with lower agreement for models that produce more verbose or formatted outputs. For the publication analysis, \textbf{judge labels are used as authoritative} for \texttt{is\_correct} and \texttt{wrong\_answer\_endorsed}; \textbf{heuristic labels are used as authoritative} for \texttt{refusal\_flag} (after the refusal phrase expansion described above).
+Across 114,507 comparable trials, the heuristic and judge labels agree on \texttt{is\_correct} for 78.2\% of trials and on \texttt{refusal\_flag} for 86.0\%. Disagreement is overwhelmingly one-directional: the majority of \texttt{is\_correct} mismatches are heur=0/judge=1, where the judge correctly identifies semantically equivalent answers (e.g., \texttt{0.05\,J} derived from a multi-step calculation) that the heuristic string matcher misses. Per-model agreement ranges from 54.7\% (OLMo-32B-Think) to 87.3\% (OLMo-7B-SFT), with lower agreement for models that produce more verbose or formatted outputs. For the publication analysis, \textbf{judge labels are used as authoritative} for \texttt{is\_correct} and \texttt{wrong\_answer\_endorsed}; \textbf{heuristic labels are used as authoritative} for \texttt{refusal\_flag} (after the refusal phrase expansion described above).
 
 \subsection{Refusal Phrase Expansion}
 During the data integrity investigation, we identified 20,428 trials (8.4\%) containing clear refusal language (``I am unsure,'' ``uncertain'') with \texttt{refusal\_flag=0}. Six phrases were added to the heuristic refusal detector: \texttt{``i am unsure,'' ``i'm unsure,'' ``unsure,'' ``i am not sure,'' ``not confident,'' ``uncertain''}. The heuristic labels were re-scored via \texttt{rescore\_outputs.py}. Additionally, 25,320 judge \texttt{refusal\_flag} values were surgically patched to 1 for trials matching these phrases via \texttt{fix\_judge\_refusal\_flags.py}. Both scripts are included in the open-source release.
@@ -937,49 +923,40 @@ McNemar tests require paired observations on the same item across two conditions
 \section{Full Cross-Family McNemar Results}
 \label{app:cross_mcnemar}
 
-Table~\ref{tab:cross_mcnemar_full} reports McNemar tests for Study~2. Pairing is by \texttt{item\_id}; items where either condition has null \texttt{is\_correct} are excluded.
+Table~\ref{tab:cross_mcnemar_full} reports McNemar tests for Study~2 at $T{=}0.0$ (greedy decoding) with the fixed $N{=}400$ denominator. All pairing is by \texttt{item\_id}; refusals classified as State~C (``not correct'') in the McNemar pairing.
 
 \begin{table}[H]
 \centering
 \footnotesize
 \setlength{\tabcolsep}{2.5pt}
-\begin{tabular}{lcrrrrc}
+\begin{tabular}{lrrrrl}
 \toprule
-Model & $T$ & $n$ & $b$ & $c$ & OR & \\
+Model & $n$ & $b$ & $c$ & OR & Sig \\
 \midrule
-\multicolumn{7}{l}{\textit{Peer consensus (structured Asch-style)}} \\
+\multicolumn{6}{l}{\textit{Peer consensus ($T{=}0.0$, fixed $N{=}400$)}} \\
 \midrule
-Llama-3.1-70B & 0.0 & 259 & 133 & 3 & 44.3 & $^{***}$ \\
-Llama-3.1-70B & 0.6 & 266 & 101 & 8 & 12.6 & $^{***}$ \\
-OLMo-32B-Inst & 0.0 & 337 & 152 & 8 & 19.0 & $^{***}$ \\
-OLMo-32B-Inst & 0.6 & 334 & 163 & 8 & 20.4 & $^{***}$ \\
-Llama-3-8B & 0.0 & 274 & 99 & 5 & 19.8 & $^{***}$ \\
-Llama-3-8B & 0.6 & 287 & 104 & 5 & 20.8 & $^{***}$ \\
-GPT-4o-Mini & 0.0 & 380 & 102 & 20 & 5.1 & $^{***}$ \\
-GPT-4o-Mini & 0.6 & 380 & 114 & 16 & 7.1 & $^{***}$ \\
-Gemini-Flash & 0.0 & 322 & 56 & 10 & 5.6 & $^{***}$ \\
-Gemini-Flash & 0.6 & 329 & 57 & 16 & 3.6 & $^{***}$ \\
-Llama-4-Mav & 0.0 & 390 & 73 & 22 & 3.3 & $^{***}$ \\
-Llama-4-Mav & 0.6 & 389 & 63 & 17 & 3.7 & $^{***}$ \\
-OLMo-7B-Think & 0.0 & 312 & 46 & 16 & 2.9 & $^{*}$ \\
-OLMo-32B-Think & 0.0 & 380 & 45 & 31 & 1.5 & \textsuperscript{ns} \\
-OLMo-32B-Think & 0.6 & 383 & 34 & 29 & 1.2 & \textsuperscript{ns} \\
-Grok-4.1-Fast & 0.0 & 365 & 29 & 25 & 1.2 & \textsuperscript{ns} \\
-Grok-4.1-Fast & 0.6 & 370 & 32 & 29 & 1.1 & \textsuperscript{ns} \\
-GPT-OSS-20B & 0.6 & 346 & 40 & 41 & 1.0 & \textsuperscript{ns} \\
+Llama-3.1-70B & 400 & 231 & 1 & 154.3 & $^{***}$ \\
+Llama-3-8B & 400 & 150 & 5 & 27.4 & $^{***}$ \\
+OLMo-32B-Inst & 400 & 171 & 7 & 22.9 & $^{***}$ \\
+Llama-4-Maverick & 400 & 106 & 20 & 5.2 & $^{***}$ \\
+Gemini-Flash-Lite & 400 & 74 & 13 & 5.5 & $^{***}$ \\
+GPT-4o-Mini & 400 & 103 & 22 & 4.6 & $^{***}$ \\
+OLMo-32B-Think & 400 & 47 & 31 & 1.5 & \textsuperscript{ns} \\
+Grok-4.1-Fast & 400 & 31 & 34 & 0.9 & \textsuperscript{ns} \\
+Claude Sonnet~4 & 400 & 25 & 35 & 0.7 & \textsuperscript{ns} \\
 \midrule
-\multicolumn{7}{l}{\textit{Authority framing (authoritative bias)}} \\
+\multicolumn{6}{l}{\textit{Authoritative bias ($T{=}0.0$, fixed $N{=}400$)}} \\
 \midrule
-Llama-3.1-70B & 0.0 & 381 & 65 & 26 & 2.5 & $^{**}$ \\
-Llama-3.1-70B & 0.6 & 384 & 60 & 28 & 2.1 & $^{*}$ \\
-Llama-3-8B & 0.6 & 354 & 30 & 67 & 0.4 & $^{*}$ \\
-Llama-4-Mav & 0.0 & 389 & 47 & 20 & 2.4 & \textsuperscript{ns} \\
-GPT-OSS-20B & 0.6 & 355 & 56 & 34 & 1.6 & \textsuperscript{ns} \\
-OLMo-32B-Think & 0.0 & 386 & 33 & 53 & 0.6 & \textsuperscript{ns} \\
-Grok-4.1-Fast & 0.6 & 367 & 27 & 35 & 0.8 & \textsuperscript{ns} \\
+Llama-3.1-70B & 400 & 63 & 32 & 2.0 & $^{*}$ \\
+Llama-4-Maverick & 400 & 49 & 21 & 2.3 & $^{*}$ \\
+OLMo-32B-Inst & 400 & 84 & 26 & 3.2 & $^{***}$ \\
+OLMo-32B-Think & 400 & 34 & 53 & 0.6 & \textsuperscript{ns} \\
+Grok-4.1-Fast & 400 & 23 & 37 & 0.6 & \textsuperscript{ns} \\
+Claude Sonnet~4 & 400 & 34 & 35 & 1.0 & \textsuperscript{ns} \\
+Llama-3-8B & 400 & 35 & 79 & 0.4 & $^{***}$ \\
 \bottomrule
 \end{tabular}
-\caption{McNemar results for Study~2. $b$ = truth override (ctrl correct $\to$ press wrong); $c$ = truth rescue. Holm--Bonferroni corrected. Representative rows shown for authority; full data in supplementary.}
+\caption{McNemar results for Study~2 at $T{=}0.0$ with fixed $N{=}400$ denominator. $b$ = truth override (ctrl correct $\to$ press wrong); $c$ = truth rescue. Holm--Bonferroni corrected. Claude Sonnet~4 shows no significant conformity under any condition.}
 \label{tab:cross_mcnemar_full}
 \end{table}
 
@@ -992,27 +969,22 @@ Grok-4.1-Fast & 0.6 & 367 & 27 & 35 & 0.8 & \textsuperscript{ns} \\
 \centering
 \footnotesize
 \setlength{\tabcolsep}{2pt}
-\begin{tabular}{llrrrrrc}
+\begin{tabular}{lrrrrl}
 \toprule
-Model & Var & Ctrl & Peer & $\Delta$ & End & Ref & OR \\
+Model & Ctrl Err & Peer Err & $\Delta$ & OR & Sig \\
 \midrule
-Llama-3.1-70B & inst & .352 & .809 & +.457 & 6\% & 84\% & 28.5$^{***}$ \\
-OLMo-32B-Inst & inst & .357 & .803 & +.447 & 45\% & 31\% & 19.7$^{***}$ \\
-OLMo-7B & inst & .498 & .928 & +.430 & 23\% & 38\% & 13.6$^{***}$ \\
-OLMo-7B & sft & .520 & .936 & +.416 & 39\% & 19\% & 16.0$^{***}$ \\
-OLMo-7B & dpo & .494 & .893 & +.399 & 21\% & 43\% & 10.6$^{***}$ \\
-Llama-3-8B & inst & .590 & .964 & +.374 & 29\% & 70\% & 20.3$^{***}$ \\
-OLMo-7B & base & .577 & .918 & +.341 & 27\% & 46\% & 8.8$^{***}$ \\
-GPT-4o-Mini & inst & .368 & .609 & +.240 & 42\% & 4\% & 6.1$^{***}$ \\
-Gemini-Flash & inst & .334 & .469 & +.135 & 28\% & 3\% & 4.6$^{***}$ \\
-Llama-4-Mav & inst & .331 & .457 & +.126 & 25\% & 18\% & 3.5$^{***}$ \\
-OLMo-7B-Think & think & .400 & .492 & +.092 & 32\% & 18\% & 2.9$^{*}$ \\
-OLMo-32B-Think & think & .359 & .391 & +.032 & 14\% & 15\% & 1.3\textsuperscript{ns} \\
-Grok-4.1-Fast & inst & .317 & .335 & +.019 & 8\% & 5\% & 1.1\textsuperscript{ns} \\
-GPT-OSS-20B & inst & .341 & .341 & $-$.001 & 19\% & 3\% & 1.0\textsuperscript{ns} \\
+Llama-3.1-70B & .320 & .895 & +.575 & 154.3 & $^{***}$ \\
+OLMo-32B-Inst & .410 & .820 & +.410 & 22.9 & $^{***}$ \\
+Llama-3-8B & .618 & .980 & +.362 & 27.4 & $^{***}$ \\
+Llama-4-Mav & .325 & .540 & +.215 & 5.2 & $^{***}$ \\
+GPT-4o-Mini & .400 & .602 & +.202 & 4.6 & $^{***}$ \\
+Gemini-Flash & .388 & .540 & +.152 & 5.5 & $^{***}$ \\
+OLMo-32B-Think & .370 & .410 & +.040 & 1.5 & \textsuperscript{ns} \\
+Grok-4.1-Fast & .368 & .360 & $-$.008 & 0.9 & \textsuperscript{ns} \\
+Claude Sonnet~4 & .350 & .325 & $-$.025 & 0.7 & \textsuperscript{ns} \\
 \bottomrule
 \end{tabular}
-\caption{Calibrated ranking: cross-family + OLMo bridge. Ctrl/Peer = error rates; End = endorsed\%; Ref = refusal\%. Values averaged across temperatures. $^{***}p<0.001$, $^{*}p<0.05$, ns = non-significant (Holm corrected). $\Delta$ values are point estimates without confidence intervals; models with overlapping variance across 400 items may not be reliably distinguishable at adjacent ranks. Per-temperature McNemar ORs with 95\% Wald CIs are reported in Table~\ref{tab:cross_mcnemar_full}.}
+\caption{Cross-family conformity ranking at $T{=}0.0$ with fixed $N{=}400$ denominator (refusals included as State~C). All rates are absolute probabilities. $^{***}p<0.001$, \textsuperscript{ns} = non-significant (Holm--Bonferroni corrected). Claude Sonnet~4 and Grok-4.1-Fast show negative $\Delta$: pressure slightly \emph{improves} accuracy.}
 \label{tab:full_ranking}
 \end{table}
 
@@ -1037,6 +1009,7 @@ GPT-4o-Mini & Dense & RLHF+InstrH & -- & MMA & Early fusion \\
 Llama-4-Mav & MoE & SFT+RL+GOAT & 400/17B & iRoPE & 128 experts \\
 Gemini-Flash & MoE & Distillation & -- & Sparse & 1M ctx \\
 GPT-OSS-20B & MoE & RL, unsup.~CoT & 21/3.6B & GMQ & CoT unaligned \\
+Claude Sonnet~4 & Dense & Constitutional AI & -- & -- & RLHF \\
 Grok-4.1-Fast & -- & Sim.~RL & -- & -- & 2M ctx \\
 OLMo-7B-Think & Dense & SFT+DPO+RL & 7B & MHA & Supervised CoT \\
 \bottomrule

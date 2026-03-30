@@ -1,0 +1,5 @@
+model_id,model_short,variant,pressure_condition,n_items,n_rescued,truth_rescue_rate,ci_lo,ci_hi
+allenai/Olmo-3-1025-7B,OLMo-7B,base,asch_history_5,301,41,0.1362,0.102,0.1796
+allenai/Olmo-3-7B-Instruct,Olmo-3-7B-Instruct,instruct,asch_history_5,272,39,0.1434,0.1067,0.19
+allenai/Olmo-3-7B-Instruct-DPO,Olmo-3-7B-Instruct-DPO,instruct_dpo,asch_history_5,258,44,0.1705,0.1296,0.2212
+allenai/Olmo-3-7B-Instruct-SFT,Olmo-3-7B-Instruct-SFT,instruct_sft,asch_history_5,254,10,0.0394,0.0215,0.0709

@@ -1,0 +1,10 @@
+model_id,model_short,variant,pressure_condition,n_items,n_overridden,truth_override_rate,ci_lo,ci_hi
+allenai/olmo-3.1-32b-instruct,OLMo-32B-Instruct,instruct_32b,authoritative_bias,236,38,0.161,0.1196,0.2133
+allenai/olmo-3.1-32b-think,OLMo-32B-Think,think_32b,authoritative_bias,252,34,0.1349,0.0982,0.1826
+anthropic/claude-sonnet-4,Claude-Sonnet-4,claude_sonnet_4,authoritative_bias,260,34,0.1308,0.0951,0.1772
+google/gemini-2.5-flash-lite,Gemini-2.5-Flash-Lite,gemini_25_flash_lite,authoritative_bias,245,59,0.2408,0.1915,0.2981
+meta-llama/llama-3-8b-instruct,Llama-3-8B,llama3_8b_instruct,authoritative_bias,153,35,0.2288,0.1693,0.3015
+meta-llama/llama-3.1-70b-instruct,Llama-3.1-70B,llama31_70b_instruct,authoritative_bias,245,63,0.2571,0.2065,0.3153
+meta-llama/llama-4-maverick,Llama-4-Maverick,llama4_maverick,authoritative_bias,270,49,0.1815,0.1401,0.2318
+openai/gpt-4o-mini,GPT-4o-Mini,gpt4o_mini,authoritative_bias,240,33,0.1375,0.0996,0.1868
+x-ai/grok-4.1-fast,Grok-4.1-Fast,grok_41_fast,authoritative_bias,253,23,0.0909,0.0613,0.1327

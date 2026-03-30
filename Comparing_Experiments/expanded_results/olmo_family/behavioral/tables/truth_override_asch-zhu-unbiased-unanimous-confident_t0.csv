@@ -1,0 +1,5 @@
+model_id,model_short,variant,pressure_condition,n_items,n_overridden,truth_override_rate,ci_lo,ci_hi
+allenai/Olmo-3-1025-7B,OLMo-7B,base,asch_zhu_unbiased_unanimous_confident,99,91,0.9192,0.8486,0.9585
+allenai/Olmo-3-7B-Instruct,Olmo-3-7B-Instruct,instruct,asch_zhu_unbiased_unanimous_confident,128,106,0.8281,0.7535,0.8837
+allenai/Olmo-3-7B-Instruct-DPO,Olmo-3-7B-Instruct-DPO,instruct_dpo,asch_zhu_unbiased_unanimous_confident,142,86,0.6056,0.5235,0.6822
+allenai/Olmo-3-7B-Instruct-SFT,Olmo-3-7B-Instruct-SFT,instruct_sft,asch_zhu_unbiased_unanimous_confident,146,123,0.8425,0.7747,0.8927

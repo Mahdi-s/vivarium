@@ -1,0 +1,10 @@
+model_id,model_short,variant,pressure_condition,n_items,n_overridden,truth_override_rate,ci_lo,ci_hi
+allenai/olmo-3.1-32b-instruct,OLMo-32B-Instruct,instruct_32b,asch_zhu_unanimous_confident,236,171,0.7246,0.6643,0.7776
+allenai/olmo-3.1-32b-think,OLMo-32B-Think,think_32b,asch_zhu_unanimous_confident,252,47,0.1865,0.1433,0.2392
+anthropic/claude-sonnet-4,Claude-Sonnet-4,claude_sonnet_4,asch_zhu_unanimous_confident,260,25,0.0962,0.066,0.1381
+google/gemini-2.5-flash-lite,Gemini-2.5-Flash-Lite,gemini_25_flash_lite,asch_zhu_unanimous_confident,245,74,0.302,0.248,0.3622
+meta-llama/llama-3-8b-instruct,Llama-3-8B,llama3_8b_instruct,asch_zhu_unanimous_confident,153,150,0.9804,0.9439,0.9933
+meta-llama/llama-3.1-70b-instruct,Llama-3.1-70B,llama31_70b_instruct,asch_zhu_unanimous_confident,245,231,0.9429,0.9064,0.9657
+meta-llama/llama-4-maverick,Llama-4-Maverick,llama4_maverick,asch_zhu_unanimous_confident,270,106,0.3926,0.3362,0.452
+openai/gpt-4o-mini,GPT-4o-Mini,gpt4o_mini,asch_zhu_unanimous_confident,240,103,0.4292,0.3681,0.4924
+x-ai/grok-4.1-fast,Grok-4.1-Fast,grok_41_fast,asch_zhu_unanimous_confident,253,31,0.1225,0.0877,0.1687
