@@ -34,12 +34,9 @@
 \hypersetup{colorlinks=true, citecolor=darkblue, linkcolor=darkblue, urlcolor=darkblue}
 
 % Prompt box environment for appendix examples
+% Uses the same light-background tcolorbox palette as the behavioral mode examples
 \lstdefinestyle{promptstyle}{
-  basicstyle=\ttfamily\footnotesize\color{white},
-  keywordstyle=\color{white},
-  commentstyle=\color{white},
-  stringstyle=\color{white},
-  identifierstyle=\color{white},
+  basicstyle=\ttfamily\footnotesize,
   columns=fullflexible,
   keepspaces=true,
   showstringspaces=false,
@@ -48,15 +45,16 @@
 }
 \newtcblisting{promptbox}{
   enhanced,
+  breakable,
   width=\linewidth,
-  colback=DiagBlue!90!black,
-  colframe=DiagBlue!35!white,
-  coltext=white,
-  boxrule=0.6pt,
-  arc=4pt,
+  colback=DiagBlue!5!white,
+  colframe=DiagBlue!50!black,
+  coltext=black!85,
+  boxrule=0.5pt,
+  arc=3pt,
   left=6pt, right=6pt, top=6pt, bottom=6pt,
-  before skip=1.1\baselineskip,
-  after skip=1.1\baselineskip,
+  before skip=0.8\baselineskip,
+  after skip=0.8\baselineskip,
   listing only,
   listing options={style=promptstyle},
 }

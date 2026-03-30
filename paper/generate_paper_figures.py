@@ -168,30 +168,39 @@ def make_forest_plot():
     ax.set_yticks(y)
     ax.set_yticklabels(df["display"], fontsize=7.5)
 
-    # Right-side annotations: OR and significance
+    # --- Two-column annotation layout to avoid overlap ---
+    # Delta labels go at the end of each bar.
+    # OR + significance go in a fixed right-margin column outside the plot area.
     for i, (_, row) in enumerate(df.iterrows()):
         delta = row["delta_mean"]
         or_val = row.get("OR_mean")
         sig = row.get("sig", "")
 
-        # Delta value on the bar
-        x_text = delta + 0.008 if delta >= 0 else delta - 0.008
-        ha = "left" if delta >= 0 else "right"
-        ax.text(x_text, i, f"{delta:+.3f}", va="center", ha=ha,
-                fontsize=6.5, fontweight="bold", zorder=5)
+        # Delta value: placed just past the bar tip (or inside for very long bars)
+        if delta >= 0.35:
+            # Long bar — put delta INSIDE the bar to avoid collision with OR column
+            ax.text(delta - 0.008, i, f"{delta:+.3f}", va="center", ha="right",
+                    fontsize=6.5, fontweight="bold", color="white", zorder=5)
+        elif delta >= 0:
+            ax.text(delta + 0.008, i, f"{delta:+.3f}", va="center", ha="left",
+                    fontsize=6.5, fontweight="bold", zorder=5)
+        else:
+            ax.text(delta - 0.008, i, f"{delta:+.3f}", va="center", ha="right",
+                    fontsize=6.5, fontweight="bold", zorder=5)
 
-        # OR + significance on right margin
+        # OR + significance in a FIXED right column (axes fraction = 1.02, outside plot)
         if or_val is not None and not np.isnan(or_val):
             stars = sig_stars(sig) if sig else sig_stars(row.get("p_adj"))
             or_text = f"OR={or_val:.1f}" if or_val < 100 else f"OR={or_val:.0f}"
-            ax.text(0.62, i, f"{or_text}  {stars}",
-                    fontsize=6, va="center", ha="left", fontfamily="monospace",
-                    transform=ax.get_yaxis_transform(),
-                    color="black" if stars != "ns" else "#999999")
+            ax.annotate(f"{or_text}  {stars}",
+                        xy=(1.02, i), xycoords=("axes fraction", "data"),
+                        fontsize=6, va="center", ha="left", fontfamily="monospace",
+                        annotation_clip=False,
+                        color="black" if stars != "ns" else "#999999")
 
     ax.set_xlabel(r"Peer Pressure Effect ($\Delta$ error rate, $T{=}0.0$, fixed $N{=}400$)", fontsize=9)
     ax.set_title("Cross-Family Conformity Under Structured Peer Consensus", fontsize=10, fontweight="bold")
-    ax.set_xlim(-0.08, 0.65)
+    ax.set_xlim(-0.08, 0.60)
     ax.grid(axis="x", alpha=0.2, zorder=0)
 
     # Legend
@@ -234,10 +243,16 @@ def make_scatter():
     ax.axhline(30, color="grey", linewidth=0.5, linestyle="--", alpha=0.4)
     ax.axvline(15, color="grey", linewidth=0.5, linestyle="--", alpha=0.4)
 
-    # Quadrant labels
-    ax.text(35, 2, "Sycophantic\nCompliance", fontsize=6, color="#999", ha="center", va="bottom", style="italic")
-    ax.text(4, 78, "Safety-Driven\nAvoidance", fontsize=6, color="#999", ha="center", va="center", style="italic")
-    ax.text(4, 2, "Epistemic\nResistance", fontsize=6, color="#999", ha="center", va="bottom", style="italic")
+    # Quadrant labels — positioned in far corners to avoid overlapping data points
+    ax.text(0.95, 0.02, "Sycophantic\nCompliance", fontsize=7, color="#BBBBBB",
+            ha="right", va="bottom", style="italic", fontweight="bold",
+            transform=ax.transAxes, zorder=1)
+    ax.text(0.03, 0.95, "Safety-Driven\nAvoidance", fontsize=7, color="#BBBBBB",
+            ha="left", va="top", style="italic", fontweight="bold",
+            transform=ax.transAxes, zorder=1)
+    ax.text(0.03, 0.02, "Epistemic\nResistance", fontsize=7, color="#BBBBBB",
+            ha="left", va="bottom", style="italic", fontweight="bold",
+            transform=ax.transAxes, zorder=1)
 
     colors = [ARCH_COLORS.get(row["model_short"], C_OLMO) for _, row in df.iterrows()]
     sizes = np.abs(df["delta_error"]) * 600 + 40
