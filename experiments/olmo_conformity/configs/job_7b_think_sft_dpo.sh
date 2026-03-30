@@ -13,7 +13,13 @@
 # ---------------------------------------------------------------------------
 # OLMo-3 7B Think-SFT + Think-DPO in parallel (one model per GPU).
 #
-# Usage:
+# For one job per model and temperature (recommended for queue fairness), use:
+#   TEMPERATURE=0.0 sbatch job_7b_think_sft.sh
+#   TEMPERATURE=0.6 sbatch job_7b_think_sft.sh
+#   TEMPERATURE=0.0 sbatch job_7b_think_dpo.sh
+#   TEMPERATURE=0.6 sbatch job_7b_think_dpo.sh
+#
+# Usage (this script — both models, one temperature):
 #   TEMPERATURE=0.0 sbatch job_7b_think_sft_dpo.sh
 #   TEMPERATURE=0.6 sbatch job_7b_think_sft_dpo.sh
 #

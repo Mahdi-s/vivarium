@@ -11,13 +11,23 @@
 #SBATCH --job-name=AAM_32B_DPO
 
 # ---------------------------------------------------------------------------
-# OLMo-3 32B Think-DPO — Run T=0.0 then T=0.6 sequentially (tensor-parallel on 2 GPUs).
+# OLMo-3 32B Think-DPO — one temperature per job (tensor-parallel on 2 GPUs).
 #
 # Usage:
-#   sbatch job_32b_think_dpo.sh
+#   TEMPERATURE=0.0 sbatch job_32b_think_dpo.sh
+#   TEMPERATURE=0.6 sbatch job_32b_think_dpo.sh
+#
+# Defaults: TEMPERATURE=0.0
 # ---------------------------------------------------------------------------
 
 set -euo pipefail
+
+TEMPERATURE="${TEMPERATURE:-0.0}"
+if [ "${TEMPERATURE}" = "0.6" ]; then
+    SUITE="suite_32b_think_dpo_temp0p6.json"
+else
+    SUITE="suite_32b_think_dpo_temp0p0.json"
+fi
 
 cd /home1/mahdisae/aam/abstractAgentMachine
 source /scratch1/mahdisae/aam_venv/bin/activate
@@ -39,13 +49,10 @@ export XDG_CACHE_HOME="${HF_SCRATCH}/xdg_cache"
 mkdir -p "${HF_HOME}" "${HUGGINGFACE_HUB_CACHE}" "${HF_DATASETS_CACHE}" \
          "${TORCH_HOME}" "${XDG_CACHE_HOME}"
 
-for SUITE_TEMP in "suite_32b_think_dpo_temp0p0.json:0.0" "suite_32b_think_dpo_temp0p6.json:0.6"; do
-    SUITE="${SUITE_TEMP%%:*}"
-    TEMP="${SUITE_TEMP##*:}"
-    echo "=== OLMo 32B Think-DPO: suite=${SUITE}, temperature=${TEMP} ==="
-    python experiments/olmo_conformity/configs/run_expanded_experiments.py \
-        --suite "experiments/olmo_conformity/configs/${SUITE}" \
-        --hpc --runs-only --force-rerun
-done
+echo "=== OLMo 32B Think-DPO: suite=${SUITE}, temperature=${TEMPERATURE} ==="
 
-echo "=== OLMo 32B Think-DPO (both temperatures) complete ==="
+python experiments/olmo_conformity/configs/run_expanded_experiments.py \
+    --suite "experiments/olmo_conformity/configs/${SUITE}" \
+    --hpc --runs-only --force-rerun
+
+echo "=== OLMo 32B Think-DPO (T=${TEMPERATURE}) complete ==="
