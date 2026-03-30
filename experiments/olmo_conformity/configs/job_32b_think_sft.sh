@@ -28,13 +28,24 @@ export PYTHONPATH="/home1/mahdisae/aam/abstractAgentMachine/src:${PYTHONPATH:-}"
 export MPLCONFIGDIR="/scratch1/mahdisae/olmo_experiments/mpl_cache/${SLURM_JOB_ID}"
 mkdir -p "${MPLCONFIGDIR}"
 
+# --- Redirect all caches to scratch to avoid blowing the 100GB home quota ---
+HF_SCRATCH="/scratch1/mahdisae/olmo_experiments"
+export HF_HOME="${HF_SCRATCH}/hf_home"
+export HUGGINGFACE_HUB_CACHE="${HF_SCRATCH}/models/huggingface_cache"
+export TRANSFORMERS_CACHE="${HF_SCRATCH}/models/huggingface_cache"
+export HF_DATASETS_CACHE="${HF_SCRATCH}/hf_datasets_cache"
+export TORCH_HOME="${HF_SCRATCH}/torch_home"
+export XDG_CACHE_HOME="${HF_SCRATCH}/xdg_cache"
+mkdir -p "${HF_HOME}" "${HUGGINGFACE_HUB_CACHE}" "${HF_DATASETS_CACHE}" \
+         "${TORCH_HOME}" "${XDG_CACHE_HOME}"
+
 for SUITE_TEMP in "suite_32b_think_sft_temp0p0.json:0.0" "suite_32b_think_sft_temp0p6.json:0.6"; do
     SUITE="${SUITE_TEMP%%:*}"
     TEMP="${SUITE_TEMP##*:}"
     echo "=== OLMo 32B Think-SFT: suite=${SUITE}, temperature=${TEMP} ==="
     python experiments/olmo_conformity/configs/run_expanded_experiments.py \
         --suite "experiments/olmo_conformity/configs/${SUITE}" \
-        --hpc --runs-only
+        --hpc --runs-only --force-rerun
 done
 
 echo "=== OLMo 32B Think-SFT (both temperatures) complete ==="

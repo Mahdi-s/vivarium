@@ -39,6 +39,17 @@ export PYTHONPATH="/home1/mahdisae/aam/abstractAgentMachine/src:${PYTHONPATH:-}"
 export MPLCONFIGDIR="/scratch1/mahdisae/olmo_experiments/mpl_cache/${SLURM_JOB_ID}"
 mkdir -p "${MPLCONFIGDIR}"
 
+# --- Redirect all caches to scratch to avoid blowing the 100GB home quota ---
+HF_SCRATCH="/scratch1/mahdisae/olmo_experiments"
+export HF_HOME="${HF_SCRATCH}/hf_home"
+export HUGGINGFACE_HUB_CACHE="${HF_SCRATCH}/models/huggingface_cache"
+export TRANSFORMERS_CACHE="${HF_SCRATCH}/models/huggingface_cache"
+export HF_DATASETS_CACHE="${HF_SCRATCH}/hf_datasets_cache"
+export TORCH_HOME="${HF_SCRATCH}/torch_home"
+export XDG_CACHE_HOME="${HF_SCRATCH}/xdg_cache"
+mkdir -p "${HF_HOME}" "${HUGGINGFACE_HUB_CACHE}" "${HF_DATASETS_CACHE}" \
+         "${TORCH_HOME}" "${XDG_CACHE_HOME}"
+
 echo "=== OLMo 7B Think-SFT + Think-DPO (parallel): temperature=${TEMPERATURE} ==="
 echo "    SFT suite=${SUITE_SFT} on CUDA device 0"
 echo "    DPO suite=${SUITE_DPO} on CUDA device 1"
@@ -48,7 +59,7 @@ _run_sft() {
     python experiments/olmo_conformity/configs/run_expanded_experiments.py \
         --suite "experiments/olmo_conformity/configs/${SUITE_SFT}" \
         --temps "${TEMPERATURE}" \
-        --hpc --runs-only
+        --hpc --runs-only --force-rerun
 }
 
 _run_dpo() {
@@ -56,7 +67,7 @@ _run_dpo() {
     python experiments/olmo_conformity/configs/run_expanded_experiments.py \
         --suite "experiments/olmo_conformity/configs/${SUITE_DPO}" \
         --temps "${TEMPERATURE}" \
-        --hpc --runs-only
+        --hpc --runs-only --force-rerun
 }
 
 _run_sft &
