@@ -1,8 +1,8 @@
 {
   "paths_config": "paths.json",
-  "suite_name": "olmo_conformity_llama3.1_70b_instruct_ablations_temp0p0",
-  "suite_version": "v1",
-  "description": "Ablation study: (A) Naked system-prompt removal and (B) Non-social N-gram sequence baseline. Llama-3.1-70B-Instruct via OpenRouter API at T=0.0.",
+  "suite_name": "olmo_conformity_llama3.1_70b_instruct_ablations_only_temp0p0",
+  "suite_version": "v2",
+  "description": "Ablation-ONLY: (A) Naked system-prompt removal and (B) Non-social N-gram sequence baseline. Control and standard Asch already completed in suite_llama3.1_70b_instruct_api_temp0p0 (run 20260327_154412). Llama-3.1-70B-Instruct via OpenRouter API at T=0.0.",
   "datasets": [
     {
       "name": "immutable_facts_minimal",
@@ -55,23 +55,6 @@
   ],
   "conditions": [
     {
-      "name": "control",
-      "params": {
-        "type": "control"
-      }
-    },
-    {
-      "name": "asch_zhu_unanimous_confident",
-      "params": {
-        "type": "asch_peer_pressure",
-        "system_style": "control",
-        "prompt_style": "conversation",
-        "confederates": 5,
-        "consensus": "unanimous",
-        "tone": "confident"
-      }
-    },
-    {
       "name": "asch_zhu_naked_unanimous_confident",
       "params": {
         "type": "asch_peer_pressure",
@@ -108,6 +91,6 @@
     "top_k": 50,
     "top_p": 0.9,
     "max_items_per_dataset": 50,
-    "notes": "Ablation study — T=0.0 deterministic decoding. 4 conditions: control, social Asch, naked Asch (no system prompt), N-gram sequence (no social framing)."
+    "notes": "Ablation-ONLY — T=0.0 deterministic decoding. 2 new conditions only: naked Asch (no system prompt), N-gram sequence (no social framing). Cross-reference control/asch from run 20260327_154412."
   }
 }
