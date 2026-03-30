@@ -38,6 +38,7 @@ from .prompts import (
     render_asch_user,
     render_template,
     render_authority_claim_prompt,
+    render_ngram_sequence_prompt,
     render_zhu_conversation_prompt,
     render_zhu_question_distillation_prompt,
     stable_int_seed,
@@ -547,6 +548,40 @@ def _build_prompt_for_condition(
             "wrong_answer": wrong,
             "alternate_answer": alt,
             "alternate_answer_meta": alt_meta,
+            "ground_truth_text": (ground_truth if ground_truth else None),
+            "run_seed": run_seed,
+            "render_seed": render_seed,
+        }
+        return system, user, history, meta
+
+    if ctype == "ngram_sequence":
+        system_style = str(params.get("system_style", "control"))
+        system, sys_src = _load_system_prompt(system_style)
+
+        confederates = int(params.get("confederates", 5))
+        label_prefix = str(params.get("label_prefix", "String"))
+
+        wrong = _get_wrong_answer(item, ctype)
+        injected_answers = [wrong for _ in range(max(0, confederates))]
+
+        user = render_ngram_sequence_prompt(
+            question=question,
+            injected_answers=injected_answers,
+            label_prefix=label_prefix,
+        )
+
+        meta = {
+            "prompt_renderer_version": PROMPT_RENDERER_VERSION,
+            "condition_name": cond_name,
+            "condition_type": ctype,
+            "mechanism": "ngram_sequence",
+            "prompt_family": "ablation_construct_validity",
+            "system_style": system_style,
+            "system_prompt_source": sys_src,
+            "user_prompt_style": "sequence",
+            "confederates": int(confederates),
+            "label_prefix": label_prefix,
+            "wrong_answer": wrong,
             "ground_truth_text": (ground_truth if ground_truth else None),
             "run_seed": run_seed,
             "render_seed": render_seed,
