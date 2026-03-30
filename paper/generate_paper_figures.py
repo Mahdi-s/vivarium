@@ -3,13 +3,16 @@
 Generate publication-quality figures for the CoLM 2026 paper.
 
 Produces:
-  - fig3_cross_family_forest.pdf  (Forest plot: cross-family + OLMo bridge ranked by Δpeer)
-  - fig4_refusal_endorsement.pdf  (Scatter: behavioral taxonomy)
-  - fig5_peer_vs_authority.pdf    (Grouped bars: peer vs authority)
+  - fig1_stacked_decomposition.pdf  (100% stacked bar: 3-state decomposition)
+  - fig3_cross_family_forest.pdf    (Forest plot: cross-family + OLMo bridge ranked by Δpeer)
+  - fig4_refusal_endorsement.pdf    (Scatter: behavioral taxonomy + OLMo trajectory)
+  - fig5_peer_vs_authority.pdf      (Grouped bars: peer vs authority)
 
 Data sources (corrected, includes Claude Sonnet 4):
   - cross_family/statistical_tests/mcnemar_pressure_vs_control_t0.csv  (fixed N=400, Holm-corrected)
   - cross_family/tables/pressure_effects_t0.csv                       (endorsement/refusal at T=0.0)
+  - cross_family/tables/ablation_rates_t0.csv                         (ablation 3-state decomposition)
+  - olmo_family/tables/multinomial_rates_t0.csv                       (OLMo-7B training stages)
   - bridge/tables/calibrated_ranking.csv                              (OLMo-7B training stages)
 """
 
@@ -292,20 +295,57 @@ def make_scatter():
                     arrowprops=dict(arrowstyle="-", color="grey", linewidth=0.3, alpha=0.5) if abs(ox) > 3 else None,
                     zorder=6)
 
+    # --- OLMo-7B Training Trajectory Overlay ---
+    olmo_mn = pd.read_csv(ROOT / "Comparing_Experiments/expanded_results/olmo_family/tables/multinomial_rates_t0.csv")
+    olmo_peer = olmo_mn[olmo_mn["condition"] == "asch_zhu_unbiased_unanimous_confident"].copy()
+    stage_order = ["base", "instruct_sft", "instruct_dpo", "instruct"]
+    stage_labels_short = {"base": "Base", "instruct_sft": "SFT", "instruct_dpo": "DPO", "instruct": "Instruct"}
+
+    traj_x, traj_y = [], []
+    for stage in stage_order:
+        row = olmo_peer[olmo_peer["variant"] == stage]
+        if len(row) == 0:
+            continue
+        r = row.iloc[0]
+        traj_x.append(r["endorsement_rate"] * 100)
+        traj_y.append(r["refusal_rate"] * 100)
+
+    # Plot trajectory path with arrows
+    for i in range(len(traj_x) - 1):
+        ax.annotate("", xy=(traj_x[i + 1], traj_y[i + 1]), xytext=(traj_x[i], traj_y[i]),
+                    arrowprops=dict(arrowstyle="-|>", color=C_OLMO, linewidth=1.8, alpha=0.7),
+                    zorder=4)
+
+    # Plot trajectory points
+    ax.scatter(traj_x, traj_y, s=60, c=C_OLMO, edgecolor="black", linewidth=0.6,
+               marker="s", alpha=0.9, zorder=7)
+
+    # Label trajectory points
+    traj_offsets = {"Base": (-8, 8), "SFT": (5, 5), "DPO": (-10, 5), "Instruct": (5, -8)}
+    for i, stage in enumerate(stage_order[:len(traj_x)]):
+        lbl = stage_labels_short[stage]
+        ox, oy = traj_offsets.get(lbl, (5, 3))
+        ax.annotate(lbl, (traj_x[i], traj_y[i]), textcoords="offset points",
+                    xytext=(ox, oy), fontsize=6, fontweight="bold", color=C_OLMO,
+                    zorder=8)
+
     ax.set_xlabel("Wrong Answer Endorsement Rate (%)", fontsize=9)
     ax.set_ylabel("Refusal Rate (%)", fontsize=9)
-    ax.set_title("Behavioral Response Taxonomy Under Peer Consensus\n($T{=}0.0$, fixed $N{=}400$)", fontsize=10, fontweight="bold")
-    ax.set_xlim(-2, 52)
+    ax.set_title("Behavioral Phase Space Under Peer Consensus\n($T{=}0.0$, fixed $N{=}400$)", fontsize=10, fontweight="bold")
+    ax.set_xlim(-2, 80)
     ax.set_ylim(-3, 95)
     ax.grid(alpha=0.15)
 
     # Legend
     from matplotlib.patches import Patch
+    from matplotlib.lines import Line2D
     legend_elements = [
         Patch(facecolor=C_DENSE, edgecolor="black", linewidth=0.4, label="Dense Instruct"),
         Patch(facecolor=C_MOE, edgecolor="black", linewidth=0.4, label="MoE"),
         Patch(facecolor=C_THINK, edgecolor="black", linewidth=0.4, label="Think/Reasoning"),
         Patch(facecolor=C_CONST, edgecolor="black", linewidth=0.4, label="Constitutional AI"),
+        Line2D([0], [0], color=C_OLMO, linewidth=1.8, marker="s", markersize=5,
+               markerfacecolor=C_OLMO, markeredgecolor="black", label="OLMo-7B Trajectory"),
     ]
     ax.legend(handles=legend_elements, loc="upper right", fontsize=6, framealpha=0.9)
 
@@ -387,8 +427,148 @@ def make_peer_vs_auth():
 
 
 # ═══════════════════════════════════════════════════════════════════
+# FIGURE 1: 100% Stacked Bar — 3-State Decomposition
+# ═══════════════════════════════════════════════════════════════════
+def make_stacked_bar():
+    _, pe, _ = load_t0_data()
+    olmo_mn = pd.read_csv(ROOT / "Comparing_Experiments/expanded_results/olmo_family/tables/multinomial_rates_t0.csv")
+    ablation = pd.read_csv(ROOT / "Comparing_Experiments/expanded_results/cross_family/tables/ablation_rates_t0.csv")
+
+    # --- Group 1: Cross-family (peer condition, T=0.0) ---
+    peer_pe = pe[pe["condition"] == "asch_zhu_unanimous_confident"].copy()
+    peer_pe["correct"] = 1.0 - peer_pe["pressure_error_rate"] - peer_pe["pressure_refusal_rate"]
+    peer_pe["error"] = peer_pe["pressure_error_rate"]
+    peer_pe["refusal"] = peer_pe["pressure_refusal_rate"]
+    # Sort by correct rate descending (most resistant at top)
+    cross = peer_pe.sort_values("correct", ascending=True)[
+        ["model_short", "correct", "error", "refusal"]].copy()
+
+    # --- Group 2: OLMo-7B Training Trajectory (T=0.0, peer confident) ---
+    olmo_peer = olmo_mn[olmo_mn["condition"] == "asch_zhu_unbiased_unanimous_confident"].copy()
+    stage_order = {"base": 0, "instruct_sft": 1, "instruct_dpo": 2, "instruct": 3}
+    olmo_peer = olmo_peer[olmo_peer["variant"].isin(stage_order)]
+    olmo_peer["sort"] = olmo_peer["variant"].map(stage_order)
+    olmo_peer = olmo_peer.sort_values("sort", ascending=False)
+    stage_labels = {"base": "OLMo-7B Base", "instruct_sft": "OLMo-7B SFT",
+                    "instruct_dpo": "OLMo-7B DPO", "instruct": "OLMo-7B Instruct"}
+    olmo_rows = []
+    for _, r in olmo_peer.iterrows():
+        olmo_rows.append({
+            "model_short": stage_labels[r["variant"]],
+            "correct": r["correct_rate"],
+            "error": r["error_rate"],
+            "refusal": r["refusal_rate"],
+        })
+    olmo_df = pd.DataFrame(olmo_rows)
+
+    # --- Group 3: Llama-3.1-70B Ablation ---
+    abl_llama = ablation[ablation["model_short"] == "Llama-3.1-70B"].copy()
+    cond_labels = {
+        "asch_zhu_unanimous_confident": "70B: Peer + Sys Prompt",
+        "asch_zhu_naked_unanimous_confident": "70B: Peer (No Sys Prompt)",
+        "ngram_sequence_baseline": "70B: N-gram Baseline",
+    }
+    cond_order = list(cond_labels.keys())
+    abl_rows = []
+    for cond in reversed(cond_order):
+        row = abl_llama[abl_llama["condition"] == cond]
+        if len(row) == 0:
+            continue
+        r = row.iloc[0]
+        abl_rows.append({
+            "model_short": cond_labels[cond],
+            "correct": r["correct_rate"],
+            "error": r["error_rate"],
+            "refusal": r["refusal_rate"],
+        })
+    abl_df = pd.DataFrame(abl_rows)
+
+    # --- Combine with group separators ---
+    all_labels = []
+    all_correct = []
+    all_error = []
+    all_refusal = []
+    group_seps = []  # y-positions for group separators
+
+    def add_group(df, label_col="model_short"):
+        for _, r in df.iterrows():
+            all_labels.append(r[label_col])
+            all_correct.append(r["correct"] * 100)
+            all_error.append(r["error"] * 100)
+            all_refusal.append(r["refusal"] * 100)
+
+    add_group(cross)
+    group_seps.append(len(all_labels) - 0.5)
+    add_group(olmo_df)
+    group_seps.append(len(all_labels) - 0.5)
+    add_group(abl_df)
+
+    n = len(all_labels)
+    y = np.arange(n)
+
+    fig, ax = plt.subplots(figsize=(7, max(5, n * 0.36)), constrained_layout=True)
+
+    C_CORRECT = "#27AE60"  # green
+    C_ERROR = "#C0392B"    # red
+    C_REFUSAL = "#7F8C8D"  # grey
+
+    # Stacked horizontal bars
+    ax.barh(y, all_correct, color=C_CORRECT, edgecolor="white", linewidth=0.3,
+            label="State A: Correct (Resisted)", zorder=3)
+    ax.barh(y, all_error, left=all_correct, color=C_ERROR, edgecolor="white", linewidth=0.3,
+            label="State B: Wrong Answer", zorder=3)
+    lefts = [c + e for c, e in zip(all_correct, all_error)]
+    ax.barh(y, all_refusal, left=lefts, color=C_REFUSAL, edgecolor="white", linewidth=0.3,
+            label="State C: Refusal", zorder=3)
+
+    # Percentage labels inside bars (if segment >= 8%)
+    for i in range(n):
+        # Correct
+        if all_correct[i] >= 8:
+            ax.text(all_correct[i] / 2, i, f"{all_correct[i]:.0f}%",
+                    ha="center", va="center", fontsize=6, color="white", fontweight="bold", zorder=4)
+        # Error
+        if all_error[i] >= 8:
+            ax.text(all_correct[i] + all_error[i] / 2, i, f"{all_error[i]:.0f}%",
+                    ha="center", va="center", fontsize=6, color="white", fontweight="bold", zorder=4)
+        # Refusal
+        if all_refusal[i] >= 8:
+            ax.text(lefts[i] + all_refusal[i] / 2, i, f"{all_refusal[i]:.0f}%",
+                    ha="center", va="center", fontsize=6, color="white", fontweight="bold", zorder=4)
+
+    # Group separators
+    for sep_y in group_seps:
+        ax.axhline(sep_y, color="black", linewidth=0.8, linestyle="--", alpha=0.4, zorder=5)
+
+    # Group labels
+    n_cross = len(cross)
+    n_olmo = len(olmo_df)
+    ax.text(102, n_cross / 2 - 0.5, "Cross-Family\n(Study 2)", fontsize=7, va="center", ha="left",
+            style="italic", color="grey", clip_on=False)
+    ax.text(102, n_cross + n_olmo / 2 - 0.5, "OLMo-7B\n(Study 1)", fontsize=7, va="center", ha="left",
+            style="italic", color="grey", clip_on=False)
+    ax.text(102, n_cross + n_olmo + len(abl_df) / 2 - 0.5, "Ablation\n(Llama-70B)", fontsize=7, va="center", ha="left",
+            style="italic", color="grey", clip_on=False)
+
+    ax.set_yticks(y)
+    ax.set_yticklabels(all_labels, fontsize=7.5)
+    ax.set_xlabel("Percentage of $N{=}400$ Items", fontsize=9)
+    ax.set_title("3-State Decomposition Under Peer Consensus ($T{=}0.0$, Fixed $N{=}400$)",
+                 fontsize=10, fontweight="bold")
+    ax.set_xlim(0, 100)
+    ax.legend(loc="lower center", ncol=3, fontsize=7, framealpha=0.9,
+              bbox_to_anchor=(0.45, -0.15))
+
+    fig.savefig(OUT / "fig1_stacked_decomposition.pdf")
+    fig.savefig(OUT / "fig1_stacked_decomposition.png", dpi=300)
+    plt.close(fig)
+    print(f"  Saved: fig1_stacked_decomposition.pdf  ({n} bars)")
+
+
+# ═══════════════════════════════════════════════════════════════════
 if __name__ == "__main__":
     print("Generating publication figures from T=0.0 corrected data...")
+    make_stacked_bar()
     make_forest_plot()
     make_scatter()
     make_peer_vs_auth()
