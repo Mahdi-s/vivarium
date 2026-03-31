@@ -8,30 +8,72 @@
 
 ## 1. Data Inventory
 
-### Cross-Family Study (runs/)
-- **Models:** 9 model families
-- **Temperature:** T=0.0 (primary), T=0.6 (supplementary)
-- **Conditions:** 4 (control, peer, authority-bias, authority-trust)
-- **Trials (T=0.0):** 14,400
-- **Includes:** Claude Sonnet 4 (new), GPT-4o-Mini, GPT-OSS-20B, Grok-4.1-Fast,
-  Gemini-2.5-Flash-Lite, Llama-3-8B, Llama-3.1-70B, Llama-4-Maverick,
-  OLMo-32B-Instruct, OLMo-32B-Think
+### Cross-Family Study (`runs/`)
 
-### OLMo-7B Family Study (runs_latest/)
-- **Variants:** 4 (base, instruct, instruct_dpo, instruct_sft)
-- **Temperatures:** 6 (T=0.0 to T=1.0, step 0.2)
-- **Conditions:** 12 (control + 7 peer + 2 authority + 2 mitigation)
-- **Trials (T=0.0):** 19,197
-- **Judge:** GPT-OSS-20B (gpt-oss-20b) via OpenRouter
+- **Models:** 10 model families
+- **Temperature:** T=0.0 (primary, greedy), T=0.6 (supplementary)
+- **Conditions:** 4 (control, peer_consensus, authority_bias, authority_trust)
+- **Clean Trials (T=0.0):** 15,613 of 16,000 (387 pending gpt-oss-20b re-run)
+- **Clean Trials (T=0.6):** 16,000 ✅
+- **Includes:**
+  - `allenai/olmo-3.1-32b-instruct` — runs `1c2e5cb6` (T=0.0), `62187f52` (T=0.6)
+  - `allenai/olmo-3.1-32b-think` — runs `a34ad9b1` (T=0.0), `7db9896e` (T=0.6)
+  - `anthropic/claude-sonnet-4` — runs `5be5ada7` (T=0.0), `21556460` (T=0.6)
+  - `google/gemini-2.5-flash-lite` — runs `e043fbf6` (T=0.0), `d71e75b1` (T=0.6)
+  - `meta-llama/llama-3-8b-instruct` — runs `1899a883` (T=0.0), `70860876` (T=0.6)
+  - `meta-llama/llama-3.1-70b-instruct` — runs `3a0404f7` (T=0.0), `49d07104` (T=0.6)
+  - `meta-llama/llama-4-maverick` — runs `485ddc2d` (T=0.0), `c2ce0f85` (T=0.6)
+  - `openai/gpt-4o-mini` — runs `c07ede3a` (T=0.0), `eb63d212` (T=0.6)
+  - `openai/gpt-oss-20b` — run `3ecdc9b7` (T=0.6, complete); run `66765d5e` (T=0.0, 1,413/1,600 clean — 187 rate-limit errors being re-run via `--resume-auto`)
+  - `x-ai/grok-4.1-fast` — runs `25056752` (T=0.0), `157a6a9e` (T=0.6)
 
-### Ablation Study (runs/)
-- **Models:** 2 (Llama-3.1-70B, OLMo-32B-Instruct)
-- **Conditions:** asch_zhu_naked_unanimous_confident (no system prompt), ngram_sequence_baseline
-- **Trials:** 1,600
+### Ablation Study (`runs/`)
 
-### Excluded Data
-- **gpt-oss-20b T=0.0:** Incomplete run (142/1600 trials), UUID 66765d5e excluded
-- **Think variants in runs_latest/:** Not re-judged with gpt-oss-20b; excluded from primary analysis
+Tests system-prompt protection and sequential-pattern null model. These are **complete** at 800 trials each (2 conditions × 400 items × 1 model — intentional design, not incomplete runs).
+
+- **Models:** 2 (`meta-llama/llama-3.1-70b-instruct`, `allenai/olmo-3.1-32b-instruct`)
+- **Temperature:** T=0.0
+- **Conditions:** 2
+  - `asch_zhu_naked_unanimous_confident` — same Asch peer setup as the main suite but without a system prompt; tests whether the system prompt provides conformity resistance
+  - `ngram_sequence_baseline` — n-gram sequence-completion framing without adversarial social content; isolates pure pattern-completion from genuine social pressure response
+- **Runs:** `e8a90500` (llama-3.1-70b), `ef72529e` (olmo-3.1-32b-instruct)
+- **Trials:** 800 each ✅
+
+### OLMo-7B-Think Exploratory Run (`runs/think/`)
+
+- **Model:** `allenai/Olmo-3-7B-Think`
+- **Run ID:** `f47fe05e`
+- **Temperature:** T=0.0
+- **Conditions:** 4 (core: control, peer_consensus, authority_bias, authority_trust)
+- **Trials:** 1,609 (1,608 clean; +9 overfill from mid-run restart, deduplicated before analysis)
+- **Judge:** GPT-OSS-20B via OpenRouter
+
+### OLMo-7B Training Stage Study (`runs_latest/runs/`)
+
+- **Variants (primary):** 4 — base, instruct, instruct_sft, instruct_dpo
+- **Variants (excluded from primary):** 4 — think, think_sft, think_dpo, rl_zero_math (incomplete across most temperature runs)
+- **Temperatures:** 6 (T=0.0, 0.2, 0.4, 0.6, 0.8, 1.0)
+- **Conditions:** 12 (control + 7 peer variants + 2 authority + 2 mitigation)
+- **Run IDs:** `9f240f89` (T=0.0), `46f0762a` (T=0.2), `bbd05985` (T=0.4), `86c72262` (T=0.6), `9369442d` (T=0.8), `9173bfae` (T=1.0)
+- **Trials (T=0.0, primary variants):** ~17,400 ✅
+- **Judge:** GPT-OSS-20B via OpenRouter
+
+### Condition Overlap Between Study Arms
+
+The 4-condition cross-family suite (`runs/`) shares the following conditions with the 12-condition OLMo-7B suite (`runs_latest/runs/`), enabling a calibrated bridge ranking:
+
+| Cross-family condition | Corresponding OLMo-7B condition |
+|---|---|
+| `control` | `control` |
+| `asch_zhu_unanimous_confident` | `asch_zhu_unbiased_unanimous_confident` |
+| `authoritative_bias` | `authoritative_bias` |
+| `authority_trust` | `authority_zhu_unbiased_trust` |
+
+### Data Notes
+
+- **GPT-OSS-20B T=0.0 (`66765d5e`):** Corrupted by concurrent writes on 2026-03-27 (1,145 duplicate outputs, 681 rate-limit errors). Cleaned 2026-03-31: 1,413 trials have one clean output; 187 remain as rate-limit stubs pending `--resume-auto` re-run. Excluding from primary analysis until re-run completes; T=0.6 results (`3ecdc9b7`) are unaffected and fully usable.
+- **Ghost run `621a7698`:** Claude Sonnet 4 T=0.6 with 1,600 registered trials but 0 outputs — killed before fan-out. Duplicate of completed run `21556460`. Ignore.
+- **Think variants in `runs_latest/`:** Not re-judged with GPT-OSS-20B; excluded from primary analysis. OLMo-7B-Think uses the separate `f47fe05e` run in `runs/think/`.
 
 ---
 

@@ -153,15 +153,15 @@ The monotonicity enforced by the $\max$ operation ensures that if hypothesis $(i
 
 The corrections are applied within the following families:
 
-- **Study 2, peer consensus condition**: One McNemar test per model (9 models in the original analysis; should be updated to 10 with the addition of OLMo-7B-Think).
-- **Study 2, authority condition**: One McNemar test per model (9 tests).
-- **Study 1 (OLMo within-family analysis)**: 11 tests per experimental variant (one per training condition/checkpoint).
+- **Study 2, peer consensus condition (`asch_zhu_unanimous_confident`)**: One McNemar test per model; 11 tests total (10 cross-family model families + OLMo-7B-Think from `runs/think/`). GPT-OSS-20B T=0.0 is provisional pending re-run of 187 error trials.
+- **Study 2, authority conditions (`authoritative_bias`, `authority_trust`)**: One McNemar test per model per condition; 11 × 2 = 22 tests corrected together as one family per condition.
+- **Study 1 (OLMo within-family analysis)**: 11 tests per experimental variant (one per training condition/checkpoint) across 8 OLMo-7B variants at 6 temperatures.
 
 Each family is corrected independently. Cross-family comparisons (e.g., peer consensus vs. authority) are treated as separate analyses.
 
 ### Worked Example
 
-Suppose 9 tests yield the following sorted raw $p$-values:
+Suppose 11 tests (10 cross-family models + OLMo-7B-Think) yield sorted raw $p$-values; the table below uses a condensed 9-test illustration for brevity:
 
 | Rank $i$ | Raw $p_{(i)}$ | Multiplier $(k - i + 1)$ | Adjusted $p_{\text{adj}}^{(i)}$ |
 |---|---|---|---|
@@ -326,7 +326,9 @@ The study's design introduces several dependencies that constrain the valid scop
 
 The primary analyses use $T = 0.0$ (greedy decoding) only. At greedy temperature, each item contributes exactly one deterministic observation per model per condition. This ensures that the 400 observations entering each McNemar test are independent (conditional on the items).
 
-Table 2 in earlier drafts pooled results across all six temperatures ($T \in \{0.0, 0.2, 0.4, 0.6, 0.8, 1.0\}$), which was flagged by reviewers. The same item at different temperatures does not produce independent observations; the outputs at $T = 0.2$ and $T = 0.4$ are correlated because they are sampled from the same underlying probability distribution (differing only in the temperature scaling). The revision restricts the primary cross-model comparison to $T = 0.0$.
+Cross-family runs were also collected at $T = 0.6$ (2 temperatures total vs. 6 in Study 1). Table 2 in earlier drafts pooled results across both temperatures, which was flagged by reviewers. The same item at different temperatures does not produce independent observations. The revision restricts the primary cross-model comparison to $T = 0.0$, with $T = 0.6$ reported as a temperature-stability supplementary analysis.
+
+**Note on GPT-OSS-20B T=0.0**: Run `66765d5e` has 1,413 valid outputs (187 pending re-run). All reported $p$-values and effect sizes for this model at $T = 0.0$ are provisional until the re-run completes.
 
 ### Within Study 1 (OLMo Within-Family Comparison)
 

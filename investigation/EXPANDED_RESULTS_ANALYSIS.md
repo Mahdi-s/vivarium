@@ -15,10 +15,71 @@
 
 ### Data Sources
 
-| Source | Path | Content |
-|--------|------|---------|
-| Cross-family runs | `runs/` (17 runs) + `runs/think/` (1 run) | 9 model families × 2 temperatures (0.0, 0.6) × 4 conditions × 8 datasets × 50 items/cell |
-| OLMo-7B family | `runs_latest/runs/` (6 runs) | 1 model, 4 training stages × 6 temperatures (0.0–1.0) × 12 conditions × 8 datasets × 50 items/cell |
+| Source | Path | Models | Conditions | Temperatures | Clean Trials |
+|--------|------|--------|------------|--------------|-------------|
+| Cross-family study | `runs/` (20 primary runs) | 10 families × 2 temps | 4 | T=0.0, T=0.6 | 31,613 of 32,000¹ |
+| Ablation study | `runs/` (2 ablation runs) | 2 models | 2 | T=0.0 | 1,600 |
+| OLMo-7B-Think | `runs/think/` (1 run) | OLMo-7B-Think | 4 (core) | T=0.0 | 1,608 |
+| OLMo-7B family | `runs_latest/runs/` (6 runs) | 4 primary variants | 12 | T=0.0–1.0 | ~208,812 |
+
+¹ 387 trials pending re-run: `gpt-oss-20b` T=0.0 run (`66765d5e`) had 187 rate-limit errors cleaned from a concurrent-write corruption; `--resume-auto` will fill them on next invocation.
+
+### Complete Run Registry (`runs/` — cross-family and ablation)
+
+#### Primary Cross-Family Runs (4 conditions: control, asch_zhu_unanimous_confident, authoritative_bias, authority_trust)
+
+| Run ID | Model ID | Temp | Clean Trials | Status |
+|--------|----------|------|-------------|--------|
+| `a34ad9b1` | `allenai/olmo-3.1-32b-think` | 0.0 | 1,600 | ✅ Complete |
+| `7db9896e` | `allenai/olmo-3.1-32b-think` | 0.6 | 1,600 | ✅ Complete |
+| `1c2e5cb6` | `allenai/olmo-3.1-32b-instruct` | 0.0 | 1,600 | ✅ Complete |
+| `62187f52` | `allenai/olmo-3.1-32b-instruct` | 0.6 | 1,600 | ✅ Complete |
+| `1899a883` | `meta-llama/llama-3-8b-instruct` | 0.0 | 1,600 | ✅ Complete |
+| `70860876` | `meta-llama/llama-3-8b-instruct` | 0.6 | 1,600 | ✅ Complete |
+| `3a0404f7` | `meta-llama/llama-3.1-70b-instruct` | 0.0 | 1,600 | ✅ Complete |
+| `49d07104` | `meta-llama/llama-3.1-70b-instruct` | 0.6 | 1,600 | ✅ Complete |
+| `485ddc2d` | `meta-llama/llama-4-maverick` | 0.0 | 1,600 | ✅ Complete |
+| `c2ce0f85` | `meta-llama/llama-4-maverick` | 0.6 | 1,600 | ✅ Complete |
+| `e043fbf6` | `google/gemini-2.5-flash-lite` | 0.0 | 1,600 | ✅ Complete |
+| `d71e75b1` | `google/gemini-2.5-flash-lite` | 0.6 | 1,600 | ✅ Complete |
+| `25056752` | `x-ai/grok-4.1-fast` | 0.0 | 1,600 | ✅ Complete |
+| `157a6a9e` | `x-ai/grok-4.1-fast` | 0.6 | 1,600 | ✅ Complete |
+| `c07ede3a` | `openai/gpt-4o-mini` | 0.0 | 1,600 | ✅ Complete |
+| `eb63d212` | `openai/gpt-4o-mini` | 0.6 | 1,600 | ✅ Complete |
+| `66765d5e` | `openai/gpt-oss-20b` | 0.0 | 1,413 | ⚠️ Pending (187 errors → `--resume-auto`) |
+| `3ecdc9b7` | `openai/gpt-oss-20b` | 0.6 | 1,600 | ✅ Complete |
+| `5be5ada7` | `anthropic/claude-sonnet-4` | 0.0 | 1,600 | ✅ Complete |
+| `21556460` | `anthropic/claude-sonnet-4` | 0.6 | 1,600 | ✅ Complete |
+
+#### Ablation Runs (2 conditions: asch_zhu_naked_unanimous_confident, ngram_sequence_baseline)
+
+These runs test the system-prompt protection hypothesis (naked = no system prompt) and a null sequential-pattern baseline. They are **intentional 800-trial runs**, not incomplete runs.
+
+| Run ID | Model ID | Temp | Clean Trials | Status |
+|--------|----------|------|-------------|--------|
+| `e8a90500` | `meta-llama/llama-3.1-70b-instruct` | 0.0 | 800 | ✅ Complete |
+| `ef72529e` | `allenai/olmo-3.1-32b-instruct` | 0.0 | 800 | ✅ Complete |
+
+> **OLMo-32B-Instruct and Llama-3.1-70B-Instruct are the only two models with both the full 4-condition cross-family suite AND the 2-condition ablation suite**, giving them richer condition coverage than the other 8 cross-family models.
+
+#### OLMo-7B-Think Exploratory Run (`runs/think/`)
+
+| Run ID | Model ID | Temp | Clean Trials | Status |
+|--------|----------|------|-------------|--------|
+| `f47fe05e` | `allenai/Olmo-3-7B-Think` | 0.0 | 1,608 | ✅ Complete |
+
+#### OLMo-7B Training Stage Runs (`runs_latest/runs/`)
+
+Each run covers all 4 primary variants (base, instruct, instruct_sft, instruct_dpo) at one temperature across all 12 conditions. Think variants (think, think_sft, think_dpo, rl_zero_math) are present but incomplete in most runs and excluded from primary analysis.
+
+| Run ID | Temp | Primary Variant Trials | Status |
+|--------|------|----------------------|--------|
+| `9f240f89` | 0.0 | ~17,400 | ✅ Primary variants complete |
+| `46f0762a` | 0.2 | ~17,373 | ✅ Primary variants complete |
+| `bbd05985` | 0.4 | ~18,989 | ✅ Primary variants complete |
+| `86c72262` | 0.6 | ~19,085 | ✅ Primary variants complete |
+| `9369442d` | 0.8 | ~17,400 | ✅ Primary variants complete |
+| `9173bfae` | 1.0 | ~17,400 | ✅ Primary variants complete |
 
 ### Label Source
 
@@ -106,6 +167,8 @@ For every model except GPT-OSS-20B, the peer consensus condition (`asch_zhu_unan
 | GPT-4o-Mini | +0.240 | +0.020 | +0.019 | **12x** |
 | Gemini-2.5-Flash-Lite | +0.135 | +0.036 | +0.040 | **3.4x** |
 | Llama-4-Maverick | +0.126 | +0.045 | +0.008 | **2.8x** |
+
+> † GPT-OSS-20B T=0.0 results (`66765d5e`) are based on 1,413 clean trials pending completion to 1,600. T=0.6 results (`3ecdc9b7`) are fully complete.
 
 **Interpretation:** The structured peer consensus prompt (5 unanimous participants) is dramatically more effective at inducing conformity than authority framing. This is likely because:
 - The peer prompt creates an **autoregressive pattern** (Participant 1: X, Participant 2: X, ... Participant 5: ?) that SFT-trained models are compelled to complete
@@ -325,12 +388,15 @@ Models that are accurate on a domain tend to show **larger** conformity deltas o
 | OLMo-32B-Instruct | +0.427 | +0.466 | +0.039 | Yes |
 | Llama-3-8B | +0.387 | +0.360 | -0.027 | Yes |
 | GPT-4o-Mini | +0.220 | +0.261 | +0.041 | Yes |
+| Claude-Sonnet-4 | +0.000¹ | — | — | Immune |
 | Gemini-2.5-Flash-Lite | +0.142 | +0.128 | -0.015 | Yes |
 | Llama-4-Maverick | +0.129 | +0.123 | -0.007 | Yes |
 | OLMo-32B-Think | +0.041 | +0.023 | -0.018 | Yes |
 | Grok-4.1-Fast | +0.020 | +0.017 | -0.003 | Yes |
 
 **Most models are temperature-stable** between T=0.0 and T=0.6. The notable exception is **Llama-3.1-70B**, which drops from +0.533 to +0.381 — a 29% reduction. This may reflect that at T=0.6, the 70B model occasionally "breaks out" of the conformist pattern through sampling diversity, while at T=0.0 it deterministically follows the consensus.
+
+¹ Claude Sonnet 4 peer pressure effect is near-zero at T=0.0 (OR=0.72, ns after Holm correction).
 
 ---
 
