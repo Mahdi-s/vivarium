@@ -302,7 +302,7 @@ Because the McNemar test under a strict fixed-$N{=}400$ design captures shifts f
 \begin{figure}[t]
     \centering
     \includegraphics[width=0.65\textwidth]{fig4_refusal_endorsement.pdf}
-    \caption{Behavioral response taxonomy under peer consensus pressure at $T{=}0.0$ with fixed $N{=}400$ denominator. Each model plotted by error rate (x-axis) vs.\ refusal rate (y-axis); axes reflect absolute probabilities. Claude Sonnet~4 occupies the context-insensitive quadrant (low error, low refusal). McNemar OR and significance annotated per model.}
+    \caption{Behavioral response taxonomy under peer consensus pressure at $T{=}0.0$ with fixed $N{=}400$ denominator. Each model plotted by endorsement rate (x-axis) vs.\ refusal rate (y-axis); axes reflect absolute probabilities under pressure. Bubble size is proportional to $\Delta$~endorsement (the actual conformity signal, not total $\Delta$~error). Claude Sonnet~4 occupies the context-insensitive quadrant (low endorsement, low refusal). Llama-3.1-70B sits in the safety-driven avoidance quadrant with $\Delta$~endorsement of only $-0.6\%$ despite its large McNemar OR. $\Delta$~endorsement and Holm-corrected significance annotated per model.}
     \label{fig:scatter}
 \end{figure}
 
@@ -321,7 +321,7 @@ Figure~\ref{fig:peer_auth} compares pressure effects across two mechanisms at $T
 \begin{figure}[t]
     \centering
     \includegraphics[width=\textwidth]{fig5_peer_vs_authority.pdf}
-    \caption{Peer consensus vs.\ authority framing across model families at $T{=}0.0$. Models sorted by $\Delta_\text{peer}$. Significance annotations from McNemar tests (Holm corrected). Peer consensus is significant for all 6 non-reasoning families; authority framing for 3 of 6.}
+    \caption{Peer consensus vs.\ authority framing across model families at $T{=}0.0$. Models sorted by $\Delta_\text{endorsement}$. Peer consensus bars are decomposed: solid color = $\Delta$~endorsement rate (actual wrong-answer adoption), hatched grey = $\Delta$~refusal rate (safety-driven avoidance, stacked). This decomposition reveals that Llama-3.1-70B's peer effect is almost entirely refusal, while OLMo-32B-Instruct and GPT-4o-Mini show genuine endorsement. Significance: Holm--Bonferroni corrected McNemar tests. Peer consensus is significant for all 6 non-reasoning families; authority framing for 3 of 6.}
     \label{fig:peer_auth}
 \end{figure}
 

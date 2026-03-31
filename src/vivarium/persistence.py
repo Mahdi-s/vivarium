@@ -21,6 +21,27 @@ class TraceDbConfig:
     db_path: str
 
 
+@dataclass
+class ConformityOutputRow:
+    """Buffered output row for batch insertion into conformity_outputs.
+
+    Collect these during async trial fan-out, then flush with
+    TraceDb.batch_write_conformity_trial_results() to reduce per-trial
+    transaction overhead from O(N) to O(N/batch_size).
+    """
+
+    output_id: str
+    trial_id: str
+    raw_text: str
+    parsed_answer_text: Optional[str]
+    parsed_answer_json: Optional[Dict[str, Any]]
+    is_correct: Optional[bool]
+    refusal_flag: bool
+    latency_ms: Optional[float]
+    token_usage_json: Optional[Dict[str, Any]]
+    created_at: Optional[float] = None
+
+
 class TraceDb:
     def __init__(self, config: TraceDbConfig):
         self._config = config
@@ -1009,6 +1030,46 @@ class TraceDb:
                     (_json_dumps_any(token_usage_json) if token_usage_json is not None else None),
                     ts,
                 ),
+            )
+
+    def batch_write_conformity_trial_results(
+        self,
+        output_rows: "List[ConformityOutputRow]",
+    ) -> None:
+        """Write a batch of conformity outputs in a single transaction.
+
+        Reduces per-trial transaction churn from O(N) commits to O(N/batch_size)
+        by grouping multiple outputs into one executemany call. Safe to call with
+        an empty list (no-op). Compatible with --resume-auto: trial/prompt rows
+        are written individually in the build phase; only outputs are batched here.
+        """
+        if not output_rows:
+            return
+        ts = float(time.time())
+        with self.conn:
+            self.conn.executemany(
+                """
+                INSERT INTO conformity_outputs(
+                  output_id, trial_id, raw_text, parsed_answer_text, parsed_answer_json,
+                  is_correct, refusal_flag, latency_ms, token_usage_json, created_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                """,
+                [
+                    (
+                        row.output_id,
+                        row.trial_id,
+                        row.raw_text,
+                        row.parsed_answer_text,
+                        (_json_dumps_any(row.parsed_answer_json) if row.parsed_answer_json is not None else None),
+                        (None if row.is_correct is None else (1 if bool(row.is_correct) else 0)),
+                        (1 if bool(row.refusal_flag) else 0),
+                        row.latency_ms,
+                        (_json_dumps_any(row.token_usage_json) if row.token_usage_json is not None else None),
+                        float(row.created_at or ts),
+                    )
+                    for row in output_rows
+                ],
             )
 
     # -----------------------------------------

@@ -47,6 +47,31 @@ def register_subparsers(subparsers: Any) -> None:
     pc.add_argument("--judgeval-judge-model", type=str, default="gpt-oss:20b", help="Ollama model to use as judge")
     pc.add_argument("--judgeval-ollama-base", type=str, default="http://localhost:11434/v1", help="Ollama API base URL")
     pc.add_argument("--resume-auto", action="store_true", help="Auto-detect and resume the most recent incomplete run for this suite config instead of starting fresh")
+    pc.add_argument(
+        "--openrouter-provider",
+        type=str,
+        default=None,
+        help=(
+            "JSON string for OpenRouter provider routing preferences, injected as extra_body.provider. "
+            "Example: '{\"order\": [\"Groq\"], \"allow_fallbacks\": false}'. "
+            "Per-model openrouter_provider in the suite config takes precedence over this flag."
+        ),
+    )
+    pc.add_argument(
+        "--async-mode",
+        action="store_true",
+        help=(
+            "Enable async concurrent trial execution: fan out LLM calls in parallel "
+            "and batch-write results. Ideal for API-backed models. "
+            "Incompatible with --capture-activations (falls back to serial)."
+        ),
+    )
+    pc.add_argument(
+        "--db-flush-batch-size",
+        type=int,
+        default=None,
+        help="Number of trials to batch per async fan-out + DB flush window (default: 20 or suite config value).",
+    )
 
     pp = subparsers.add_parser("olmo-conformity-probe", help="Capture activations for probe dataset, train probe, and compute projections")
     pp.add_argument("--run-id", type=str, required=True, help="Existing run_id in runs/<ts>_<run_id>/simulation.db")
@@ -385,6 +410,15 @@ def _handle_olmo_conformity(args: Any) -> int:
         if args.capture_components:
             capture_components = [x.strip() for x in str(args.capture_components).split(",") if x.strip() != ""]
 
+    # Parse optional OpenRouter provider routing JSON.
+    openrouter_provider = None
+    _or_provider_raw = getattr(args, "openrouter_provider", None)
+    if _or_provider_raw:
+        try:
+            openrouter_provider = json.loads(_or_provider_raw)
+        except Exception as e:
+            print(f"Warning: --openrouter-provider is not valid JSON, ignoring: {e}")
+
     paths = run_olmo_conformity_suite(
         suite_config_path=str(args.suite_config),
         runs_dir=str(args.runs_dir),
@@ -403,6 +437,9 @@ def _handle_olmo_conformity(args: Any) -> int:
         judgeval_judge_model=str(args.judgeval_judge_model),
         judgeval_ollama_base=str(args.judgeval_ollama_base),
         resume_auto=bool(args.resume_auto),
+        execution_mode="async" if getattr(args, "async_mode", False) else None,
+        db_flush_batch_size=getattr(args, "db_flush_batch_size", None),
+        openrouter_provider=openrouter_provider,
     )
     print(f"run_dir={paths.run_dir}")
     print(f"db={paths.db_path}")

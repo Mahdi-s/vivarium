@@ -337,9 +337,21 @@ def make_scatter():
 
     # Get peer-condition pressure effects at T=0.0 (endorsement/refusal rates)
     peer_pe = pe[pe["condition"] == "asch_zhu_unanimous_confident"].copy()
-    peer_pe = peer_pe[["model_short", "pressure_endorsement_rate", "pressure_refusal_rate"]].copy()
+    peer_pe = peer_pe[["model_short", "pressure_endorsement_rate", "pressure_refusal_rate",
+                        "control_refusal_rate"]].copy()
 
-    # Get peer McNemar OR, significance, and delta at T=0.0 (fixed-N=400 metric)
+    # Control endorsement rates from per-model metrics
+    ctrl_metrics = pd.read_csv(
+        ROOT / "Comparing_Experiments/expanded_results/cross_family/tables/per_model_condition_metrics.csv"
+    )
+    ctrl = ctrl_metrics[
+        (ctrl_metrics["condition"] == "control") & (ctrl_metrics["temperature"] == 0.0)
+    ][["short_name", "endorsed_rate"]].copy()
+    ctrl.columns = ["model_short", "ctrl_endorse"]
+    peer_pe = peer_pe.merge(ctrl, on="model_short", how="left")
+    peer_pe["delta_endorse"] = peer_pe["pressure_endorsement_rate"] - peer_pe["ctrl_endorse"]
+
+    # Get peer McNemar significance at T=0.0
     peer_mcn = mcn[mcn["condition"] == "asch_zhu_unanimous_confident"].copy()
     peer_mcn = peer_mcn[["model_short", "odds_ratio", "delta_error", "p_adjusted", "sig_adjusted"]].copy()
 
@@ -363,7 +375,8 @@ def make_scatter():
             transform=ax.transAxes, zorder=1)
 
     colors = [ARCH_COLORS.get(row["model_short"], C_OLMO) for _, row in df.iterrows()]
-    sizes = np.abs(df["delta_error"]) * 600 + 40
+    # Bubble size proportional to Δ endorsement (actual conformity), NOT Δ error
+    sizes = np.abs(df["delta_endorse"]) * 1200 + 40
 
     scatter = ax.scatter(
         df["pressure_endorsement_rate"] * 100, df["pressure_refusal_rate"] * 100,
@@ -384,14 +397,14 @@ def make_scatter():
     for _, row in df.iterrows():
         name = row["model_short"]
         ox, oy = offsets.get(name, (5, 3))
-        or_val = row.get("odds_ratio")
         sig = row.get("sig_adjusted", "")
-
         stars = sig_stars(sig)
+        de = row["delta_endorse"]
+
+        # Annotate with Δ endorsement (the real conformity metric) instead of OR
         label = name
-        if or_val is not None and not np.isnan(or_val):
-            or_str = f"{or_val:.1f}" if or_val < 100 else f"{or_val:.0f}"
-            label += f"\nOR={or_str} {stars}"
+        if de is not None and not np.isnan(de):
+            label += f"\n$\\Delta$end={de*100:+.1f}% {stars}"
 
         ax.annotate(label,
                     (row["pressure_endorsement_rate"] * 100, row["pressure_refusal_rate"] * 100),
@@ -464,53 +477,84 @@ def make_scatter():
 # FIGURE 5: Peer vs Authority Grouped Bars (T=0.0, fixed N=400)
 # ═══════════════════════════════════════════════════════════════════
 def make_peer_vs_auth():
-    mcn, _, _ = load_t0_data()
+    """
+    Figure 5: Peer vs Authority, but decomposing peer bars into
+    endorsement (solid) and refusal (hatched) components so readers
+    can see which part of the pressure effect is actual conformity.
+    """
+    mcn, pe, _ = load_t0_data()
 
-    # --- Use McNemar deltas exclusively (fixed-N=400, refusals as State C) ---
-    # Peer delta and significance at T=0.0
-    peer = mcn[mcn["condition"] == "asch_zhu_unanimous_confident"][
+    # --- Peer: decompose into endorsement and refusal deltas ---
+    peer_pe = pe[pe["condition"] == "asch_zhu_unanimous_confident"].copy()
+    peer_pe = peer_pe[["model_short", "pressure_endorsement_rate",
+                        "pressure_refusal_rate", "control_refusal_rate"]].copy()
+
+    # Control endorsement rates
+    ctrl_metrics = pd.read_csv(
+        ROOT / "Comparing_Experiments/expanded_results/cross_family/tables/per_model_condition_metrics.csv"
+    )
+    ctrl = ctrl_metrics[
+        (ctrl_metrics["condition"] == "control") & (ctrl_metrics["temperature"] == 0.0)
+    ][["short_name", "endorsed_rate", "refusal_rate"]].copy()
+    ctrl.columns = ["model_short", "ctrl_endorse", "ctrl_refusal_metric"]
+
+    peer_pe = peer_pe.merge(ctrl, on="model_short", how="left")
+    peer_pe["delta_endorse"] = peer_pe["pressure_endorsement_rate"] - peer_pe["ctrl_endorse"]
+    peer_pe["delta_refusal"] = peer_pe["pressure_refusal_rate"] - peer_pe["ctrl_refusal_metric"]
+
+    # Peer significance from McNemar
+    peer_mcn = mcn[mcn["condition"] == "asch_zhu_unanimous_confident"][
         ["model_short", "delta_error", "p_adjusted", "sig_adjusted"]].copy()
-    peer.columns = ["model_short", "delta_peer", "p_peer", "sig_peer"]
+    peer_mcn.columns = ["model_short", "delta_peer_total", "p_peer", "sig_peer"]
 
-    # Authority delta and significance at T=0.0 (authoritative_bias)
+    # Authority delta and significance
     auth = mcn[mcn["condition"] == "authoritative_bias"][
         ["model_short", "delta_error", "p_adjusted", "sig_adjusted"]].copy()
     auth.columns = ["model_short", "delta_auth", "p_auth", "sig_auth"]
 
-    # Merge
-    df = peer.merge(auth, on="model_short", how="left")
+    df = peer_pe.merge(peer_mcn, on="model_short", how="left")
+    df = df.merge(auth, on="model_short", how="left")
 
-    # Sort by peer delta descending
-    df = df.sort_values("delta_peer", ascending=False).reset_index(drop=True)
+    # Sort by peer endorsement delta descending (actual conformity)
+    df = df.sort_values("delta_endorse", ascending=False).reset_index(drop=True)
 
-    fig, ax = plt.subplots(figsize=(7, 3.2), constrained_layout=True)
+    fig, ax = plt.subplots(figsize=(7, 3.5), constrained_layout=True)
 
     x = np.arange(len(df))
     w = 0.35
-    colors_peer = [ARCH_COLORS.get(row["model_short"], C_OLMO) for _, row in df.iterrows()]
+    colors_model = [ARCH_COLORS.get(row["model_short"], C_OLMO) for _, row in df.iterrows()]
     colors_auth = [plt.cm.Greys(0.35)] * len(df)
 
-    # Peer bars
-    ax.bar(x - w / 2, df["delta_peer"], w, color=colors_peer,
-           edgecolor="black", linewidth=0.4, label="Peer Consensus", zorder=3)
+    # --- Peer bars: stacked endorsement (solid) + refusal (hatched) ---
+    endorse_vals = df["delta_endorse"].fillna(0).values
+    refusal_vals = df["delta_refusal"].clip(lower=0).fillna(0).values  # only positive refusal changes
 
-    # Authority bars
+    # Endorsement component (solid color)
+    ax.bar(x - w / 2, endorse_vals, w, color=colors_model,
+           edgecolor="black", linewidth=0.4, zorder=3, label="Peer: $\\Delta$ Endorsement")
+
+    # Refusal component (hatched, stacked on top of endorsement if positive)
+    ax.bar(x - w / 2, refusal_vals, w, bottom=np.maximum(endorse_vals, 0),
+           color="#95A5A6", edgecolor="black", linewidth=0.3, alpha=0.6,
+           hatch="///", zorder=3, label="Peer: $\\Delta$ Refusal")
+
+    # Authority bars (single solid bar — authority framing has minimal refusal confound)
     auth_vals = df["delta_auth"].fillna(0)
     ax.bar(x + w / 2, auth_vals, w, color=colors_auth,
            edgecolor="black", linewidth=0.4, label="Authority Framing", zorder=3)
 
-    # Significance annotations — use ACTUAL p-values from data
+    # Significance annotations
     for i, (_, row) in enumerate(df.iterrows()):
-        # Peer stars
+        # Peer stars above the total stacked bar
         stars_peer = sig_stars(row.get("sig_peer", "ns"))
-        y_peer = max(row["delta_peer"], 0) + 0.012
+        y_peer = max(endorse_vals[i], 0) + max(refusal_vals[i], 0) + 0.015
         ax.text(i - w / 2, y_peer, stars_peer, ha="center", va="bottom",
                 fontsize=5.5, fontweight="bold",
                 color="black" if stars_peer != "ns" else "#AAAAAA")
 
-        # Authority stars — use actual Holm-corrected significance
+        # Authority stars
         stars_auth = sig_stars(row.get("sig_auth", "ns"))
-        y_auth = max(auth_vals.iloc[i], 0) + 0.012
+        y_auth = max(auth_vals.iloc[i], 0) + 0.015
         ax.text(i + w / 2, y_auth, stars_auth, ha="center", va="bottom",
                 fontsize=5.5, fontweight="bold" if stars_auth != "ns" else "normal",
                 color="black" if stars_auth != "ns" else "#AAAAAA",
@@ -518,12 +562,15 @@ def make_peer_vs_auth():
 
     ax.set_xticks(x)
     ax.set_xticklabels(df["model_short"], rotation=35, ha="right", fontsize=7)
-    ax.set_ylabel(r"Pressure Effect ($\Delta$ error rate)", fontsize=9)
-    ax.set_title("Peer Consensus vs Authority Framing ($T{=}0.0$, Holm corrected)", fontsize=10, fontweight="bold")
+    ax.set_ylabel(r"Pressure Effect ($\Delta$ rate)", fontsize=9)
+    ax.set_title(
+        "Peer Consensus vs Authority Framing ($T{=}0.0$, Holm corrected)\n"
+        "Peer bars decomposed: solid = endorsement, hatched = refusal",
+        fontsize=9, fontweight="bold",
+    )
     ax.axhline(0, color="black", linewidth=0.7, linestyle="--", alpha=0.4)
-    ax.set_ylim(-0.15, 0.65)
     ax.grid(axis="y", alpha=0.15, zorder=0)
-    ax.legend(fontsize=7, loc="upper right", framealpha=0.9)
+    ax.legend(fontsize=6.5, loc="upper right", framealpha=0.9)
 
     fig.savefig(OUT / "fig5_peer_vs_authority.pdf")
     fig.savefig(OUT / "fig5_peer_vs_authority.png", dpi=300)

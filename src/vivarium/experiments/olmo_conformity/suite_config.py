@@ -33,6 +33,10 @@ class SuiteModelSpec(BaseModel):
     has_think_tokens: bool = False
     backend: Optional[str] = None  # "huggingface", "litellm", "transformerlens", "mock"
     notes: Optional[str] = None
+    # OpenRouter provider routing: passed as extra_body.provider in API calls.
+    # Example: {"order": ["Groq"], "allow_fallbacks": false}
+    openrouter_provider: Optional[Dict[str, Any]] = None
+    openrouter_transforms: Optional[List[str]] = None
 
 
 class SuiteRunSpec(BaseModel):
@@ -44,6 +48,10 @@ class SuiteRunSpec(BaseModel):
     top_p: Optional[float] = None
     max_items_per_dataset: Optional[int] = None
     notes: Optional[str] = None
+    # Execution mode: "serial" (default, safe for all models) or "async" (concurrent API calls).
+    execution_mode: str = "serial"
+    # Number of trials to fan out per asyncio.run() batch in async mode.
+    db_flush_batch_size: int = 20
 
 
 class SuiteConfig(BaseModel):

@@ -167,6 +167,7 @@ def create_gateway(
     capture_context: Optional["CaptureContext"] = None,
     rate_limit_config: Optional["RateLimitConfig"] = None,
     max_new_tokens: int = 128,
+    openrouter_extras: Optional[Dict[str, Any]] = None,
 ) -> Tuple[Any, str]:
     """
     Create the appropriate LLM gateway for a model. Model-agnostic.
@@ -196,6 +197,7 @@ def create_gateway(
             api_base=api_base,
             api_key=api_key,
             rate_limit_config=rate_limit_config,
+            openrouter_extras=openrouter_extras,
         )
         # Determine model ID format based on API provider.
         # OpenRouter expects full org/model slugs (e.g. "allenai/olmo-3-32b-think").
@@ -426,11 +428,16 @@ class LiteLLMGateway:
 
     Requires provider credentials via environment variables depending on provider.
     Example for OpenAI-compatible: set OPENAI_API_KEY.
+
+    openrouter_extras: optional dict injected as extra_body when api_base is OpenRouter.
+      Supports: provider (routing preferences), transforms (list[str]), route (str).
+      Example: {"provider": {"order": ["Groq"], "allow_fallbacks": False}}
     """
 
     api_base: Optional[str] = None
     api_key: Optional[str] = None
     rate_limit_config: Optional[RateLimitConfig] = None
+    openrouter_extras: Optional[Dict[str, Any]] = None
 
     def __post_init__(self) -> None:
         if self.rate_limit_config is not None:
@@ -483,6 +490,21 @@ class LiteLLMGateway:
                 # Request reasoning/thinking tokens from Think models.
                 # OpenRouter returns these in message.reasoning, separate from content.
                 kwargs["reasoning"] = {"effort": "high", "exclude": False}
+                # Inject provider routing / transform preferences via extra_body.
+                # Supports: {"provider": {"order": ["Groq"]}, "transforms": [...], "route": "..."}
+                if self.openrouter_extras:
+                    extra_body: Dict[str, Any] = {}
+                    provider_pref = self.openrouter_extras.get("provider")
+                    if provider_pref is not None:
+                        extra_body["provider"] = provider_pref
+                    transforms = self.openrouter_extras.get("transforms")
+                    if transforms is not None:
+                        extra_body["transforms"] = transforms
+                    route = self.openrouter_extras.get("route")
+                    if route is not None:
+                        extra_body["route"] = route
+                    if extra_body:
+                        kwargs["extra_body"] = extra_body
             else:
                 # For other OpenAI-compatible local servers (e.g. llama-server).
                 kwargs["custom_llm_provider"] = "openai"
