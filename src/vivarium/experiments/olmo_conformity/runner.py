@@ -248,9 +248,9 @@ def _find_incomplete_run_for_suite(
 
             expected_cells = expected_item_count * len(condition_names) * len(model_ids)
             completed = tmp_db.conn.execute(
-                "SELECT COUNT(*) AS n FROM conformity_trials t "
+                "SELECT COUNT(DISTINCT t.trial_id) AS n FROM conformity_trials t "
                 "JOIN conformity_outputs o ON o.trial_id = t.trial_id "
-                "WHERE t.run_id = ?;",
+                "WHERE t.run_id = ? AND o.raw_text NOT LIKE '<error>%';",
                 (db_run_id,),
             ).fetchone()["n"]
 
@@ -1150,6 +1150,7 @@ def run_suite(
                         _ex_row = trace_db.conn.execute(
                             "SELECT t.trial_id, o.output_id FROM conformity_trials t "
                             "LEFT JOIN conformity_outputs o ON t.trial_id = o.trial_id "
+                            "  AND o.raw_text NOT LIKE '<error>%' "
                             "WHERE t.run_id = ? AND t.model_id = ? AND t.item_id = ? AND t.condition_id = ?",
                             (run_id_final, model_id, str(item["item_id"]), cond_id),
                         ).fetchone()
@@ -1433,6 +1434,7 @@ def run_suite(
                     _existing_row = trace_db.conn.execute(
                         "SELECT t.trial_id, o.output_id FROM conformity_trials t "
                         "LEFT JOIN conformity_outputs o ON t.trial_id = o.trial_id "
+                        "  AND o.raw_text NOT LIKE '<error>%' "
                         "WHERE t.run_id = ? AND t.model_id = ? AND t.item_id = ? AND t.condition_id = ?",
                         (run_id_final, model_id, str(item["item_id"]), cond_id),
                     ).fetchone()
