@@ -1,7 +1,7 @@
 # Investigation Folder: Data Integrity & Analysis Audit
 
 **Project:** "How Alignment Shapes Social Conformity" (CoLM 2026)
-**Last Updated:** 2026-03-29
+**Last Updated:** 2026-03-30
 
 This folder contains the complete audit trail for the data integrity investigation, analysis verification, and paper revision process. It is designed to be self-contained — a future collaborator or LLM assistant should be able to reconstruct the entire decision chain from these files.
 
@@ -21,6 +21,10 @@ This folder contains the complete audit trail for the data integrity investigati
 
 6. **`FINAL_REVISION_LOG.md`** — Every correction applied during the final paper revision, with explanations of why each error occurred and how it was fixed. **Start here if you need to verify that a specific number in the paper is correct.**
 
+7. **`JUDGE_ANALYSIS.md`** — Comprehensive documentation of the 78/22 hybrid labeling pipeline: heuristic parser architecture, GPT-OSS-20B adjudication, label definitions, agreement rates per dataset, and known limitations. Includes judge_report.sh output summaries for all three data directories.
+
+8. **`STATISTICAL_TESTS.md`** — Detailed explanation of every statistical test used in the paper (McNemar's exact binomial, Holm-Bonferroni correction, Wilson score CIs, Haldane-Anscombe OR correction, Cohen's h, Tc metric), including mathematical formulations, assumptions, rationale for choosing each test, and worked examples.
+
 ---
 
 ## Key Files
@@ -35,6 +39,8 @@ This folder contains the complete audit trail for the data integrity investigati
 | `ARCHITECTURAL_ANALYSIS.md` | Architecture × conformity patterns |
 | `ANALYSIS_DESIGN.md` | Two-study experimental design rationale |
 | `FINAL_REVISION_LOG.md` | All corrections from final paper revision |
+| `JUDGE_ANALYSIS.md` | 78/22 hybrid judge pipeline documentation |
+| `STATISTICAL_TESTS.md` | Statistical test rationale and formulations |
 
 ### Scripts (Python)
 | File | Purpose | Idempotent? |
@@ -80,9 +86,18 @@ McNemar tests pair by `item_id` (inner join). Items where either control or pres
 
 **BUG HISTORY:** The initial script paired by array position (sorted by trial_id), which scrambled items. Fixed by adding `item_id` to the data loader SQL and merging on it. See `FINAL_REVISION_LOG.md` for details.
 
-### Excluded Data
-- `gpt-oss-20b` T=0.0 (UUID `66765d5e`): Only 143/1600 trials — incomplete
-- `runs_latest/` variants `think`, `think_sft`, `think_dpo`, `rl_zero`: Not in scope for the paper
+### Data Directory Summary (as of 2026-03-30)
+
+| Directory | Purpose | DBs | Total Trials | Status |
+|-----------|---------|-----|-------------|--------|
+| `runs/` | Study 2: cross-family (11 models × T=0.0,0.6) + ablations | 28 | ~44,800 | 27 complete, 1 partial (GPT-OSS-20B T=0.0) |
+| `runs/think/` | OLMo-7B-Think standalone run | 1 | 1,609 | Complete |
+| `runs_latest/runs/` | Study 1: OLMo-7B within-family (8 variants × 6 temps) | 6 | ~215,288 | All complete |
+
+### Excluded / Incomplete Data
+- `gpt-oss-20b` T=0.0 (UUID `66765d5e`): Only 232/1600 outputs — run interrupted. 4 retry attempts (UUIDs starting with `20260330_17...`) all have 0 outputs.
+- `runs_latest/` variant `rl_zero`: Only 25% trial coverage at 4 of 6 temperatures. Not used in paper.
+- `runs/think/` OLMo-7B-Think-SFT: Only 2 trials (test run). Not usable.
 
 ### Analysis Output Locations
 - `Comparing_Experiments/expanded_results/olmo_family/` — OLMo 12-condition analysis (judge labels)
