@@ -114,114 +114,219 @@ def load_t0_data():
 
 
 # ═══════════════════════════════════════════════════════════════════
-# FIGURE 3: Cross-Family Forest Plot (T=0.0, fixed N=400)
+# FIGURE 3: Diverging Butterfly Chart — Endorsement vs Refusal Change
 # ═══════════════════════════════════════════════════════════════════
 def make_forest_plot():
+    """
+    Diverging butterfly chart: each model gets two opposing bars.
+    RIGHT (warm red) = Δ endorsement rate (actual conformity / wrong-answer adoption)
+    LEFT  (cool grey) = Δ refusal rate   (safety-driven avoidance)
+    Models ranked by Δ endorsement (descending) — the real conformity signal.
+    """
     mcn, pe, bridge = load_t0_data()
 
-    # --- Cross-family models from T=0.0 McNemar (peer condition) ---
+    # --- Cross-family: pressure effects with endorsement/refusal breakdown ---
+    peer_pe = pe[pe["condition"] == "asch_zhu_unanimous_confident"].copy()
+
+    # Control endorsement/refusal from per-model metrics
+    ctrl_metrics = pd.read_csv(
+        ROOT / "Comparing_Experiments/expanded_results/cross_family/tables/per_model_condition_metrics.csv"
+    )
+    ctrl = ctrl_metrics[
+        (ctrl_metrics["condition"] == "control") & (ctrl_metrics["temperature"] == 0.0)
+    ][["short_name", "endorsed_rate", "refusal_rate"]].copy()
+    ctrl.columns = ["model_short", "ctrl_endorse", "ctrl_refusal"]
+
+    # Merge: pressure endorsement/refusal + control endorsement/refusal
+    df = peer_pe[["model_short", "pressure_endorsement_rate", "pressure_refusal_rate"]].merge(
+        ctrl, on="model_short", how="left"
+    )
+    df["delta_endorse"] = df["pressure_endorsement_rate"] - df["ctrl_endorse"]
+    df["delta_refusal"] = df["pressure_refusal_rate"] - df["ctrl_refusal"]
+
+    # Add OLMo-7B-Think from per-model metrics (not in pressure_effects_t0)
+    peer_7bt = ctrl_metrics[
+        (ctrl_metrics["short_name"] == "OLMo-7B-Think")
+        & (ctrl_metrics["condition"] == "asch_zhu_unanimous_confident")
+        & (ctrl_metrics["temperature"] == 0.0)
+    ]
+    ctrl_7bt = ctrl_metrics[
+        (ctrl_metrics["short_name"] == "OLMo-7B-Think")
+        & (ctrl_metrics["condition"] == "control")
+        & (ctrl_metrics["temperature"] == 0.0)
+    ]
+    if len(peer_7bt) > 0 and len(ctrl_7bt) > 0:
+        row_7bt = pd.DataFrame([{
+            "model_short": "OLMo-7B-Think",
+            "pressure_endorsement_rate": peer_7bt.iloc[0]["endorsed_rate"],
+            "pressure_refusal_rate": peer_7bt.iloc[0]["refusal_rate"],
+            "ctrl_endorse": ctrl_7bt.iloc[0]["endorsed_rate"],
+            "ctrl_refusal": ctrl_7bt.iloc[0]["refusal_rate"],
+            "delta_endorse": peer_7bt.iloc[0]["endorsed_rate"] - ctrl_7bt.iloc[0]["endorsed_rate"],
+            "delta_refusal": peer_7bt.iloc[0]["refusal_rate"] - ctrl_7bt.iloc[0]["refusal_rate"],
+        }])
+        df = pd.concat([df, row_7bt], ignore_index=True)
+
+    # McNemar significance for annotation
     peer_mcn = mcn[mcn["condition"] == "asch_zhu_unanimous_confident"].copy()
-    # Use the T=0.0 delta and OR directly (no averaging across temps)
-    cross = peer_mcn[["model_short", "delta_error", "odds_ratio", "p_adjusted", "sig_adjusted"]].copy()
-    cross.columns = ["short_name", "delta_mean", "OR_mean", "p_adj", "sig"]
+    sig_map = dict(zip(peer_mcn["model_short"], peer_mcn["sig_adjusted"]))
+    or_map = dict(zip(peer_mcn["model_short"], peer_mcn["odds_ratio"]))
 
-    # --- OLMo-7B bridge stages (not in cross-family McNemar) ---
-    olmo_stages = bridge[bridge["short_name"].str.contains("Olmo-3-7B|OLMo-7B")].copy()
-    olmo_stages = olmo_stages[["short_name", "delta_mean"]].copy()
-    olmo_stages["OR_mean"] = np.nan
-    olmo_stages["p_adj"] = np.nan
-    olmo_stages["sig"] = ""
+    # Sort by Δ endorsement descending (most conformist at top)
+    df = df.sort_values("delta_endorse", ascending=True).reset_index(drop=True)
 
-    # Combine
-    df = pd.concat([cross, olmo_stages], ignore_index=True)
-    df = df.sort_values("delta_mean", ascending=True).reset_index(drop=True)
+    # --- OLMo-7B bridge stages ---
+    olmo_mn = pd.read_csv(
+        ROOT / "Comparing_Experiments/expanded_results/olmo_family/tables/multinomial_rates_t0.csv"
+    )
+    ctrl_olmo = olmo_mn[olmo_mn["condition"] == "control"].copy()
+    peer_olmo = olmo_mn[olmo_mn["condition"] == "asch_zhu_unbiased_unanimous_confident"].copy()
 
-    # Display names
-    display_names = {
-        "Olmo-3-7B-Instruct": "OLMo-7B Instruct",
-        "Olmo-3-7B-Instruct-SFT": "OLMo-7B SFT",
-        "Olmo-3-7B-Instruct-DPO": "OLMo-7B DPO",
-        "OLMo-7B": "OLMo-7B Base",
-        "Claude-Sonnet-4": "Claude Sonnet 4",
+    stage_order = ["base", "instruct_sft", "instruct_dpo", "instruct"]
+    stage_display = {
+        "base": "OLMo-7B Base", "instruct_sft": "OLMo-7B SFT",
+        "instruct_dpo": "OLMo-7B DPO", "instruct": "OLMo-7B Instruct",
     }
-    df["display"] = df["short_name"].map(lambda x: display_names.get(x, x))
+    olmo_rows = []
+    for stage in stage_order:
+        c = ctrl_olmo[ctrl_olmo["variant"] == stage]
+        p = peer_olmo[peer_olmo["variant"] == stage]
+        if len(c) == 0 or len(p) == 0:
+            continue
+        olmo_rows.append({
+            "model_short": stage_display[stage],
+            "delta_endorse": p.iloc[0]["endorsement_rate"] - c.iloc[0]["endorsement_rate"],
+            "delta_refusal": p.iloc[0]["refusal_rate"] - c.iloc[0]["refusal_rate"],
+        })
+    olmo_df = pd.DataFrame(olmo_rows)
+    # Sort OLMo by delta_endorse ascending (to match main ranking direction)
+    olmo_df = olmo_df.sort_values("delta_endorse", ascending=True).reset_index(drop=True)
 
-    fig, ax = plt.subplots(figsize=(7, 5.0), constrained_layout=True)
+    # Display names for cross-family
+    display_names = {"Claude-Sonnet-4": "Claude Sonnet 4"}
+    df["display"] = df["model_short"].map(lambda x: display_names.get(x, x))
 
-    y = np.arange(len(df))
-    colors = [ARCH_COLORS.get(row["short_name"], C_OLMO) for _, row in df.iterrows()]
+    # ── Build figure ──
+    n_cross = len(df)
+    n_olmo = len(olmo_df)
+    n_total = n_cross + n_olmo + 1  # +1 for separator gap
+    fig, ax = plt.subplots(figsize=(7, 0.42 * n_total + 1.2), constrained_layout=True)
 
-    # Horizontal bars
-    bars = ax.barh(y, df["delta_mean"], height=0.55, color=colors,
-                   edgecolor="black", linewidth=0.4, alpha=0.9, zorder=3)
+    # Y positions: cross-family at bottom, gap, OLMo stages at top
+    y_cross = np.arange(n_cross)
+    y_olmo = np.arange(n_cross + 1, n_cross + 1 + n_olmo)  # +1 gap
 
-    # Zero line
-    ax.axvline(0, color="black", linewidth=0.7, linestyle="--", alpha=0.4, zorder=2)
+    bar_h = 0.38
 
-    # Separator between OLMo stages and cross-family
-    olmo_idx = [i for i, row in df.iterrows() if "OLMo-7B" in row["display"]]
-    if olmo_idx:
-        sep_y = max(olmo_idx) + 0.5
-        ax.axhline(sep_y, color="grey", linewidth=0.8, linestyle=":", alpha=0.6, zorder=1)
-        ax.text(0.52, sep_y + 0.15, "── OLMo-7B training stages ──",
-                fontsize=6, color="grey", ha="center", va="bottom", style="italic",
-                transform=ax.get_yaxis_transform())
+    # --- Endorsement bars (RIGHT, warm red) ---
+    endorse_colors = [ARCH_COLORS.get(row["model_short"], C_OLMO) for _, row in df.iterrows()]
+    ax.barh(y_cross, df["delta_endorse"] * 100, height=bar_h,
+            color=endorse_colors, edgecolor="black", linewidth=0.4, alpha=0.9, zorder=3)
 
-    # Labels
-    ax.set_yticks(y)
-    ax.set_yticklabels(df["display"], fontsize=7.5)
-
-    # --- Two-column annotation layout to avoid overlap ---
-    # Delta labels go at the end of each bar.
-    # OR + significance go in a fixed right-margin column outside the plot area.
-    for i, (_, row) in enumerate(df.iterrows()):
-        delta = row["delta_mean"]
-        or_val = row.get("OR_mean")
-        sig = row.get("sig", "")
-
-        # Delta value: placed just past the bar tip (or inside for very long bars)
-        if delta >= 0.35:
-            # Long bar — put delta INSIDE the bar to avoid collision with OR column
-            ax.text(delta - 0.008, i, f"{delta:+.3f}", va="center", ha="right",
-                    fontsize=6.5, fontweight="bold", color="white", zorder=5)
-        elif delta >= 0:
-            ax.text(delta + 0.008, i, f"{delta:+.3f}", va="center", ha="left",
-                    fontsize=6.5, fontweight="bold", zorder=5)
+    # --- Refusal bars (LEFT for increase, transparent for decrease) ---
+    # Positive delta_refusal = more refusals under pressure → show LEFT (grey, solid)
+    # Negative delta_refusal = fewer refusals under pressure → skip (not safety-driven)
+    refusal_vals = []
+    for _, row in df.iterrows():
+        if row["delta_refusal"] > 0:
+            refusal_vals.append(-row["delta_refusal"] * 100)  # negative = leftward
         else:
-            ax.text(delta - 0.008, i, f"{delta:+.3f}", va="center", ha="right",
-                    fontsize=6.5, fontweight="bold", zorder=5)
+            refusal_vals.append(0)  # no bar for refusal decrease
+    ax.barh(y_cross, refusal_vals, height=bar_h,
+            color="#95A5A6", edgecolor="black", linewidth=0.3, alpha=0.6, zorder=3)
 
-        # OR + significance in a FIXED right column (axes fraction = 1.02, outside plot)
-        if or_val is not None and not np.isnan(or_val):
-            stars = sig_stars(sig) if sig else sig_stars(row.get("p_adj"))
-            or_text = f"OR={or_val:.1f}" if or_val < 100 else f"OR={or_val:.0f}"
-            ax.annotate(f"{or_text}  {stars}",
-                        xy=(1.02, i), xycoords=("axes fraction", "data"),
-                        fontsize=6, va="center", ha="left", fontfamily="monospace",
-                        annotation_clip=False,
-                        color="black" if stars != "ns" else "#999999")
+    # --- OLMo-7B stages ---
+    for j, (_, row) in enumerate(olmo_df.iterrows()):
+        stage_name = row["model_short"]
+        stage_key = {v: k for k, v in stage_display.items()}.get(stage_name, "base")
+        c = C_OLMO_STAGES.get(stage_key, C_OLMO)
+        ax.barh(y_olmo[j], row["delta_endorse"] * 100, height=bar_h,
+                color=c, edgecolor="black", linewidth=0.4, alpha=0.9, zorder=3)
+        ax.barh(y_olmo[j], -abs(row["delta_refusal"]) * 100, height=bar_h,
+                color="#95A5A6", edgecolor="black", linewidth=0.3, alpha=0.6, zorder=3)
 
-    ax.set_xlabel(r"Peer Pressure Effect ($\Delta$ error rate, $T{=}0.0$, fixed $N{=}400$)", fontsize=9)
-    ax.set_title("Cross-Family Conformity Under Structured Peer Consensus", fontsize=10, fontweight="bold")
-    ax.set_xlim(-0.08, 0.60)
-    ax.grid(axis="x", alpha=0.2, zorder=0)
+    # --- Zero line ---
+    ax.axvline(0, color="black", linewidth=0.8, zorder=2)
 
-    # Legend
+    # --- Separator ---
+    sep_y = n_cross + 0.5 - 0.5  # gap position
+    ax.axhline(sep_y, color="grey", linewidth=0.8, linestyle=":", alpha=0.6, zorder=1)
+    ax.text(0, sep_y + 0.2, "── OLMo-7B training stages ──",
+            fontsize=6, color="grey", ha="center", va="bottom", style="italic")
+
+    # --- Y-axis labels ---
+    all_labels = list(df["display"]) + [""] + list(olmo_df["model_short"])
+    all_y = list(y_cross) + [sep_y] + list(y_olmo)
+    ax.set_yticks(list(y_cross) + list(y_olmo))
+    ax.set_yticklabels(list(df["display"]) + list(olmo_df["model_short"]), fontsize=7.5)
+
+    # --- Annotations: Δ values + significance ---
+    for i, (_, row) in enumerate(df.iterrows()):
+        de = row["delta_endorse"] * 100
+        dr = row["delta_refusal"] * 100
+
+        # Endorsement value (right side)
+        if abs(de) > 1:
+            x_pos = de + (1.5 if de >= 0 else -1.5)
+            ha = "left" if de >= 0 else "right"
+            ax.text(x_pos, y_cross[i], f"{de:+.1f}%", va="center", ha=ha,
+                    fontsize=6, fontweight="bold", zorder=5)
+
+        # Refusal value (left side)
+        if abs(dr) > 2:
+            x_pos = -abs(dr) - 1.5
+            ax.text(x_pos, y_cross[i], f"+{abs(dr):.0f}%", va="center", ha="right",
+                    fontsize=5.5, color="#666666", zorder=5)
+
+        # Significance in right margin
+        sig = sig_map.get(row["model_short"], "")
+        stars = sig_stars(sig)
+        color = "black" if stars != "ns" else "#999999"
+        ax.annotate(stars, xy=(1.02, y_cross[i]),
+                    xycoords=("axes fraction", "data"),
+                    fontsize=6.5, va="center", ha="left", fontfamily="monospace",
+                    annotation_clip=False, color=color)
+
+    # OLMo stage labels
+    for j, (_, row) in enumerate(olmo_df.iterrows()):
+        de = row["delta_endorse"] * 100
+        if abs(de) > 1:
+            x_pos = de + (1.5 if de >= 0 else -1.5)
+            ha = "left" if de >= 0 else "right"
+            ax.text(x_pos, y_olmo[j], f"{de:+.1f}%", va="center", ha=ha,
+                    fontsize=6, fontweight="bold", color="#555555", zorder=5)
+
+    # --- Axis labels ---
+    ax.set_xlabel(
+        r"$\longleftarrow$ $\Delta$ Refusal Rate (%)          "
+        r"$\Delta$ Endorsement Rate (%) $\longrightarrow$",
+        fontsize=8.5,
+    )
+    ax.set_title(
+        "Decomposed Pressure Response: Endorsement vs. Refusal\n"
+        r"(Structured Peer Consensus, $T{=}0.0$, Fixed $N{=}400$)",
+        fontsize=10, fontweight="bold",
+    )
+    ax.grid(axis="x", alpha=0.15, zorder=0)
+
+    # --- Legend ---
     from matplotlib.patches import Patch
     legend_elements = [
         Patch(facecolor=C_DENSE, edgecolor="black", linewidth=0.4, label="Dense Instruct"),
         Patch(facecolor=C_MOE, edgecolor="black", linewidth=0.4, label="MoE"),
         Patch(facecolor=C_THINK, edgecolor="black", linewidth=0.4, label="Think/Reasoning"),
         Patch(facecolor=C_CONST, edgecolor="black", linewidth=0.4, label="Constitutional AI"),
+        Patch(facecolor="#95A5A6", edgecolor="black", linewidth=0.3, alpha=0.6,
+              label=r"$\Delta$ Refusal (left)"),
         Patch(facecolor=C_OLMO, edgecolor="black", linewidth=0.4, label="OLMo-7B Stages"),
     ]
-    ax.legend(handles=legend_elements, loc="lower right", fontsize=6.5,
+    ax.legend(handles=legend_elements, loc="lower right", fontsize=6,
               framealpha=0.9, edgecolor="grey")
 
     fig.savefig(OUT / "fig3_cross_family_forest.pdf")
     fig.savefig(OUT / "fig3_cross_family_forest.png", dpi=300)
     plt.close(fig)
-    print(f"  Saved: fig3_cross_family_forest.pdf  ({len(df)} models)")
+    print(f"  Saved: fig3_cross_family_forest.pdf  ({n_cross} cross-family + {n_olmo} OLMo stages)")
 
 
 # ═══════════════════════════════════════════════════════════════════
