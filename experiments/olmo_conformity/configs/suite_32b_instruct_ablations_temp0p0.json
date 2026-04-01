@@ -69,7 +69,7 @@
       "name": "ngram_sequence_baseline",
       "params": {
         "type": "ngram_sequence",
-        "system_style": "control",
+        "system_style": "none",
         "confederates": 5,
         "label_prefix": "String"
       }
