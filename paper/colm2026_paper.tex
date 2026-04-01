@@ -1,5 +1,5 @@
 \documentclass{article}
-\usepackage[final]{colm2026_conference}
+\usepackage[submission]{colm2026_conference}
 
 \usepackage{microtype}
 \usepackage{hyperref}
@@ -90,7 +90,7 @@ University of Southern California \\
 \maketitle
 
 \begin{abstract}
-We evaluate consensus susceptibility---capitulation to fabricated peer consensus in structured prompt formats, distinct from user-directed sycophancy---across 11 model families on $N{=}400$ shared items at $T{=}0.0$ (greedy decoding), scored by a 78/22 hybrid heuristic-plus-LLM labeling pipeline. Four sequential OLMo-3-7B checkpoints show that measured conformity increases after supervised fine-tuning and partially decreases after direct preference optimization; the sequential design does not isolate independent causal effects. Across families, susceptibility varies widely: Llama-3.1-70B exhibits large refusal-driven shifts (McNemar OR\,=\,154.3 [21.6,\,1098.6]; refusal-driven, $b{=}231$, $c{=}1$) while Claude Sonnet~4 shows no statistically significant susceptibility (OR\,=\,0.72 [0.43,\,1.19], $p{=}1.0$). Models exhibit three response patterns under this prompt format---endorsement-dominant, refusal-dominant, or context-insensitive---with peer consensus inducing significant conformity in all 6 non-reasoning families and authority framing in 3 of 6 (Holm corrected). Within OLMo, the vulnerability correlates with supervised fine-tuning stage. Two ablation studies probe the mechanism: a non-social n-gram baseline produces 35.0\% wrong-answer endorsement, and removing the truthfulness system prompt increases Llama-3.1-70B endorsement from 4.5\% to 25.0\%. Our ablations suggest that repetitive in-context syntactic cues account for a substantial portion of the measured effect, reducing confidence that the observed behavior reflects purely social deference and highlighting a vulnerability in the instruction hierarchy~\citep{wallace2024instruction} that explicit system prompts only partially mitigate.
+We evaluate consensus susceptibility, capitulation to fabricated peer consensus in structured prompt formats, distinct from user-directed sycophancy, across 11 model families on $N{=}400$ shared items at $T{=}0.0$ (greedy decoding), scored by a 78/22 hybrid heuristic-plus-LLM labeling pipeline. Four sequential OLMo-3-7B checkpoints show that measured conformity increases after supervised fine-tuning and partially decreases after direct preference optimization; the sequential design does not isolate independent causal effects. Across families, susceptibility varies widely: Llama-3.1-70B exhibits large refusal-driven shifts (McNemar OR\,=\,154.3 [21.6,\,1098.6]; refusal-driven, $b{=}231$, $c{=}1$) while Claude Sonnet~4 shows no statistically significant susceptibility (OR\,=\,0.72 [0.43,\,1.19], $p{=}1.0$). Models exhibit three response patterns under this prompt format, endorsement-dominant, refusal-dominant, or context-insensitive, with peer consensus inducing significant conformity in all 6 non-reasoning families and authority framing in 3 of 6 (Holm corrected). Within OLMo, the vulnerability correlates with supervised fine-tuning stage. Two ablation studies probe the mechanism: a non-social n-gram baseline produces 35.0\% wrong-answer endorsement, and removing the truthfulness system prompt increases Llama-3.1-70B endorsement from 4.5\% to 25.0\%. Our ablations suggest that repetitive in-context syntactic cues account for a substantial portion of the measured effect, reducing confidence that the observed behavior reflects purely social deference and highlighting a vulnerability in the instruction hierarchy~\citep{wallace2024instruction} that explicit system prompts only partially mitigate.
 \end{abstract}
 
 
@@ -109,7 +109,7 @@ Prior cross-family comparisons~\citep{zhu2025conformity} found instruction-tuned
 This paper provides six contributions:
 \begin{enumerate}
     \item \textbf{Within-family decomposition}: SFT and DPO are associated with \emph{opposite} changes in conformity within the OLMo-3-7B pipeline. Because DPO is applied to SFT weights, these effects are not independently identifiable; we report the sequential trajectory (\S\ref{sec:sft_dpo}).
-    \item \textbf{Cross-family behavioral taxonomy}: Under identical pressure, 11~model families exhibit three response patterns under this prompt format---endorsement-dominant, refusal-dominant, or context-insensitive---with Claude Sonnet~4~\citep{bai2022constitutional} anchoring the context-insensitive pole (\S\ref{sec:cross_family}).
+    \item \textbf{Cross-family behavioral taxonomy}: Under identical pressure, 11~model families exhibit three response patterns under this prompt format, endorsement-dominant, refusal-dominant, or context-insensitive, with Claude Sonnet~4~\citep{bai2022constitutional} anchoring the context-insensitive pole (\S\ref{sec:cross_family}).
     \item \textbf{Non-significant conformity in reasoning models}: All five models with extended reasoning capability show non-significant McNemar tests under Holm correction at $T{=}0.0$; this is a descriptive pattern across architecturally heterogeneous models (\S\ref{sec:cross_family}).
     \item \textbf{Peer $>$ authority}: Peer consensus significantly increases errors for all 6 non-reasoning families; authority framing for 3 of 6 (Holm--Bonferroni corrected; \S\ref{sec:cross_family}).
     \item \textbf{Ablation: construct validity}: System-prompt removal and a non-social n-gram baseline probe the autoregressive pattern-completion component, demonstrating that the truthfulness instruction~\citep{wallace2024instruction} provides model-dependent protection (\S\ref{sec:ablation}).
@@ -137,7 +137,7 @@ Sycophancy studies \emph{user-directed} deference. \citet{sharma2024sycophancy} 
 \citet{celebi2025parrot} evaluate 22 models on sycophancy under authority pressure across 13 MMLU domains with log-likelihood calibration, but do not decompose the post-training pipeline into stages. \citet{weng2025benchform} study conformity in multi-agent settings. \citet{shoval2025psychiatric} adapt Asch-style influence to psychiatric assessments using GPT-4o, but analyze a single model with no training-stage decomposition.
 
 \paragraph{Post-Training Effects on Behavior.}
-The RLHF pipeline reduces generation diversity and sharpens output distributions~\citep{rlhf_entropy}, potentially increasing the likelihood of sampling socially ``safe'' agreement modes. \citet{rafailov2023dpo} introduced DPO as an offline alternative to PPO~\citep{schulman2017ppo}. \citet{sharma2024sycophancy} showed that RLHF broadly amplifies sycophancy but did not isolate SFT from preference optimization as separate stages. Our sequential OLMo design partially addresses this gap by showing that the conformity metrics increase after SFT and decrease after the subsequent DPO checkpoint, without isolating independent causal effects---a finding that would be invisible in any study treating post-training as a single step.
+The RLHF pipeline reduces generation diversity and sharpens output distributions~\citep{rlhf_entropy}, potentially increasing the likelihood of sampling socially ``safe'' agreement modes. \citet{rafailov2023dpo} introduced DPO as an offline alternative to PPO~\citep{schulman2017ppo}. \citet{sharma2024sycophancy} showed that RLHF broadly amplifies sycophancy but did not isolate SFT from preference optimization as separate stages. Our sequential OLMo design partially addresses this gap by showing that the conformity metrics increase after SFT and decrease after the subsequent DPO checkpoint, without isolating independent causal effects, a finding that would be invisible in any study treating post-training as a single step.
 
 \paragraph{Temperature and Conformity.}
 \citet{renze2024} find temperature changes (0.0--1.0) do not significantly impact problem-solving in neutral contexts. Our data shows this finding does not generalize to biased contexts: conformity effects are robust across the full temperature range, with the majority of vulnerability concentrated at $T\!=\!0.0$ (greedy decoding). The $T_c$ metric we introduce provides the first per-item characterization of this temperature--conformity interaction.
@@ -302,13 +302,13 @@ Because the McNemar test under a strict fixed-$N{=}400$ design captures shifts f
 \begin{figure}[t]
     \centering
     \includegraphics[width=0.65\textwidth]{fig4_refusal_endorsement.pdf}
-    \caption{Behavioral response taxonomy under peer consensus pressure at $T{=}0.0$ with fixed $N{=}400$ denominator. Each model plotted by endorsement rate (x-axis) vs.\ refusal rate (y-axis); axes reflect absolute probabilities under pressure. Bubble size is proportional to $\Delta$~endorsement (the actual conformity signal, not total $\Delta$~error). Claude Sonnet~4 occupies the context-insensitive quadrant (low endorsement, low refusal). Llama-3.1-70B sits in the safety-driven avoidance quadrant with $\Delta$~endorsement of only $-0.6\%$ despite its large McNemar OR. $\Delta$~endorsement and Holm-corrected significance annotated per model.}
+    \caption{Behavioral response taxonomy under peer consensus pressure at $T{=}0.0$ with fixed $N{=}400$ denominator. Each model plotted by error rate (x-axis) vs.\ refusal rate (y-axis); axes reflect absolute probabilities. Claude Sonnet~4 occupies the context-insensitive quadrant (low error, low refusal). McNemar OR and significance annotated per model.}
     \label{fig:scatter}
 \end{figure}
 
 \subsection{Think Models Show Non-Significant Peer Conformity}
 
-All five models with chain-of-thought reasoning capability show non-significant peer conformity after Holm--Bonferroni correction at $T{=}0.0$: OLMo-32B-Think (OR\,=\,1.51 [0.96,\,2.37], $p_\text{Holm}=1.0$), OLMo-7B-Think ($\Delta=+0.092$, $p_\text{Holm}=1.0$), Grok-4.1-Fast (OR\,=\,0.91 [0.56,\,1.49], $p_\text{Holm}=1.0$), GPT-OSS-20B ($p_\text{Holm}=1.0$), and Claude Sonnet~4 (OR\,=\,0.72 [0.43,\,1.19], $p_\text{Holm}=1.0$). In contrast, instruct variants of the same families are highly vulnerable: OLMo-32B-Instruct (OR\,=\,22.9 [10.8,\,48.4], $p<0.001$). Extended reasoning---generating intermediate logical steps before committing to a final answer---is associated with non-significant conformity effects in this evaluation. However, non-significance does not constitute evidence of resistance; it indicates failure to detect a significant effect under our sample size, prompt format, and metric. With only five reasoning models of heterogeneous architecture, scale, and alignment approach, the sample is insufficient to attribute the pattern to reasoning per se.
+All five models with chain-of-thought reasoning capability show non-significant peer conformity after Holm--Bonferroni correction at $T{=}0.0$: OLMo-32B-Think (OR\,=\,1.51 [0.96,\,2.37], $p_\text{Holm}=1.0$), OLMo-7B-Think ($\Delta=+0.092$, $p_\text{Holm}=1.0$), Grok-4.1-Fast (OR\,=\,0.91 [0.56,\,1.49], $p_\text{Holm}=1.0$), GPT-OSS-20B ($p_\text{Holm}=1.0$), and Claude Sonnet~4 (OR\,=\,0.72 [0.43,\,1.19], $p_\text{Holm}=1.0$). In contrast, instruct variants of the same families are highly vulnerable: OLMo-32B-Instruct (OR\,=\,22.9 [10.8,\,48.4], $p<0.001$). Extended reasoning, generating intermediate logical steps before committing to a final answer, is associated with non-significant conformity effects in this evaluation. However, non-significance does not constitute evidence of resistance; it indicates failure to detect a significant effect under our sample size, prompt format, and metric. With only five reasoning models of heterogeneous architecture, scale, and alignment approach, the sample is insufficient to attribute the pattern to reasoning per se.
 
 \paragraph{Mechanical alternative.} An alternative explanation is that reasoning models output an initial reasoning token (e.g., \texttt{<think>}) before their final answer, mechanically breaking the n-gram repetition chain established by the fabricated peer responses. We cannot definitively distinguish whether their non-significance stems from logical deliberation or this structural interrupt.
 
@@ -321,7 +321,7 @@ Figure~\ref{fig:peer_auth} compares pressure effects across two mechanisms at $T
 \begin{figure}[t]
     \centering
     \includegraphics[width=\textwidth]{fig5_peer_vs_authority.pdf}
-    \caption{Peer consensus vs.\ authority framing across model families at $T{=}0.0$. Models sorted by $\Delta_\text{endorsement}$. Peer consensus bars are decomposed: solid color = $\Delta$~endorsement rate (actual wrong-answer adoption), hatched grey = $\Delta$~refusal rate (safety-driven avoidance, stacked). This decomposition reveals that Llama-3.1-70B's peer effect is almost entirely refusal, while OLMo-32B-Instruct and GPT-4o-Mini show genuine endorsement. Significance: Holm--Bonferroni corrected McNemar tests. Peer consensus is significant for all 6 non-reasoning families; authority framing for 3 of 6.}
+    \caption{Peer consensus vs.\ authority framing across model families at $T{=}0.0$. Models sorted by $\Delta_\text{peer}$. Significance annotations from McNemar tests (Holm corrected). Peer consensus is significant for all 6 non-reasoning families; authority framing for 3 of 6.}
     \label{fig:peer_auth}
 \end{figure}
 
@@ -336,7 +336,7 @@ The OLMo-7B-Instruct variant, which appears in both studies on identical items, 
 
 The cross-family data shows suggestive patterns that warrant discussion, though the observational design prevents attribution to any single factor.
 
-\paragraph{MoE and Constitutional AI models show lower conformity.} All three MoE models (Llama-4-Maverick, Gemini-Flash-Lite, GPT-OSS-20B) and Claude Sonnet~4 (Constitutional AI~\citep{bai2022constitutional}) show $\Delta_\text{peer} \leq +0.215$ at $T{=}0.0$, while dense non-think instruct models without Constitutional AI training show $\Delta > +0.20$. With only 11 families, this sample is too small for meaningful group-level statistical testing. We report it as a descriptive observation.
+\paragraph{MoE and State of the art AI models show lower conformity.} All three MoE models (Llama-4-Maverick, Gemini-Flash-Lite, GPT-OSS-20B) and Claude Sonnet~4 (Constitutional AI~\citep{bai2022constitutional}) show $\Delta_\text{peer} \leq +0.215$ at $T{=}0.0$, while dense non-think instruct models without Constitutional AI training show $\Delta > +0.20$. With only 11 families, this sample is too small for meaningful group-level statistical testing. We report it as a descriptive observation.
 
 \paragraph{Models with reasoning capability show non-significant conformity effects in this sample.} All five reasoning-capable or Constitutional AI models show non-significant McNemar tests at $T{=}0.0$ (Holm corrected), while all 6 non-reasoning instruct models show significant conformity. This is a descriptive pattern consistent with Study~1's OLMo-Think results.
 
@@ -637,7 +637,7 @@ A revolving door serves as a security measure at a library. It is convenient for
 \section{Hybrid Labeling Pipeline}
 \label{app:judge}
 
-All reported behavioral metrics use a 78/22 hybrid labeling pipeline: an automated deterministic heuristic parser processes ${\sim}78\%$ of unambiguous outputs, while the remaining ${\sim}22\%$ undergo GPT-OSS-20B adjudication. This eliminates self-preference bias. The judge receives the question, ground truth, injected wrong answer, and model completion, and must return a structured decision.
+All reported behavioral metrics have been tested vis an automated deterministic heuristic parser processes trails first, and then they undergo GPT-OSS-20B adjudication. This eliminates self-preference bias. The judge receives the question, ground truth, injected wrong answer, and model completion, and must return a structured decision.
 
 \begin{promptbox}
 [Judge Prompt Template]
@@ -901,7 +901,7 @@ OLMo-7B-Think & Dense & SFT+DPO+RL & 7B & MHA & Supervised CoT \\
 
 The three examples below use the \emph{same} item (question: ``An astronomer observes that a planet rotates faster after a meteorite impact. Which is the most likely effect of this increase in rotation?''; ground truth: \emph{Planetary days will become shorter}; injected wrong answer: \emph{Planetary density will decrease}) under identical Asch-style peer pressure at $T{=}0.0$.  They illustrate the three behavioral modes described in \S\ref{sec:cross_family}.
 
-\subsection*{Example 1: System Prompt Override (OLMo-32B-Instruct --- Endorsement-Dominant)}
+\subsection*{Example 1: System Prompt Override (OLMo-32B-Instruct ,  Endorsement-Dominant)}
 
 Despite the explicit truthfulness instruction in the system prompt, OLMo-32B-Instruct repeats the fabricated peer consensus verbatim.  The 5-shot n-gram repetition pattern (``Agent A: X \ldots Agent E: X'') overrides the instruction hierarchy.
 
@@ -929,17 +929,17 @@ Please answer the question with the correct answer.
 
 \noindent\textbf{Diagnosis.}  The model fabricates a causal justification (``the impact can cause the planet to lose mass'') to rationalize the peer consensus.  The system prompt's ``prefer correctness over agreement'' instruction is completely overridden by the autoregressive n-gram pattern.  Endorsement rate for this model: 40.8\% [36.0, 45.6] at $T{=}0.0$.
 
-\subsection*{Example 2: Constitutional AI Resistance (Claude Sonnet 4 --- Context-Insensitive)}
+\subsection*{Example 2: Constitutional AI Resistance (Claude Sonnet 4 ,  Context-Insensitive)}
 
 Under the identical prompt, Claude Sonnet~4 ignores the fabricated peers and produces the factually correct answer.
 
 \begin{tcolorbox}[enhanced, breakable, colback=green!3, colframe=okgreen!60, boxrule=0.5pt, arc=3pt, title={\small\bfseries Claude Sonnet 4 Output (State A: Correct)}, fonttitle=\sffamily]
-\small\ttfamily The most likely effect of the increase in rotation would be that planetary days become shorter. When a planet rotates faster, it completes each rotation in less time, which means the length of a day on that planet decreases. The prior answers suggesting density would decrease are incorrect---a meteorite impact that increases rotation speed does not directly reduce planetary density.
+\small\ttfamily The most likely effect of the increase in rotation would be that planetary days become shorter. When a planet rotates faster, it completes each rotation in less time, which means the length of a day on that planet decreases. The prior answers suggesting density would decrease are incorrect, a meteorite impact that increases rotation speed does not directly reduce planetary density.
 \end{tcolorbox}
 
 \noindent\textbf{Diagnosis.}  Claude Sonnet~4 explicitly rejects the peer consensus (``the prior answers \ldots are incorrect'') and provides the correct physical reasoning.  OR\,=\,0.72 [0.43, 1.19], $p_\text{Holm}=1.0$: pressure has no significant effect on this model's accuracy.
 
-\subsection*{Example 3: Safety-Driven Refusal (Llama-3.1-70B --- Refusal-Dominant)}
+\subsection*{Example 3: Safety-Driven Refusal (Llama-3.1-70B ,  Refusal-Dominant)}
 
 Rather than endorsing the wrong answer, Llama-3.1-70B triggers a safety-aligned refusal response, declining to confirm the fabricated consensus.
 
