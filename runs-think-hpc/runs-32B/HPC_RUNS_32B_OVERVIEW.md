@@ -5,7 +5,7 @@ This report summarizes what is inside `runs-think-hpc/runs-32B`, based on:
 - `./scripts/judge_report.sh --config experiments/olmo_conformity/configs/suite_32b_think_sft_temp0.0.json --inventory runs-think-hpc/runs-32B --show-missing`
 - direct SQLite queries on each `simulation.db`
 
-**HPC refresh:** Run folders were replaced with current HPC exports (checkpointed **`simulation.db` only** in this drop—no `-wal` / `-shm` sidecars on disk). Tables below were **re-verified locally on 2026-04-06**.
+**HPC refresh:** Run folders were replaced with current HPC exports (checkpointed **`simulation.db` only** in this drop—no `-wal` / `-shm` sidecars on disk). Trial and output counts below were **re-checked with SQL on 2026-04-06** (`sqlite3 …/simulation.db`).
 
 **Git LFS:** `simulation.db`, and—if present—`simulation.db-wal` / `simulation.db-shm` under `runs-think-hpc/runs-32B/<run_folder>/`, use **Git LFS** (see `.gitattributes`). `.gitignore` exempts these paths from the global `*.db` / `simulation*.db` rules. After clone, run `git lfs pull` if working trees show tiny pointer files instead of SQLite binaries.
 
@@ -48,7 +48,20 @@ Convention:
 
 Expected full suite (per `suite_32b_think_*` JSON family): **1600** trials = 8 datasets × 4 conditions × 50 items.
 
-From `./scripts/judge_report.sh --inventory runs-think-hpc/runs-32B --show-missing`:
+**Trials done (SQL):** For each run folder, `trials done` = row count in `conformity_trials`:
+
+```sql
+SELECT COUNT(*) FROM conformity_trials;
+```
+
+| run folder | trials (SQL `conformity_trials`) |
+|---|---:|
+| `20260330_235019_81d9194a-b1ef-4261-a0fb-bb0f713e1239` | 607 |
+| `20260331_002604_e673de86-d8dc-4ce0-bfc9-969d531eb425` | 983 |
+| `20260331_005822_3041fb7e-98bc-4343-90d7-e56d9e134a3b` | 669 |
+| `20260331_014024_d0158f56-c99c-4e7d-92fc-c7ece3190781` | 506 |
+
+These match `./scripts/judge_report.sh --config experiments/olmo_conformity/configs/suite_32b_think_sft_temp0.0.json --inventory runs-think-hpc/runs-32B --show-missing` (inventory derives the same trial counts from the DB).
 
 | run folder | model | temp | trials done / expected | cells ok / total | inventory status |
 |---|---|---:|---:|---:|---|
@@ -61,7 +74,7 @@ Summary: **0 complete, 4 partial** (relative to the full 32-cell design). The in
 
 ## 4) Embedded config + DB snapshot (SQLite)
 
-`runs.config_json -> $.suite_config.suite_name` (and trial rows agree on model/temperature):
+`runs.config_json -> $.suite_config.suite_name` (and trial rows agree on model/temperature). **Trials** = `SELECT COUNT(*) FROM conformity_trials`; **outputs** = `SELECT COUNT(*) FROM conformity_outputs`; **missing output rows** = trials − outputs (here always **1** pending row per run).
 
 | run folder | embedded `suite_name` | trials | outputs | missing output rows |
 |---|---|---:|---:|---:|
@@ -76,7 +89,7 @@ All four DBs have **25** tables and include the usual conformity tables (`confor
 
 ## 5) Judge labels on `conformity_outputs.is_correct`
 
-Counts are over **existing output rows joined to trials** for the run:
+Counts are from **`conformity_outputs`** (same totals as §4 **outputs**; join to `conformity_trials` matches one-to-one here):
 
 | run folder | `is_correct = 1` | `is_correct = 0` | `is_correct IS NULL` | total outputs |
 |---|---:|---:|---:|---:|
