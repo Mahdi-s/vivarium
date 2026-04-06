@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="docs/readme-header.gif" alt="Vivarium — tiny agents collaborating inside a glass dome" width="720" />
-</p>
-
 <h1 align="center">Vivarium</h1>
 
 <p align="center">
@@ -10,29 +6,14 @@
 </p>
 
 <p align="center">
-  <a href="pyproject.toml"><img src="https://img.shields.io/badge/package-0.1.0-8e44ad?style=for-the-badge&labelColor=2c1e4a" alt="Vivarium 0.1.0" /></a>
-  <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776ab?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.11 and 3.12" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-f9ca24?style=for-the-badge&logo=opensourceinitiative&logoColor=black" alt="MIT License" /></a>
-  <img src="https://img.shields.io/badge/🔬_Status-research_α-ff9f43?style=for-the-badge" alt="Research alpha" />
+  <a href="pyproject.toml"><img src="https://img.shields.io/badge/version-0.1.0-555555?style=flat-square" alt="Version 0.1.0" /></a>
+  <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.11 and 3.12" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-999999?style=flat-square" alt="MIT License" /></a>
+  <img src="https://img.shields.io/badge/Core-PyTorch-EE4C2C?style=flat-square&logo=pytorch&logoColor=white" alt="PyTorch" />
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/PyTorch-torch_≥2.9-ee4c2c?style=for-the-badge&logo=pytorch&logoColor=white" alt="PyTorch" />
-  <img src="https://img.shields.io/badge/Pydantic-v2-e92063?style=for-the-badge&logo=pydantic&logoColor=white" alt="Pydantic v2" />
-  <img src="https://img.shields.io/badge/SQLite-trace_DB-003b57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite" />
-  <a href="https://huggingface.co/docs/transformers"><img src="https://img.shields.io/badge/🤗_Transformers-core-ffd21e?style=for-the-badge&logo=huggingface&logoColor=000" alt="Hugging Face Transformers" /></a>
-  <img src="https://img.shields.io/badge/🔭_TransformerLens-mechanistic-7c3aed?style=for-the-badge" alt="TransformerLens mechanistic interpretability" />
-</p>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/LangGraph-BDI_agents-1abc9c?style=for-the-badge" alt="LangGraph BDI agents" />
-  <img src="https://img.shields.io/badge/LiteLLM-multi--provider-34495e?style=for-the-badge" alt="LiteLLM multi-provider gateway" />
-  <img src="https://img.shields.io/badge/Jupyter-analysis-ff6f00?style=for-the-badge&logo=jupyter&logoColor=white" alt="Jupyter notebooks" />
-  <img src="https://img.shields.io/badge/ChromaDB-vector_memory-27ae60?style=for-the-badge" alt="ChromaDB optional memory" />
-</p>
-
-<p align="center" title="Stack at a glance">
-  <sub>🐍 Python · 🤖 LLM agents · 🧵 parallel think → ordered commit · 🗂️ one SQLite trace per run · 🔬 hooks when you need internals</sub>
+  <img src="docs/readme-header.gif" alt="Vivarium — tiny agents collaborating inside a glass dome" width="720" />
 </p>
 
 ---
