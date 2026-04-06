@@ -1,3 +1,6 @@
 # Large run artifacts: use Git LFS so history stays small and checkouts stay consistent.
 runs/**              filter=lfs diff=lfs merge=lfs -text
 runs_latest/**       filter=lfs diff=lfs merge=lfs -text
+runs-think-hpc/runs-32B/**/simulation.db     filter=lfs diff=lfs merge=lfs -text
+runs-think-hpc/runs-32B/**/simulation.db-wal filter=lfs diff=lfs merge=lfs -text
+runs-think-hpc/runs-32B/**/simulation.db-shm filter=lfs diff=lfs merge=lfs -text

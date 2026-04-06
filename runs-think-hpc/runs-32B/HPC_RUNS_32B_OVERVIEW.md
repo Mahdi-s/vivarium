@@ -2,8 +2,14 @@
 
 This report summarizes what is inside `runs-think-hpc/runs-32B`, based on:
 
-- `./scripts/judge_report.sh --inventory runs-think-hpc/runs-32B --show-missing`
+- `./scripts/judge_report.sh --config experiments/olmo_conformity/configs/suite_32b_think_sft_temp0.0.json --inventory runs-think-hpc/runs-32B --show-missing`
 - direct SQLite queries on each `simulation.db`
+
+**HPC refresh:** Run folders were replaced with current HPC exports (checkpointed **`simulation.db` only** in this drop—no `-wal` / `-shm` sidecars on disk). Tables below were **re-verified locally on 2026-04-06**.
+
+**Git LFS:** `simulation.db`, and—if present—`simulation.db-wal` / `simulation.db-shm` under `runs-think-hpc/runs-32B/<run_folder>/`, use **Git LFS** (see `.gitattributes`). `.gitignore` exempts these paths from the global `*.db` / `simulation*.db` rules. After clone, run `git lfs pull` if working trees show tiny pointer files instead of SQLite binaries.
+
+Per-run DB sizes (bytes, 2026-04-06): ~13.5M (SFT 0.0), ~15.6M (SFT 0.6), ~13.9M (DPO 0.0), ~11.8M (DPO 0.6).
 
 It parallels the structure of `runs-think-hpc/HPC_RUNS_OVERVIEW.md` (7B-focused), but covers **OLMo-3 32B Think SFT/DPO** only.
 
@@ -12,7 +18,7 @@ It parallels the structure of `runs-think-hpc/HPC_RUNS_OVERVIEW.md` (7B-focused)
 - Total run folders with DBs: **4**
 - Suite family: **OLMo-3 32B Think-SFT** and **Think-DPO** at **temp 0.0** and **0.6**
 - Per run you typically see:
-  - `simulation.db` (and often `simulation.db-wal` / `simulation.db-shm` if the snapshot was taken while SQLite had a write-ahead log)
+  - `simulation.db` (LFS-tracked; WAL/SHM only if copied mid-write from the cluster)
   - `artifacts/` (figures, tables subdirs may be empty)
   - `exports/` (may be empty)
 
