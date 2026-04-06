@@ -1,12 +1,37 @@
-# Vivarium
+<p align="center">
+  <img src="docs/readme-header.gif" alt="Vivarium — tiny agents collaborating inside a glass dome" width="720" />
+</p>
 
-A deterministic, traceable multi-agent simulation platform with deep mechanistic interpretability support. Designed for rigorous research into agent dynamics, emergent behaviors, and cognitive introspection.
+<h1 align="center">Vivarium</h1>
+
+<p align="center">
+  <strong>A miniature world for LLM agents — playful to run, serious under the hood.</strong><br />
+  <em>Reproducible multi-agent Sims meets mechanistic interpretability: same seed, same trace, optional peek inside the model.</em>
+</p>
+
+---
+
+**Hi there.** If you have ever wanted a simulation where agents **chat, react, and collide socially** — but you still get a **SQLite movie of every step**, **deterministic replays**, and (when you use open-weight models) **activations, probes, and steering** tied to behavior — you are in the right terrarium.
+
+### Where Vivarium fits
+
+Open-source **agentic simulation** spans a huge design space: embodied RL environments, workflow graphs around black-box APIs, benchmarking harnesses, and more. Vivarium is optimized for **research-style multi-agent LLM experiments** where traceability and interpretability matter as much as clever prompts.
+
+| You are trying to… | Vivarium is built to… |
+|--------------------|----------------------|
+| **Ship a fair A/B on agent behavior** | Keep execution **deterministic** (seeds, ordering, stable IDs) and log everything to an **append-only trace DB** |
+| **Run rooms with dozens of agents** | Use a **barrier scheduler** (parallel think → ordered commit) plus **archetype caching** so duplicate personas do not nuke your API bill |
+| **Ground agents in real people** | Initialize **empirical digital twins** from CSV / JSONL survey fields, with **BDI-style** prompts (beliefs · desires · intentions) |
+| **Go beyond “it said X”** | Capture **sparse activations** (TransformerLens + HuggingFace hooks), train **probes**, run **logit lens**, apply **activation steering**, and wire results into reports |
+| **Trust the run** | Emit **scientific run certificates**, **mode-collapse** diagnostics, and optional **Merkle-style** provenance |
+
+**Ship shape:** the included **OLMo Conformity Experiment** is the reference stress test — behavioral trials (control, Asch-style unanimity, authority bias), mechanistic pipelines, interventions, and LLM-judge evaluation — so you can clone the pattern for your own paradigm.
 
 ## Overview
 
-Vivarium provides a **deterministic simulation kernel** that separates agent policy from platform execution, ensuring reproducible experiments. It integrates **TransformerLens** and **HuggingFace hooked models** for activation capture, enabling researchers to correlate high-level social outcomes with low-level neural activations.
+At its core, Vivarium is a **deterministic simulation kernel** that separates **agent policy** from **platform execution**. That split is what makes replays boringly reliable and what lets you swap mock, API, or hooked local models without rewriting the world.
 
-The platform has been used to run the **OLMo Conformity Experiment** — a large-scale study of sycophancy and social conformity in language models using behavioral trials, mechanistic probes, activation steering interventions, and LLM judge evaluation.
+It integrates **TransformerLens** and **HuggingFace** hooked models for activation-aligned analysis, so you can relate **population-level social outcomes** to **internal representations** when your model allows it.
 
 ```mermaid
 graph TB
@@ -203,7 +228,7 @@ sequenceDiagram
 1. **Clone the repository:**
    ```bash
    git clone <repository-url>
-   cd Vivarium
+   cd abstractAgentMachine  # or your clone folder name
    ```
 
 2. **Install dependencies:**
