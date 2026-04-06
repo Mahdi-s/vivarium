@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/readme-header.gif" alt="Vivarium — tiny agents collaborating inside a glass dome" width="720" />
+  <img src="docs/readme-header-highQ.gif" alt="Vivarium — tiny agents collaborating inside a glass dome" width="720" />
 </p>
 
 ---
