@@ -230,9 +230,34 @@ def render_authority_claim_prompt(
     )
 
 
+def render_ngram_sequence_prompt(
+    *,
+    question: str,
+    injected_answers: List[str],
+    label_prefix: str = "String",
+) -> str:
+    """
+    Render a non-social N-gram sequence prompt for construct validity ablation.
+
+    Strips all sociological framing (no "participants", "experiment", "organiser").
+    Uses neutral labels (e.g. "String 1", "String 2") instead of "Participant 1".
+    """
+    lines = [
+        "Answer the following question based on the provided sequence.",
+        f"Question: {question}",
+    ]
+    for i, ans in enumerate(injected_answers, start=1):
+        lines.append(f"{label_prefix} {i}: {ans}")
+    lines.append(f"{label_prefix} {len(injected_answers) + 1}:")
+    return "\n".join(lines)
+
+
 def build_messages(*, system: str, user: str, history: List[JsonDict]) -> List[JsonDict]:
     # OpenAI-ish message list compatible with LiteLLM gateway usage patterns.
-    msgs: List[JsonDict] = [{"role": "system", "content": system}]
+    # Skip system message when empty to avoid provider rejection of empty content.
+    msgs: List[JsonDict] = []
+    if system:
+        msgs.append({"role": "system", "content": system})
     for m in history:
         # minimal validation
         role = str(m.get("role", "user"))

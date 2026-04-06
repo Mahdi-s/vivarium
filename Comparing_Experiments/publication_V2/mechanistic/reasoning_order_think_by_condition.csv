@@ -125,9 +125,9 @@ think_sft,asch_zhu_unbiased_diverse_plain,answer_only,151,25,0.1656
 think_sft,asch_zhu_unbiased_diverse_plain,social_only,713,141,0.1978
 think_sft,asch_zhu_unbiased_diverse_plain,neither,364,64,0.1758
 think_sft,asch_zhu_unbiased_qd,answer_first,712,280,0.3933
-think_sft,asch_zhu_unbiased_qd,social_first,582,124,0.2131
+think_sft,asch_zhu_unbiased_qd,social_first,580,124,0.2138
 think_sft,asch_zhu_unbiased_qd,answer_only,132,26,0.197
-think_sft,asch_zhu_unbiased_qd,social_only,633,108,0.1706
+think_sft,asch_zhu_unbiased_qd,social_only,635,108,0.1701
 think_sft,asch_zhu_unbiased_qd,neither,341,76,0.2229
 think_sft,asch_zhu_unbiased_unanimous_confident,answer_first,595,224,0.3765
 think_sft,asch_zhu_unbiased_unanimous_confident,social_first,685,165,0.2409

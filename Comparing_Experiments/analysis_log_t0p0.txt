@@ -131,3 +131,103 @@ Loading checkpoint shards: 100%|██████████| 3/3 [00:06<00:00
 2026-03-26 01:54:28 [INFO] --- think T=0.0 ---
 2026-03-26 01:54:28 [INFO] Running experiment for think T=0.0...
 2026-03-26 01:54:28 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python3 -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmp6hwtnn7d.json --runs-dir /Users/mahdi/repos/abstractAgentMachine/runs/think --run-id f47fe05e-4564-4680-a2d8-39a88c6f8d37
+2026-03-26 11:30:23 [INFO] ============================================================
+2026-03-26 11:30:23 [INFO] EXPANDED CONFORMITY EXPERIMENTS PIPELINE
+2026-03-26 11:30:23 [INFO] ============================================================
+2026-03-26 11:30:23 [INFO] Repo root: /Users/mahdi/repos/abstractAgentMachine
+2026-03-26 11:30:23 [INFO] Mode: LOCAL
+2026-03-26 11:30:23 [INFO] Metadata file: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-26 11:30:23 [INFO] Models directory: /Users/mahdi/repos/abstractAgentMachine/models
+2026-03-26 11:30:23 [INFO] Runs directory: /Users/mahdi/repos/abstractAgentMachine/runs/think
+2026-03-26 11:30:23 [INFO] Output directory: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments
+2026-03-26 11:30:23 [INFO] Mode: model-first
+2026-03-26 11:30:23 [INFO] Phase: trials
+2026-03-26 11:30:23 [INFO] Suite: /Users/mahdi/repos/abstractAgentMachine/runs/think/suite_think_B6ALhY.json
+2026-03-26 11:30:23 [INFO] Memory usage (pipeline start): 28.2 MB
+2026-03-26 11:30:23 [INFO] Set VIVARIUM_HF_CACHE=/Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-03-26 11:30:23 [INFO] Set VIVARIUM_ARTIFACTS_DIR=/Users/mahdi/repos/abstractAgentMachine/runs/think
+2026-03-26 11:30:23 [INFO] Created/verified models cache directory: /Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-03-26 11:30:23 [INFO] Created/verified runs directory: /Users/mahdi/repos/abstractAgentMachine/runs/think
+2026-03-26 11:30:23 [INFO] 
+2026-03-26 11:30:23 [INFO] ============================================================
+2026-03-26 11:30:23 [INFO] PHASE 1: RUNNING EXPERIMENTS
+2026-03-26 11:30:23 [INFO] ============================================================
+2026-03-26 11:30:23 [INFO] 
+2026-03-26 11:30:23 [INFO] --- think T=0.0 ---
+2026-03-26 11:30:23 [INFO] Running experiment for think T=0.0...
+2026-03-26 11:30:23 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python3 -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmpbw4s49zo.json --runs-dir /Users/mahdi/repos/abstractAgentMachine/runs/think --run-id f47fe05e-4564-4680-a2d8-39a88c6f8d37
+2026-03-26 20:49:07 [INFO] ============================================================
+2026-03-26 20:49:07 [INFO] EXPANDED CONFORMITY EXPERIMENTS PIPELINE
+2026-03-26 20:49:07 [INFO] ============================================================
+2026-03-26 20:49:07 [INFO] Repo root: /Users/mahdi/repos/abstractAgentMachine
+2026-03-26 20:49:07 [INFO] Mode: LOCAL
+2026-03-26 20:49:07 [INFO] Metadata file: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-26 20:49:07 [INFO] Models directory: /Users/mahdi/repos/abstractAgentMachine/models
+2026-03-26 20:49:07 [INFO] Runs directory: /Users/mahdi/repos/abstractAgentMachine/runs/think
+2026-03-26 20:49:07 [INFO] Output directory: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments
+2026-03-26 20:49:07 [INFO] Mode: model-first
+2026-03-26 20:49:07 [INFO] Phase: trials
+2026-03-26 20:49:07 [INFO] Suite: /Users/mahdi/repos/abstractAgentMachine/runs/think/suite_think_OwXKnf.json
+2026-03-26 20:49:07 [INFO] Memory usage (pipeline start): 30.7 MB
+2026-03-26 20:49:07 [INFO] Set VIVARIUM_HF_CACHE=/Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-03-26 20:49:07 [INFO] Set VIVARIUM_ARTIFACTS_DIR=/Users/mahdi/repos/abstractAgentMachine/runs/think
+2026-03-26 20:49:07 [INFO] Created/verified models cache directory: /Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-03-26 20:49:07 [INFO] Created/verified runs directory: /Users/mahdi/repos/abstractAgentMachine/runs/think
+2026-03-26 20:49:07 [INFO] 
+2026-03-26 20:49:07 [INFO] ============================================================
+2026-03-26 20:49:07 [INFO] PHASE 1: RUNNING EXPERIMENTS
+2026-03-26 20:49:07 [INFO] ============================================================
+2026-03-26 20:49:07 [INFO] 
+2026-03-26 20:49:07 [INFO] --- think T=0.0 ---
+2026-03-26 20:49:07 [INFO] Running experiment for think T=0.0...
+2026-03-26 20:49:07 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python3 -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmpzdwifd6r.json --runs-dir /Users/mahdi/repos/abstractAgentMachine/runs/think --run-id f47fe05e-4564-4680-a2d8-39a88c6f8d37
+2026-03-27 01:30:58 [INFO] ============================================================
+2026-03-27 01:30:58 [INFO] EXPANDED CONFORMITY EXPERIMENTS PIPELINE
+2026-03-27 01:30:58 [INFO] ============================================================
+2026-03-27 01:30:58 [INFO] Repo root: /Users/mahdi/repos/abstractAgentMachine
+2026-03-27 01:30:58 [INFO] Mode: LOCAL
+2026-03-27 01:30:58 [INFO] Metadata file: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-27 01:30:58 [INFO] Models directory: /Users/mahdi/repos/abstractAgentMachine/models
+2026-03-27 01:30:58 [INFO] Runs directory: /Users/mahdi/repos/abstractAgentMachine/runs/think
+2026-03-27 01:30:58 [INFO] Output directory: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments
+2026-03-27 01:30:58 [INFO] Mode: model-first
+2026-03-27 01:30:58 [INFO] Phase: trials
+2026-03-27 01:30:58 [INFO] Suite: /Users/mahdi/repos/abstractAgentMachine/runs/think/suite_think_RMD4kh.json
+2026-03-27 01:30:58 [INFO] Memory usage (pipeline start): 30.1 MB
+2026-03-27 01:30:58 [INFO] Set VIVARIUM_HF_CACHE=/Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-03-27 01:30:58 [INFO] Set VIVARIUM_ARTIFACTS_DIR=/Users/mahdi/repos/abstractAgentMachine/runs/think
+2026-03-27 01:30:58 [INFO] Created/verified models cache directory: /Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-03-27 01:30:58 [INFO] Created/verified runs directory: /Users/mahdi/repos/abstractAgentMachine/runs/think
+2026-03-27 01:30:58 [INFO] 
+2026-03-27 01:30:58 [INFO] ============================================================
+2026-03-27 01:30:58 [INFO] PHASE 1: RUNNING EXPERIMENTS
+2026-03-27 01:30:58 [INFO] ============================================================
+2026-03-27 01:30:58 [INFO] 
+2026-03-27 01:30:58 [INFO] --- think T=0.0 ---
+2026-03-27 01:30:58 [INFO] Running experiment for think T=0.0...
+2026-03-27 01:30:58 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python3 -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmpawjqv0et.json --runs-dir /Users/mahdi/repos/abstractAgentMachine/runs/think --run-id f47fe05e-4564-4680-a2d8-39a88c6f8d37
+2026-03-27 10:48:02 [INFO] ============================================================
+2026-03-27 10:48:02 [INFO] EXPANDED CONFORMITY EXPERIMENTS PIPELINE
+2026-03-27 10:48:02 [INFO] ============================================================
+2026-03-27 10:48:02 [INFO] Repo root: /Users/mahdi/repos/abstractAgentMachine
+2026-03-27 10:48:02 [INFO] Mode: LOCAL
+2026-03-27 10:48:02 [INFO] Metadata file: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-03-27 10:48:02 [INFO] Models directory: /Users/mahdi/repos/abstractAgentMachine/models
+2026-03-27 10:48:02 [INFO] Runs directory: /Users/mahdi/repos/abstractAgentMachine/runs/think
+2026-03-27 10:48:02 [INFO] Output directory: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments
+2026-03-27 10:48:02 [INFO] Mode: model-first
+2026-03-27 10:48:02 [INFO] Phase: trials
+2026-03-27 10:48:02 [INFO] Suite: /Users/mahdi/repos/abstractAgentMachine/runs/think/suite_think_VG4s3f.json
+2026-03-27 10:48:02 [INFO] Memory usage (pipeline start): 29.1 MB
+2026-03-27 10:48:02 [INFO] Set VIVARIUM_HF_CACHE=/Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-03-27 10:48:02 [INFO] Set VIVARIUM_ARTIFACTS_DIR=/Users/mahdi/repos/abstractAgentMachine/runs/think
+2026-03-27 10:48:02 [INFO] Created/verified models cache directory: /Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-03-27 10:48:02 [INFO] Created/verified runs directory: /Users/mahdi/repos/abstractAgentMachine/runs/think
+2026-03-27 10:48:02 [INFO] 
+2026-03-27 10:48:02 [INFO] ============================================================
+2026-03-27 10:48:02 [INFO] PHASE 1: RUNNING EXPERIMENTS
+2026-03-27 10:48:02 [INFO] ============================================================
+2026-03-27 10:48:02 [INFO] 
+2026-03-27 10:48:02 [INFO] --- think T=0.0 ---
+2026-03-27 10:48:02 [INFO] Running experiment for think T=0.0...
+2026-03-27 10:48:02 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python3 -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmpiefr_gfg.json --runs-dir /Users/mahdi/repos/abstractAgentMachine/runs/think --run-id f47fe05e-4564-4680-a2d8-39a88c6f8d37

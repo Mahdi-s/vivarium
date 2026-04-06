@@ -10,9 +10,25 @@ Architecture: Decoupled Producer-Consumer with dynamic GPU batching.
     1 × DB Writer (Thread)        — drains output queue, writes in executemany(500) transactions
 
 Usage:
+    # Original metadata-driven mode (runs_latest/runs/)
     python scripts/rescore_outputs.py --metadata Comparing_Experiments/runs_metadata_v6.json
+
+    # Restrict to a single run via metadata
     python scripts/rescore_outputs.py --run-id 9f240f89-... --force
-    python scripts/rescore_outputs.py --use-embeddings --embedding-model all-MiniLM-L6-v2
+
+    # Auto-discover all simulation.db files under one or more directories
+    python scripts/rescore_outputs.py --discover --runs-dir runs --runs-dir runs/think
+
+    # Discover + only rescore specific variants (e.g. skip think variants)
+    python scripts/rescore_outputs.py \\
+        --discover --runs-dir runs_latest/runs \\
+        --variant-filter base,instruct,instruct_sft,instruct_dpo,rl_zero
+
+    # Full sweep: runs_latest (non-think) + runs/ + runs/think/ (all)
+    python scripts/rescore_outputs.py \\
+        --discover --runs-dir runs_latest/runs \\
+        --variant-filter base,instruct,instruct_sft,instruct_dpo,rl_zero
+    python scripts/rescore_outputs.py --discover --runs-dir runs --runs-dir runs/think
 """
 
 from __future__ import annotations
@@ -22,6 +38,7 @@ import json
 import multiprocessing as mp
 import os
 import queue
+import re
 import sqlite3
 import sys
 import threading
@@ -254,25 +271,38 @@ JOIN conformity_trials t ON t.trial_id = o.trial_id
 JOIN conformity_items i ON i.item_id = t.item_id
 JOIN conformity_datasets d ON d.dataset_id = i.dataset_id
 JOIN conformity_conditions c ON c.condition_id = t.condition_id
-WHERE t.run_id = ?
+WHERE t.run_id = ?{variant_clause}
 """
 
-def _count_rows(db_path: str, run_id: str) -> int:
+def _count_rows(db_path: str, run_id: str, allowed_variants: Optional[List[str]] = None) -> int:
     conn = sqlite3.connect(db_path)
+    variant_clause = ""
+    params: list = [run_id]
+    if allowed_variants:
+        placeholders = ",".join("?" * len(allowed_variants))
+        variant_clause = f" AND t.variant IN ({placeholders})"
+        params.extend(allowed_variants)
     count = conn.execute(
         "SELECT COUNT(*) FROM conformity_outputs o "
-        "JOIN conformity_trials t ON t.trial_id=o.trial_id WHERE t.run_id=?",
-        (run_id,),
+        f"JOIN conformity_trials t ON t.trial_id=o.trial_id WHERE t.run_id=?{variant_clause}",
+        params,
     ).fetchone()[0]
     conn.close()
     return count
 
 
-def _iter_rows(db_path: str, run_id: str):
+def _iter_rows(db_path: str, run_id: str, allowed_variants: Optional[List[str]] = None):
     """Yield tuples of (output_id, raw_text, gt, wa, cond, dataset, source_json) in chunks."""
+    variant_clause = ""
+    params: list = [run_id]
+    if allowed_variants:
+        placeholders = ",".join("?" * len(allowed_variants))
+        variant_clause = f" AND t.variant IN ({placeholders})"
+        params.extend(allowed_variants)
+    query = _ROW_QUERY.format(variant_clause=variant_clause)
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
-    cursor = conn.execute(_ROW_QUERY, (run_id,))
+    cursor = conn.execute(query, params)
 
     while True:
         rows = cursor.fetchmany(_DB_CHUNK_SIZE)
@@ -303,14 +333,16 @@ def rescore_db(
     n_workers: int = 14,
     use_embeddings: bool = False,
     embedding_model: str = "all-MiniLM-L6-v2",
+    allowed_variants: Optional[List[str]] = None,
 ) -> int:
     """Rescore a single simulation.db. Returns number of rows updated."""
-    total = _count_rows(db_path, run_id)
+    total = _count_rows(db_path, run_id, allowed_variants)
     if total == 0:
         print(f"  No rows to rescore")
         return 0
 
-    print(f"  Rescoring {total:,} rows with {n_workers} workers ...")
+    variant_label = f" (variants: {','.join(allowed_variants)})" if allowed_variants else ""
+    print(f"  Rescoring {total:,} rows with {n_workers} workers{variant_label} ...")
 
     ctx = mp.get_context("spawn")
     input_q: mp.Queue = ctx.Queue(maxsize=n_workers * 200)
@@ -334,7 +366,7 @@ def rescore_db(
     t0 = time.monotonic()
     fed = 0
     try:
-        for item in _iter_rows(db_path, run_id):
+        for item in _iter_rows(db_path, run_id, allowed_variants):
             input_q.put(item)
             fed += 1
     except KeyboardInterrupt:
@@ -363,45 +395,196 @@ def rescore_db(
     return writer.written
 
 
+# ---------------------------------------------------------------------------
+# Discovery (no-metadata mode)
+# ---------------------------------------------------------------------------
+
+_RUN_DIR_RE = re.compile(r"^\d{8}_\d{6}_[0-9a-f\-]{36}$")
+
+
+def discover_runs(runs_dirs: List[Path]) -> List[Tuple[str, Path]]:
+    """Return deduplicated [(run_id, db_path), ...] from all supplied roots.
+
+    Iterates each directory one level deep for folders matching
+    YYYYMMDD_HHMMSS_<uuid> that contain a simulation.db.
+    The same run_id appearing under multiple roots is de-duplicated;
+    first occurrence wins.
+    """
+    seen: Dict[str, Path] = {}
+    results: List[Tuple[str, Path]] = []
+
+    for runs_dir in runs_dirs:
+        if not runs_dir.exists():
+            print(f"  [warn] runs-dir not found, skipping: {runs_dir}")
+            continue
+
+        # The directory itself might be a single run folder
+        if _RUN_DIR_RE.match(runs_dir.name):
+            db = runs_dir / "simulation.db"
+            if db.exists():
+                run_id = runs_dir.name.split("_", 2)[-1]
+                if run_id not in seen:
+                    seen[run_id] = db
+                    results.append((run_id, db))
+            continue
+
+        for entry in sorted(runs_dir.iterdir()):
+            if not entry.is_dir() or not _RUN_DIR_RE.match(entry.name):
+                continue
+            db = entry / "simulation.db"
+            if not db.exists():
+                print(f"  [skip] {entry.name} — simulation.db not found")
+                continue
+            run_id = entry.name.split("_", 2)[-1]
+            if run_id in seen:
+                print(f"  [dedup] run_id={run_id[:8]}… already seen, skipping {entry}")
+                continue
+            seen[run_id] = db
+            results.append((run_id, db))
+
+    return results
+
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
 def main():
-    ap = argparse.ArgumentParser(description="Re-score conformity outputs with enhanced cascade")
-    ap.add_argument("--runs-dir", type=str, default="runs_latest/runs")
-    ap.add_argument("--metadata", type=str, default="Comparing_Experiments/runs_metadata_v6.json")
+    ap = argparse.ArgumentParser(
+        description="Re-score conformity outputs with enhanced cascade",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+
+    # Source selection
+    ap.add_argument(
+        "--runs-dir",
+        dest="runs_dirs",
+        action="append",
+        metavar="DIR",
+        help=(
+            "Directory containing run folders (YYYYMMDD_HHMMSS_<uuid>). "
+            "May be repeated to process multiple trees. "
+            "Used in --discover mode; ignored when --metadata is used without --discover."
+        ),
+    )
+    ap.add_argument(
+        "--discover",
+        action="store_true",
+        help=(
+            "Auto-discover run folders under --runs-dir trees instead of reading "
+            "a metadata JSON. Required when targeting runs/ or runs/think/."
+        ),
+    )
+    ap.add_argument(
+        "--metadata",
+        type=str,
+        default="Comparing_Experiments/runs_metadata_v6.json",
+        help="Path to runs_metadata JSON (used in legacy metadata mode, default: %(default)s).",
+    )
+
+    # Filtering
+    ap.add_argument(
+        "--variant-filter",
+        type=str,
+        default=None,
+        metavar="VARIANTS",
+        help=(
+            "Comma-separated list of variant names to rescore "
+            "(e.g. 'base,instruct,instruct_sft,instruct_dpo,rl_zero'). "
+            "When set, only matching rows are rescored. Default: all variants."
+        ),
+    )
+    ap.add_argument(
+        "--run-id",
+        type=str,
+        default=None,
+        help="Restrict to a single run_id (metadata mode only).",
+    )
+
+    # Performance
     ap.add_argument("--n-workers", type=int, default=14)
     ap.add_argument("--use-embeddings", action="store_true")
     ap.add_argument("--embedding-model", type=str, default="all-MiniLM-L6-v2")
-    ap.add_argument("--run-id", type=str, default=None, help="Restrict to a single run")
+
     args = ap.parse_args()
 
-    runs_dir = Path(args.runs_dir)
-    metadata = load_runs_metadata(Path(args.metadata))
-
-    if args.run_id:
-        targets = {k: v for k, v in metadata.items() if v["run_id"] == args.run_id}
-        if not targets:
-            print(f"Run ID {args.run_id} not found in metadata", file=sys.stderr)
-            return 1
-    else:
-        targets = metadata
+    allowed_variants: Optional[List[str]] = None
+    if args.variant_filter:
+        allowed_variants = [v.strip() for v in args.variant_filter.split(",") if v.strip()]
 
     total_updated = 0
-    for temp_str, info in targets.items():
-        db_path = str(runs_dir / info["run_dir"] / "simulation.db")
-        if not Path(db_path).exists():
-            print(f"[SKIP] Missing DB: {db_path}")
-            continue
 
-        print(f"\n=== T={info['temperature']} run={info['run_id'][:12]}... ===")
-        updated = rescore_db(
-            db_path,
-            info["run_id"],
-            n_workers=args.n_workers,
-            use_embeddings=args.use_embeddings,
-            embedding_model=args.embedding_model,
+    if args.discover:
+        # ---- Discovery mode --------------------------------------------------
+        runs_dirs_raw: List[str] = args.runs_dirs or ["runs"]
+        runs_dirs = [Path(d).expanduser().resolve() for d in runs_dirs_raw]
+
+        print(f"Discovering runs under: {[str(d) for d in runs_dirs]}")
+        runs = discover_runs(runs_dirs)
+        if not runs:
+            print("No valid run directories found. Exiting.")
+            return 1
+
+        variant_label = f"  variant_filter : {','.join(allowed_variants)}\n" if allowed_variants else ""
+        print(
+            f"\n{len(runs)} run(s) found.\n"
+            f"{variant_label}"
+            f"  n_workers      : {args.n_workers}\n"
         )
-        total_updated += updated
 
-    print(f"\nTotal updated: {total_updated:,} rows across {len(targets)} run(s)")
+        for run_id, db_path in runs:
+            print(f"\n=== run_id={run_id[:12]}…  db={db_path} ===")
+            updated = rescore_db(
+                str(db_path),
+                run_id,
+                n_workers=args.n_workers,
+                use_embeddings=args.use_embeddings,
+                embedding_model=args.embedding_model,
+                allowed_variants=allowed_variants,
+            )
+            total_updated += updated
+
+        print(f"\nTotal updated: {total_updated:,} rows across {len(runs)} run(s)")
+
+    else:
+        # ---- Legacy metadata mode --------------------------------------------
+        metadata = load_runs_metadata(Path(args.metadata))
+        runs_dir = Path(args.runs_dirs[0] if args.runs_dirs else "runs_latest/runs")
+
+        if args.run_id:
+            targets = {k: v for k, v in metadata.items() if v["run_id"] == args.run_id}
+            if not targets:
+                print(f"Run ID {args.run_id} not found in metadata", file=sys.stderr)
+                return 1
+        else:
+            targets = metadata
+
+        variant_label = f"  variant_filter : {','.join(allowed_variants)}\n" if allowed_variants else ""
+        print(
+            f"\n{len(targets)} run(s) from metadata.\n"
+            f"{variant_label}"
+            f"  n_workers      : {args.n_workers}\n"
+        )
+
+        for temp_str, info in targets.items():
+            db_path = str(runs_dir / info["run_dir"] / "simulation.db")
+            if not Path(db_path).exists():
+                print(f"[SKIP] Missing DB: {db_path}")
+                continue
+
+            print(f"\n=== T={info['temperature']} run={info['run_id'][:12]}... ===")
+            updated = rescore_db(
+                db_path,
+                info["run_id"],
+                n_workers=args.n_workers,
+                use_embeddings=args.use_embeddings,
+                embedding_model=args.embedding_model,
+                allowed_variants=allowed_variants,
+            )
+            total_updated += updated
+
+        print(f"\nTotal updated: {total_updated:,} rows across {len(targets)} run(s)")
+
     return 0
 
 

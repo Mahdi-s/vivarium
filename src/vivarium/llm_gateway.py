@@ -167,6 +167,7 @@ def create_gateway(
     capture_context: Optional["CaptureContext"] = None,
     rate_limit_config: Optional["RateLimitConfig"] = None,
     max_new_tokens: int = 128,
+    openrouter_extras: Optional[Dict[str, Any]] = None,
 ) -> Tuple[Any, str]:
     """
     Create the appropriate LLM gateway for a model. Model-agnostic.
@@ -196,10 +197,18 @@ def create_gateway(
             api_base=api_base,
             api_key=api_key,
             rate_limit_config=rate_limit_config,
+            openrouter_extras=openrouter_extras,
         )
-        # For Ollama, strip org prefix and lowercase for the API model name
+        # Determine model ID format based on API provider.
+        # OpenRouter expects full org/model slugs (e.g. "allenai/olmo-3-32b-think").
+        # Local servers (Ollama, vLLM, llama.cpp) expect just the model name.
+        _is_openrouter = api_base and "openrouter" in api_base.lower()
         model_id_for_api = model_id
-        if "/" in model_id:
+        if _is_openrouter:
+            # OpenRouter uses lowercase org/model slugs
+            model_id_for_api = model_id.lower()
+        elif "/" in model_id:
+            # Local servers: strip org prefix and lowercase
             model_id_for_api = model_id.split("/", 1)[1].lower()
         return gw, model_id_for_api
 
@@ -419,11 +428,16 @@ class LiteLLMGateway:
 
     Requires provider credentials via environment variables depending on provider.
     Example for OpenAI-compatible: set OPENAI_API_KEY.
+
+    openrouter_extras: optional dict injected as extra_body when api_base is OpenRouter.
+      Supports: provider (routing preferences), transforms (list[str]), route (str).
+      Example: {"provider": {"order": ["Groq"], "allow_fallbacks": False}}
     """
 
     api_base: Optional[str] = None
     api_key: Optional[str] = None
     rate_limit_config: Optional[RateLimitConfig] = None
+    openrouter_extras: Optional[Dict[str, Any]] = None
 
     def __post_init__(self) -> None:
         if self.rate_limit_config is not None:
@@ -448,6 +462,7 @@ class LiteLLMGateway:
             "model": model,
             "messages": messages,
             "temperature": temperature,
+            "stream": False,
         }
         if top_k is not None and int(top_k) > 0:
             kwargs["top_k"] = int(top_k)
@@ -462,8 +477,37 @@ class LiteLLMGateway:
             kwargs["seed"] = seed
         if self.api_base:
             kwargs["api_base"] = self.api_base
-            # For OpenAI-compatible local servers (e.g. llama-server), force provider resolution.
-            kwargs["custom_llm_provider"] = "openai"
+            _is_openrouter = "openrouter" in self.api_base.lower()
+            if _is_openrouter:
+                # OpenRouter is OpenAI-compatible; use "openai" provider so litellm
+                # sends the request to our api_base rather than its own routing.
+                kwargs["custom_llm_provider"] = "openai"
+                # Optional attribution headers for OpenRouter leaderboards.
+                kwargs["extra_headers"] = {
+                    "HTTP-Referer": "https://github.com/vivarium-project",
+                    "X-OpenRouter-Title": "Vivarium OLMo Conformity",
+                }
+                # Request reasoning/thinking tokens from Think models.
+                # OpenRouter returns these in message.reasoning, separate from content.
+                kwargs["reasoning"] = {"effort": "high", "exclude": False}
+                # Inject provider routing / transform preferences via extra_body.
+                # Supports: {"provider": {"order": ["Groq"]}, "transforms": [...], "route": "..."}
+                if self.openrouter_extras:
+                    extra_body: Dict[str, Any] = {}
+                    provider_pref = self.openrouter_extras.get("provider")
+                    if provider_pref is not None:
+                        extra_body["provider"] = provider_pref
+                    transforms = self.openrouter_extras.get("transforms")
+                    if transforms is not None:
+                        extra_body["transforms"] = transforms
+                    route = self.openrouter_extras.get("route")
+                    if route is not None:
+                        extra_body["route"] = route
+                    if extra_body:
+                        kwargs["extra_body"] = extra_body
+            else:
+                # For other OpenAI-compatible local servers (e.g. llama-server).
+                kwargs["custom_llm_provider"] = "openai"
         if self.api_key is not None:
             kwargs["api_key"] = self.api_key
         elif self.api_base:
@@ -514,6 +558,27 @@ class LiteLLMGateway:
                 "unsupported",
             )
         )
+
+    @staticmethod
+    def _is_json_parse_error(err: Exception) -> bool:
+        """Detect JSONDecodeError buried in LiteLLM exception chains."""
+        import json as _json
+
+        for exc in (err, getattr(err, "__cause__", None), getattr(err, "__context__", None)):
+            if isinstance(exc, _json.JSONDecodeError):
+                return True
+        s = str(err).lower()
+        return "jsondecode" in s or "expecting value" in s
+
+    @staticmethod
+    def _extract_body_hint(err: Exception) -> str:
+        """Best-effort extraction of the first 500 chars of the response body for diagnostics."""
+        for exc in (err, getattr(err, "__cause__", None), getattr(err, "__context__", None)):
+            doc = getattr(exc, "doc", None)
+            if isinstance(doc, (str, bytes)):
+                return repr(doc[:500])
+        s = str(err)
+        return s[:500] if len(s) > 500 else s
 
     @staticmethod
     def _strip_top_k_if_known_unsupported(*, litellm_mod: Any, kwargs: Dict[str, Any]) -> None:
@@ -587,6 +652,11 @@ class LiteLLMGateway:
                         resp.setdefault("_vvm_meta", {})["top_p_ignored"] = True
                 except Exception:
                     pass
+            elif self._is_json_parse_error(e):
+                body_hint = self._extract_body_hint(e)
+                raise type(e)(
+                    f"{e} | body_prefix(500): {body_hint}"
+                ) from e
             else:
                 raise
         # Keep full response for downstream parsing.
@@ -663,6 +733,11 @@ class LiteLLMGateway:
                     except Exception:
                         pass
                     return resp
+                if self._is_json_parse_error(e):
+                    body_hint = self._extract_body_hint(e)
+                    raise type(e)(
+                        f"{e} | body_prefix(500): {body_hint}"
+                    ) from e
                 raise
 
         # Apply rate limiting if configured
@@ -1401,15 +1476,17 @@ class HuggingFaceHookedGateway:
 
         do_sample = float(temperature) > 0.0
         pad_token_id = getattr(self._tokenizer, "eos_token_id", None)
-        # Build an explicit GenerationConfig so temperature/top_p are applied and Transformers
-        # does not warn "The following generation flags are not valid and may be ignored".
+        # Build an explicit GenerationConfig that fully overrides the model's
+        # baked-in generation_config.json (which may set do_sample=True /
+        # temperature=0.6).  We always set temperature explicitly so the
+        # model defaults cannot leak through.
         generation_config = GenerationConfig(
             max_new_tokens=int(self.max_new_tokens),
             do_sample=do_sample,
+            temperature=float(temperature),
             pad_token_id=pad_token_id,
         )
         if do_sample:
-            generation_config.temperature = float(temperature)
             if top_k is not None and int(top_k) > 0:
                 generation_config.top_k = int(top_k)
             if top_p is not None:
@@ -1429,8 +1506,9 @@ class HuggingFaceHookedGateway:
         # Pass sampling kwargs directly in addition to generation_config, because some
         # model implementations (e.g. OLMo3) ignore them when read from the config object.
         generate_kwargs: Dict[str, Any] = dict(generation_config=generation_config)
+        generate_kwargs["temperature"] = float(temperature)
+        generate_kwargs["do_sample"] = do_sample
         if do_sample:
-            generate_kwargs["temperature"] = float(temperature)
             if top_k is not None and int(top_k) > 0:
                 generate_kwargs["top_k"] = int(top_k)
             if top_p is not None:
@@ -1674,7 +1752,7 @@ class HuggingFaceTransformersGateway:
             outputs = self._model.generate(
                 **inputs,
                 max_new_tokens=self.max_new_tokens,
-                temperature=temperature if temperature > 0 else None,
+                temperature=float(temperature),
                 top_k=(int(top_k) if (temperature > 0 and top_k is not None and int(top_k) > 0) else None),
                 top_p=top_p_value,
                 do_sample=temperature > 0,

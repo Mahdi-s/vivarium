@@ -7,12 +7,20 @@
 #   ./judge_report.sh <run_id>
 #   ./judge_report.sh --all [runs_dir]
 #   ./judge_report.sh --config <suite_config.json> [--all [runs_dir] | <run_id> [runs_dir]] [--include-refusal] [--detailed] [--per-run]
+#                     [--ready-min-cov 95] [--ready-min-match 75] [--ready-min-n 1000]
+#
+#   # Run inventory (scan a folder and show model/temp/trials/missing-cells table):
+#   ./judge_report.sh --inventory [runs_dir]
+#   ./judge_report.sh --inventory runs --show-missing
+#   ./judge_report.sh --inventory runs --sort model
+#   ./judge_report.sh --inventory runs --filter-model llama
 
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RUNS_PATH="${REPO_ROOT}/runs_latest/runs"
-SUITE_CONFIG="${REPO_ROOT}/experiments/olmo_conformity/configs/suite_expanded_temp0.0.json"
+# Default: full 7B expanded suite (8 datasets × 12 conditions). Override with --config if your run used another suite.
+SUITE_CONFIG="${REPO_ROOT}/experiments/olmo_conformity/configs/suite_7b_expanded.json"
 MODE="all"
 RUN_ID=""
 INCLUDE_REFUSAL=0
@@ -22,6 +30,11 @@ READY_MIN_COV=95.0
 READY_MIN_MATCH=75.0
 READY_MIN_N=1000
 
+# Inventory-mode options
+INVENTORY_MODE=0
+INVENTORY_DIR=""
+INVENTORY_EXTRA_ARGS=()
+
 usage() {
   echo "Usage:"
   echo "  ./judge_report.sh"
@@ -29,6 +42,12 @@ usage() {
   echo "  ./judge_report.sh --all [runs_dir]"
   echo "  ./judge_report.sh --config <suite_config.json> [--all [runs_dir] | <run_id> [runs_dir]] [--include-refusal] [--detailed] [--per-run]"
   echo "                    [--ready-min-cov 95] [--ready-min-match 75] [--ready-min-n 1000]"
+  echo ""
+  echo "  # Run inventory — scan a folder and print a model/temp/trials/missing-cells table:"
+  echo "  ./judge_report.sh --inventory [runs_dir]   (default dir: runs)"
+  echo "  ./judge_report.sh --inventory runs --show-missing"
+  echo "  ./judge_report.sh --inventory runs --sort {id|model|temp|trials}"
+  echo "  ./judge_report.sh --inventory runs --filter-model REGEX"
 }
 
 resolve_path() {
@@ -81,6 +100,26 @@ while [[ $i -lt $# ]]; do
       [[ $i -lt $# ]] || { echo "Error: --ready-min-n expects an integer"; usage; exit 1; }
       READY_MIN_N="${args[$i]}"
       ;;
+    --inventory)
+      INVENTORY_MODE=1
+      if [[ $((i + 1)) -lt $# && "${args[$((i + 1))]}" != --* ]]; then
+        i=$((i + 1))
+        INVENTORY_DIR="$(resolve_path "${args[$i]}")"
+      fi
+      ;;
+    --show-missing)
+      INVENTORY_EXTRA_ARGS+=(--show-missing)
+      ;;
+    --sort)
+      i=$((i + 1))
+      [[ $i -lt $# ]] || { echo "Error: --sort expects {id|model|temp|trials}"; usage; exit 1; }
+      INVENTORY_EXTRA_ARGS+=(--sort "${args[$i]}")
+      ;;
+    --filter-model)
+      i=$((i + 1))
+      [[ $i -lt $# ]] || { echo "Error: --filter-model expects a regex"; usage; exit 1; }
+      INVENTORY_EXTRA_ARGS+=(--filter-model "${args[$i]}")
+      ;;
     -*)
       echo "Error: unknown option: $arg"
       usage
@@ -101,6 +140,20 @@ while [[ $i -lt $# ]]; do
   esac
   i=$((i + 1))
 done
+
+# ── Inventory mode: delegate entirely to run_inventory.py ───────────────────
+if [[ "$INVENTORY_MODE" -eq 1 ]]; then
+  INVENTORY_SCRIPT="${REPO_ROOT}/scripts/run_inventory.py"
+  if [[ ! -f "$INVENTORY_SCRIPT" ]]; then
+    echo "Error: run_inventory.py not found at ${INVENTORY_SCRIPT}"
+    exit 1
+  fi
+  if [[ -z "$INVENTORY_DIR" ]]; then
+    INVENTORY_DIR="${REPO_ROOT}/runs"
+  fi
+  exec python3 "$INVENTORY_SCRIPT" --runs-dir "$INVENTORY_DIR" "${INVENTORY_EXTRA_ARGS[@]+"${INVENTORY_EXTRA_ARGS[@]}"}"
+fi
+# ── End inventory mode ──────────────────────────────────────────────────────
 
 if [[ ! -f "$SUITE_CONFIG" ]]; then
   echo "Error: suite config not found: $SUITE_CONFIG"
@@ -525,6 +578,38 @@ print(make_table(
 ))
 
 print()
+print(paint(f"{BOLD}LLM-judged cells (dataset × condition){RESET}", CYAN))
+print(paint("  llm_judge_valid = trials with non-empty parsed_answer_json, no [parse_error], json $.is_correct present (same as judge_valid elsewhere).", YELLOW))
+llm_cell_rows = []
+for r in readiness_rows:
+    tr = int(r["trials"] or 0)
+    jv = int(r["judge_valid"] or 0)
+    if tr <= 0:
+        st = "EMPTY"
+    elif jv >= tr:
+        st = "FULL"
+    elif jv > 0:
+        st = "PARTIAL"
+    else:
+        st = "NONE"
+    llm_cell_rows.append([r["dataset"], r["condition"], tr, jv, pct(jv, tr), st])
+llm_cell_rows.sort(key=lambda x: (x[0], x[1]))
+print(make_table(
+    ["dataset", "condition", "trials", "llm_judge_valid", "judge_cov", "cell_status"],
+    llm_cell_rows,
+    right_align_cols={2, 3, 4},
+))
+full_cells = sum(1 for row in llm_cell_rows if row[5] == "FULL")
+part_cells = sum(1 for row in llm_cell_rows if row[5] == "PARTIAL")
+none_cells = sum(1 for row in llm_cell_rows if row[5] == "NONE")
+print(
+    paint(
+        f"  summary: FULL={full_cells} PARTIAL={part_cells} NONE={none_cells} (of {len(llm_cell_rows)} cells; FULL => all trials in cell have valid LLM is_correct)",
+        GREEN,
+    )
+)
+
+print()
 print(paint(f"{BOLD}Manual-vs-Judge Drift Breakdown{RESET}", CYAN))
 precision, recall, _, _, _ = confusion_metrics(overall_tp, overall_tn, overall_fp, overall_fn)
 drift_total = overall_tp + overall_tn + overall_fp + overall_fn
@@ -690,6 +775,7 @@ BOLD = "\033[1m" if ansi else ""
 CYAN = "\033[36m" if ansi else ""
 MAGENTA = "\033[35m" if ansi else ""
 YELLOW = "\033[33m" if ansi else ""
+GREEN = "\033[32m" if ansi else ""
 
 def paint(text, color):
     return f"{color}{text}{RESET}" if ansi else text
@@ -994,6 +1080,38 @@ print(make_table(
     cell_rows if detailed else cell_rows[:18],
     right_align_cols={3, 4, 5, 6, 7, 8, 9, 10},
 ))
+
+print()
+print(paint(f"{BOLD}LLM-judged cells (dataset × condition, pooled across runs){RESET}", CYAN))
+print(paint("  llm_judge_valid = trials with valid LLM is_correct in parsed_answer_json (same rule as judge_valid).", YELLOW))
+llm_cell_rows_pooled = []
+for r in condition_story_rows:
+    tr = int(r["trials"] or 0)
+    jv = int(r["judge_valid"] or 0)
+    if tr <= 0:
+        st = "EMPTY"
+    elif jv >= tr:
+        st = "FULL"
+    elif jv > 0:
+        st = "PARTIAL"
+    else:
+        st = "NONE"
+    llm_cell_rows_pooled.append([r["dataset"], r["condition"], tr, jv, pct(jv, tr), st])
+llm_cell_rows_pooled.sort(key=lambda x: (x[0], x[1]))
+print(make_table(
+    ["dataset", "condition", "trials", "llm_judge_valid", "judge_cov", "cell_status"],
+    llm_cell_rows_pooled,
+    right_align_cols={2, 3, 4},
+))
+full_cp = sum(1 for row in llm_cell_rows_pooled if row[5] == "FULL")
+part_cp = sum(1 for row in llm_cell_rows_pooled if row[5] == "PARTIAL")
+none_cp = sum(1 for row in llm_cell_rows_pooled if row[5] == "NONE")
+print(
+    paint(
+        f"  summary: FULL={full_cp} PARTIAL={part_cp} NONE={none_cp} (of {len(llm_cell_rows_pooled)} cells)",
+        GREEN,
+    )
+)
 
 print()
 print(paint(f"{BOLD}Cross-Run Stability (dataset){RESET}", CYAN))

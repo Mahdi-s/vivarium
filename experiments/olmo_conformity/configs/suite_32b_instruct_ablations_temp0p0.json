@@ -1,0 +1,96 @@
+{
+  "paths_config": "paths.json",
+  "suite_name": "olmo_conformity_32b_instruct_ablations_only_temp0p0",
+  "suite_version": "v2",
+  "description": "Ablation-ONLY: (A) Naked system-prompt removal and (B) Non-social N-gram sequence baseline. Control and standard Asch already completed in suite_32b_instruct_api_temp0p0 (run 20260327_152738). OLMo 3.1 32B Instruct via OpenRouter API at T=0.0.",
+  "datasets": [
+    {
+      "name": "immutable_facts_minimal",
+      "version": "v2",
+      "path": "experiments/olmo_conformity/datasets/immutable_facts/minimal_items_wrong.jsonl",
+      "category": "general"
+    },
+    {
+      "name": "social_conventions_minimal",
+      "version": "v2",
+      "path": "experiments/olmo_conformity/datasets/social_conventions/minimal_items_wrong.jsonl",
+      "category": "opinion"
+    },
+    {
+      "name": "gsm8k",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/math/gsm8k_items_wrong.jsonl",
+      "category": "math"
+    },
+    {
+      "name": "mmlu_math",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/math/mmlu_math_items_wrong.jsonl",
+      "category": "math"
+    },
+    {
+      "name": "mmlu_science",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/science/mmlu_science_items_wrong.jsonl",
+      "category": "science"
+    },
+    {
+      "name": "mmlu_knowledge",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/knowledge/mmlu_knowledge_items_wrong.jsonl",
+      "category": "knowledge"
+    },
+    {
+      "name": "truthfulqa",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/truthfulness/truthfulqa_items_wrong.jsonl",
+      "category": "truthfulness"
+    },
+    {
+      "name": "arc",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/reasoning/arc_items_wrong.jsonl",
+      "category": "reasoning"
+    }
+  ],
+  "conditions": [
+    {
+      "name": "asch_zhu_naked_unanimous_confident",
+      "params": {
+        "type": "asch_peer_pressure",
+        "system_style": "none",
+        "prompt_style": "conversation",
+        "confederates": 5,
+        "consensus": "unanimous",
+        "tone": "confident"
+      }
+    },
+    {
+      "name": "ngram_sequence_baseline",
+      "params": {
+        "type": "ngram_sequence",
+        "system_style": "none",
+        "confederates": 5,
+        "label_prefix": "String"
+      }
+    }
+  ],
+  "models": [
+    {
+      "variant": "instruct_32b",
+      "model_id": "allenai/olmo-3.1-32b-instruct",
+      "max_new_tokens": 256,
+      "has_think_tokens": false,
+      "backend": "litellm",
+      "notes": "OLMo 3.1 32B Instruct via OpenRouter — ablation study"
+    }
+  ],
+  "run": {
+    "seed": 42,
+    "temperature": 0.0,
+    "top_k": 50,
+    "top_p": 0.9,
+    "max_items_per_dataset": 50,
+    "notes": "Ablation-ONLY — T=0.0 deterministic decoding. 2 new conditions only: naked Asch (no system prompt), N-gram sequence (no social framing). Cross-reference control/asch from run 20260327_152738."
+  }
+}

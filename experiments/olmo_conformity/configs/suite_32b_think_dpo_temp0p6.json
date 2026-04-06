@@ -84,7 +84,7 @@
     }
   ],
   "models": [
-    { "variant": "think_dpo", "model_id": "allenai/Olmo-3-32B-Think-DPO", "max_new_tokens": 512, "has_think_tokens": true, "notes": "32B Think pipeline: Direct Preference Optimization stage" }
+    { "variant": "think_dpo", "model_id": "allenai/Olmo-3-32B-Think-DPO", "max_new_tokens": 5000, "has_think_tokens": true, "notes": "32B Think pipeline: Direct Preference Optimization stage; HPC extended generation" }
   ],
   "run": {
     "seed": 42,
@@ -92,7 +92,7 @@
     "top_k": 50,
     "top_p": 0.95,
     "max_items_per_dataset": 50,
-    "notes": "temperature=0.6 (recommended for Think models); 32B models require ~64GB for weights in fp16 — use multi-GPU (4x A100/A40) with tensor parallelism"
+    "notes": "temperature=0.6 (recommended for Think models); 32B models use 2x A100 tensor parallelism; max_new_tokens=5000"
   },
   "scientific_notes": {
     "stage": "Think-DPO: Direct preference optimization on Dolci-Think-DPO dataset (learns to distinguish preferred from dispreferred outputs)",

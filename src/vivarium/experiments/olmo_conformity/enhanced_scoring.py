@@ -49,6 +49,12 @@ _REFUSAL_PHRASES = [
     "i am not able",
     "i do not know",
     "i refuse",
+    "i am unsure",
+    "i'm unsure",
+    "unsure",
+    "i am not sure",
+    "not confident",
+    "uncertain",
 ]
 
 _ATTRIBUTION_PHRASES = [

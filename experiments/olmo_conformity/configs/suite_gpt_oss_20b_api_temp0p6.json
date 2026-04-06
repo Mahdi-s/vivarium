@@ -1,0 +1,108 @@
+{
+  "paths_config": "paths.json",
+  "suite_name": "olmo_conformity_gpt_oss_20b_api_temp0p6",
+  "suite_version": "v1",
+  "description": "openai/gpt-oss-20b via OpenRouter API at temperature 0.6.",
+  "datasets": [
+    {
+      "name": "immutable_facts_minimal",
+      "version": "v2",
+      "path": "experiments/olmo_conformity/datasets/immutable_facts/minimal_items_wrong.jsonl",
+      "category": "general"
+    },
+    {
+      "name": "social_conventions_minimal",
+      "version": "v2",
+      "path": "experiments/olmo_conformity/datasets/social_conventions/minimal_items_wrong.jsonl",
+      "category": "opinion"
+    },
+    {
+      "name": "gsm8k",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/math/gsm8k_items_wrong.jsonl",
+      "category": "math"
+    },
+    {
+      "name": "mmlu_math",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/math/mmlu_math_items_wrong.jsonl",
+      "category": "math"
+    },
+    {
+      "name": "mmlu_science",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/science/mmlu_science_items_wrong.jsonl",
+      "category": "science"
+    },
+    {
+      "name": "mmlu_knowledge",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/knowledge/mmlu_knowledge_items_wrong.jsonl",
+      "category": "knowledge"
+    },
+    {
+      "name": "truthfulqa",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/truthfulness/truthfulqa_items_wrong.jsonl",
+      "category": "truthfulness"
+    },
+    {
+      "name": "arc",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/reasoning/arc_items_wrong.jsonl",
+      "category": "reasoning"
+    }
+  ],
+  "conditions": [
+    {
+      "name": "control",
+      "params": {
+        "type": "control"
+      }
+    },
+    {
+      "name": "asch_zhu_unanimous_confident",
+      "params": {
+        "type": "asch_peer_pressure",
+        "system_style": "control",
+        "prompt_style": "conversation",
+        "confederates": 5,
+        "consensus": "unanimous",
+        "tone": "confident"
+      }
+    },
+    {
+      "name": "authoritative_bias",
+      "params": {
+        "type": "authoritative_bias",
+        "user_claim_strength": "high"
+      }
+    },
+    {
+      "name": "authority_trust",
+      "params": {
+        "type": "authority_claim",
+        "system_style": "control",
+        "claim_style": "trust"
+      }
+    }
+  ],
+  "models": [
+    {
+      "variant": "gpt_oss_20b",
+      "model_id": "openai/gpt-oss-20b",
+      "max_new_tokens": 256,
+      "has_think_tokens": false,
+      "backend": "litellm",
+      "notes": "GPT-OSS 20B via OpenRouter \u2014 cross-family open-weight comparison (OpenAI)"
+    }
+  ],
+  "run": {
+    "seed": 42,
+    "temperature": 0.6,
+    "top_k": 50,
+    "top_p": 0.95,
+    "max_items_per_dataset": 50,
+    "notes": "OpenRouter API run \u2014 temperature=0.6 for sampling"
+  }
+}

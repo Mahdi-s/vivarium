@@ -1,0 +1,101 @@
+{
+  "paths_config": "paths.json",
+  "suite_name": "olmo_conformity_7b_think_sft_temp0.6",
+  "suite_version": "v1",
+  "description": "OLMo 3 7B Think-SFT conformity experiment at temperature 0.6 with max_new_tokens=5000 (HPC).",
+  "datasets": [
+    {
+      "name": "immutable_facts_minimal",
+      "version": "v2",
+      "path": "experiments/olmo_conformity/datasets/immutable_facts/minimal_items_wrong.jsonl",
+      "category": "general",
+      "notes": "Curated factual questions (geography, science, math)"
+    },
+    {
+      "name": "social_conventions_minimal",
+      "version": "v2",
+      "path": "experiments/olmo_conformity/datasets/social_conventions/minimal_items_wrong.jsonl",
+      "category": "opinion",
+      "notes": "Opinion/preference questions"
+    },
+    {
+      "name": "gsm8k",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/math/gsm8k_items_wrong.jsonl",
+      "category": "math",
+      "notes": "Grade school math word problems"
+    },
+    {
+      "name": "mmlu_math",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/math/mmlu_math_items_wrong.jsonl",
+      "category": "math",
+      "notes": "MMLU math subsets (high school, elementary, college)"
+    },
+    {
+      "name": "mmlu_science",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/science/mmlu_science_items_wrong.jsonl",
+      "category": "science",
+      "notes": "MMLU science subsets (physics, chemistry, biology)"
+    },
+    {
+      "name": "mmlu_knowledge",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/knowledge/mmlu_knowledge_items_wrong.jsonl",
+      "category": "knowledge",
+      "notes": "MMLU knowledge subsets (geography, history, world religions)"
+    },
+    {
+      "name": "truthfulqa",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/truthfulness/truthfulqa_items_wrong.jsonl",
+      "category": "truthfulness",
+      "notes": "TruthfulQA - tests tendency to reproduce common misconceptions"
+    },
+    {
+      "name": "arc",
+      "version": "v1",
+      "path": "experiments/olmo_conformity/datasets/reasoning/arc_items_wrong.jsonl",
+      "category": "reasoning",
+      "notes": "ARC Challenge + Easy - science reasoning questions"
+    }
+  ],
+  "conditions": [
+    {
+      "name": "control",
+      "params": { "type": "control" },
+      "notes": "Baseline: direct question without social pressure"
+    },
+    {
+      "name": "asch_zhu_unanimous_confident",
+      "params": { "type": "asch_peer_pressure", "system_style": "control", "prompt_style": "conversation", "confederates": 5, "consensus": "unanimous", "tone": "confident" },
+      "notes": "Zhu et al.-style Asch: unbiased system + unanimous-confident confederates — strongest peer pressure"
+    },
+    {
+      "name": "authoritative_bias",
+      "params": { "type": "authoritative_bias", "user_claim_strength": "high" },
+      "notes": "Authoritative user claims wrong_answer with high confidence"
+    },
+    {
+      "name": "authority_trust",
+      "params": { "type": "authority_claim", "system_style": "control", "claim_style": "trust" },
+      "notes": "Zhu et al. sycophancy-style: 'I trust that the answer must be ...' (unbiased system)"
+    }
+  ],
+  "models": [
+    { "variant": "think_sft", "model_id": "allenai/Olmo-3-7B-Think-SFT", "max_new_tokens": 5000, "has_think_tokens": true, "notes": "7B Think-SFT; HPC run with extended generation" }
+  ],
+  "run": {
+    "seed": 42,
+    "temperature": 0.6,
+    "top_k": 50,
+    "top_p": 0.95,
+    "max_items_per_dataset": 50,
+    "notes": "temperature=0.6 recommended for Think models; pair with Think-DPO on second GPU"
+  },
+  "scientific_notes": {
+    "stage": "Think-SFT: supervised fine-tuning stage of think pipeline",
+    "categories": ["general", "opinion", "math", "science", "knowledge", "truthfulness", "reasoning"]
+  }
+}

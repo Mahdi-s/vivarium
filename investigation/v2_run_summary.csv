@@ -1,0 +1,26 @@
+location,uuid,model_id,variant,temperature,total_trials,heuristic_labels,judge_labels,judge_cov_%,comparable,agree,disagree,agreement_%,heur0_judge1,heur1_judge0,parse_errors,wrong_endorsed,null_endorsed,n_conditions,n_datasets,judge_models
+runs,a34ad9b1-abd0-4119-96c6-7b1cd61d7f4d,allenai/olmo-3.1-32b-think,think_32b,0.0,1600,1400,1565,97.8,1368,747,621,54.6,598,23,0,155,51,4,8,openai/gpt-oss-20b:1600
+runs,7db9896e-9e3b-439f-88e3-74fe25ea2bad,allenai/olmo-3.1-32b-think,think_32b,0.6,1600,1400,1570,98.1,1372,751,621,54.7,599,22,0,162,66,4,8,openai/gpt-oss-20b:1600
+runs,1c2e5cb6-0372-4835-bbb7-7230c55517e4,allenai/olmo-3.1-32b-instruct,instruct_32b,0.0,1600,1400,1506,94.1,1313,845,468,64.4,459,9,0,285,57,4,8,openai/gpt-oss-20b:1600
+runs,62187f52-7a7e-4db0-a269-d14d8e887b1b,allenai/olmo-3.1-32b-instruct,instruct_32b,0.6,1600,1400,1505,94.1,1314,835,479,63.5,466,13,0,294,52,4,8,openai/gpt-oss-20b:1600
+runs,1899a883-82e4-45f3-833a-d6403cf1ac95,meta-llama/llama-3-8b-instruct,llama3_8b_instruct,0.0,1600,1400,1410,88.1,1223,930,293,76.0,277,16,0,213,94,4,8,openai/gpt-oss-20b:1600
+runs,70860876-c5c2-4445-a59d-e44ae8094887,meta-llama/llama-3-8b-instruct,llama3_8b_instruct,0.6,1600,1400,1439,89.9,1245,973,272,78.2,260,12,0,224,79,4,8,openai/gpt-oss-20b:1600
+runs,3a0404f7-bd47-4b25-b2e2-5501e550566f,meta-llama/llama-3.1-70b-instruct,llama31_70b_instruct,0.0,1600,1400,1447,90.4,1263,842,421,66.7,412,9,0,177,80,4,8,openai/gpt-oss-20b:1596; qwen/qwen3.5-flash-02-23:4
+runs,49d07104-c14c-4a8b-a013-ae0783c5f3e8,meta-llama/llama-3.1-70b-instruct,llama31_70b_instruct,0.6,1600,1400,1460,91.2,1268,809,459,63.8,448,11,0,174,62,4,8,openai/gpt-oss-20b:1600
+runs,485ddc2d-6cae-4715-835e-76ab72e38159,meta-llama/llama-4-maverick,llama4_maverick,0.0,1600,1400,1579,98.7,1382,836,546,60.5,544,2,0,238,14,4,8,openai/gpt-oss-20b:1600
+runs,c2ce0f85-8f67-40f2-a82d-e136927cf6f5,meta-llama/llama-4-maverick,llama4_maverick,0.6,1600,1400,1581,98.8,1383,858,525,62.0,520,5,0,257,12,4,8,openai/gpt-oss-20b:1600
+runs,e043fbf6-27eb-410c-8da7-bc0f9172ab0b,google/gemini-2.5-flash-lite,gemini_25_flash_lite,0.0,1600,1400,1457,91.1,1289,809,480,62.8,472,8,0,242,109,4,8,openai/gpt-oss-20b:1600
+runs,d71e75b1-17c5-4789-8ee7-13b29ef18359,google/gemini-2.5-flash-lite,gemini_25_flash_lite,0.6,1600,1400,1441,90.1,1276,793,483,62.1,472,11,0,235,109,4,8,openai/gpt-oss-20b:1600
+runs,25056752-7081-449e-9a44-ad090b566107,x-ai/grok-4.1-fast,grok_41_fast,0.0,1600,1400,1546,96.6,1353,825,528,61.0,508,20,0,135,38,4,8,openai/gpt-oss-20b:1600
+runs,157a6a9e-13de-4bdb-bdd2-54d761498f24,x-ai/grok-4.1-fast,grok_41_fast,0.6,1600,1400,1550,96.9,1358,830,528,61.1,506,22,0,134,42,4,8,openai/gpt-oss-20b:1600
+runs,c07ede3a-16ac-4b47-ac42-4f6ad8dd8370,openai/gpt-4o-mini,gpt4o_mini,0.0,1600,1400,1575,98.4,1375,924,451,67.2,441,10,0,320,8,4,8,openai/gpt-oss-20b:1600
+runs,eb63d212-77fe-46ef-965b-7777cc232f1f,openai/gpt-4o-mini,gpt4o_mini,0.6,1600,1400,1575,98.4,1375,924,451,67.2,444,7,0,321,9,4,8,openai/gpt-oss-20b:1600
+runs,66765d5e-204c-4074-aaf4-b9c148fe61a5,openai/gpt-oss-20b,gpt_oss_20b,0.0,143,142,137,95.8,137,57,80,41.6,77,3,0,17,5,4,1,openai/gpt-oss-20b:142
+runs,3ecdc9b7-49db-4625-b90e-fc3745b9224e,openai/gpt-oss-20b,gpt_oss_20b,0.6,1600,1400,1505,94.1,1323,729,594,55.1,546,48,0,278,75,4,8,openai/gpt-oss-20b:1600
+runs/think,f47fe05e-4564-4680-a2d8-39a88c6f8d37,allenai/Olmo-3-7B-Think,think,0.0,1609,1408,1409,87.6,1224,742,482,60.6,461,21,0,331,155,4,8,openai/gpt-oss-20b:1608
+runs_latest/runs,9f240f89-e58e-423a-ae68-f990b31c84cd,allenai/Olmo-3-1025-7B,base,0.0,34794,30444,33426,96.1,29173,22890,6283,78.5,4232,2051,0,8451,2509,12,8,gemma3:1b:25194; gemma3:12b:9600
+runs_latest/runs,46f0762a-210a-459a-8709-d24a0f194eb0,allenai/Olmo-3-1025-7B,base,0.2,34746,30396,33331,95.9,29081,22905,6176,78.8,4177,1999,0,8362,2544,12,8,gemma3:1b:25146; gemma3:12b:9600
+runs_latest/runs,bbd05985-d185-460a-b0aa-dd356d27ec94,allenai/Olmo-3-1025-7B,base,0.4,37978,33178,36635,96.5,31937,25401,6536,79.5,4516,2020,0,8802,2617,12,8,gemma3:1b:28361; gemma3:12b:9600; gpt-oss:20b:17
+runs_latest/runs,86c72262-d1aa-41b5-9c22-d7b2e0570215,allenai/Olmo-3-1025-7B,base,0.6,38170,33370,36801,96.4,32111,25621,6490,79.8,4552,1938,0,8721,2612,12,8,gemma3:1b:28561; gemma3:12b:9600; gpt-oss:20b:9
+runs_latest/runs,9369442d-d825-4cd0-81a1-8ed276c37814,allenai/Olmo-3-1025-7B,base,0.8,34800,30900,34566,99.3,30666,23769,6897,77.5,5103,1794,0,9140,487,12,8,gemma3:1b:23690; qwen3:0.6b:7510; gemma3:12b:3600
+runs_latest/runs,9173bfae-4e8a-464f-8c9c-7ee91caa8b6e,allenai/Olmo-3-1025-7B,base,1.0,34800,30900,34389,98.8,30513,23308,7205,76.4,5444,1761,0,8951,1005,12,8,gemma3:1b:21919; qwen3:0.6b:8020; gemma3:12b:4167; glm-5:cloud:694
