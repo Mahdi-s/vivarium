@@ -48,10 +48,11 @@ simulation*.db
 test*.db
 smoke*.db
 
-# Exception: OLMo 32B HPC run snapshots under runs-think-hpc/runs-32B (tracked via Git LFS; see .gitattributes)
-!runs-think-hpc/runs-32B/**/simulation.db
-!runs-think-hpc/runs-32B/**/simulation.db-wal
-!runs-think-hpc/runs-32B/**/simulation.db-shm
+# Exception: HPC run snapshots under runs-think-hpc (tracked via Git LFS; see .gitattributes)
+# This includes both top-level 7B run folders and runs-think-hpc/runs-32B/.
+!runs-think-hpc/**/*.db
+!runs-think-hpc/**/*.db-wal
+!runs-think-hpc/**/*.db-shm
 
 # Run artifacts (Phase 3+)
 runs/
