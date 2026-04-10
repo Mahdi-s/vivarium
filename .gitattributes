@@ -1,6 +1,8 @@
 # Large run artifacts: use Git LFS so history stays small and checkouts stay consistent.
 runs/**              filter=lfs diff=lfs merge=lfs -text
 runs_latest/**       filter=lfs diff=lfs merge=lfs -text
-runs-think-hpc/runs-32B/**/simulation.db     filter=lfs diff=lfs merge=lfs -text
-runs-think-hpc/runs-32B/**/simulation.db-wal filter=lfs diff=lfs merge=lfs -text
-runs-think-hpc/runs-32B/**/simulation.db-shm filter=lfs diff=lfs merge=lfs -text
+# runs/** covers runs/think/** and all other run subfolders (simulation.db, activations, etc.).
+# HPC export tree: track SQLite DBs and WAL/SHM sidecars explicitly under runs-think-hpc/.
+runs-think-hpc/**/*.db     filter=lfs diff=lfs merge=lfs -text
+runs-think-hpc/**/*.db-wal filter=lfs diff=lfs merge=lfs -text
+runs-think-hpc/**/*.db-shm filter=lfs diff=lfs merge=lfs -text
