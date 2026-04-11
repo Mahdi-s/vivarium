@@ -1,0 +1,97 @@
+model_id,short_name,architecture,dataset_name,n_items,n_wrong_endorsed,ber,ber_lo,ber_hi
+allenai/Olmo-3-32B-Think-DPO,OLMo-32B-Think-DPO,think,arc,50.0,4.0,0.08,0.031549003255790686,0.18838502545063704
+allenai/Olmo-3-32B-Think-DPO,OLMo-32B-Think-DPO,think,gsm8k,50.0,2.0,0.04,0.011038652660826577,0.13460337877954667
+allenai/Olmo-3-32B-Think-DPO,OLMo-32B-Think-DPO,think,immutable_facts_minimal,50.0,17.0,0.34,0.2243676963506106,0.47846431458517147
+allenai/Olmo-3-32B-Think-DPO,OLMo-32B-Think-DPO,think,mmlu_knowledge,50.0,15.0,0.3,0.1910338908960936,0.4375061227736339
+allenai/Olmo-3-32B-Think-DPO,OLMo-32B-Think-DPO,think,mmlu_math,50.0,5.0,0.1,0.04347512399157111,0.2136049033478839
+allenai/Olmo-3-32B-Think-DPO,OLMo-32B-Think-DPO,think,mmlu_science,50.0,7.0,0.14,0.06950745262022862,0.2618645719852809
+allenai/Olmo-3-32B-Think-DPO,OLMo-32B-Think-DPO,think,social_conventions_minimal,50.0,18.0,0.36,0.24138562967182875,0.49859237989698046
+allenai/Olmo-3-32B-Think-DPO,OLMo-32B-Think-DPO,think,truthfulqa,50.0,9.0,0.18,0.0977008273245379,0.3079631945470261
+allenai/Olmo-3-32B-Think-SFT,OLMo-32B-Think-SFT,think,arc,50.0,6.0,0.12,0.05617523710624646,0.23805078886623582
+allenai/Olmo-3-32B-Think-SFT,OLMo-32B-Think-SFT,think,gsm8k,50.0,1.0,0.02,0.0035391680889764604,0.10495686471836953
+allenai/Olmo-3-32B-Think-SFT,OLMo-32B-Think-SFT,think,immutable_facts_minimal,50.0,23.0,0.46,0.3296943460178263,0.5960136567161192
+allenai/Olmo-3-32B-Think-SFT,OLMo-32B-Think-SFT,think,mmlu_knowledge,50.0,21.0,0.42,0.2937479723456693,0.5576680331222217
+allenai/Olmo-3-32B-Think-SFT,OLMo-32B-Think-SFT,think,mmlu_math,50.0,2.0,0.04,0.011038652660826577,0.13460337877954667
+allenai/Olmo-3-32B-Think-SFT,OLMo-32B-Think-SFT,think,mmlu_science,50.0,9.0,0.18,0.0977008273245379,0.3079631945470261
+allenai/Olmo-3-32B-Think-SFT,OLMo-32B-Think-SFT,think,social_conventions_minimal,50.0,24.0,0.48,0.3479691239550571,0.6148848774119157
+allenai/Olmo-3-32B-Think-SFT,OLMo-32B-Think-SFT,think,truthfulqa,50.0,18.0,0.36,0.24138562967182875,0.49859237989698046
+allenai/olmo-3.1-32b-instruct,OLMo-32B-Instruct,dense,arc,50.0,5.0,0.1,0.04347512399157111,0.2136049033478839
+allenai/olmo-3.1-32b-instruct,OLMo-32B-Instruct,dense,gsm8k,50.0,40.0,0.8,0.6696262789551477,0.8875637005402612
+allenai/olmo-3.1-32b-instruct,OLMo-32B-Instruct,dense,immutable_facts_minimal,50.0,24.0,0.48,0.3479691239550571,0.6148848774119157
+allenai/olmo-3.1-32b-instruct,OLMo-32B-Instruct,dense,mmlu_knowledge,50.0,19.0,0.38,0.2586259584257722,0.5184980497760643
+allenai/olmo-3.1-32b-instruct,OLMo-32B-Instruct,dense,mmlu_math,50.0,21.0,0.42,0.2937479723456693,0.5576680331222217
+allenai/olmo-3.1-32b-instruct,OLMo-32B-Instruct,dense,mmlu_science,50.0,16.0,0.32,0.20758044093999403,0.45810557136276076
+allenai/olmo-3.1-32b-instruct,OLMo-32B-Instruct,dense,social_conventions_minimal,50.0,27.0,0.54,0.40398634328388083,0.6703056539821737
+allenai/olmo-3.1-32b-instruct,OLMo-32B-Instruct,dense,truthfulqa,50.0,11.0,0.22,0.12753786224302288,0.35241815689459555
+allenai/olmo-3.1-32b-think,OLMo-32B-Think,think,arc,50.0,1.0,0.02,0.0035391680889764604,0.10495686471836953
+allenai/olmo-3.1-32b-think,OLMo-32B-Think,think,gsm8k,50.0,1.0,0.02,0.0035391680889764604,0.10495686471836953
+allenai/olmo-3.1-32b-think,OLMo-32B-Think,think,immutable_facts_minimal,50.0,12.0,0.24,0.14297252401872207,0.3741294937519236
+allenai/olmo-3.1-32b-think,OLMo-32B-Think,think,mmlu_knowledge,50.0,5.0,0.1,0.04347512399157111,0.2136049033478839
+allenai/olmo-3.1-32b-think,OLMo-32B-Think,think,mmlu_math,50.0,0.0,0.0,0.0,0.07135003417431873
+allenai/olmo-3.1-32b-think,OLMo-32B-Think,think,mmlu_science,50.0,4.0,0.08,0.031549003255790686,0.18838502545063704
+allenai/olmo-3.1-32b-think,OLMo-32B-Think,think,social_conventions_minimal,50.0,14.0,0.28,0.17474014357680362,0.4166538714598967
+allenai/olmo-3.1-32b-think,OLMo-32B-Think,think,truthfulqa,50.0,10.0,0.2,0.11243629945973886,0.3303737210448524
+anthropic/claude-sonnet-4,Claude-Sonnet-4,constitutional,arc,50.0,4.0,0.08,0.031549003255790686,0.18838502545063704
+anthropic/claude-sonnet-4,Claude-Sonnet-4,constitutional,gsm8k,50.0,1.0,0.02,0.0035391680889764604,0.10495686471836953
+anthropic/claude-sonnet-4,Claude-Sonnet-4,constitutional,immutable_facts_minimal,50.0,2.0,0.04,0.011038652660826577,0.13460337877954667
+anthropic/claude-sonnet-4,Claude-Sonnet-4,constitutional,mmlu_knowledge,50.0,2.0,0.04,0.011038652660826577,0.13460337877954667
+anthropic/claude-sonnet-4,Claude-Sonnet-4,constitutional,mmlu_math,50.0,0.0,0.0,0.0,0.07135003417431873
+anthropic/claude-sonnet-4,Claude-Sonnet-4,constitutional,mmlu_science,50.0,3.0,0.06,0.020614596364630478,0.16217343370877002
+anthropic/claude-sonnet-4,Claude-Sonnet-4,constitutional,social_conventions_minimal,50.0,4.0,0.08,0.031549003255790686,0.18838502545063704
+anthropic/claude-sonnet-4,Claude-Sonnet-4,constitutional,truthfulqa,50.0,3.0,0.06,0.020614596364630478,0.16217343370877002
+google/gemini-2.5-flash-lite,Gemini-2.5-Flash-Lite,moe,arc,50.0,6.0,0.12,0.05617523710624646,0.23805078886623582
+google/gemini-2.5-flash-lite,Gemini-2.5-Flash-Lite,moe,gsm8k,50.0,2.0,0.04,0.011038652660826577,0.13460337877954667
+google/gemini-2.5-flash-lite,Gemini-2.5-Flash-Lite,moe,immutable_facts_minimal,50.0,21.0,0.42,0.2937479723456693,0.5576680331222217
+google/gemini-2.5-flash-lite,Gemini-2.5-Flash-Lite,moe,mmlu_knowledge,50.0,15.0,0.3,0.1910338908960936,0.4375061227736339
+google/gemini-2.5-flash-lite,Gemini-2.5-Flash-Lite,moe,mmlu_math,50.0,1.0,0.02,0.0035391680889764604,0.10495686471836953
+google/gemini-2.5-flash-lite,Gemini-2.5-Flash-Lite,moe,mmlu_science,50.0,5.0,0.1,0.04347512399157111,0.2136049033478839
+google/gemini-2.5-flash-lite,Gemini-2.5-Flash-Lite,moe,social_conventions_minimal,50.0,31.0,0.62,0.4815019502239357,0.7413740415742278
+google/gemini-2.5-flash-lite,Gemini-2.5-Flash-Lite,moe,truthfulqa,50.0,20.0,0.4,0.2760818978624575,0.5381881089724063
+meta-llama/llama-3-8b-instruct,Llama-3-8B,dense,arc,50.0,3.0,0.06,0.020614596364630478,0.16217343370877002
+meta-llama/llama-3-8b-instruct,Llama-3-8B,dense,gsm8k,50.0,9.0,0.18,0.0977008273245379,0.3079631945470261
+meta-llama/llama-3-8b-instruct,Llama-3-8B,dense,immutable_facts_minimal,50.0,10.0,0.2,0.11243629945973886,0.3303737210448524
+meta-llama/llama-3-8b-instruct,Llama-3-8B,dense,mmlu_knowledge,50.0,11.0,0.22,0.12753786224302288,0.35241815689459555
+meta-llama/llama-3-8b-instruct,Llama-3-8B,dense,mmlu_math,50.0,19.0,0.38,0.2586259584257722,0.5184980497760643
+meta-llama/llama-3-8b-instruct,Llama-3-8B,dense,mmlu_science,50.0,11.0,0.22,0.12753786224302288,0.35241815689459555
+meta-llama/llama-3-8b-instruct,Llama-3-8B,dense,social_conventions_minimal,50.0,15.0,0.3,0.1910338908960936,0.4375061227736339
+meta-llama/llama-3-8b-instruct,Llama-3-8B,dense,truthfulqa,50.0,16.0,0.32,0.20758044093999403,0.45810557136276076
+meta-llama/llama-3.1-70b-instruct,Llama-3.1-70B,dense,arc,50.0,0.0,0.0,0.0,0.07135003417431873
+meta-llama/llama-3.1-70b-instruct,Llama-3.1-70B,dense,gsm8k,50.0,0.0,0.0,0.0,0.07135003417431873
+meta-llama/llama-3.1-70b-instruct,Llama-3.1-70B,dense,immutable_facts_minimal,50.0,1.0,0.02,0.0035391680889764604,0.10495686471836953
+meta-llama/llama-3.1-70b-instruct,Llama-3.1-70B,dense,mmlu_knowledge,50.0,3.0,0.06,0.020614596364630478,0.16217343370877002
+meta-llama/llama-3.1-70b-instruct,Llama-3.1-70B,dense,mmlu_math,50.0,1.0,0.02,0.0035391680889764604,0.10495686471836953
+meta-llama/llama-3.1-70b-instruct,Llama-3.1-70B,dense,mmlu_science,50.0,7.0,0.14,0.06950745262022862,0.2618645719852809
+meta-llama/llama-3.1-70b-instruct,Llama-3.1-70B,dense,social_conventions_minimal,50.0,4.0,0.08,0.031549003255790686,0.18838502545063704
+meta-llama/llama-3.1-70b-instruct,Llama-3.1-70B,dense,truthfulqa,50.0,2.0,0.04,0.011038652660826577,0.13460337877954667
+meta-llama/llama-4-maverick,Llama-4-Maverick (MoE),moe,arc,50.0,7.0,0.14,0.06950745262022862,0.2618645719852809
+meta-llama/llama-4-maverick,Llama-4-Maverick (MoE),moe,gsm8k,50.0,1.0,0.02,0.0035391680889764604,0.10495686471836953
+meta-llama/llama-4-maverick,Llama-4-Maverick (MoE),moe,immutable_facts_minimal,50.0,16.0,0.32,0.20758044093999403,0.45810557136276076
+meta-llama/llama-4-maverick,Llama-4-Maverick (MoE),moe,mmlu_knowledge,50.0,17.0,0.34,0.2243676963506106,0.47846431458517147
+meta-llama/llama-4-maverick,Llama-4-Maverick (MoE),moe,mmlu_math,50.0,2.0,0.04,0.011038652660826577,0.13460337877954667
+meta-llama/llama-4-maverick,Llama-4-Maverick (MoE),moe,mmlu_science,50.0,7.0,0.14,0.06950745262022862,0.2618645719852809
+meta-llama/llama-4-maverick,Llama-4-Maverick (MoE),moe,social_conventions_minimal,50.0,31.0,0.62,0.4815019502239357,0.7413740415742278
+meta-llama/llama-4-maverick,Llama-4-Maverick (MoE),moe,truthfulqa,50.0,17.0,0.34,0.2243676963506106,0.47846431458517147
+openai/gpt-4o-mini,GPT-4o-Mini,dense,arc,50.0,11.0,0.22,0.12753786224302288,0.35241815689459555
+openai/gpt-4o-mini,GPT-4o-Mini,dense,gsm8k,50.0,14.0,0.28,0.17474014357680362,0.4166538714598967
+openai/gpt-4o-mini,GPT-4o-Mini,dense,immutable_facts_minimal,50.0,26.0,0.52,0.3851151225880844,0.6520308760449429
+openai/gpt-4o-mini,GPT-4o-Mini,dense,mmlu_knowledge,50.0,21.0,0.42,0.2937479723456693,0.5576680331222217
+openai/gpt-4o-mini,GPT-4o-Mini,dense,mmlu_math,50.0,9.0,0.18,0.0977008273245379,0.3079631945470261
+openai/gpt-4o-mini,GPT-4o-Mini,dense,mmlu_science,50.0,19.0,0.38,0.2586259584257722,0.5184980497760643
+openai/gpt-4o-mini,GPT-4o-Mini,dense,social_conventions_minimal,50.0,34.0,0.68,0.5418944286372394,0.792419559060006
+openai/gpt-4o-mini,GPT-4o-Mini,dense,truthfulqa,50.0,26.0,0.52,0.3851151225880844,0.6520308760449429
+openai/gpt-oss-20b,GPT-OSS-20B,moe,arc,50.0,4.0,0.08,0.031549003255790686,0.18838502545063704
+openai/gpt-oss-20b,GPT-OSS-20B,moe,gsm8k,50.0,1.0,0.02,0.0035391680889764604,0.10495686471836953
+openai/gpt-oss-20b,GPT-OSS-20B,moe,immutable_facts_minimal,50.0,14.0,0.28,0.17474014357680362,0.4166538714598967
+openai/gpt-oss-20b,GPT-OSS-20B,moe,mmlu_knowledge,50.0,14.0,0.28,0.17474014357680362,0.4166538714598967
+openai/gpt-oss-20b,GPT-OSS-20B,moe,mmlu_math,50.0,5.0,0.1,0.04347512399157111,0.2136049033478839
+openai/gpt-oss-20b,GPT-OSS-20B,moe,mmlu_science,50.0,12.0,0.24,0.14297252401872207,0.3741294937519236
+openai/gpt-oss-20b,GPT-OSS-20B,moe,social_conventions_minimal,50.0,11.0,0.22,0.12753786224302288,0.35241815689459555
+openai/gpt-oss-20b,GPT-OSS-20B,moe,truthfulqa,50.0,10.0,0.2,0.11243629945973886,0.3303737210448524
+x-ai/grok-4.1-fast,Grok-4.1-Fast,think,arc,50.0,4.0,0.08,0.031549003255790686,0.18838502545063704
+x-ai/grok-4.1-fast,Grok-4.1-Fast,think,gsm8k,50.0,0.0,0.0,0.0,0.07135003417431873
+x-ai/grok-4.1-fast,Grok-4.1-Fast,think,immutable_facts_minimal,50.0,3.0,0.06,0.020614596364630478,0.16217343370877002
+x-ai/grok-4.1-fast,Grok-4.1-Fast,think,mmlu_knowledge,50.0,3.0,0.06,0.020614596364630478,0.16217343370877002
+x-ai/grok-4.1-fast,Grok-4.1-Fast,think,mmlu_math,50.0,1.0,0.02,0.0035391680889764604,0.10495686471836953
+x-ai/grok-4.1-fast,Grok-4.1-Fast,think,mmlu_science,50.0,3.0,0.06,0.020614596364630478,0.16217343370877002
+x-ai/grok-4.1-fast,Grok-4.1-Fast,think,social_conventions_minimal,50.0,12.0,0.24,0.14297252401872207,0.3741294937519236
+x-ai/grok-4.1-fast,Grok-4.1-Fast,think,truthfulqa,50.0,5.0,0.1,0.04347512399157111,0.2136049033478839

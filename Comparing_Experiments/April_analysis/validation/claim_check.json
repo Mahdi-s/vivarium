@@ -1,0 +1,93 @@
+[
+  {
+    "claim": "C1: instruct_sft maximizes BER on Instruct path at T=0 unanimous_confident",
+    "predicted": "paper reports ~73.8%",
+    "observed": "0.738",
+    "status": "PASS",
+    "notes": "Anchor claim for the SFT amplification narrative."
+  },
+  {
+    "claim": "C2: instruct_dpo partial reversal on Instruct path at T=0 unanimous_confident",
+    "predicted": "paper reports ~39.0%",
+    "observed": "0.390",
+    "status": "PASS",
+    "notes": "DPO reversal signature."
+  },
+  {
+    "claim": "C3: think_sft < instruct_sft on 4 shared conditions at T=0 (HPC data)",
+    "predicted": "think_sft mean BER < instruct_sft mean BER",
+    "observed": "instruct_sft=0.402, think_sft=0.261",
+    "status": "PASS",
+    "notes": "Reasoning prefix halves the pattern-completion effect on the shared conditions."
+  },
+  {
+    "claim": "C4a: BER has a negative temperature trend for base (unanimous_plain)",
+    "predicted": "slope < 0 AND ber(T=0) > ber(T=1)",
+    "observed": "bers=[0.61, 0.645, 0.6, 0.55, 0.542, 0.51], slope=-0.122",
+    "status": "PASS",
+    "notes": "Pure pattern-completion temperature concentration on the pretrained backbone."
+  },
+  {
+    "claim": "C4b: BER is non-increasing in T for instruct_sft (unanimous_confident)",
+    "predicted": "expected FAIL under tone-cue interaction hypothesis",
+    "observed": "[0.738, 0.757, 0.795, 0.805, 0.797, 0.777]",
+    "status": "FAIL",
+    "notes": "Non-monotonic curve peaking at mid-T is a signature of SFT-acquired tone-cue processing distinct from pattern completion."
+  },
+  {
+    "claim": "C5a: Spearman(BER, reps) > 0.5 for base at T=0",
+    "predicted": ">= 0.5",
+    "observed": "0.837",
+    "status": "PASS",
+    "notes": "Pattern-match gradient on base."
+  },
+  {
+    "claim": "C5b: Spearman(BER, reps) > 0.5 for instruct_sft at T=0",
+    "predicted": ">= 0.5",
+    "observed": "0.884",
+    "status": "PASS",
+    "notes": "Pattern-match gradient on instruct_sft."
+  },
+  {
+    "claim": "C6: Instruct-family knowledge-vs-endorsement correlation is weak (|r| < 0.30)",
+    "predicted": "|r| < 0.30 for every Instruct-family variant",
+    "observed": "base=-0.165, instruct_sft=-0.073, instruct_dpo=-0.215, instruct=-0.087",
+    "status": "PASS",
+    "notes": "Deliberation offers modest protection on the Instruct path; mechanism is not pure knowledge-based reasoning."
+  },
+  {
+    "claim": "C7: DA reduces BER vs unanimous_plain on instruct_sft at T=0",
+    "predicted": "ber(da) < ber(unanimous_plain)",
+    "observed": "da=0.403, anchor=0.512, delta=-0.110",
+    "status": "PASS",
+    "notes": "DA mitigation partial break on SFT."
+  },
+  {
+    "claim": "C8: Diverse peers (reps 5->1) produce a strong BER drop on instruct_sft",
+    "predicted": "delta < -0.20",
+    "observed": "instruct_sft delta=-0.337",
+    "status": "PASS",
+    "notes": "Pattern-break mitigation on Instruct path. Think path cannot be assessed: diverse condition not collected for HPC Think runs (future work)."
+  },
+  {
+    "claim": "C9: [REPLACED] Think-path control BER is in the 5-10% band (not ~0%)",
+    "predicted": "0.04 <= min(think control BER) AND max(think control BER) <= 0.12",
+    "observed": "think_controls={'think_sft': 0.085, 'think_dpo': 0.08, 'think': 0.06}, instruct_controls={'base': 0.0525, 'instruct_sft': 0.06, 'instruct_dpo': 0.065, 'instruct': 0.07}",
+    "status": "PASS",
+    "notes": "The original claim 'Think control BER ~ 0%' was a runs_latest truncation artifact and has been retracted. See data reconciliation section in findings_summary.md."
+  },
+  {
+    "claim": "C10 [NEW]: Think-family knowledge protection is stronger than any Instruct variant",
+    "predicted": "corr(ctrl_correct, pressure_endorsed) < -0.25 for every Think variant",
+    "observed": "think_sft=-0.377, think_dpo=-0.356, think=-0.298",
+    "status": "PASS",
+    "notes": "Reverses original Finding 2. Think reasoning prefix actually USES item knowledge; truncated runs_latest data hid the effect."
+  },
+  {
+    "claim": "C11 [NEW]: <think> prefix cuts pattern-completion BER vs matched Instruct-SFT at T=0",
+    "predicted": "ber(think_sft) - ber(instruct_sft) < -0.30 on unanimous_confident",
+    "observed": "delta=-0.415",
+    "status": "PASS",
+    "notes": "Weak proxy for Think-path mitigation: decoding a reasoning trace before the answer disrupts the pattern-completion trajectory, even without explicit prompt-level mitigations."
+  }
+]

@@ -1,0 +1,3 @@
+model_id,short_name,architecture,ber_with_system_prompt,ber_without_system_prompt,delta_without_minus_with,mcnemar_p_value,ber_ngram_baseline,pattern_completion_ratio
+meta-llama/llama-3.1-70b-instruct,Llama-3.1-70B,dense,0.045,0.25,0.20500000000000002,1.1102230246251565e-16,0.3575,7.944444444444445
+allenai/olmo-3.1-32b-instruct,OLMo-32B-Instruct,dense,0.4075,0.39,-0.01749999999999996,0.5823062744132168,0.455,1.1165644171779143

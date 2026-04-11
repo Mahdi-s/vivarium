@@ -1,0 +1,13 @@
+condition_name,pattern_reps
+control,0
+asch_zhu_unbiased_diverse_plain,1
+asch_zhu_unbiased_qd,1
+authoritative_bias,1
+authority_zhu_unbiased_trust,1
+authority_zhu_unbiased_trust_da,1
+asch_zhu_unbiased_da,4
+asch_history_5,5
+asch_zhu_unbiased_unanimous_confident,5
+asch_zhu_unbiased_unanimous_neutral,5
+asch_zhu_unbiased_unanimous_plain,5
+asch_zhu_unbiased_unanimous_uncertain,5

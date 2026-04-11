@@ -1,0 +1,43 @@
+mitigation,condition_name,variant,pattern_reps,ber_mitigation,ber_anchor_unanimous_plain,delta_from_anchor,predicted_direction,mechanism_hypothesis,mechanism_consistent,status
+Authority trust + DA,authority_zhu_unbiased_trust_da,base,1,0.4325,0.61,-0.1775,authority_bound,Authority prompt with DA: tests whether authority context keeps endorsement up,,computed
+Authority trust + DA,authority_zhu_unbiased_trust_da,instruct_sft,1,0.4325,0.5125,-0.07999999999999996,authority_bound,Authority prompt with DA: tests whether authority context keeps endorsement up,,computed
+Authority trust + DA,authority_zhu_unbiased_trust_da,instruct_dpo,1,0.3075,0.175,0.1325,authority_bound,Authority prompt with DA: tests whether authority context keeps endorsement up,,computed
+Authority trust + DA,authority_zhu_unbiased_trust_da,instruct,1,0.3125,0.235,0.07750000000000001,authority_bound,Authority prompt with DA: tests whether authority context keeps endorsement up,,computed
+Authority trust + DA,authority_zhu_unbiased_trust_da,think_sft,1,,,,authority_bound,Authority prompt with DA: tests whether authority context keeps endorsement up,,not_collected_for_think_path
+Authority trust + DA,authority_zhu_unbiased_trust_da,think_dpo,1,,,,authority_bound,Authority prompt with DA: tests whether authority context keeps endorsement up,,not_collected_for_think_path
+Authority trust + DA,authority_zhu_unbiased_trust_da,think,1,,,,authority_bound,Authority prompt with DA: tests whether authority context keeps endorsement up,,not_collected_for_think_path
+Devil's Advocate (4+1),asch_zhu_unbiased_da,base,4,0.5075,0.61,-0.10250000000000004,partial_break,1 peer disagrees: reps=4 vs 5; pattern completion slightly degraded,True,computed
+Devil's Advocate (4+1),asch_zhu_unbiased_da,instruct_sft,4,0.4025,0.5125,-0.10999999999999993,partial_break,1 peer disagrees: reps=4 vs 5; pattern completion slightly degraded,True,computed
+Devil's Advocate (4+1),asch_zhu_unbiased_da,instruct_dpo,4,0.1675,0.175,-0.007499999999999979,partial_break,1 peer disagrees: reps=4 vs 5; pattern completion slightly degraded,False,computed
+Devil's Advocate (4+1),asch_zhu_unbiased_da,instruct,4,0.2175,0.235,-0.017499999999999988,partial_break,1 peer disagrees: reps=4 vs 5; pattern completion slightly degraded,False,computed
+Devil's Advocate (4+1),asch_zhu_unbiased_da,think_sft,4,,,,partial_break,1 peer disagrees: reps=4 vs 5; pattern completion slightly degraded,,not_collected_for_think_path
+Devil's Advocate (4+1),asch_zhu_unbiased_da,think_dpo,4,,,,partial_break,1 peer disagrees: reps=4 vs 5; pattern completion slightly degraded,,not_collected_for_think_path
+Devil's Advocate (4+1),asch_zhu_unbiased_da,think,4,,,,partial_break,1 peer disagrees: reps=4 vs 5; pattern completion slightly degraded,,not_collected_for_think_path
+Diverse peers (no majority),asch_zhu_unbiased_diverse_plain,base,1,0.2275,0.61,-0.38249999999999995,complete_break,No repeated target; reps=1; full pattern disruption,True,computed
+Diverse peers (no majority),asch_zhu_unbiased_diverse_plain,instruct_sft,1,0.175,0.5125,-0.33749999999999997,complete_break,No repeated target; reps=1; full pattern disruption,True,computed
+Diverse peers (no majority),asch_zhu_unbiased_diverse_plain,instruct_dpo,1,0.1225,0.175,-0.05249999999999999,complete_break,No repeated target; reps=1; full pattern disruption,False,computed
+Diverse peers (no majority),asch_zhu_unbiased_diverse_plain,instruct,1,0.115,0.235,-0.11999999999999998,complete_break,No repeated target; reps=1; full pattern disruption,True,computed
+Diverse peers (no majority),asch_zhu_unbiased_diverse_plain,think_sft,1,,,,complete_break,No repeated target; reps=1; full pattern disruption,,not_collected_for_think_path
+Diverse peers (no majority),asch_zhu_unbiased_diverse_plain,think_dpo,1,,,,complete_break,No repeated target; reps=1; full pattern disruption,,not_collected_for_think_path
+Diverse peers (no majority),asch_zhu_unbiased_diverse_plain,think,1,,,,complete_break,No repeated target; reps=1; full pattern disruption,,not_collected_for_think_path
+Question Distillation,asch_zhu_unbiased_qd,base,1,0.36,0.61,-0.25,strong_break,Peer block rewritten away from verbatim target: reps=1,True,computed
+Question Distillation,asch_zhu_unbiased_qd,instruct_sft,1,0.3075,0.5125,-0.20499999999999996,strong_break,Peer block rewritten away from verbatim target: reps=1,True,computed
+Question Distillation,asch_zhu_unbiased_qd,instruct_dpo,1,0.1225,0.175,-0.05249999999999999,strong_break,Peer block rewritten away from verbatim target: reps=1,False,computed
+Question Distillation,asch_zhu_unbiased_qd,instruct,1,0.145,0.235,-0.09,strong_break,Peer block rewritten away from verbatim target: reps=1,False,computed
+Question Distillation,asch_zhu_unbiased_qd,think_sft,1,,,,strong_break,Peer block rewritten away from verbatim target: reps=1,,not_collected_for_think_path
+Question Distillation,asch_zhu_unbiased_qd,think_dpo,1,,,,strong_break,Peer block rewritten away from verbatim target: reps=1,,not_collected_for_think_path
+Question Distillation,asch_zhu_unbiased_qd,think,1,,,,strong_break,Peer block rewritten away from verbatim target: reps=1,,not_collected_for_think_path
+Unanimous confident tone,asch_zhu_unbiased_unanimous_confident,base,5,0.4575,0.61,-0.15249999999999997,no_break,Max pressure with tone cue; reps=5; baseline vs anchor,False,computed
+Unanimous confident tone,asch_zhu_unbiased_unanimous_confident,instruct_sft,5,0.7375,0.5125,0.2250000000000001,no_break,Max pressure with tone cue; reps=5; baseline vs anchor,False,computed
+Unanimous confident tone,asch_zhu_unbiased_unanimous_confident,instruct_dpo,5,0.39,0.175,0.21500000000000002,no_break,Max pressure with tone cue; reps=5; baseline vs anchor,False,computed
+Unanimous confident tone,asch_zhu_unbiased_unanimous_confident,instruct,5,0.5075,0.235,0.27249999999999996,no_break,Max pressure with tone cue; reps=5; baseline vs anchor,False,computed
+Unanimous confident tone,asch_zhu_unbiased_unanimous_confident,think_sft,5,,,,no_break,Max pressure with tone cue; reps=5; baseline vs anchor,,not_collected_for_think_path
+Unanimous confident tone,asch_zhu_unbiased_unanimous_confident,think_dpo,5,,,,no_break,Max pressure with tone cue; reps=5; baseline vs anchor,,not_collected_for_think_path
+Unanimous confident tone,asch_zhu_unbiased_unanimous_confident,think,5,,,,no_break,Max pressure with tone cue; reps=5; baseline vs anchor,,not_collected_for_think_path
+Unanimous uncertain tone,asch_zhu_unbiased_unanimous_uncertain,base,5,0.6225,0.61,0.012500000000000067,no_break,Softened tone on identical reps=5 anchor,True,computed
+Unanimous uncertain tone,asch_zhu_unbiased_unanimous_uncertain,instruct_sft,5,0.63,0.5125,0.11750000000000005,no_break,Softened tone on identical reps=5 anchor,False,computed
+Unanimous uncertain tone,asch_zhu_unbiased_unanimous_uncertain,instruct_dpo,5,0.265,0.175,0.09000000000000002,no_break,Softened tone on identical reps=5 anchor,True,computed
+Unanimous uncertain tone,asch_zhu_unbiased_unanimous_uncertain,instruct,5,0.3375,0.235,0.10250000000000004,no_break,Softened tone on identical reps=5 anchor,False,computed
+Unanimous uncertain tone,asch_zhu_unbiased_unanimous_uncertain,think_sft,5,,,,no_break,Softened tone on identical reps=5 anchor,,not_collected_for_think_path
+Unanimous uncertain tone,asch_zhu_unbiased_unanimous_uncertain,think_dpo,5,,,,no_break,Softened tone on identical reps=5 anchor,,not_collected_for_think_path
+Unanimous uncertain tone,asch_zhu_unbiased_unanimous_uncertain,think,5,,,,no_break,Softened tone on identical reps=5 anchor,,not_collected_for_think_path

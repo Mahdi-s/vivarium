@@ -1,0 +1,20 @@
+rank,cohort,short_name,model_id,architecture,state_B_n,n_denominator,ber,ber_lo,ber_hi
+1,instruct_7b,OLMo-7B-Instruct-SFT,allenai/Olmo-3-7B-Instruct-SFT,instruct,295.0,400.0,0.7375,0.69226759360591,0.7782139021092418
+2,instruct_7b,OLMo-7B-Instruct-RL,allenai/Olmo-3-7B-Instruct,instruct,203.0,400.0,0.5075,0.458667706127959,0.5561896042630459
+3,base_7b,OLMo-7B-Base,allenai/Olmo-3-1025-7B,base,183.0,400.0,0.4575,0.4093127098586455,0.5064958645923273
+4,cross_family,OLMo-32B-Instruct,allenai/olmo-3.1-32b-instruct,dense,163.0,400.0,0.4075,0.3604472385805353,0.4563125999304055
+5,cross_family,GPT-4o-Mini,openai/gpt-4o-mini,dense,160.0,400.0,0.4,0.35316069336620937,0.44874183475372675
+6,instruct_7b,OLMo-7B-Instruct-DPO,allenai/Olmo-3-7B-Instruct-DPO,instruct,156.0,400.0,0.39,0.3434632828365625,0.4386294980953673
+7,think_7b,OLMo-7B-Think-SFT,allenai/Olmo-3-7B-Think-SFT,think,129.0,400.0,0.3225,0.2785671880694585,0.369809799343428
+8,think_7b,OLMo-7B-Think-RL,allenai/Olmo-3-7B-Think,think,117.0,400.0,0.2925,0.2500612880815991,0.3388864577672683
+9,think_7b,OLMo-7B-Think-DPO,allenai/Olmo-3-7B-Think-DPO,think,114.0,400.0,0.285,0.242970040431969,0.3311203950258936
+10,cross_family,OLMo-32B-Think-SFT,allenai/Olmo-3-32B-Think-SFT,think,104.0,400.0,0.26,0.2194409481918117,0.30512511929603503
+11,cross_family,Gemini-2.5-Flash-Lite,google/gemini-2.5-flash-lite,moe,101.0,400.0,0.2525,0.21241625232287653,0.2972925047739654
+12,cross_family,Llama-4-Maverick (MoE),meta-llama/llama-4-maverick,moe,98.0,400.0,0.245,0.20540805053884156,0.28944339616699555
+13,cross_family,Llama-3-8B,meta-llama/llama-3-8b-instruct,dense,94.0,400.0,0.235,0.1960903097272598,0.278951389790571
+14,cross_family,OLMo-32B-Think-DPO,allenai/Olmo-3-32B-Think-DPO,think,77.0,400.0,0.1925,0.15686042573701753,0.2339898482317861
+15,cross_family,GPT-OSS-20B,openai/gpt-oss-20b,moe,71.0,400.0,0.1775,0.14317534561717957,0.21796030756961446
+16,cross_family,OLMo-32B-Think,allenai/olmo-3.1-32b-think,think,47.0,400.0,0.1175,0.08952149033047882,0.1527556797282769
+17,cross_family,Grok-4.1-Fast,x-ai/grok-4.1-fast,think,31.0,400.0,0.0775,0.05513258958646752,0.10790559172026265
+18,cross_family,Claude-Sonnet-4,anthropic/claude-sonnet-4,constitutional,19.0,400.0,0.0475,0.030616832107668652,0.07299210763504237
+19,cross_family,Llama-3.1-70B,meta-llama/llama-3.1-70b-instruct,dense,18.0,400.0,0.045,0.028651223384090457,0.07000527956161895

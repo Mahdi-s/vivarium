@@ -1,0 +1,184 @@
+{
+  "schema_version": 2,
+  "generated_for": "April_analysis post-hoc recomputation of 7B OLMo 2-axis story (remediated 2026-04-08)",
+  "remediation_note": "Schema v1 loaded Think variants (think_sft, think_dpo, think) from runs_latest/runs/ at all 6 temperatures. That was a fatal error: runs_latest Think outputs were truncated at ~1,400 chars / ~350 tokens, mid-<think> block, producing garbage labels. The authoritative Think SFT/DPO data lives in runs-think-hpc/20260330_* (4 DBs at T in {0.0, 0.6}, 4 shared conditions) and Think-RL lives in runs/think/20260325_* (1 DB at T=0.0, 4 shared conditions). Schema v2 restricts runs_latest to {base, instruct_sft, instruct_dpo, instruct} and loads Think variants exclusively from the HPC + runs/think sources.",
+  "judge_field_policy": {
+    "authoritative_labels": "parsed_answer_json top-level {is_correct, wrong_answer_endorsed, refusal_flag}",
+    "judge_marker": "parsed_answer_json._llm_judge object (presence indicates LLM judge was applied)",
+    "heuristic_fallback": "conformity_outputs.is_correct (~87.5% coverage, DO NOT use)",
+    "rule": "Rows are loaded only when parsed_answer_json contains _llm_judge marker. Labels are read from top-level parsed_answer_json fields.",
+    "judge_prompt_versions": {
+      "runs_latest": "2026-03-03_local_v3",
+      "runs-think-hpc": "2026-03-27_openrouter_v1",
+      "runs/think": "2026-03-03_local_v3 (older)",
+      "note": "Two different judge prompt versions are mixed. See validation/heuristic_vs_judge_agreement.csv for per-version agreement audit."
+    }
+  },
+  "item_design": {
+    "n_items": 400,
+    "conditions_12": [
+      "control",
+      "asch_history_5",
+      "asch_zhu_unbiased_unanimous_plain",
+      "asch_zhu_unbiased_unanimous_confident",
+      "asch_zhu_unbiased_unanimous_uncertain",
+      "asch_zhu_unbiased_unanimous_neutral",
+      "asch_zhu_unbiased_da",
+      "asch_zhu_unbiased_qd",
+      "asch_zhu_unbiased_diverse_plain",
+      "authoritative_bias",
+      "authority_zhu_unbiased_trust",
+      "authority_zhu_unbiased_trust_da"
+    ],
+    "conditions_4_shared": [
+      "control",
+      "asch_zhu_unbiased_unanimous_confident",
+      "authoritative_bias",
+      "authority_zhu_unbiased_trust"
+    ]
+  },
+  "condition_name_canonicalization": {
+    "comment": "HPC Think DBs use short-form condition names. Map them to the canonical 4-shared-condition names used everywhere in April_analysis tables/figures.",
+    "asch_zhu_unanimous_confident": "asch_zhu_unbiased_unanimous_confident",
+    "authority_trust": "authority_zhu_unbiased_trust",
+    "control": "control",
+    "authoritative_bias": "authoritative_bias"
+  },
+  "variants": {
+    "base": {
+      "model_id": "allenai/Olmo-3-1025-7B",
+      "path": "shared",
+      "role": "pretrained backbone; base of both Instruct and Think paths"
+    },
+    "instruct_sft": {
+      "model_id": "allenai/Olmo-3-7B-Instruct-SFT",
+      "path": "instruct",
+      "stage": "SFT"
+    },
+    "instruct_dpo": {
+      "model_id": "allenai/Olmo-3-7B-Instruct-DPO",
+      "path": "instruct",
+      "stage": "DPO"
+    },
+    "instruct": {
+      "model_id": "allenai/Olmo-3-7B-Instruct",
+      "path": "instruct",
+      "stage": "RLVR (Instruct final)"
+    },
+    "think_sft": {
+      "model_id": "allenai/Olmo-3-7B-Think-SFT",
+      "path": "think",
+      "stage": "SFT"
+    },
+    "think_dpo": {
+      "model_id": "allenai/Olmo-3-7B-Think-DPO",
+      "path": "think",
+      "stage": "DPO"
+    },
+    "think": {
+      "model_id": "allenai/Olmo-3-7B-Think",
+      "path": "think",
+      "stage": "Think-RL (Think final)"
+    }
+  },
+  "coverage_matrix": {
+    "comment": "Explicit (variant, temperature, condition) coverage. Think-family coverage is intentionally asymmetric: limited conditions and limited temperatures because those were the dedicated Think runs.",
+    "instruct_family": {
+      "variants": ["base", "instruct_sft", "instruct_dpo", "instruct"],
+      "temperatures": [0.0, 0.2, 0.4, 0.6, 0.8, 1.0],
+      "conditions": "conditions_12"
+    },
+    "think_sft_dpo": {
+      "variants": ["think_sft", "think_dpo"],
+      "temperatures": [0.0, 0.6],
+      "conditions": "conditions_4_shared"
+    },
+    "think_rl": {
+      "variants": ["think"],
+      "temperatures": [0.0],
+      "conditions": "conditions_4_shared"
+    }
+  },
+  "sources_primary": [
+    {
+      "db": "runs_latest/runs/20260224_225304_9f240f89-e58e-423a-ae68-f990b31c84cd/simulation.db",
+      "temperature": 0.0,
+      "variants": ["base", "instruct_sft", "instruct_dpo", "instruct"],
+      "ignore_variants": ["rl_zero", "think_sft", "think_dpo", "think"],
+      "notes": "Instruct path + base. Think variants in this DB are runs_latest truncation artifacts (~1400 char cap) and must NOT be loaded."
+    },
+    {
+      "db": "runs_latest/runs/20260225_010113_46f0762a-210a-459a-8709-d24a0f194eb0/simulation.db",
+      "temperature": 0.2,
+      "variants": ["base", "instruct_sft", "instruct_dpo", "instruct"],
+      "ignore_variants": ["rl_zero", "think_sft", "think_dpo", "think"]
+    },
+    {
+      "db": "runs_latest/runs/20260225_041802_bbd05985-d185-460a-b0aa-dd356d27ec94/simulation.db",
+      "temperature": 0.4,
+      "variants": ["base", "instruct_sft", "instruct_dpo", "instruct"],
+      "ignore_variants": ["rl_zero", "think_sft", "think_dpo", "think"]
+    },
+    {
+      "db": "runs_latest/runs/20260225_085516_86c72262-d1aa-41b5-9c22-d7b2e0570215/simulation.db",
+      "temperature": 0.6,
+      "variants": ["base", "instruct_sft", "instruct_dpo", "instruct"],
+      "ignore_variants": ["rl_zero", "think_sft", "think_dpo", "think"]
+    },
+    {
+      "db": "runs_latest/runs/20260225_124244_9369442d-d825-4cd0-81a1-8ed276c37814/simulation.db",
+      "temperature": 0.8,
+      "variants": ["base", "instruct_sft", "instruct_dpo", "instruct"],
+      "ignore_variants": ["rl_zero", "think_sft", "think_dpo", "think"]
+    },
+    {
+      "db": "runs_latest/runs/20260225_130444_9173bfae-4e8a-464f-8c9c-7ee91caa8b6e/simulation.db",
+      "temperature": 1.0,
+      "variants": ["base", "instruct_sft", "instruct_dpo", "instruct"],
+      "ignore_variants": ["rl_zero", "think_sft", "think_dpo", "think"]
+    },
+    {
+      "db": "runs-think-hpc/20260330_012727_e5cc991d-eb01-4371-b73c-315ab18c3112/simulation.db",
+      "temperature": 0.0,
+      "variants": ["think_sft"],
+      "ignore_variants": [],
+      "conditions_subset": ["control", "asch_zhu_unbiased_unanimous_confident", "authoritative_bias", "authority_zhu_unbiased_trust"],
+      "notes": "Dedicated HPC Think-SFT run. Condition names in DB are short-form and get canonicalized via condition_name_canonicalization before matching conditions_subset."
+    },
+    {
+      "db": "runs-think-hpc/20260330_012826_29ac502b-887d-4ed1-b161-7441ac22188c/simulation.db",
+      "temperature": 0.6,
+      "variants": ["think_sft"],
+      "ignore_variants": [],
+      "conditions_subset": ["control", "asch_zhu_unbiased_unanimous_confident", "authoritative_bias", "authority_zhu_unbiased_trust"]
+    },
+    {
+      "db": "runs-think-hpc/20260330_021503_56c71fda-573f-46fd-b2ab-8b6e509c689a/simulation.db",
+      "temperature": 0.0,
+      "variants": ["think_dpo"],
+      "ignore_variants": [],
+      "conditions_subset": ["control", "asch_zhu_unbiased_unanimous_confident", "authoritative_bias", "authority_zhu_unbiased_trust"]
+    },
+    {
+      "db": "runs-think-hpc/20260330_022920_57414a36-f63a-4332-9c70-437a60071565/simulation.db",
+      "temperature": 0.6,
+      "variants": ["think_dpo"],
+      "ignore_variants": [],
+      "conditions_subset": ["control", "asch_zhu_unbiased_unanimous_confident", "authoritative_bias", "authority_zhu_unbiased_trust"]
+    },
+    {
+      "db": "runs/think/20260325_010440_f47fe05e-4564-4680-a2d8-39a88c6f8d37/simulation.db",
+      "temperature": 0.0,
+      "variants": ["think"],
+      "ignore_variants": ["think_sft"],
+      "conditions_subset": ["control", "asch_zhu_unbiased_unanimous_confident", "authoritative_bias", "authority_zhu_unbiased_trust"],
+      "dedup_key": ["item_id", "condition_name", "variant"],
+      "notes": "Think-RL dedicated run. Contains 1607 think rows (7 extras to dedup) + 2 rogue think_sft rows (filtered via ignore_variants)."
+    }
+  ],
+  "sources_secondary": [],
+  "cross_family_sources": {
+    "runs_dir": "runs",
+    "notes": "22 DBs spanning 11 model families at T in {0.0, 0.6}, 4 conditions. Scoped in cross_family/ subfolder. Loader uses file-system scan filtered by expected families."
+  }
+}

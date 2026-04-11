@@ -1,0 +1,257 @@
+{
+  "schema_version": 3,
+  "experiment_group": "cross_family",
+  "generated_for": "April_analysis expansion (2026-04-09): cross-family generalization + ablation probes",
+  "expansion_note": "This manifest loads the 12 cross-family models (dense/MoE/Think/Constitutional) at T in {0, 0.6} across 4 shared conditions, plus 2 ablation DBs (Llama-3.1-70B-Instruct + OLMo-3.1-32B-Instruct with system_style:none running asch_zhu_naked_unanimous_confident and ngram_sequence_baseline). Isolated from runs_metadata.json so the 7B pipeline remains untouched.",
+  "judge_field_policy": {
+    "authoritative_labels": "parsed_answer_json top-level {is_correct, wrong_answer_endorsed, refusal_flag}",
+    "judge_marker": "parsed_answer_json._llm_judge object (presence indicates LLM judge was applied)",
+    "rule": "All 18 cross-family + ablation DBs use judge_model='openai/gpt-oss-20b' with prompt_version='2026-03-27_openrouter_v1'. Per user decision 2026-04-09, the local/openrouter split is non-material because both paths used the same judge model.",
+    "judge_prompt_version": "2026-03-27_openrouter_v1",
+    "judge_model": "openai/gpt-oss-20b"
+  },
+  "condition_name_canonicalization": {
+    "comment": "Cross-family DBs use the same HPC short-form names as the 7B Think HPC DBs. Map to canonical long-form before any downstream code reads them.",
+    "asch_zhu_unanimous_confident": "asch_zhu_unbiased_unanimous_confident",
+    "authority_trust": "authority_zhu_unbiased_trust",
+    "control": "control",
+    "authoritative_bias": "authoritative_bias"
+  },
+  "model_short_names": {
+    "allenai/olmo-3.1-32b-think": "OLMo-32B-Think",
+    "allenai/olmo-3.1-32b-instruct": "OLMo-32B-Instruct",
+    "meta-llama/llama-3-8b-instruct": "Llama-3-8B",
+    "meta-llama/llama-3.1-70b-instruct": "Llama-3.1-70B",
+    "meta-llama/llama-4-maverick": "Llama-4-Maverick (MoE)",
+    "google/gemini-2.5-flash-lite": "Gemini-2.5-Flash-Lite",
+    "x-ai/grok-4.1-fast": "Grok-4.1-Fast",
+    "openai/gpt-4o-mini": "GPT-4o-Mini",
+    "openai/gpt-oss-20b": "GPT-OSS-20B",
+    "anthropic/claude-sonnet-4": "Claude-Sonnet-4",
+    "allenai/Olmo-3-32B-Think-SFT": "OLMo-32B-Think-SFT",
+    "allenai/Olmo-3-32B-Think-DPO": "OLMo-32B-Think-DPO"
+  },
+  "architecture_tags": {
+    "comment": "Display/color grouping for figures. Think means the model emits a reasoning chain before answering.",
+    "OLMo-32B-Instruct": "dense",
+    "Llama-3-8B": "dense",
+    "Llama-3.1-70B": "dense",
+    "GPT-4o-Mini": "dense",
+    "Llama-4-Maverick (MoE)": "moe",
+    "GPT-OSS-20B": "moe",
+    "Gemini-2.5-Flash-Lite": "moe",
+    "OLMo-32B-Think": "think",
+    "Grok-4.1-Fast": "think",
+    "Claude-Sonnet-4": "constitutional",
+    "OLMo-32B-Think-SFT": "think",
+    "OLMo-32B-Think-DPO": "think"
+  },
+  "expected_shared_conditions": [
+    "control",
+    "asch_zhu_unbiased_unanimous_confident",
+    "authoritative_bias",
+    "authority_zhu_unbiased_trust"
+  ],
+  "expected_ablation_conditions": [
+    "asch_zhu_naked_unanimous_confident",
+    "ngram_sequence_baseline"
+  ],
+  "expected_temperatures_cross_family": [0.0, 0.6],
+  "expected_temperatures_ablation": [0.0],
+  "expected_cell_counts": {
+    "cross_family_main": 96,
+    "ablation_system_prompt_removed": 4,
+    "grand_total_cells": 100,
+    "grand_total_trials": 40000
+  },
+  "sources_primary": [
+    {
+      "db": "runs/20260327_152738_a34ad9b1-abd0-4119-96c6-7b1cd61d7f4d/simulation.db",
+      "temperature": 0.0,
+      "variants": ["think_32b"],
+      "experiment_group": "cross_family_main",
+      "conditions_subset": ["control", "asch_zhu_unbiased_unanimous_confident", "authoritative_bias", "authority_zhu_unbiased_trust"]
+    },
+    {
+      "db": "runs/20260327_152926_7db9896e-9e3b-439f-88e3-74fe25ea2bad/simulation.db",
+      "temperature": 0.6,
+      "variants": ["think_32b"],
+      "experiment_group": "cross_family_main",
+      "conditions_subset": ["control", "asch_zhu_unbiased_unanimous_confident", "authoritative_bias", "authority_zhu_unbiased_trust"]
+    },
+    {
+      "db": "runs/20260327_152936_1c2e5cb6-0372-4835-bbb7-7230c55517e4/simulation.db",
+      "temperature": 0.0,
+      "variants": ["instruct_32b"],
+      "experiment_group": "cross_family_main",
+      "conditions_subset": ["control", "asch_zhu_unbiased_unanimous_confident", "authoritative_bias", "authority_zhu_unbiased_trust"]
+    },
+    {
+      "db": "runs/20260327_152944_62187f52-7a7e-4db0-a269-d14d8e887b1b/simulation.db",
+      "temperature": 0.6,
+      "variants": ["instruct_32b"],
+      "experiment_group": "cross_family_main",
+      "conditions_subset": ["control", "asch_zhu_unbiased_unanimous_confident", "authoritative_bias", "authority_zhu_unbiased_trust"]
+    },
+    {
+      "db": "runs/20260327_154349_1899a883-82e4-45f3-833a-d6403cf1ac95/simulation.db",
+      "temperature": 0.0,
+      "variants": ["llama3_8b_instruct"],
+      "experiment_group": "cross_family_main",
+      "conditions_subset": ["control", "asch_zhu_unbiased_unanimous_confident", "authoritative_bias", "authority_zhu_unbiased_trust"]
+    },
+    {
+      "db": "runs/20260327_154401_70860876-c5c2-4445-a59d-e44ae8094887/simulation.db",
+      "temperature": 0.6,
+      "variants": ["llama3_8b_instruct"],
+      "experiment_group": "cross_family_main",
+      "conditions_subset": ["control", "asch_zhu_unbiased_unanimous_confident", "authoritative_bias", "authority_zhu_unbiased_trust"]
+    },
+    {
+      "db": "runs/20260327_154412_3a0404f7-bd47-4b25-b2e2-5501e550566f/simulation.db",
+      "temperature": 0.0,
+      "variants": ["llama31_70b_instruct"],
+      "experiment_group": "cross_family_main",
+      "conditions_subset": ["control", "asch_zhu_unbiased_unanimous_confident", "authoritative_bias", "authority_zhu_unbiased_trust"]
+    },
+    {
+      "db": "runs/20260327_154419_49d07104-c14c-4a8b-a013-ae0783c5f3e8/simulation.db",
+      "temperature": 0.6,
+      "variants": ["llama31_70b_instruct"],
+      "experiment_group": "cross_family_main",
+      "conditions_subset": ["control", "asch_zhu_unbiased_unanimous_confident", "authoritative_bias", "authority_zhu_unbiased_trust"]
+    },
+    {
+      "db": "runs/20260327_154428_485ddc2d-6cae-4715-835e-76ab72e38159/simulation.db",
+      "temperature": 0.0,
+      "variants": ["llama4_maverick"],
+      "experiment_group": "cross_family_main",
+      "conditions_subset": ["control", "asch_zhu_unbiased_unanimous_confident", "authoritative_bias", "authority_zhu_unbiased_trust"]
+    },
+    {
+      "db": "runs/20260327_154435_c2ce0f85-8f67-40f2-a82d-e136927cf6f5/simulation.db",
+      "temperature": 0.6,
+      "variants": ["llama4_maverick"],
+      "experiment_group": "cross_family_main",
+      "conditions_subset": ["control", "asch_zhu_unbiased_unanimous_confident", "authoritative_bias", "authority_zhu_unbiased_trust"]
+    },
+    {
+      "db": "runs/20260327_224321_e043fbf6-27eb-410c-8da7-bc0f9172ab0b/simulation.db",
+      "temperature": 0.0,
+      "variants": ["gemini_25_flash_lite"],
+      "experiment_group": "cross_family_main",
+      "conditions_subset": ["control", "asch_zhu_unbiased_unanimous_confident", "authoritative_bias", "authority_zhu_unbiased_trust"]
+    },
+    {
+      "db": "runs/20260327_224336_d71e75b1-17c5-4789-8ee7-13b29ef18359/simulation.db",
+      "temperature": 0.6,
+      "variants": ["gemini_25_flash_lite"],
+      "experiment_group": "cross_family_main",
+      "conditions_subset": ["control", "asch_zhu_unbiased_unanimous_confident", "authoritative_bias", "authority_zhu_unbiased_trust"]
+    },
+    {
+      "db": "runs/20260327_224348_25056752-7081-449e-9a44-ad090b566107/simulation.db",
+      "temperature": 0.0,
+      "variants": ["grok_41_fast"],
+      "experiment_group": "cross_family_main",
+      "conditions_subset": ["control", "asch_zhu_unbiased_unanimous_confident", "authoritative_bias", "authority_zhu_unbiased_trust"]
+    },
+    {
+      "db": "runs/20260327_224357_157a6a9e-13de-4bdb-bdd2-54d761498f24/simulation.db",
+      "temperature": 0.6,
+      "variants": ["grok_41_fast"],
+      "experiment_group": "cross_family_main",
+      "conditions_subset": ["control", "asch_zhu_unbiased_unanimous_confident", "authoritative_bias", "authority_zhu_unbiased_trust"]
+    },
+    {
+      "db": "runs/20260327_224413_c07ede3a-16ac-4b47-ac42-4f6ad8dd8370/simulation.db",
+      "temperature": 0.0,
+      "variants": ["gpt4o_mini"],
+      "experiment_group": "cross_family_main",
+      "conditions_subset": ["control", "asch_zhu_unbiased_unanimous_confident", "authoritative_bias", "authority_zhu_unbiased_trust"]
+    },
+    {
+      "db": "runs/20260327_224422_eb63d212-77fe-46ef-965b-7777cc232f1f/simulation.db",
+      "temperature": 0.6,
+      "variants": ["gpt4o_mini"],
+      "experiment_group": "cross_family_main",
+      "conditions_subset": ["control", "asch_zhu_unbiased_unanimous_confident", "authoritative_bias", "authority_zhu_unbiased_trust"]
+    },
+    {
+      "db": "runs/20260327_224552_66765d5e-204c-4074-aaf4-b9c148fe61a5/simulation.db",
+      "temperature": 0.0,
+      "variants": ["gpt_oss_20b"],
+      "experiment_group": "cross_family_main",
+      "conditions_subset": ["control", "asch_zhu_unbiased_unanimous_confident", "authoritative_bias", "authority_zhu_unbiased_trust"],
+      "notes": "DB has 187 retry trials (1787 output rows) but the first-output-per-trial CTE in _april_load_db_rows picks the judged row, yielding exactly 1600 clean trials."
+    },
+    {
+      "db": "runs/20260327_224603_3ecdc9b7-49db-4625-b90e-fc3745b9224e/simulation.db",
+      "temperature": 0.6,
+      "variants": ["gpt_oss_20b"],
+      "experiment_group": "cross_family_main",
+      "conditions_subset": ["control", "asch_zhu_unbiased_unanimous_confident", "authoritative_bias", "authority_zhu_unbiased_trust"]
+    },
+    {
+      "db": "runs/20260329_211511_5be5ada7-64be-4cbd-9024-aacbcaf233e3/simulation.db",
+      "temperature": 0.0,
+      "variants": ["claude_sonnet_4"],
+      "experiment_group": "cross_family_main",
+      "conditions_subset": ["control", "asch_zhu_unbiased_unanimous_confident", "authoritative_bias", "authority_zhu_unbiased_trust"]
+    },
+    {
+      "db": "runs/20260329_211518_21556460-5f97-4a23-8c54-4a1f999ba619/simulation.db",
+      "temperature": 0.6,
+      "variants": ["claude_sonnet_4"],
+      "experiment_group": "cross_family_main",
+      "conditions_subset": ["control", "asch_zhu_unbiased_unanimous_confident", "authoritative_bias", "authority_zhu_unbiased_trust"]
+    },
+    {
+      "db": "runs-think-hpc/runs-32B/20260404_093315_81d9194a-b1ef-4261-a0fb-bb0f713e1239/simulation.db",
+      "temperature": 0.0,
+      "variants": ["think_sft"],
+      "experiment_group": "cross_family_main",
+      "conditions_subset": ["control", "asch_zhu_unbiased_unanimous_confident", "authoritative_bias", "authority_zhu_unbiased_trust"],
+      "notes": "32B-Think-SFT from HPC. DB variant is 'think_sft'; model_id is 'allenai/Olmo-3-32B-Think-SFT'."
+    },
+    {
+      "db": "runs-think-hpc/runs-32B/20260404_093744_e673de86-d8dc-4ce0-bfc9-969d531eb425/simulation.db",
+      "temperature": 0.6,
+      "variants": ["think_sft"],
+      "experiment_group": "cross_family_main",
+      "conditions_subset": ["control", "asch_zhu_unbiased_unanimous_confident", "authoritative_bias", "authority_zhu_unbiased_trust"],
+      "notes": "32B-Think-SFT from HPC. DB variant is 'think_sft'; model_id is 'allenai/Olmo-3-32B-Think-SFT'."
+    },
+    {
+      "db": "runs-think-hpc/runs-32B/20260404_100941_3041fb7e-98bc-4343-90d7-e56d9e134a3b/simulation.db",
+      "temperature": 0.0,
+      "variants": ["think_dpo"],
+      "experiment_group": "cross_family_main",
+      "conditions_subset": ["control", "asch_zhu_unbiased_unanimous_confident", "authoritative_bias", "authority_zhu_unbiased_trust"],
+      "notes": "32B-Think-DPO from HPC. DB variant is 'think_dpo'; model_id is 'allenai/Olmo-3-32B-Think-DPO'."
+    },
+    {
+      "db": "runs-think-hpc/runs-32B/20260404_094925_d0158f56-c99c-4e7d-92fc-c7ece3190781/simulation.db",
+      "temperature": 0.6,
+      "variants": ["think_dpo"],
+      "experiment_group": "cross_family_main",
+      "conditions_subset": ["control", "asch_zhu_unbiased_unanimous_confident", "authoritative_bias", "authority_zhu_unbiased_trust"]
+    },
+    {
+      "db": "runs/20260329_235403_e8a90500-25cd-469f-a138-197c338fddaf/simulation.db",
+      "temperature": 0.0,
+      "variants": ["llama31_70b_instruct"],
+      "experiment_group": "ablation_system_prompt_removed",
+      "conditions_subset": ["asch_zhu_naked_unanimous_confident", "ngram_sequence_baseline"],
+      "notes": "Ablation DB. Same 400 item_ids as the main Llama-3.1-70B cross-family DB at T=0 (verified via INTERSECT query 2026-04-09). system_style:none strips the 'be truthful' system prompt; compare BER against the main DB's asch_zhu_unbiased_unanimous_confident at same T."
+    },
+    {
+      "db": "runs/20260329_235408_ef72529e-5e82-463f-8b8b-b2a6c7decd3c/simulation.db",
+      "temperature": 0.0,
+      "variants": ["instruct_32b"],
+      "experiment_group": "ablation_system_prompt_removed",
+      "conditions_subset": ["asch_zhu_naked_unanimous_confident", "ngram_sequence_baseline"],
+      "notes": "Ablation DB. Same 400 item_ids as the main OLMo-3.1-32B-Instruct cross-family DB at T=0."
+    }
+  ]
+}

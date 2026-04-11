@@ -1,0 +1,37 @@
+model_id,short_name,architecture,temperature,pressure_condition,n_paired,b_novel_endorse,c_recovered,chi2_yates,p_value,odds_ratio,p_holm
+allenai/Olmo-3-32B-Think-DPO,OLMo-32B-Think-DPO,think,0.0,asch_zhu_unbiased_unanimous_confident,400,65,11,36.96052631578947,1.2054514053616572e-09,5.909090909090909,2.8930833728679772e-08
+allenai/Olmo-3-32B-Think-DPO,OLMo-32B-Think-DPO,think,0.0,authoritative_bias,400,70,12,39.6219512195122,3.081995769704804e-10,5.833333333333333,7.70498942426201e-09
+allenai/Olmo-3-32B-Think-DPO,OLMo-32B-Think-DPO,think,0.0,authority_zhu_unbiased_trust,399,73,9,48.40243902439025,3.471334331095477e-12,8.11111111111111,9.719736127067335e-11
+allenai/Olmo-3-32B-Think-SFT,OLMo-32B-Think-SFT,think,0.0,asch_zhu_unbiased_unanimous_confident,400,87,10,59.54639175257732,1.199040866595169e-14,8.7,3.836930773104541e-13
+allenai/Olmo-3-32B-Think-SFT,OLMo-32B-Think-SFT,think,0.0,authoritative_bias,400,62,11,34.24657534246575,4.855291058092348e-09,5.636363636363637,1.11671694336124e-07
+allenai/Olmo-3-32B-Think-SFT,OLMo-32B-Think-SFT,think,0.0,authority_zhu_unbiased_trust,400,81,11,51.75,6.303846333821639e-13,7.363636363636363,1.954192363484708e-11
+allenai/olmo-3.1-32b-instruct,OLMo-32B-Instruct,dense,0.0,asch_zhu_unbiased_unanimous_confident,400,152,6,133.06962025316454,0.0,25.333333333333332,0.0
+allenai/olmo-3.1-32b-instruct,OLMo-32B-Instruct,dense,0.0,authoritative_bias,400,50,11,23.672131147540984,1.1422472386835025e-06,4.545454545454546,1.9418203057619543e-05
+allenai/olmo-3.1-32b-instruct,OLMo-32B-Instruct,dense,0.0,authority_zhu_unbiased_trust,400,40,8,20.020833333333332,7.660302094092408e-06,5.0,9.662930350151644e-05
+allenai/olmo-3.1-32b-think,OLMo-32B-Think,think,0.0,asch_zhu_unbiased_unanimous_confident,400,36,11,12.25531914893617,0.00046393379835085735,3.272727272727273,0.0046393379835085735
+allenai/olmo-3.1-32b-think,OLMo-32B-Think,think,0.0,authoritative_bias,400,32,14,6.282608695652174,0.0121928486136611,2.2857142857142856,0.0853499402956277
+allenai/olmo-3.1-32b-think,OLMo-32B-Think,think,0.0,authority_zhu_unbiased_trust,400,38,14,10.173076923076923,0.001425062561992374,2.7142857142857144,0.012825563057931366
+anthropic/claude-sonnet-4,Claude-Sonnet-4,constitutional,0.0,asch_zhu_unbiased_unanimous_confident,400,14,5,3.3684210526315788,0.06645742001693111,2.8,0.13291484003386222
+anthropic/claude-sonnet-4,Claude-Sonnet-4,constitutional,0.0,authoritative_bias,400,17,5,5.5,0.019016473672300527,3.4,0.09508236836150263
+anthropic/claude-sonnet-4,Claude-Sonnet-4,constitutional,0.0,authority_zhu_unbiased_trust,400,17,6,4.3478260869565215,0.03705621856411889,2.8333333333333335,0.11186227986344432
+google/gemini-2.5-flash-lite,Gemini-2.5-Flash-Lite,moe,0.0,asch_zhu_unbiased_unanimous_confident,400,87,7,66.3936170212766,3.3306690738754696e-16,12.428571428571429,1.1324274851176597e-14
+google/gemini-2.5-flash-lite,Gemini-2.5-Flash-Lite,moe,0.0,authoritative_bias,400,43,9,20.942307692307693,4.733246030896865e-06,4.777777777777778,7.099869046345297e-05
+google/gemini-2.5-flash-lite,Gemini-2.5-Flash-Lite,moe,0.0,authority_zhu_unbiased_trust,400,56,12,27.191176470588236,1.8429785741957971e-07,4.666666666666667,3.5016592909720146e-06
+meta-llama/llama-3-8b-instruct,Llama-3-8B,dense,0.0,asch_zhu_unbiased_unanimous_confident,400,84,14,48.58163265306123,3.1682434453728092e-12,6.0,9.187905991581147e-11
+meta-llama/llama-3-8b-instruct,Llama-3-8B,dense,0.0,authoritative_bias,400,35,18,4.830188679245283,0.02796556996586108,1.9444444444444444,0.11186227986344432
+meta-llama/llama-3-8b-instruct,Llama-3-8B,dense,0.0,authority_zhu_unbiased_trust,400,44,14,14.5,0.00014015954262958097,3.142857142857143,0.0015417549689253907
+meta-llama/llama-3.1-70b-instruct,Llama-3.1-70B,dense,0.0,asch_zhu_unbiased_unanimous_confident,400,13,15,0.03571428571428571,0.8501067391385259,0.8666666666666667,0.8501067391385259
+meta-llama/llama-3.1-70b-instruct,Llama-3.1-70B,dense,0.0,authoritative_bias,400,62,7,42.26086956521739,7.987488448435442e-11,8.857142857142858,2.076746996593215e-09
+meta-llama/llama-3.1-70b-instruct,Llama-3.1-70B,dense,0.0,authority_zhu_unbiased_trust,400,52,8,30.816666666666666,2.8359172121739107e-08,6.5,5.955426145565212e-07
+meta-llama/llama-4-maverick,Llama-4-Maverick (MoE),moe,0.0,asch_zhu_unbiased_unanimous_confident,400,89,8,65.97938144329896,4.440892098500626e-16,11.125,1.4654943925052066e-14
+meta-llama/llama-4-maverick,Llama-4-Maverick (MoE),moe,0.0,authoritative_bias,400,60,3,49.77777777777778,1.7218448888911553e-12,20.0,5.165534666673466e-11
+meta-llama/llama-4-maverick,Llama-4-Maverick (MoE),moe,0.0,authority_zhu_unbiased_trust,400,39,7,20.891304347826086,4.860962614872122e-06,5.571428571428571,7.099869046345297e-05
+openai/gpt-4o-mini,GPT-4o-Mini,dense,0.0,asch_zhu_unbiased_unanimous_confident,400,142,4,128.55479452054794,0.0,35.5,0.0
+openai/gpt-4o-mini,GPT-4o-Mini,dense,0.0,authoritative_bias,400,42,9,20.07843137254902,7.433023346270495e-06,4.666666666666667,9.662930350151644e-05
+openai/gpt-4o-mini,GPT-4o-Mini,dense,0.0,authority_zhu_unbiased_trust,400,56,3,45.83050847457627,1.2894019185694106e-11,18.666666666666668,3.4813851801374085e-10
+openai/gpt-oss-20b,GPT-OSS-20B,moe,0.0,asch_zhu_unbiased_unanimous_confident,400,61,11,33.34722222222222,7.708784943716296e-09,5.545454545454546,1.695932687617585e-07
+openai/gpt-oss-20b,GPT-OSS-20B,moe,0.0,authoritative_bias,400,66,17,27.759036144578314,1.374049084512663e-07,3.8823529411764706,2.748098169025326e-06
+openai/gpt-oss-20b,GPT-OSS-20B,moe,0.0,authority_zhu_unbiased_trust,400,58,17,21.333333333333332,3.859616436896474e-06,3.411764705882353,6.175386299034358e-05
+x-ai/grok-4.1-fast,Grok-4.1-Fast,think,0.0,asch_zhu_unbiased_unanimous_confident,400,27,10,6.918918918918919,0.008528852154051858,2.7,0.06823081723241486
+x-ai/grok-4.1-fast,Grok-4.1-Fast,think,0.0,authoritative_bias,400,26,10,6.25,0.012419330651552318,2.6,0.0853499402956277
+x-ai/grok-4.1-fast,Grok-4.1-Fast,think,0.0,authority_zhu_unbiased_trust,400,46,8,25.35185185185185,4.776935745853805e-07,5.75,8.59848434253685e-06

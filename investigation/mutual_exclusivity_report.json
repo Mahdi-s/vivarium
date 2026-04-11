@@ -1,0 +1,1099 @@
+{
+  "total_databases": 37,
+  "total_conflicts_raw": 615,
+  "total_conflicts_in_analysis": 0,
+  "verdict": "PASS",
+  "databases": [
+    {
+      "db": "runs_latest/runs/20260224_225304_9f240f89-e58e-423a-ae68-f990b31c84cd/simulation.db",
+      "manifest": "7B",
+      "ignore_variants": [
+        "think_dpo",
+        "think_sft",
+        "rl_zero",
+        "think"
+      ],
+      "allowed_variants": [
+        "base",
+        "instruct_sft",
+        "instruct_dpo",
+        "instruct"
+      ],
+      "total_judged": 34794,
+      "refusal_AND_endorsed_total": 0,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "base",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 1,
+          "correct_AND_refusal": 4
+        },
+        {
+          "variant": "instruct",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 5,
+          "correct_AND_refusal": 0
+        },
+        {
+          "variant": "instruct_dpo",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 8,
+          "correct_AND_refusal": 0
+        },
+        {
+          "variant": "instruct_sft",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 3,
+          "correct_AND_refusal": 0
+        },
+        {
+          "variant": "rl_zero",
+          "total_judged": 1200,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 3,
+          "correct_AND_refusal": 4
+        },
+        {
+          "variant": "think",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 16,
+          "correct_AND_refusal": 22
+        },
+        {
+          "variant": "think_dpo",
+          "total_judged": 4794,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 15,
+          "correct_AND_refusal": 39
+        },
+        {
+          "variant": "think_sft",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 19,
+          "correct_AND_refusal": 35
+        }
+      ]
+    },
+    {
+      "db": "runs_latest/runs/20260225_010113_46f0762a-210a-459a-8709-d24a0f194eb0/simulation.db",
+      "manifest": "7B",
+      "ignore_variants": [
+        "think_dpo",
+        "think_sft",
+        "rl_zero",
+        "think"
+      ],
+      "allowed_variants": [
+        "base",
+        "instruct_sft",
+        "instruct_dpo",
+        "instruct"
+      ],
+      "total_judged": 34746,
+      "refusal_AND_endorsed_total": 0,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "base",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 4,
+          "correct_AND_refusal": 3
+        },
+        {
+          "variant": "instruct",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 4,
+          "correct_AND_refusal": 0
+        },
+        {
+          "variant": "instruct_dpo",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 3,
+          "correct_AND_refusal": 1
+        },
+        {
+          "variant": "instruct_sft",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 5,
+          "correct_AND_refusal": 0
+        },
+        {
+          "variant": "rl_zero",
+          "total_judged": 1200,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 2,
+          "correct_AND_refusal": 3
+        },
+        {
+          "variant": "think",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 19,
+          "correct_AND_refusal": 27
+        },
+        {
+          "variant": "think_dpo",
+          "total_judged": 4746,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 17,
+          "correct_AND_refusal": 31
+        },
+        {
+          "variant": "think_sft",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 18,
+          "correct_AND_refusal": 32
+        }
+      ]
+    },
+    {
+      "db": "runs_latest/runs/20260225_041802_bbd05985-d185-460a-b0aa-dd356d27ec94/simulation.db",
+      "manifest": "7B",
+      "ignore_variants": [
+        "think_dpo",
+        "think_sft",
+        "rl_zero",
+        "think"
+      ],
+      "allowed_variants": [
+        "base",
+        "instruct_sft",
+        "instruct_dpo",
+        "instruct"
+      ],
+      "total_judged": 37978,
+      "refusal_AND_endorsed_total": 0,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "base",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 4,
+          "correct_AND_refusal": 4
+        },
+        {
+          "variant": "instruct",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 3,
+          "correct_AND_refusal": 0
+        },
+        {
+          "variant": "instruct_dpo",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 6,
+          "correct_AND_refusal": 1
+        },
+        {
+          "variant": "instruct_sft",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 4,
+          "correct_AND_refusal": 0
+        },
+        {
+          "variant": "rl_zero",
+          "total_judged": 4378,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 6,
+          "correct_AND_refusal": 106
+        },
+        {
+          "variant": "think",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 16,
+          "correct_AND_refusal": 29
+        },
+        {
+          "variant": "think_dpo",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 18,
+          "correct_AND_refusal": 26
+        },
+        {
+          "variant": "think_sft",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 19,
+          "correct_AND_refusal": 34
+        }
+      ]
+    },
+    {
+      "db": "runs_latest/runs/20260225_085516_86c72262-d1aa-41b5-9c22-d7b2e0570215/simulation.db",
+      "manifest": "7B",
+      "ignore_variants": [
+        "think_dpo",
+        "think_sft",
+        "rl_zero",
+        "think"
+      ],
+      "allowed_variants": [
+        "base",
+        "instruct_sft",
+        "instruct_dpo",
+        "instruct"
+      ],
+      "total_judged": 38170,
+      "refusal_AND_endorsed_total": 0,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "base",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 9,
+          "correct_AND_refusal": 1
+        },
+        {
+          "variant": "instruct",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 3,
+          "correct_AND_refusal": 0
+        },
+        {
+          "variant": "instruct_dpo",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 3,
+          "correct_AND_refusal": 1
+        },
+        {
+          "variant": "instruct_sft",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 8,
+          "correct_AND_refusal": 0
+        },
+        {
+          "variant": "rl_zero",
+          "total_judged": 4570,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 6,
+          "correct_AND_refusal": 122
+        },
+        {
+          "variant": "think",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 14,
+          "correct_AND_refusal": 31
+        },
+        {
+          "variant": "think_dpo",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 19,
+          "correct_AND_refusal": 24
+        },
+        {
+          "variant": "think_sft",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 23,
+          "correct_AND_refusal": 41
+        }
+      ]
+    },
+    {
+      "db": "runs_latest/runs/20260225_124244_9369442d-d825-4cd0-81a1-8ed276c37814/simulation.db",
+      "manifest": "7B",
+      "ignore_variants": [
+        "think_dpo",
+        "think_sft",
+        "rl_zero",
+        "think"
+      ],
+      "allowed_variants": [
+        "base",
+        "instruct_sft",
+        "instruct_dpo",
+        "instruct"
+      ],
+      "total_judged": 34800,
+      "refusal_AND_endorsed_total": 288,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "base",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 9,
+          "correct_AND_refusal": 0
+        },
+        {
+          "variant": "instruct",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 3,
+          "correct_AND_refusal": 0
+        },
+        {
+          "variant": "instruct_dpo",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 8,
+          "correct_AND_refusal": 1
+        },
+        {
+          "variant": "instruct_sft",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 5,
+          "correct_AND_refusal": 1
+        },
+        {
+          "variant": "rl_zero",
+          "total_judged": 1200,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 1,
+          "correct_AND_refusal": 2
+        },
+        {
+          "variant": "think",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 119,
+          "correct_AND_endorsed": 101,
+          "correct_AND_refusal": 42
+        },
+        {
+          "variant": "think_dpo",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 41,
+          "correct_AND_endorsed": 84,
+          "correct_AND_refusal": 103
+        },
+        {
+          "variant": "think_sft",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 128,
+          "correct_AND_endorsed": 96,
+          "correct_AND_refusal": 50
+        }
+      ]
+    },
+    {
+      "db": "runs_latest/runs/20260225_130444_9173bfae-4e8a-464f-8c9c-7ee91caa8b6e/simulation.db",
+      "manifest": "7B",
+      "ignore_variants": [
+        "think_dpo",
+        "think_sft",
+        "rl_zero",
+        "think"
+      ],
+      "allowed_variants": [
+        "base",
+        "instruct_sft",
+        "instruct_dpo",
+        "instruct"
+      ],
+      "total_judged": 34800,
+      "refusal_AND_endorsed_total": 327,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "base",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 9,
+          "correct_AND_refusal": 1
+        },
+        {
+          "variant": "instruct",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 3,
+          "correct_AND_refusal": 1
+        },
+        {
+          "variant": "instruct_dpo",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 3,
+          "correct_AND_refusal": 2
+        },
+        {
+          "variant": "instruct_sft",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 7,
+          "correct_AND_refusal": 3
+        },
+        {
+          "variant": "rl_zero",
+          "total_judged": 1200,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 0,
+          "correct_AND_refusal": 3
+        },
+        {
+          "variant": "think",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 100,
+          "correct_AND_endorsed": 97,
+          "correct_AND_refusal": 40
+        },
+        {
+          "variant": "think_dpo",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 117,
+          "correct_AND_endorsed": 111,
+          "correct_AND_refusal": 116
+        },
+        {
+          "variant": "think_sft",
+          "total_judged": 4800,
+          "refusal_AND_endorsed": 110,
+          "correct_AND_endorsed": 110,
+          "correct_AND_refusal": 49
+        }
+      ]
+    },
+    {
+      "db": "runs-think-hpc/20260330_012727_e5cc991d-eb01-4371-b73c-315ab18c3112/simulation.db",
+      "manifest": "7B",
+      "ignore_variants": [],
+      "allowed_variants": [
+        "think_sft"
+      ],
+      "total_judged": 1600,
+      "refusal_AND_endorsed_total": 0,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "think_sft",
+          "total_judged": 1600,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 1,
+          "correct_AND_refusal": 0
+        }
+      ]
+    },
+    {
+      "db": "runs-think-hpc/20260330_012826_29ac502b-887d-4ed1-b161-7441ac22188c/simulation.db",
+      "manifest": "7B",
+      "ignore_variants": [],
+      "allowed_variants": [
+        "think_sft"
+      ],
+      "total_judged": 1600,
+      "refusal_AND_endorsed_total": 0,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "think_sft",
+          "total_judged": 1600,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 3,
+          "correct_AND_refusal": 0
+        }
+      ]
+    },
+    {
+      "db": "runs-think-hpc/20260330_021503_56c71fda-573f-46fd-b2ab-8b6e509c689a/simulation.db",
+      "manifest": "7B",
+      "ignore_variants": [],
+      "allowed_variants": [
+        "think_dpo"
+      ],
+      "total_judged": 1600,
+      "refusal_AND_endorsed_total": 0,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "think_dpo",
+          "total_judged": 1600,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 1,
+          "correct_AND_refusal": 0
+        }
+      ]
+    },
+    {
+      "db": "runs-think-hpc/20260330_022920_57414a36-f63a-4332-9c70-437a60071565/simulation.db",
+      "manifest": "7B",
+      "ignore_variants": [],
+      "allowed_variants": [
+        "think_dpo"
+      ],
+      "total_judged": 1600,
+      "refusal_AND_endorsed_total": 0,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "think_dpo",
+          "total_judged": 1600,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 2,
+          "correct_AND_refusal": 0
+        }
+      ]
+    },
+    {
+      "db": "runs/think/20260325_010440_f47fe05e-4564-4680-a2d8-39a88c6f8d37/simulation.db",
+      "manifest": "7B",
+      "ignore_variants": [
+        "think_sft"
+      ],
+      "allowed_variants": [
+        "think"
+      ],
+      "total_judged": 1608,
+      "refusal_AND_endorsed_total": 0,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "think",
+          "total_judged": 1607,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 0,
+          "correct_AND_refusal": 53
+        },
+        {
+          "variant": "think_sft",
+          "total_judged": 1,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 0,
+          "correct_AND_refusal": 0
+        }
+      ]
+    },
+    {
+      "db": "runs/20260327_152738_a34ad9b1-abd0-4119-96c6-7b1cd61d7f4d/simulation.db",
+      "manifest": "cross_family",
+      "ignore_variants": [],
+      "allowed_variants": [
+        "think_32b"
+      ],
+      "total_judged": 1600,
+      "refusal_AND_endorsed_total": 0,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "think_32b",
+          "total_judged": 1600,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 1,
+          "correct_AND_refusal": 5
+        }
+      ]
+    },
+    {
+      "db": "runs/20260327_152926_7db9896e-9e3b-439f-88e3-74fe25ea2bad/simulation.db",
+      "manifest": "cross_family",
+      "ignore_variants": [],
+      "allowed_variants": [
+        "think_32b"
+      ],
+      "total_judged": 1600,
+      "refusal_AND_endorsed_total": 0,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "think_32b",
+          "total_judged": 1600,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 0,
+          "correct_AND_refusal": 2
+        }
+      ]
+    },
+    {
+      "db": "runs/20260327_152936_1c2e5cb6-0372-4835-bbb7-7230c55517e4/simulation.db",
+      "manifest": "cross_family",
+      "ignore_variants": [],
+      "allowed_variants": [
+        "instruct_32b"
+      ],
+      "total_judged": 1600,
+      "refusal_AND_endorsed_total": 0,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "instruct_32b",
+          "total_judged": 1600,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 1,
+          "correct_AND_refusal": 41
+        }
+      ]
+    },
+    {
+      "db": "runs/20260327_152944_62187f52-7a7e-4db0-a269-d14d8e887b1b/simulation.db",
+      "manifest": "cross_family",
+      "ignore_variants": [],
+      "allowed_variants": [
+        "instruct_32b"
+      ],
+      "total_judged": 1600,
+      "refusal_AND_endorsed_total": 0,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "instruct_32b",
+          "total_judged": 1600,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 0,
+          "correct_AND_refusal": 46
+        }
+      ]
+    },
+    {
+      "db": "runs/20260327_154349_1899a883-82e4-45f3-833a-d6403cf1ac95/simulation.db",
+      "manifest": "cross_family",
+      "ignore_variants": [],
+      "allowed_variants": [
+        "llama3_8b_instruct"
+      ],
+      "total_judged": 1600,
+      "refusal_AND_endorsed_total": 0,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "llama3_8b_instruct",
+          "total_judged": 1600,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 1,
+          "correct_AND_refusal": 15
+        }
+      ]
+    },
+    {
+      "db": "runs/20260327_154401_70860876-c5c2-4445-a59d-e44ae8094887/simulation.db",
+      "manifest": "cross_family",
+      "ignore_variants": [],
+      "allowed_variants": [
+        "llama3_8b_instruct"
+      ],
+      "total_judged": 1600,
+      "refusal_AND_endorsed_total": 0,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "llama3_8b_instruct",
+          "total_judged": 1600,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 1,
+          "correct_AND_refusal": 20
+        }
+      ]
+    },
+    {
+      "db": "runs/20260327_154412_3a0404f7-bd47-4b25-b2e2-5501e550566f/simulation.db",
+      "manifest": "cross_family",
+      "ignore_variants": [],
+      "allowed_variants": [
+        "llama31_70b_instruct"
+      ],
+      "total_judged": 1600,
+      "refusal_AND_endorsed_total": 0,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "llama31_70b_instruct",
+          "total_judged": 1600,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 1,
+          "correct_AND_refusal": 25
+        }
+      ]
+    },
+    {
+      "db": "runs/20260327_154419_49d07104-c14c-4a8b-a013-ae0783c5f3e8/simulation.db",
+      "manifest": "cross_family",
+      "ignore_variants": [],
+      "allowed_variants": [
+        "llama31_70b_instruct"
+      ],
+      "total_judged": 1600,
+      "refusal_AND_endorsed_total": 0,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "llama31_70b_instruct",
+          "total_judged": 1600,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 1,
+          "correct_AND_refusal": 36
+        }
+      ]
+    },
+    {
+      "db": "runs/20260327_154428_485ddc2d-6cae-4715-835e-76ab72e38159/simulation.db",
+      "manifest": "cross_family",
+      "ignore_variants": [],
+      "allowed_variants": [
+        "llama4_maverick"
+      ],
+      "total_judged": 1600,
+      "refusal_AND_endorsed_total": 0,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "llama4_maverick",
+          "total_judged": 1600,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 2,
+          "correct_AND_refusal": 50
+        }
+      ]
+    },
+    {
+      "db": "runs/20260327_154435_c2ce0f85-8f67-40f2-a82d-e136927cf6f5/simulation.db",
+      "manifest": "cross_family",
+      "ignore_variants": [],
+      "allowed_variants": [
+        "llama4_maverick"
+      ],
+      "total_judged": 1600,
+      "refusal_AND_endorsed_total": 0,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "llama4_maverick",
+          "total_judged": 1600,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 3,
+          "correct_AND_refusal": 39
+        }
+      ]
+    },
+    {
+      "db": "runs/20260327_224321_e043fbf6-27eb-410c-8da7-bc0f9172ab0b/simulation.db",
+      "manifest": "cross_family",
+      "ignore_variants": [],
+      "allowed_variants": [
+        "gemini_25_flash_lite"
+      ],
+      "total_judged": 1600,
+      "refusal_AND_endorsed_total": 0,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "gemini_25_flash_lite",
+          "total_judged": 1600,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 1,
+          "correct_AND_refusal": 17
+        }
+      ]
+    },
+    {
+      "db": "runs/20260327_224336_d71e75b1-17c5-4789-8ee7-13b29ef18359/simulation.db",
+      "manifest": "cross_family",
+      "ignore_variants": [],
+      "allowed_variants": [
+        "gemini_25_flash_lite"
+      ],
+      "total_judged": 1600,
+      "refusal_AND_endorsed_total": 0,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "gemini_25_flash_lite",
+          "total_judged": 1600,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 2,
+          "correct_AND_refusal": 23
+        }
+      ]
+    },
+    {
+      "db": "runs/20260327_224348_25056752-7081-449e-9a44-ad090b566107/simulation.db",
+      "manifest": "cross_family",
+      "ignore_variants": [],
+      "allowed_variants": [
+        "grok_41_fast"
+      ],
+      "total_judged": 1600,
+      "refusal_AND_endorsed_total": 0,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "grok_41_fast",
+          "total_judged": 1600,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 4,
+          "correct_AND_refusal": 10
+        }
+      ]
+    },
+    {
+      "db": "runs/20260327_224357_157a6a9e-13de-4bdb-bdd2-54d761498f24/simulation.db",
+      "manifest": "cross_family",
+      "ignore_variants": [],
+      "allowed_variants": [
+        "grok_41_fast"
+      ],
+      "total_judged": 1600,
+      "refusal_AND_endorsed_total": 0,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "grok_41_fast",
+          "total_judged": 1600,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 2,
+          "correct_AND_refusal": 4
+        }
+      ]
+    },
+    {
+      "db": "runs/20260327_224413_c07ede3a-16ac-4b47-ac42-4f6ad8dd8370/simulation.db",
+      "manifest": "cross_family",
+      "ignore_variants": [],
+      "allowed_variants": [
+        "gpt4o_mini"
+      ],
+      "total_judged": 1600,
+      "refusal_AND_endorsed_total": 0,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "gpt4o_mini",
+          "total_judged": 1600,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 9,
+          "correct_AND_refusal": 1
+        }
+      ]
+    },
+    {
+      "db": "runs/20260327_224422_eb63d212-77fe-46ef-965b-7777cc232f1f/simulation.db",
+      "manifest": "cross_family",
+      "ignore_variants": [],
+      "allowed_variants": [
+        "gpt4o_mini"
+      ],
+      "total_judged": 1600,
+      "refusal_AND_endorsed_total": 0,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "gpt4o_mini",
+          "total_judged": 1600,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 8,
+          "correct_AND_refusal": 3
+        }
+      ]
+    },
+    {
+      "db": "runs/20260327_224552_66765d5e-204c-4074-aaf4-b9c148fe61a5/simulation.db",
+      "manifest": "cross_family",
+      "ignore_variants": [],
+      "allowed_variants": [
+        "gpt_oss_20b"
+      ],
+      "total_judged": 1600,
+      "refusal_AND_endorsed_total": 0,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "gpt_oss_20b",
+          "total_judged": 1600,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 5,
+          "correct_AND_refusal": 0
+        }
+      ]
+    },
+    {
+      "db": "runs/20260327_224603_3ecdc9b7-49db-4625-b90e-fc3745b9224e/simulation.db",
+      "manifest": "cross_family",
+      "ignore_variants": [],
+      "allowed_variants": [
+        "gpt_oss_20b"
+      ],
+      "total_judged": 1600,
+      "refusal_AND_endorsed_total": 0,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "gpt_oss_20b",
+          "total_judged": 1600,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 11,
+          "correct_AND_refusal": 0
+        }
+      ]
+    },
+    {
+      "db": "runs/20260329_211511_5be5ada7-64be-4cbd-9024-aacbcaf233e3/simulation.db",
+      "manifest": "cross_family",
+      "ignore_variants": [],
+      "allowed_variants": [
+        "claude_sonnet_4"
+      ],
+      "total_judged": 1600,
+      "refusal_AND_endorsed_total": 0,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "claude_sonnet_4",
+          "total_judged": 1600,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 0,
+          "correct_AND_refusal": 1
+        }
+      ]
+    },
+    {
+      "db": "runs/20260329_211518_21556460-5f97-4a23-8c54-4a1f999ba619/simulation.db",
+      "manifest": "cross_family",
+      "ignore_variants": [],
+      "allowed_variants": [
+        "claude_sonnet_4"
+      ],
+      "total_judged": 1600,
+      "refusal_AND_endorsed_total": 0,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "claude_sonnet_4",
+          "total_judged": 1600,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 2,
+          "correct_AND_refusal": 1
+        }
+      ]
+    },
+    {
+      "db": "runs-think-hpc/runs-32B/20260404_093315_81d9194a-b1ef-4261-a0fb-bb0f713e1239/simulation.db",
+      "manifest": "cross_family",
+      "ignore_variants": [],
+      "allowed_variants": [
+        "think_sft"
+      ],
+      "total_judged": 1600,
+      "refusal_AND_endorsed_total": 0,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "think_sft",
+          "total_judged": 1600,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 0,
+          "correct_AND_refusal": 0
+        }
+      ]
+    },
+    {
+      "db": "runs-think-hpc/runs-32B/20260404_093744_e673de86-d8dc-4ce0-bfc9-969d531eb425/simulation.db",
+      "manifest": "cross_family",
+      "ignore_variants": [],
+      "allowed_variants": [
+        "think_sft"
+      ],
+      "total_judged": 1596,
+      "refusal_AND_endorsed_total": 0,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "think_sft",
+          "total_judged": 1596,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 2,
+          "correct_AND_refusal": 0
+        }
+      ]
+    },
+    {
+      "db": "runs-think-hpc/runs-32B/20260404_100941_3041fb7e-98bc-4343-90d7-e56d9e134a3b/simulation.db",
+      "manifest": "cross_family",
+      "ignore_variants": [],
+      "allowed_variants": [
+        "think_dpo"
+      ],
+      "total_judged": 1599,
+      "refusal_AND_endorsed_total": 0,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "think_dpo",
+          "total_judged": 1599,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 1,
+          "correct_AND_refusal": 0
+        }
+      ]
+    },
+    {
+      "db": "runs-think-hpc/runs-32B/20260404_094925_d0158f56-c99c-4e7d-92fc-c7ece3190781/simulation.db",
+      "manifest": "cross_family",
+      "ignore_variants": [],
+      "allowed_variants": [
+        "think_dpo"
+      ],
+      "total_judged": 1600,
+      "refusal_AND_endorsed_total": 0,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "think_dpo",
+          "total_judged": 1600,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 2,
+          "correct_AND_refusal": 0
+        }
+      ]
+    },
+    {
+      "db": "runs/20260329_235403_e8a90500-25cd-469f-a138-197c338fddaf/simulation.db",
+      "manifest": "cross_family",
+      "ignore_variants": [],
+      "allowed_variants": [
+        "llama31_70b_instruct"
+      ],
+      "total_judged": 800,
+      "refusal_AND_endorsed_total": 0,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "llama31_70b_instruct",
+          "total_judged": 800,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 0,
+          "correct_AND_refusal": 0
+        }
+      ]
+    },
+    {
+      "db": "runs/20260329_235408_ef72529e-5e82-463f-8b8b-b2a6c7decd3c/simulation.db",
+      "manifest": "cross_family",
+      "ignore_variants": [],
+      "allowed_variants": [
+        "instruct_32b"
+      ],
+      "total_judged": 800,
+      "refusal_AND_endorsed_total": 0,
+      "refusal_AND_endorsed_in_analysis": 0,
+      "per_variant": [
+        {
+          "variant": "instruct_32b",
+          "total_judged": 800,
+          "refusal_AND_endorsed": 0,
+          "correct_AND_endorsed": 2,
+          "correct_AND_refusal": 0
+        }
+      ]
+    }
+  ]
+}
