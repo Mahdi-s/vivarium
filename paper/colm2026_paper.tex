@@ -103,7 +103,7 @@ University of Southern California \\
 \maketitle
 
 \begin{abstract}
-Large language models are increasingly deployed in roles where they must maintain factual accuracy under contextual pressure. We study \emph{consensus susceptibility}---the tendency of a model to abandon a correct answer when fabricated peer consensus in the prompt endorses a wrong one---through two complementary studies. First, we decompose the post-training pipeline of a single open-weight model family (OLMo-3-7B) into its constituent stages---supervised fine-tuning (SFT), direct preference optimization (DPO), and reinforcement learning---revealing that these stages have opposing effects on susceptibility: SFT amplifies wrong-answer endorsement while DPO partially reverses it. Second, we survey a diverse set of model families on identical items under identical pressure, uncovering three qualitatively distinct behavioral modes---endorsement-dominant, refusal-dominant, and context-insensitive---shaped by alignment approach rather than raw capability. Two ablation studies probe the mechanism underlying the effect and reveal that a substantial portion arises from autoregressive pattern completion rather than genuine social deference: stripping all social framing from the prompt while preserving its repetitive structure still elicits high endorsement. Together, these findings reframe consensus susceptibility as primarily a vulnerability to repetitive in-context patterns whose severity is governed by post-training decisions, with direct implications for alignment pipeline design.
+When a language model is asked a question it can answer correctly, but five fabricated peers in the prompt all endorse the wrong answer, does the model stick with what it knows---or go along with the crowd? We study this phenomenon, which we call \emph{consensus susceptibility}, by exploiting a unique property of the OLMo model family: every intermediate training checkpoint is publicly available. This lets us trace how susceptibility changes as a model progresses through supervised fine-tuning, preference optimization, and reinforcement learning---across both the standard instruction-following path and the chain-of-thought reasoning path, and at both the 7-billion and 32-billion parameter scales. We find that these training stages have opposing effects: fine-tuning on human demonstrations amplifies the tendency to endorse fabricated consensus, while preference optimization partially reverses it. To test whether these patterns are specific to OLMo, we extend the evaluation to eight additional model families spanning diverse architectures and alignment approaches, and find that different training pipelines produce qualitatively different failure modes under pressure. Finally, we probe whether models are genuinely deferring to social pressure or simply completing a repetitive pattern in the prompt---and find that pattern completion, not social deference, is the primary driver.
 \end{abstract}
 
 
@@ -111,34 +111,46 @@ Large language models are increasingly deployed in roles where they must maintai
 \section{Introduction}
 \label{sec:intro}
 
-As large language models (LLMs) are deployed in decision-critical roles~\citep{bommasani2021opportunities}, their reliability depends not only on what they know but on whether they maintain that knowledge under contextual pressure. When an LLM serves as a medical assistant, legal advisor, or coding copilot, deference to misleading context can have serious consequences---yet our understanding of \emph{where} this vulnerability comes from remains surprisingly shallow.
+In 1951, Solomon Asch showed that ordinary people will deny what their own eyes tell them when enough confederates in the room confidently assert a wrong answer~\citep{asch1956}. The effect is remarkably robust: even when the correct answer is obvious, roughly a third of participants conform to a unanimous but incorrect majority. Asch's experiment has since become one of the most replicated findings in social psychology.
 
-We study \textbf{consensus susceptibility}: capitulation to fabricated \emph{peer consensus} embedded in the prompt. This is mechanistically distinct from \textbf{sycophancy} (deference to the \emph{user's} stated opinion;~\citealp{sharma2024sycophancy}). A sycophantic model agrees with the person asking the question; a consensus-susceptible model agrees with a crowd of fabricated peers, even when it would otherwise answer correctly. Following \citet{asch1956}'s classic conformity paradigm from social psychology, we present models with unanimous wrong answers from fabricated peers and measure whether they abandon correct responses to agree.
+We ask a simple version of this question about language models: \emph{if a model knows the right answer, will it change its mind when the prompt contains fabricated peers all endorsing the wrong one?}
 
-\paragraph{Why existing work leaves a gap.}
-Prior cross-family comparisons~\citep{zhu2025conformity} tested base versus instruction-tuned models across several families and concluded that instruction-tuning \emph{reduces} conformity. But comparing a base Llama to an instruct Gemma tells us little about what drives the difference: is it the architecture, the pretraining data, the fine-tuning recipe, or all three at once? To answer the causal question---\emph{which stage of post-training introduces or removes this vulnerability?}---we need to compare checkpoints along the \emph{same} training pipeline, holding everything else constant. This has not been done for conformity.
+This matters because language models are increasingly deployed in roles where maintaining accuracy under contextual pressure is critical~\citep{bommasani2021opportunities}---as medical assistants, legal advisors, coding copilots, and decision-support tools. If a model can be pushed into endorsing a wrong answer simply by embedding fake consensus in its input, that is a concrete vulnerability with real-world consequences.
 
-\paragraph{Our approach: two complementary studies.}
-We address this gap through two studies sharing a common evaluation protocol and item set.
+\paragraph{Consensus susceptibility vs.\ sycophancy.}
+It is worth distinguishing this phenomenon from \textbf{sycophancy}, which has received more attention in the alignment literature~\citep{sharma2024sycophancy}. A sycophantic model agrees with \emph{the person asking the question}---it tells you what you want to hear. What we study here is different: the model agrees with \emph{a crowd of fabricated third-party peers}, even when it would otherwise answer correctly. We call this \textbf{consensus susceptibility}. The distinction matters because the two phenomena exploit different aspects of training: sycophancy exploits the model's drive to be helpful and agreeable to the user, while consensus susceptibility exploits sensitivity to patterns of agreement in the context.
 
-\textbf{Study~1 (within-family decomposition)} exploits the OLMo-3-7B model family~\citep{groeneveld2024olmo}, which is unique among major model families in publicly releasing every intermediate training checkpoint. We evaluate four stages along the Instruct pipeline---the pretrained Base model, the SFT checkpoint, the DPO checkpoint, and the final released model---on the same items under the same conditions. Because all four share identical architecture and pretraining, any behavioral differences must reflect the post-training stage that produced them. This design reveals that successive stages have \emph{opposing} effects on susceptibility.
+\paragraph{Why training stages matter.}
+Modern language models do not go directly from pretraining to deployment. After learning language from a massive text corpus, they go through several additional stages designed to make them more useful and aligned with human preferences. \textbf{Supervised fine-tuning (SFT)} teaches the model to follow instructions by training it on examples of good responses written by humans. \textbf{Direct preference optimization (DPO)}~\citep{rafailov2023dpo} refines the model further by showing it pairs of responses---one preferred, one not---and nudging it toward the preferred style. \textbf{Reinforcement learning with verifiable rewards (RLVR)} provides a final adjustment using automated feedback on tasks with checkable answers. Some models also go through a separate \textbf{reasoning path} (often called the ``Think'' pipeline), which trains the model to produce intermediate reasoning steps before committing to a final answer.
 
-\textbf{Study~2 (cross-family survey)} tests whether the patterns observed within OLMo generalize. We evaluate a diverse set of model families---spanning dense and mixture-of-experts architectures, open and closed weights, and varied alignment approaches including RLHF, Constitutional AI, and RL-dominant training---on identical items under identical pressure. This survey uncovers qualitatively distinct behavioral modes: models do not simply vary in \emph{how much} they conform, but in \emph{how} they respond to pressure.
+Each of these stages is designed to make the model better---but do they also change how the model responds to fabricated consensus? Prior work~\citep{zhu2025conformity} compared base models to final instruction-tuned models across several families and concluded that instruction-tuning \emph{reduces} conformity. But that comparison treats the entire post-training pipeline as a single black box. It cannot tell us whether the improvement comes from SFT, from DPO, from reinforcement learning, or from the combination. To answer that question, we need access to the checkpoint at each stage.
 
-Two ablation studies then probe a critical confound in the experimental design: our Asch-style prompt embeds a repetitive n-gram pattern across the fabricated peer responses. Is the model conforming to \emph{social pressure}, or is it simply completing a \emph{syntactic pattern}? The ablations disentangle these two drivers (\S\ref{sec:ablation}).
+\paragraph{Our approach.}
+We exploit a unique property of the OLMo model family~\citep{groeneveld2024olmo}: it is the only major model family that publicly releases every intermediate training checkpoint. This gives us access to the model \emph{before any post-training}, after SFT alone, after SFT + DPO, and after the full pipeline---all sharing identical architecture and pretraining data. Any behavioral differences must therefore reflect the specific training stage that produced them.
+
+We evaluate these checkpoints along two parallel training paths. The \textbf{Instruct path} (the standard instruction-following pipeline) is tested at the 7-billion parameter scale with full coverage across all experimental conditions and temperatures. The \textbf{Think path} (the chain-of-thought reasoning pipeline) is tested at both 7B and 32B scales on a shared subset of conditions, allowing us to compare how standard instruction-following and explicit reasoning training handle the same pressure. We also evaluate the 32B Instruct model for scale comparison.
+
+To test whether the patterns we observe in OLMo are specific to that family or reflect something more general, we extend the evaluation to eight additional model families---including Llama, GPT-4o-Mini, Gemini, Grok, Claude, and others---spanning diverse architectures and alignment approaches. These models are tested on the same items under the same conditions, allowing direct comparison.
+
+Finally, we probe a critical question about the mechanism: our Asch-style prompt embeds five repetitions of the wrong answer in sequence (``Participant 1: X \ldots\ Participant 5: X''). Is the model responding to \emph{social pressure}---the fact that peers are endorsing a wrong answer---or is it simply \emph{completing a repetitive pattern}? Two ablation studies strip away the social framing while preserving the repetitive structure, revealing the extent to which pattern completion, rather than social deference, drives the measured effect (\S\ref{sec:ablation}).
 
 \paragraph{Contributions.}
 \begin{enumerate}
-    \item \textbf{Within-family decomposition}: We show that SFT and DPO are associated with \emph{opposite} changes in consensus susceptibility within the OLMo-3-7B pipeline, a finding invisible in any end-to-end base-vs.-instruct comparison (\S\ref{sec:sft_dpo}).
-    \item \textbf{Cross-family behavioral taxonomy}: Under identical pressure, diverse model families exhibit three distinct response modes---endorsement-dominant, refusal-dominant, or context-insensitive---revealing that post-training approach, not just capability, shapes how models fail under pressure (\S\ref{sec:cross_family}).
-    \item \textbf{Reasoning models}: All reasoning-capable models in our survey show non-significant conformity effects, a descriptive pattern we report without attributing it to any single shared property (\S\ref{sec:cross_family}).
-    \item \textbf{Ablation reframes the mechanism}: Stripping social framing while preserving the repetitive prompt structure reveals that a substantial portion of the measured effect arises from autoregressive pattern completion rather than social deference (\S\ref{sec:ablation}).
+    \item \textbf{Training-stage decomposition}: We trace consensus susceptibility through successive post-training stages within OLMo, across both the Instruct and Think paths and at both 7B and 32B scales. We find that SFT and DPO are associated with \emph{opposite} changes in susceptibility---a finding invisible in any end-to-end comparison (\S\ref{sec:sft_dpo}).
+    \item \textbf{Cross-family extension}: Under identical pressure, diverse model families exhibit three qualitatively distinct response modes---endorsement-dominant, refusal-dominant, or context-insensitive---revealing that alignment approach, not just capability, shapes how models fail under pressure (\S\ref{sec:cross_family}).
+    \item \textbf{Mechanism probing}: Stripping social framing while preserving the repetitive prompt structure reveals that a substantial portion of the measured effect arises from autoregressive pattern completion rather than social deference (\S\ref{sec:ablation}).
 \end{enumerate}
 
-% TODO: Figure~1 (fig1_stacked_decomposition) — 3-state bar decomposition
-% for cross-family models, OLMo training trajectory, and ablation.
-% Regenerate after finalizing expanded model set.
-% \label{fig:stacked}
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{fig1_stage_trajectory.pdf}
+  \caption{\textbf{Post-training stage trajectory under unanimous-confident peer pressure (OLMo).}
+  BER (wrong-answer endorsement rate, $B/N$ where $N{=}400$) across successive post-training stages
+  for the Instruct path (blue) and Think path (orange) at two temperatures.
+  SFT amplifies wrong-answer endorsement; DPO partially reverses it.
+  Both paths share the same pretrained Base checkpoint.}
+  \label{fig:trajectory}
+\end{figure}
 
 
 %% ============================================================
@@ -155,7 +167,7 @@ A growing body of work studies \emph{sycophancy}---models deferring to the user'
 
 First, Zhu et al.'s central finding is that instruction-tuned models are \emph{less} conformist than their base counterparts. However, their comparison is between base and final instruct models, treating the entire post-training pipeline as a single step. Because base and instruct models differ in SFT data, preference optimization, and (sometimes) reinforcement learning simultaneously, this design cannot identify which stage is responsible for the observed difference. Our within-family design decomposes this pipeline into its constituent stages using a model family that publicly releases each intermediate checkpoint.
 
-Second, Zhu et al.\ compare models across families, where architectural and data differences confound any alignment-related conclusions. Our Study~2 replicates this cross-family approach on a broader set of models, but anchors it to the within-family trajectory from Study~1, allowing us to distinguish family-level variation from alignment-stage effects.
+Second, Zhu et al.\ compare models across families, where architectural and data differences confound any alignment-related conclusions. We replicate this cross-family approach on a broader set of models, but anchor it to the within-family trajectory described above, allowing us to distinguish family-level variation from alignment-stage effects.
 
 Third, Zhu et al.\ do not probe the mechanism behind the measured effect. Our ablation studies (\S\ref{sec:ablation}) test whether the observed conformity reflects genuine social deference or autoregressive pattern completion driven by the repetitive structure of the Asch-style prompt---a distinction with direct implications for mitigation strategy.
 
@@ -172,33 +184,36 @@ Understanding how each stage of post-training shapes model behavior is a growing
 \section{Methodology}
 \label{sec:method}
 
-\subsection{Study 1: Within-Family Sequential Design (OLMo-7B)}
+\subsection{Within-Family Training-Stage Decomposition (OLMo)}
 \label{sec:study1_method}
 
-We evaluate four OLMo-3-7B checkpoints along the Instruct post-training pipeline, all sharing identical architecture and pretraining data:
+The core of our design exploits the OLMo model family's unique transparency: every intermediate training checkpoint is publicly available. This lets us evaluate the same model at each stage of its post-training pipeline, so that any behavioral differences must come from the specific training stage that produced them---not from differences in architecture, pretraining data, or scale.
+
+\paragraph{Instruct path (7B, full coverage).}
+We evaluate four checkpoints along the OLMo-2-7B Instruct pipeline:
 \begin{itemize}
     \item \textbf{Base}: the pretrained model with no post-training.
     \item \textbf{Instruct\_SFT}: Base + supervised fine-tuning (SFT) on human demonstrations.
     \item \textbf{Instruct\_DPO}: Instruct\_SFT + direct preference optimization (DPO) on preference pairs.
     \item \textbf{Instruct}: the fully-trained released model (SFT + DPO + RLVR).
 \end{itemize}
-Because all four share the same pretrained weights, behavioral differences reflect changes introduced by each successive post-training stage, though the sequential application means individual contributions are not independently identifiable.
+These four checkpoints are tested across all 12 experimental conditions (1 control, 8 peer-consensus, 3 authority-claim; full catalog in Appendix~\ref{app:conditions}) at 6~temperatures ($T \in \{0.0, 0.2, \ldots, 1.0\}$), giving the most complete coverage in the study.
 
-% TODO [PENDING RESULTS]: Think pipeline decomposition.
-% Think_SFT, Think_DPO, and Think_RL checkpoints are under evaluation.
-% Results will extend the training-stage analysis to the reasoning pipeline,
-% adding a second decomposition axis (Instruct path vs Think path) to Study 1.
+\paragraph{Think path (7B and 32B).}
+OLMo also releases a separate chain-of-thought reasoning pipeline. At the 7B scale, we evaluate \textbf{Think\_SFT} and \textbf{Think\_DPO} (the reasoning counterparts of the Instruct path stages). At the 32B scale, we evaluate \textbf{Think\_SFT}, \textbf{Think\_DPO}, and the final \textbf{Think} model. These Think-path variants are tested on a shared subset of conditions at 2~temperatures ($T \in \{0.0, 0.6\}$), allowing direct comparison between instruction-following and reasoning training under the same pressure.
 
-Each variant is evaluated on 12 conditions that vary the type and intensity of contextual pressure: 1 control condition (the question alone, with no pressure), 8 peer-consensus conditions (varying the unanimity, tone, and framing of fabricated peer responses), and 3 authority-claim conditions (a single user asserting the wrong answer with varying confidence). Each condition presents the same question with the same injected wrong answer; only the surrounding context changes (full catalog in Appendix~\ref{app:conditions}). Evaluation spans 6~temperatures ($T \in \{0.0, 0.2, \ldots, 1.0\}$). Because OLMo-7B-Instruct appears in both studies on the same 400 items and 4 conditions, it serves as a calibration reference linking the within-family trajectory to the cross-family ranking (\S\ref{sec:cross_family}).
+\paragraph{Scale comparison (32B Instruct).}
+To examine whether scale interacts with susceptibility, we also evaluate the 32B Instruct model on the same shared subset of conditions. Together with the 32B Think-path variants, this provides a matched scale comparison between the two training paths.
 
-\subsection{Study 2: Cross-Family Observational Survey}
+Because OLMo-7B-Instruct appears in both the within-family decomposition and the cross-family evaluation below on the same 400 items, it serves as a calibration bridge linking the training-stage trajectory to the cross-family ranking (\S\ref{sec:cross_family}).
+
+\subsection{Cross-Family Extension}
 \label{sec:study2_method}
 
-To test whether the within-family findings generalize beyond OLMo, we evaluate a diverse set of model families spanning dense and mixture-of-experts architectures, open and closed weights, and varied alignment approaches including SFT+RLHF~\citep{meta2024llama3}, lightweight SFT + online RL~\citep{meta2025llama4}, RLHF with Instruction Hierarchy~\citep{openai2024gpt4omini}, RL with unsupervised chain-of-thought~\citep{openai2025gptoss}, distillation~\citep{google2025gemini25}, RL-dominant training~\citep{xai2025grok41}, and Constitutional AI~\citep{bai2022constitutional}. Each model is tested on 4~core conditions (control, structured peer consensus, authoritative bias, authority trust) at $T{=}0.0$ and $T{=}0.6$, with 50~items per dataset across 8~domains (400~items per condition, fixed $N{=}400$ denominator). The same items are used across all models. All inferential analyses in the main text use $T{=}0.0$ exclusively to preserve statistical independence across items; $T{=}0.6$ results are included in Appendix~\ref{app:cross_mcnemar} for completeness. Two additional ablation conditions (system-prompt removal, non-social n-gram baseline) are tested on selected models at $T{=}0.0$.
+To test whether the within-family patterns generalize beyond OLMo, we evaluate a diverse set of model families spanning dense and mixture-of-experts architectures, open and closed weights, and varied alignment approaches including SFT+RLHF~\citep{meta2024llama3}, lightweight SFT + online RL~\citep{meta2025llama4}, RLHF with Instruction Hierarchy~\citep{openai2024gpt4omini}, RL with unsupervised chain-of-thought~\citep{openai2025gptoss}, distillation~\citep{google2025gemini25}, RL-dominant training~\citep{xai2025grok41}, and Constitutional AI~\citep{bai2022constitutional}. Each model is tested on 4~core conditions (control, structured peer consensus, authoritative bias, authority trust) at $T{=}0.0$ and $T{=}0.6$, with 50~items per dataset across 8~domains (400~items per condition, fixed $N{=}400$ denominator). The same items are used across all models. All inferential analyses in the main text use $T{=}0.0$ exclusively to preserve statistical independence across items; $T{=}0.6$ results are included in Appendix~\ref{app:cross_mcnemar} for completeness. Two additional ablation conditions (system-prompt removal, non-social n-gram baseline) are tested on selected models at $T{=}0.0$.
 
 % TODO: Insert Table~\ref{tab:design} — experimental design summary.
-% Update Study~2 model count to reflect expanded set (12 families).
-% Columns: Dimension, Study 1, Study 2.
+% Columns: Dimension, OLMo Within-Family, Cross-Family Extension.
 % \label{tab:design}
 
 \subsection{Evaluation Pipeline}
@@ -221,9 +236,17 @@ Every trial is assigned to one of three mutually exclusive states: \textbf{State
 
 The training trajectory reveals non-monotonic changes in susceptibility across post-training stages. Following the pipeline chronology (Base $\to$ SFT $\to$ DPO $\to$ Instruct), control error rates decrease as the model becomes more capable, but the conformity metrics tell a different story: they do not decrease monotonically with training.
 
-% TODO: Figure~2 (fig2_conformity_or) — McNemar OR across pressure conditions
-% for OLMo-7B training stages. Regenerate after finalizing results.
-% \label{fig:or}
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{fig2_ber_heatmap.pdf}
+  \caption{\textbf{BER heatmap at $T{=}0$ across training stages and pressure conditions.}
+  Panel~A: Instruct-path variants (Base, SFT, DPO, Instruct) across all 12~conditions,
+  ordered left-to-right by the number of target-answer repetitions in the prompt.
+  Panel~B: Think-path variants on the 4~shared conditions, column-aligned with Panel~A.
+  BER = wrong-answer endorsement rate ($B/N$, $N{=}400$).
+  Color scale: low BER (blue) to high BER (red).}
+  \label{fig:heatmap}
+\end{figure}
 
 \paragraph{SFT-Associated Increase.}
 Under structured peer consensus, the SFT checkpoint produces the highest wrong-answer endorsement of any variant---substantially exceeding even the unaligned Base model. SFT simultaneously shows the lowest refusal rate, suggesting that supervised fine-tuning on human demonstrations suppresses the model's tendency to abstain while amplifying its tendency to reproduce patterns encountered in context. This is consistent with \citet{sharma2024sycophancy}'s finding that human preference data favors agreeable responses, though we have not audited OLMo's SFT dataset to confirm a specific mechanism.
@@ -240,21 +263,41 @@ These findings raise a mechanistic question: does the SFT-amplified endorsement 
 
 \paragraph{Non-social n-gram baseline.} By stripping all sociological framing and replacing the Asch prompt with a non-social n-gram repetition sequence (identical structure but without participant roles, social context, or group-discussion framing), we isolate the mechanical driver. The results show that substantial endorsement persists even without any social framing---indicating that a large portion of the measured effect arises from autoregressive pattern completion~\citep{min2022rethinking, shi2023large} rather than from social framing alone. Devil's advocate mitigations~\citep{zhu2025conformity} reduce but do not eliminate the effect (Appendix~\ref{app:mitigation}).
 
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{fig3_ablation_ngram.pdf}
+  \caption{\textbf{Pattern completion without social framing.}
+  BER under the non-social n-gram baseline (no participant roles or group-discussion framing)
+  compared to unanimous-confident pressure with and without the system prompt, at $T{=}0$.
+  Substantial wrong-answer endorsement persists even without social framing,
+  indicating that autoregressive pattern completion rather than social deference
+  is the primary driver. BER = wrong-answer endorsement rate ($B/400$).}
+  \label{fig:ablation}
+\end{figure}
+
 % Temperature analysis moved to Appendix~\ref{app:tc}.
 
 
 \subsection{Cross-Family Behavioral Taxonomy}
 \label{sec:cross_family}
 
-Study~2 evaluates diverse model families on the same 400 items under the same structured peer-consensus condition (5~unanimous confederates, confident tone). All analyses use $T{=}0.0$ with a fixed $N{=}400$ denominator. The n-gram repetition confound quantified in the ablation above applies to all results in this section.
+The cross-family extension evaluates diverse model families on the same 400 items under the same structured peer-consensus condition (5~unanimous confederates, confident tone). All analyses use $T{=}0.0$ with a fixed $N{=}400$ denominator. The n-gram repetition confound quantified in the ablation above applies to all results in this section.
 
 \paragraph{The Conformity Spectrum.}
 
 Decomposing each model's pressure response into its endorsement and refusal components reveals that the models with the largest overall $\Delta$ are not necessarily the most conformist. Some models show a large $\Delta$ driven almost entirely by \emph{increased refusal} rather than wrong-answer endorsement, while others show genuine wrong-answer adoption. This distinction is invisible in any metric that treats all errors alike.
 
-% TODO: Figure~3 (fig3_cross_family_forest) — decomposed pressure response
-% (endorsement delta vs refusal delta) for all models. Regenerate with expanded set.
-% \label{fig:forest}
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{fig4_conformity_ranking.pdf}
+  \caption{\textbf{Conformity ranking: OLMo family and other families.}
+  BER (wrong-answer endorsement rate, $B/400$) under unanimous-confident peer pressure
+  at $T{=}0$, ranked from highest to lowest. Error bars show 95\% Wilson score
+  confidence intervals. Colors indicate architecture family.
+  OLMo training-stage checkpoints (grey/orange/purple) are embedded alongside
+  cross-family models, linking the within-family trajectory to the cross-family ranking.}
+  \label{fig:ranking}
+\end{figure}
 
 \paragraph{Behavioral Taxonomy: Endorse, Refuse, or Resist.}
 
@@ -266,9 +309,19 @@ Models respond to identical social pressure through three qualitatively distinct
     \item \textbf{Context-insensitive.} These models neither endorse the wrong answer nor refuse at elevated rates---they simply answer as if the fabricated peers were not there, maintaining their baseline accuracy.
 \end{itemize}
 
-% TODO: Figure~4 (fig4_refusal_endorsement) — scatter plot of error rate vs
-% refusal rate showing the three behavioral modes. Regenerate with expanded set.
-% \label{fig:scatter}
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.85\linewidth]{fig5_behavioral_taxonomy.pdf}
+  \caption{\textbf{Behavioral taxonomy under peer pressure.}
+  Each model's $\Delta$\,endorsement (change in BER from control, $x$-axis) vs.\
+  $\Delta$\,refusal rate ($y$-axis) at $T{=}0$.
+  Models cluster into three modes:
+  \emph{endorsement-dominant} (high $\Delta$BER, low $\Delta$refusal),
+  \emph{refusal-dominant} (low $\Delta$BER, high $\Delta$refusal),
+  and \emph{context-insensitive} (near origin).
+  Colors indicate architecture family.}
+  \label{fig:taxonomy}
+\end{figure}
 
 \paragraph{Reasoning Models Show Non-Significant Conformity.}
 
@@ -280,12 +333,10 @@ All reasoning-capable models in our survey show non-significant peer conformity 
 
 Comparing peer consensus and authority framing reveals that the structured peer consensus condition produces stronger effects across families. This is consistent with the pattern-completion hypothesis: the peer consensus prompt contains five repetitions of the wrong answer, while the authority prompt contains only one. Our ablation study (\S\ref{sec:ablation}) directly quantifies this mechanical component.
 
-% TODO: Figure~5 (fig5_peer_vs_authority) — peer vs authority comparison
-% across model families. Regenerate with expanded set.
-% \label{fig:peer_auth}
+% Peer vs authority detailed comparison moved to Appendix.
 
 \paragraph{Calibration Bridge.}
-OLMo-7B-Instruct appears in both studies, linking the within-family trajectory to the cross-family ranking. The SFT amplification visible in Study~1 is preserved in the cross-family ordering: the SFT checkpoint sits above Base, and DPO sits below SFT, consistent with the within-family trajectory.
+OLMo-7B-Instruct appears in both the within-family decomposition and the cross-family evaluation, linking the training-stage trajectory to the cross-family ranking. The SFT amplification visible in the within-family analysis is preserved in the cross-family ordering: the SFT checkpoint sits above Base, and DPO sits below SFT, consistent with the training-stage trajectory.
 
 
 %% ============================================================
@@ -293,7 +344,7 @@ OLMo-7B-Instruct appears in both studies, linking the within-family trajectory t
 \label{sec:discussion}
 
 \paragraph{SFT amplifies pattern vulnerability; DPO partially repairs it.}
-Study~1 shows that conformity increases after SFT and partially decreases after DPO within OLMo. Study~2 provides cross-family corroboration: models whose documentation describes heavy SFT~\citep{meta2024llama3} cluster at the top of the conformity ranking, while those with RL-dominant alignment~\citep{openai2025gptoss, xai2025grok41} or Constitutional AI~\citep{bai2022constitutional} sit at the bottom. We cannot attribute differences to alignment strategy alone---architecture, scale, training data, and undisclosed engineering choices all differ simultaneously---but the gradient is consistent with the within-family observation. The practical implication is that alignment pipeline designers should be aware that SFT may introduce pattern-completion vulnerabilities that subsequent stages only partially repair.
+The within-family decomposition shows that conformity increases after SFT and partially decreases after DPO within OLMo. The cross-family evaluation provides corroboration: models whose documentation describes heavy SFT~\citep{meta2024llama3} cluster at the top of the conformity ranking, while those with RL-dominant alignment~\citep{openai2025gptoss, xai2025grok41} or Constitutional AI~\citep{bai2022constitutional} sit at the bottom. We cannot attribute differences to alignment strategy alone---architecture, scale, training data, and undisclosed engineering choices all differ simultaneously---but the gradient is consistent with the within-family observation. The practical implication is that alignment pipeline designers should be aware that SFT may introduce pattern-completion vulnerabilities that subsequent stages only partially repair.
 
 \paragraph{Three behavioral modes, not a spectrum.}
 \citet{zhu2025conformity}'s finding that instruct models are less conformist is not wrong, but it is incomplete. Different post-training pipelines produce qualitatively different responses to identical pressure. Some models are endorsement-dominant, adopting the wrong answer as their own. Others are refusal-dominant, declining to answer at all under pressure. Still others are context-insensitive, maintaining their baseline accuracy as if the fabricated peers were not there. A model that refuses everything and a model that endorses wrong answers are both ``failing'' under pressure, but with categorically different safety implications. The fixed-$N$ error rate conflates these modes; the 3-state decomposition is essential for interpretation.
@@ -308,7 +359,7 @@ The ablation finding that a non-social n-gram baseline produces substantial endo
 \textbf{(1)} We cannot prove causation for closed models whose training details are proprietary.
 \textbf{(2)} The effect is tied to the structured n-gram format; generalization to multi-turn conversational pressure is untested.
 \textbf{(3)} DPO is applied to SFT weights, so the observed mitigation reflects a sequential trajectory, not an independent counterfactual.
-\textbf{(4)} Study~2 uses a fixed set of conditions and items; domain-specific vulnerabilities may not be captured at this scale.
+\textbf{(4)} The cross-family evaluation uses a fixed set of conditions and items; domain-specific vulnerabilities may not be captured at this scale.
 
 
 %% ============================================================
@@ -682,7 +733,7 @@ Following \citet{zhu2025conformity}, who proposed devil's advocate (DA) and ques
 \label{app:judge_details}
 
 \subsection{Hybrid Pipeline Architecture}
-Trial outcomes were not determined by a standalone LLM judge. Labels were generated using a hybrid pipeline: an automated deterministic heuristic parser (4-phase extraction cascade) processed the majority of outputs where its classification agreed with the LLM adjudicator, while the remaining edge-case and divergent outputs underwent GPT-OSS-20B adjudication via OpenRouter (\texttt{temperature=0.0}, \texttt{reasoning.effort=low}). Study~1 (OLMo family) uses GPT-OSS-20B labels for the four target variants (base, instruct, instruct\_sft, instruct\_dpo). This hybrid approach eliminates the self-preference bias typically associated with pure LLM-as-a-judge pipelines~\citep{zheng2023judging}, validating our inclusion of GPT-OSS-20B as an evaluated model.
+Trial outcomes were not determined by a standalone LLM judge. Labels were generated using a hybrid pipeline: an automated deterministic heuristic parser (4-phase extraction cascade) processed the majority of outputs where its classification agreed with the LLM adjudicator, while the remaining edge-case and divergent outputs underwent GPT-OSS-20B adjudication via OpenRouter (\texttt{temperature=0.0}, \texttt{reasoning.effort=low}). The OLMo within-family evaluation uses GPT-OSS-20B labels for the target variants (base, instruct, instruct\_sft, instruct\_dpo). This hybrid approach eliminates the self-preference bias typically associated with pure LLM-as-a-judge pipelines~\citep{zheng2023judging}, validating our inclusion of GPT-OSS-20B as an evaluated model.
 
 \subsection{Heuristic Scoring Pipeline}
 Before judge labels are applied, each trial undergoes a four-phase heuristic extraction cascade:
@@ -710,8 +761,8 @@ McNemar tests require paired observations on the same item across two conditions
 \label{app:cross_mcnemar}
 
 % TODO: Insert Table~\ref{tab:cross_mcnemar_full} with McNemar results for
-% Study~2 at T=0.0 with fixed N=400 denominator. Include both peer consensus
-% and authoritative bias panels. b = truth override; c = truth rescue.
+% cross-family evaluation at T=0.0 with fixed N=400 denominator. Include both
+% peer consensus and authoritative bias panels. b = truth override; c = truth rescue.
 
 \FloatBarrier
 

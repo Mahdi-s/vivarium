@@ -249,8 +249,11 @@ def plot_2axis_heatmap(cells: pd.DataFrame, out_dir: str) -> None:
     n_top = len(panel_a.columns)
     n_bot = len(panel_b.columns)
     fig_c, (ax_top, ax_bot) = plt.subplots(
-        2, 1, figsize=(12.5, 6.6),
-        gridspec_kw={"height_ratios": [len(panel_a.index), len(panel_b.index)]},
+        2, 1, figsize=(12.5, 7.5),
+        gridspec_kw={
+            "height_ratios": [len(panel_a.index), len(panel_b.index)],
+            "hspace": 0.45,
+        },
     )
     _heatmap_single(
         ax_top, panel_a,

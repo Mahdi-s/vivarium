@@ -48,6 +48,14 @@ import pandas as pd
 
 from _common import build_cross_family_argparser, ensure_dir
 
+
+def _save(fig, path_stem: Path) -> None:
+    """Save figure as both PDF and PNG (for PowerPoint/preview)."""
+    fig.savefig(path_stem.with_suffix(".pdf"), dpi=300, bbox_inches="tight")
+    fig.savefig(path_stem.with_suffix(".png"), dpi=200, bbox_inches="tight")
+    plt.close(fig)
+
+
 # ── Global style ───────────────────────────────────────────────────────
 plt.rcParams.update({
     "font.family": "serif",
@@ -131,14 +139,15 @@ def make_headline_ber(tables: Dict[str, pd.DataFrame], out_dir: Path) -> None:
         fmt="none", ecolor="black", elinewidth=0.7, capsize=2,
     )
     for i, v in enumerate(ber):
-        ax.text(v + 0.005, i, f"{v*100:.1f}%", va="center", fontsize=7)
+        label_x = max(hi[i], v) + 0.012
+        ax.text(label_x, i, f"{v*100:.1f}%", va="center", fontsize=7)
 
     ax.set_yticks(y)
     ax.set_yticklabels(df["short_name"].tolist())
     ax.invert_yaxis()
-    ax.set_xlim(0, max(0.82, hi.max() + 0.05))
+    ax.set_xlim(0, max(0.85, hi.max() + 0.08))
     ax.set_xlabel("Wrong-answer endorsement rate (BER), T=0.0, asch_zhu_unbiased_unanimous_confident")
-    ax.set_title("Cross-family + OLMo-7B conformity ranking")
+    ax.set_title("OLMo family and other families")
     ax.axvline(0.5, color="gray", linewidth=0.6, linestyle=":", alpha=0.6)
     for side in ("top", "right"):
         ax.spines[side].set_visible(False)
@@ -156,8 +165,7 @@ def make_headline_ber(tables: Dict[str, pd.DataFrame], out_dir: Path) -> None:
     ax.legend(handles=legend_patches, loc="lower right", frameon=True, framealpha=0.95)
 
     fig.tight_layout()
-    fig.savefig(out_dir / "fig_cross_family_headline_ber.pdf")
-    plt.close(fig)
+    _save(fig, out_dir / "fig_cross_family_headline_ber")
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -208,8 +216,7 @@ def make_t0_vs_t06_scatter(
     ]
     ax.legend(handles=legend_patches, loc="upper left", frameon=True)
     fig.tight_layout()
-    fig.savefig(out_dir / "fig_cross_family_t0_vs_t06.pdf")
-    plt.close(fig)
+    _save(fig, out_dir / "fig_cross_family_t0_vs_t06")
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -290,8 +297,7 @@ def make_scale_bridge(tables: Dict[str, pd.DataFrame], out_dir: Path) -> None:
 
     fig.suptitle("Scale vs recipe: OLMo-7B stages against OLMo-32B at T=0", y=1.02)
     fig.tight_layout()
-    fig.savefig(out_dir / "fig_scale_bridge.pdf")
-    plt.close(fig)
+    _save(fig, out_dir / "fig_scale_bridge")
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -353,8 +359,7 @@ def make_ablation_ngram_vs_pressure(
     ax.grid(axis="y", alpha=0.25, linewidth=0.4)
 
     fig.tight_layout()
-    fig.savefig(out_dir / "fig_ablation_ngram_vs_pressure.pdf")
-    plt.close(fig)
+    _save(fig, out_dir / "fig_ablation_ngram_vs_pressure")
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -408,8 +413,7 @@ def make_system_prompt_ablation(
     ax.grid(axis="y", alpha=0.25, linewidth=0.4)
 
     fig.tight_layout()
-    fig.savefig(out_dir / "fig_system_prompt_ablation.pdf")
-    plt.close(fig)
+    _save(fig, out_dir / "fig_system_prompt_ablation")
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -459,8 +463,7 @@ def make_stacked_decomposition(
     for side in ("top", "right"):
         ax.spines[side].set_visible(False)
     fig.tight_layout()
-    fig.savefig(out_dir / "fig1_stacked_decomposition.pdf")
-    plt.close(fig)
+    _save(fig, out_dir / "fig1_stacked_decomposition")
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -500,8 +503,7 @@ def make_forest_plot(tables: Dict[str, pd.DataFrame], out_dir: Path) -> None:
     for side in ("top", "right"):
         ax.spines[side].set_visible(False)
     fig.tight_layout()
-    fig.savefig(out_dir / "fig3_cross_family_forest.pdf")
-    plt.close(fig)
+    _save(fig, out_dir / "fig3_cross_family_forest")
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -540,8 +542,7 @@ def make_refusal_endorsement_scatter(
     ]
     ax.legend(handles=legend_patches, loc="upper left", frameon=True)
     fig.tight_layout()
-    fig.savefig(out_dir / "fig4_refusal_endorsement.pdf")
-    plt.close(fig)
+    _save(fig, out_dir / "fig4_refusal_endorsement")
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -572,8 +573,7 @@ def make_peer_vs_authority(
         ax.spines[side].set_visible(False)
     ax.grid(axis="y", alpha=0.25, linewidth=0.4)
     fig.tight_layout()
-    fig.savefig(out_dir / "fig5_peer_vs_authority.pdf")
-    plt.close(fig)
+    _save(fig, out_dir / "fig5_peer_vs_authority")
 
 
 # ═══════════════════════════════════════════════════════════════════════
