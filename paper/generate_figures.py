@@ -2,8 +2,10 @@
 """Generate publication-quality figures for the COLM 2026 paper.
 
 Produces:
-  figures/fig2_conformity_or.pdf   – McNemar OR across training pipeline
-  figures/fig3_tc_ursp.pdf         – Combined Tc distribution + URSP bar
+  figures/fig2_conformity_or.pdf            – McNemar OR across training pipeline
+  figures/fig2_stage_trajectory_shared.pdf  – BER trajectory on 3 shared pressure
+                                              conditions (Instruct vs Think, T=0, 7B)
+  figures/fig3_tc_ursp.pdf                  – Combined Tc distribution + URSP bar
 """
 
 import os
@@ -181,6 +183,173 @@ ax.annotate("DPO mitigates", xy=(dpo_bar_x, dpo_top + 0.6),
 fig.savefig("paper/figures/fig2_conformity_or.pdf")
 fig.savefig("paper/figures/fig2_conformity_or.png")
 print("✓ fig2_conformity_or")
+plt.close(fig)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Figure 2 (main paper): Shared-conditions stage trajectory
+# Instruct path (Base → SFT → DPO → Instruct) and Think path (Base → Think-SFT
+# → Think-DPO) compared on the 3 pressure conditions they share at T=0.
+# Generalizes Figure 1 (one condition, two temperatures) across conditions.
+# ═══════════════════════════════════════════════════════════════════════════
+
+STAGE_CSV = os.path.join(
+    REPO_ROOT,
+    "Comparing_Experiments", "April_analysis",
+    "tables", "stage_decomposition", "instruct_vs_think_t0.csv",
+)
+
+# (csv_variant, x_position, stage_label) — x-labels are *training methods* applied at each
+# step (SFT, DPO, RLVR), not checkpoint names. The corresponding released OLMo-3 checkpoint
+# for the Instruct path at each x is: Base (Olmo-3-1025-7B) / Instruct-SFT / Instruct-DPO /
+# Instruct (the final RLVR-trained release). Similarly for Think: Think-SFT / Think-DPO.
+INSTRUCT_STAGES = [
+    ("base",         0, "Base"),
+    ("instruct_sft", 1, "SFT"),
+    ("instruct_dpo", 2, "DPO"),
+    ("instruct",     3, "RLVR"),
+]
+THINK_STAGES = [
+    ("base",      0, "Base"),
+    ("think_sft", 1, "SFT"),
+    ("think_dpo", 2, "DPO"),
+]
+
+PRESSURE_CONDS = [
+    ("asch_zhu_unbiased_unanimous_confident", "Unanimous confident"),
+    ("authoritative_bias",                    "Authoritative bias"),
+    ("authority_zhu_unbiased_trust",          "Authority trust"),
+]
+
+# Path colors for the connecting lines (stage markers still use the stage palette).
+INSTRUCT_LINE_COLOR = COLORS["Instruct"]   # #3498db blue
+THINK_LINE_COLOR    = "#e67e22"             # matched to fig1_test.tex warm orange family
+
+# Stage-to-color mapping for scatter markers. Think-SFT/Think-DPO reuse SFT/DPO colors
+# so the reader sees stage identity by color and path identity by linestyle/marker.
+STAGE_MARKER_COLOR = {
+    "base":         COLORS["Base"],
+    "instruct_sft": COLORS["SFT"],
+    "instruct_dpo": COLORS["DPO"],
+    "instruct":     COLORS["Instruct"],
+    "think_sft":    COLORS["SFT"],
+    "think_dpo":    COLORS["DPO"],
+}
+
+# Parse stage-decomposition CSV into (variant, condition) → row dict.
+stage_rows = {}
+with open(STAGE_CSV, newline="") as f:
+    for row in csv.DictReader(f):
+        stage_rows[(row["variant"], row["condition_name"])] = row
+
+CONTROL_BER = float(stage_rows[("base", "control")]["ber"])  # 0.0525
+
+# ── Plot ──────────────────────────────────────────────────────────────────
+fig, axes = plt.subplots(1, 3, figsize=(7.0, 2.6),
+                         gridspec_kw={"wspace": 0.18})
+
+DX = 0.06  # horizontal jitter to keep CI bars visually separable at shared x
+
+for ax_i, (cond_csv, cond_title) in enumerate(PRESSURE_CONDS):
+    ax = axes[ax_i]
+
+    # Extract (ber, lo, hi) triples for each stage on each path.
+    def _cell(variant):
+        row = stage_rows[(variant, cond_csv)]
+        return float(row["ber"]), float(row["ber_lo"]), float(row["ber_hi"])
+
+    inst_ys, inst_lo, inst_hi = [], [], []
+    for var, _, _ in INSTRUCT_STAGES:
+        b, lo, hi = _cell(var)
+        inst_ys.append(b); inst_lo.append(lo); inst_hi.append(hi)
+
+    think_ys, think_lo, think_hi = [], [], []
+    for var, _, _ in THINK_STAGES:
+        b, lo, hi = _cell(var)
+        think_ys.append(b); think_lo.append(lo); think_hi.append(hi)
+
+    # Jittered x-positions (Base sits exactly at x=0 for both paths).
+    x_inst  = [0.0, 1.0 - DX, 2.0 - DX, 3.0]
+    x_think = [0.0, 1.0 + DX, 2.0 + DX]
+
+    # Reference line: base control BER.
+    ax.axhline(y=CONTROL_BER, color="#95a5a6", linestyle=":", lw=0.9, zorder=1)
+
+    # Path lines (drawn first; stage-colored markers overlaid below).
+    ax.plot(x_inst, inst_ys, color=INSTRUCT_LINE_COLOR, linestyle="-",
+            lw=1.3, marker="None", zorder=2, label="_nolegend_")
+    ax.plot(x_think, think_ys, color=THINK_LINE_COLOR, linestyle=(0, (4, 2)),
+            lw=1.3, marker="None", zorder=2, label="_nolegend_")
+
+    # Error bars (Wilson 95% precomputed upstream).
+    inst_yerr = [[y - l for y, l in zip(inst_ys, inst_lo)],
+                 [h - y for y, h in zip(inst_ys, inst_hi)]]
+    think_yerr = [[y - l for y, l in zip(think_ys, think_lo)],
+                  [h - y for y, h in zip(think_ys, think_hi)]]
+    ax.errorbar(x_inst, inst_ys, yerr=inst_yerr, fmt="none",
+                ecolor=INSTRUCT_LINE_COLOR, elinewidth=0.8, capsize=2, capthick=0.7,
+                zorder=3)
+    ax.errorbar(x_think, think_ys, yerr=think_yerr, fmt="none",
+                ecolor=THINK_LINE_COLOR, elinewidth=0.8, capsize=2, capthick=0.7,
+                zorder=3)
+
+    # Stage-colored markers: circles for Instruct path, squares for Think.
+    for xi, (var, _, _) in zip(x_inst, INSTRUCT_STAGES):
+        if var == "base":
+            continue  # shared Base point drawn once, below
+        ax.scatter([xi], [_cell(var)[0]], marker="o", s=36,
+                   color=STAGE_MARKER_COLOR[var],
+                   edgecolors="white", linewidths=0.6, zorder=4)
+    for xi, (var, _, _) in zip(x_think, THINK_STAGES):
+        if var == "base":
+            continue
+        ax.scatter([xi], [_cell(var)[0]], marker="s", s=36,
+                   color=STAGE_MARKER_COLOR[var],
+                   edgecolors="white", linewidths=0.6, zorder=4)
+
+    # Shared Base marker (single, slightly larger, drawn on top).
+    ax.scatter([0.0], [_cell("base")[0]], marker="o", s=58,
+               color=COLORS["Base"], edgecolors="white", linewidths=0.8, zorder=5)
+
+    ax.set_xticks([0, 1, 2, 3])
+    ax.set_xticklabels(["Base", "SFT", "DPO", "RLVR"], fontsize=8)
+    ax.set_ylim(0.0, 0.8)
+    ax.set_title(cond_title, fontsize=9, pad=4)
+
+    if ax_i == 0:
+        ax.set_ylabel("Wrong-answer endorsement rate (BER)")
+    else:
+        ax.tick_params(labelleft=False)
+
+    if ax_i == 1:
+        ax.set_xlabel("Post-training stage")
+        # Annotate the control reference once.
+        ax.text(3.25, CONTROL_BER + 0.005,
+                f"Base control BER {CONTROL_BER*100:.1f}%",
+                fontsize=6.5, color="#7f8c8d", va="bottom", ha="right")
+
+# Shared figure legend (paths + reference line). Stage-color encoding lives in caption.
+from matplotlib.lines import Line2D
+legend_handles = [
+    Line2D([0], [0], color=INSTRUCT_LINE_COLOR, linestyle="-", lw=1.3,
+           marker="o", markersize=5, markerfacecolor=COLORS["Instruct"],
+           markeredgecolor="white", markeredgewidth=0.6,
+           label="Instruct path: Base → Instruct-SFT → Instruct-DPO → Instruct (RLVR)"),
+    Line2D([0], [0], color=THINK_LINE_COLOR, linestyle=(0, (4, 2)), lw=1.3,
+           marker="s", markersize=5, markerfacecolor=COLORS["DPO"],
+           markeredgecolor="white", markeredgewidth=0.6,
+           label="Think path: Base → Think-SFT → Think-DPO"),
+    Line2D([0], [0], color="#95a5a6", linestyle=":", lw=0.9,
+           label=f"Base control BER ({CONTROL_BER*100:.1f}%)"),
+]
+fig.legend(handles=legend_handles, loc="upper center",
+           bbox_to_anchor=(0.5, 1.02), ncol=3, frameon=False, fontsize=7.5,
+           handlelength=2.2, columnspacing=1.4)
+fig.subplots_adjust(top=0.82)
+
+fig.savefig("paper/figures/fig2_stage_trajectory_shared.pdf")
+fig.savefig("paper/figures/fig2_stage_trajectory_shared.png")
+print("✓ fig2_stage_trajectory_shared")
 plt.close(fig)
 
 
