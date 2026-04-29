@@ -891,20 +891,26 @@ def make_pillar1_fig():
 # ═══════════════════════════════════════════════════════════════════
 def make_pillar2_fig():
     """
-    2-panel figure for §3.3 Pillar II + Pillar III.
+    2-panel figure for §3.3 Pillar II.
     Left : violin plots for delta_struct_jaccard, delta_ngram_overlap,
            delta_max_run, delta_consensus_hits (50k subsample, seed=0).
            Annotated with pre-computed Cliff's delta from phase6 summary.
-    Right: Pillar III scatter — x=mean(has_run_5_response) per macro-domain,
-           y=ΔBER (SFT-Base), 3 domains; Spearman rho from phase7 json.
+    Right: effect-size forest plot — Cliff's delta + 95% bootstrap CI for
+           all 9 DPO delta metrics, with Holm-Bonferroni significance
+           markers and the Romano (2006) practical-significance thresholds.
+
+    Note (post-review revision): the original right panel was an n=3
+    Spearman scatter (Pillar III). With only 3 macro-domains, ρ takes
+    one of 6 discrete values and the bootstrap CI spans the full support
+    [-1, +1]; the panel was uninformative. We replace it with the
+    effect-size forest plot, which surfaces the directional sign
+    structure of DPO's penalty across all 9 metrics — the substantive
+    Pillar II finding.
     """
     import json
-    from scipy import stats
 
     dpo_csv = ROOT / "dataset_analysis/results/phase6_instruct-dpo_per_pair.csv"
     dpo_summary_json = ROOT / "dataset_analysis/results/phase6_instruct-dpo_summary.json"
-    pillar3_json = ROOT / "dataset_analysis/results/phase7_pillar3_correlation.json"
-    domain_ber_csv = ROOT / "Comparing_Experiments/April_analysis/tables/behavioral/domain_breakdown.csv"
 
     # ── Load DPO summary (Cliff's delta + practical_significance) ──
     with open(dpo_summary_json) as f:
@@ -930,27 +936,30 @@ def make_pillar2_fig():
     if len(dpo_df) > 50000:
         dpo_df = dpo_df.sample(n=50000, random_state=0)
 
-    # ── Load Pillar III data ──
-    with open(pillar3_json) as f:
-        p3 = json.load(f)
-
-    # Use has_run_5_response per-domain entry
-    p3_entry = p3.get("has_run_5_response", {})
-    p3_per_domain = p3_entry.get("per_domain", {})
-    p3_rho = p3_per_domain.get("spearman_rho", float("nan"))
-    p3_ci_lo = p3_per_domain.get("ci_lo", float("nan"))
-    p3_ci_hi = p3_per_domain.get("ci_hi", float("nan"))
-    p3_pval = p3_per_domain.get("pvalue", float("nan"))
-    p3_domain_data = p3_per_domain.get("domain_data", [])
-
-    # Build scatter data: x = mean_has_run_5_response, y = delta_ber
-    scatter_domains = []
-    for entry in p3_domain_data:
-        domain = entry.get("domain", "")
-        x_val = entry.get("mean_has_run_5_response", None)
-        y_val = entry.get("delta_ber", None)
-        if x_val is not None and y_val is not None:
-            scatter_domains.append({"domain": domain, "x": x_val, "y": y_val})
+    # ── Pillar II forest plot data: all 9 delta metrics ──
+    FOREST_METRICS = [
+        ("delta_ngram_overlap",        r"$\Delta$ N-gram overlap"),
+        ("delta_struct_jaccard",       r"$\Delta$ Struct Jaccard"),
+        ("delta_has_run_5",            r"$\Delta$ has-run-$\geq$5"),
+        ("delta_peer_frame_count",     r"$\Delta$ Peer-frame count"),
+        ("delta_consensus_hits",       r"$\Delta$ Consensus hits"),
+        ("delta_correction_per_1k",    r"$\Delta$ Correction / 1k"),
+        ("delta_sycophancy",           r"$\Delta$ Sycophancy"),
+        ("delta_correction",           r"$\Delta$ Correction"),
+        ("delta_max_run",              r"$\Delta$ Max run"),
+    ]
+    forest_rows = []
+    for key, label in FOREST_METRICS:
+        entry = dpo_sum.get(key, {})
+        cd = entry.get("cliffs_delta", float("nan"))
+        ci = entry.get("boot_ci_cliffs_delta", [float("nan"), float("nan")])
+        p_holm = entry.get("permutation_p_holm", float("nan"))
+        null_z = entry.get("null_cliffs_delta_z", float("nan"))
+        forest_rows.append({
+            "key": key, "label": label,
+            "cliffs": cd, "ci_lo": ci[0], "ci_hi": ci[1],
+            "p_holm": p_holm, "null_z": null_z,
+        })
 
     # ── Build figure ──
     fig, (ax_vio, ax_p3) = plt.subplots(1, 2, figsize=(9.5, 4.0), constrained_layout=True)
@@ -1003,43 +1012,53 @@ def make_pillar2_fig():
     ax_vio.axhline(0, color="black", linewidth=0.6, linestyle="--", alpha=0.5, zorder=2)
     ax_vio.grid(axis="y", alpha=0.12, zorder=0)
 
-    # ── Right: Pillar III scatter (3 domains) ──
-    for entry in scatter_domains:
-        domain = entry["domain"]
-        color = DOMAIN_COLORS_AUDIT.get(domain, DOMAIN_COLORS_AUDIT["unmapped"])
-        ax_p3.scatter(entry["x"] * 100, entry["y"] * 100,
-                      s=90, color=color, edgecolor="black", linewidth=0.6,
-                      zorder=5)
-        ax_p3.annotate(domain.capitalize(),
-                       (entry["x"] * 100, entry["y"] * 100),
-                       textcoords="offset points", xytext=(5, 3),
-                       fontsize=7, fontweight="bold", zorder=6)
+    # ── Right: effect-size forest plot for all 9 delta metrics ──
+    # Pre-registered Romano (2006) thresholds: |δ|<0.147 negligible, <0.33 small, <0.474 medium.
+    ax_p3.axvspan(-0.147, 0.147, color="grey", alpha=0.07, zorder=0,
+                  label=r"|$\delta$|<0.147 (Romano 'none')")
+    ax_p3.axvspan(0.147, 0.33,  color="#FFE4B5", alpha=0.20, zorder=0)
+    ax_p3.axvspan(-0.33, -0.147, color="#FFE4B5", alpha=0.20, zorder=0)
+    ax_p3.axvline(0, color="black", linewidth=0.5, linestyle="--", alpha=0.5, zorder=1)
 
-    # Spearman rho + CI annotation
-    rho_str = f"{p3_rho:.2f}" if not np.isnan(p3_rho) else "n/a"
-    ci_str = f"[{p3_ci_lo:.2f}, {p3_ci_hi:.2f}]" if not (np.isnan(p3_ci_lo) or np.isnan(p3_ci_hi)) else "n/a"
-    pval_str = f"{p3_pval:.3f}" if not np.isnan(p3_pval) else "n/a"
-    annotation = (rf"Spearman $\rho={rho_str}$" +
-                  f"\n95% CI {ci_str}\n$p={pval_str}$ (n=3)")
-    ax_p3.text(0.97, 0.97, annotation,
-               transform=ax_p3.transAxes,
-               fontsize=6.5, ha="right", va="top",
-               bbox=dict(boxstyle="round,pad=0.3", facecolor="white",
-                         edgecolor="grey", linewidth=0.5, alpha=0.9))
+    y_positions = np.arange(len(forest_rows))[::-1]  # top-to-bottom
+    for y, row in zip(y_positions, forest_rows):
+        cd, lo, hi = row["cliffs"], row["ci_lo"], row["ci_hi"]
+        # Holm-significant marker style: filled circle if p_holm<0.05, else open
+        sig = (not np.isnan(row["p_holm"])) and (row["p_holm"] < 0.05)
+        face = "#1f77b4" if sig else "white"
+        edge = "#1f77b4" if sig else "grey"
+        # CI bar
+        ax_p3.errorbar(cd, y, xerr=[[cd - lo], [hi - cd]],
+                       fmt="none", ecolor=edge, elinewidth=1.2,
+                       capsize=3, zorder=4)
+        # Point
+        ax_p3.scatter(cd, y, s=55, marker="o",
+                      facecolor=face, edgecolor=edge, linewidth=1.0, zorder=5)
+        # Annotation: null-z value
+        z_str = f"  z$_{{\\mathrm{{null}}}}={row['null_z']:+.0f}$"
+        ax_p3.text(hi + 0.01, y, z_str, fontsize=6.0, va="center", zorder=6)
 
-    ax_p3.axhline(0, color="grey", linewidth=0.5, linestyle="--", alpha=0.4, zorder=2)
-    ax_p3.set_xlabel(r"Mean $\hat{P}$(run $\geq 5$) per macro-domain (%)", fontsize=8)
-    ax_p3.set_ylabel(r"$\Delta$BER SFT$-$Base (%)", fontsize=8)
-    ax_p3.set_title("Pillar III: Structural Priors\nvs. Behavioral Error Rate", fontsize=9, fontweight="bold")
-    ax_p3.grid(alpha=0.12, zorder=0)
-
-    # Convert axes to %
-    ax_p3.xaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{x:.2f}"))
+    ax_p3.set_yticks(y_positions)
+    ax_p3.set_yticklabels([r["label"] for r in forest_rows], fontsize=6.5)
+    ax_p3.set_xlabel(r"Cliff's $\delta$ (rejected − chosen)", fontsize=8)
+    ax_p3.set_xlim(-0.20, 0.20)
+    ax_p3.set_title("DPO Effect-Size Forest\n($N{=}259{,}785$ pairs, Holm-corrected)",
+                    fontsize=9, fontweight="bold")
+    ax_p3.grid(axis="x", alpha=0.12, zorder=0)
+    # Legend: filled = Holm-significant, open = not
+    handles = [
+        plt.Line2D([0], [0], marker="o", color="none", markerfacecolor="#1f77b4",
+                   markeredgecolor="#1f77b4", markersize=6, label=r"$p_{\mathrm{Holm}}<0.05$"),
+        plt.Line2D([0], [0], marker="o", color="none", markerfacecolor="white",
+                   markeredgecolor="grey", markersize=6, label=r"$p_{\mathrm{Holm}}\geq 0.05$"),
+    ]
+    ax_p3.legend(handles=handles, loc="lower right", fontsize=6.0,
+                 frameon=True, framealpha=0.85)
 
     fig.savefig(OUT / "fig7_pillar_2_dpo_effect.pdf")
     fig.savefig(OUT / "fig7_pillar_2_dpo_effect.png", dpi=300)
     plt.close(fig)
-    print(f"  Saved: fig7_pillar_2_dpo_effect.pdf  ({len(scatter_domains)} domain dots, {len(dpo_df)} violin pairs)")
+    print(f"  Saved: fig7_pillar_2_dpo_effect.pdf  ({len(forest_rows)} forest metrics, {len(dpo_df)} violin pairs)")
 
 
 # ═══════════════════════════════════════════════════════════════════
