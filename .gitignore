@@ -126,11 +126,17 @@ Comparing_Experiments/expanded_suite_analysis/
 Comparing_Experiments/expanded_suite_analysis_db_endorse/
 Comparing_Experiments/publication_analysis*/
 
-# Hugging Face downloaded training data (local-only, do not track)
+# Hugging Face downloaded training data + per-row audit CSVs (heavy artifacts, local-only).
+# In the main repo, dataset_analysis/data/ and results/ are real directories where
+# JSON summaries are tracked but bulky parquets and per-row CSVs are not. The audit
+# work branch used these as symlinks to the main repo; that branch's catch-all rules
+# are intentionally NOT merged because they would over-ignore the tracked summary
+# JSONs and outlier MDs that already exist on master.
 dataset_analysis/data/raw/
 dataset_analysis/data/**/*.parquet
 dataset_analysis/data/**/*.jsonl
 dataset_analysis/results/**/*.csv
+dataset_analysis/logs/
 
 models/*
 
