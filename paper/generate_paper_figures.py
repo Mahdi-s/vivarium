@@ -718,10 +718,361 @@ def make_stacked_bar():
 
 
 # ═══════════════════════════════════════════════════════════════════
+# Domain color palette for data-audit figures (§3.3)
+# ═══════════════════════════════════════════════════════════════════
+DOMAIN_COLORS_AUDIT = {
+    "math":       "#1f77b4",  # blue
+    "science":    "#2ca02c",  # green
+    "general":    "#ff7f0e",  # orange
+    "history":    "#9467bd",  # purple
+    "preference": "#e377c2",  # pink
+    "unmapped":   "#7f7f7f",  # gray
+}
+
+# Source-to-domain mapping (mirrors audit_metrics.SOURCE_DATASET_TO_BER_DOMAIN)
+SOURCE_DATASET_TO_DOMAIN = {
+    "OpenMathInstruct 2": "math",
+    "Tulu 3 Persona Algebra": "math",
+    "Tulu 3 Persona GSM": "math",
+    "Tulu 3 Persona MATH": "math",
+    "Dolci Instruct OpenThoughts3+ Science": "science",
+    "SciRiff": "science",
+    "OpenAssistant": "general",
+    "Wildchat": "general",
+    "Aya": "unmapped",
+    "CoCoNot": "unmapped",
+    "Dolci Instruct Precise IF": "unmapped",
+    "Dolci Instruct Python Algorithms": "unmapped",
+    "Dolci Instruct Tool Use": "unmapped",
+    "Evol CodeAlpaca": "unmapped",
+    "FLAN": "unmapped",
+    "Hardcoded Data": "unmapped",
+    "Logic Puzzles": "unmapped",
+    "TableGPT": "unmapped",
+    "Tulu 3 Persona Python": "unmapped",
+    "Verifiable Reasoning": "unmapped",
+    "WildGuardMix": "unmapped",
+    "WildJailbreak": "unmapped",
+}
+
+
+# ═══════════════════════════════════════════════════════════════════
+# FIGURE 6: Pillar I — Per-Source SFT Structural Priors
+# ═══════════════════════════════════════════════════════════════════
+def make_pillar1_fig():
+    """
+    2-panel figure for §3.3 Pillar I data audit.
+    Left : horizontal bar chart of P_carryover (top 12 sources, sorted descending).
+    Right: scatter affirm_rate x max_run_geq_5_rate, log-sized markers, Spearman rho.
+    """
+    import json
+    from scipy import stats
+
+    by_source_csv = ROOT / "dataset_analysis/results/phase5_instruct-sft_by_source.csv"
+    summary_json = ROOT / "dataset_analysis/results/phase5_instruct-sft_summary.json"
+
+    df = pd.read_csv(by_source_csv)
+    with open(summary_json) as f:
+        summary = json.load(f)
+
+    # Corpus-wide P(resp_has_list | prompt_has_list)
+    corpus_mean_carryover = summary.get("P(resp_has_list | prompt_has_list)", None)
+
+    # Map domain and color
+    df["domain"] = df["source_dataset"].map(lambda s: SOURCE_DATASET_TO_DOMAIN.get(s, "unmapped"))
+    df["color"] = df["domain"].map(lambda d: DOMAIN_COLORS_AUDIT.get(d, DOMAIN_COLORS_AUDIT["unmapped"]))
+
+    # --- Left panel: top 12 by P_carryover (drop NaN rows) ---
+    bar_df = df.dropna(subset=["P_carryover"]).sort_values("P_carryover", ascending=False).head(12)
+
+    # --- Right panel: scatter affirm_rate vs max_run_geq_5_rate ---
+    scat_df = df.dropna(subset=["affirm_rate", "max_run_geq_5_rate", "n"]).copy()
+    # Filter rows where n > 0
+    scat_df = scat_df[scat_df["n"] > 0]
+    rho, pval = stats.spearmanr(scat_df["affirm_rate"], scat_df["max_run_geq_5_rate"])
+
+    fig, (ax_bar, ax_scat) = plt.subplots(1, 2, figsize=(9.5, 4.0), constrained_layout=True)
+
+    # ── Left: horizontal bar chart ──
+    y_pos = np.arange(len(bar_df))
+    bar_colors = [DOMAIN_COLORS_AUDIT.get(d, DOMAIN_COLORS_AUDIT["unmapped"])
+                  for d in bar_df["domain"]]
+
+    ax_bar.barh(y_pos, bar_df["P_carryover"].values, color=bar_colors,
+                edgecolor="black", linewidth=0.4, height=0.65, zorder=3)
+
+    # Corpus-wide mean vertical line
+    if corpus_mean_carryover is not None:
+        ax_bar.axvline(corpus_mean_carryover, color="black", linewidth=1.0,
+                       linestyle="--", zorder=4,
+                       label=f"Corpus mean ({corpus_mean_carryover:.2f})")
+
+    # Short labels (truncate long names)
+    short_labels = []
+    for s in bar_df["source_dataset"]:
+        lbl = s.replace("Dolci Instruct ", "Dolci:").replace("Tulu 3 Persona ", "Tulu:")
+        if len(lbl) > 24:
+            lbl = lbl[:23] + "…"
+        short_labels.append(lbl)
+
+    ax_bar.set_yticks(y_pos)
+    ax_bar.set_yticklabels(short_labels, fontsize=7)
+    ax_bar.set_xlabel(r"$P$(\,resp has list\,|\,prompt has list\,)", fontsize=8)
+    ax_bar.set_title("Formatting Carryover by Source\n(top 12)", fontsize=9, fontweight="bold")
+    ax_bar.set_xlim(0, 1.05)
+    ax_bar.grid(axis="x", alpha=0.15, zorder=0)
+    ax_bar.invert_yaxis()  # highest at top
+
+    # Value labels on bars
+    for i, val in enumerate(bar_df["P_carryover"].values):
+        ax_bar.text(val + 0.01, i, f"{val:.2f}", va="center", fontsize=6.5, zorder=5)
+
+    # Domain legend patches
+    from matplotlib.patches import Patch
+    seen_domains = list(dict.fromkeys(bar_df["domain"]))  # preserve order, deduplicate
+    legend_patches = [
+        Patch(facecolor=DOMAIN_COLORS_AUDIT[d], edgecolor="black", linewidth=0.4, label=d.capitalize())
+        for d in seen_domains
+    ]
+    if corpus_mean_carryover is not None:
+        from matplotlib.lines import Line2D
+        legend_patches.append(Line2D([0], [0], color="black", linewidth=1.0,
+                                     linestyle="--", label=f"Corpus mean ({corpus_mean_carryover:.2f})"))
+    ax_bar.legend(handles=legend_patches, loc="lower right", fontsize=6,
+                  framealpha=0.9, edgecolor="grey")
+
+    # ── Right: scatter ──
+    marker_sizes = np.log1p(scat_df["n"].values) * 8  # log scale, minimum ~8
+
+    scatter_colors = [DOMAIN_COLORS_AUDIT.get(d, DOMAIN_COLORS_AUDIT["unmapped"])
+                      for d in scat_df["domain"]]
+
+    ax_scat.scatter(
+        scat_df["affirm_rate"] * 100,
+        scat_df["max_run_geq_5_rate"] * 100,
+        s=marker_sizes,
+        c=scatter_colors,
+        edgecolor="black", linewidth=0.4,
+        alpha=0.85, zorder=5,
+    )
+
+    # Label each point
+    for _, row in scat_df.iterrows():
+        lbl = row["source_dataset"].replace("Dolci Instruct ", "Dolci:").replace("Tulu 3 Persona ", "Tulu:")
+        if len(lbl) > 20:
+            lbl = lbl[:19] + "…"
+        ax_scat.annotate(lbl,
+                         (row["affirm_rate"] * 100, row["max_run_geq_5_rate"] * 100),
+                         textcoords="offset points", xytext=(4, 2),
+                         fontsize=5, zorder=6)
+
+    # Spearman rho annotation
+    pval_str = f"{pval:.3f}" if pval >= 0.001 else "<0.001"
+    ax_scat.text(0.97, 0.97,
+                 rf"Spearman $\rho={rho:.2f}$" + f"\n$p={pval_str}$",
+                 transform=ax_scat.transAxes,
+                 fontsize=7, ha="right", va="top",
+                 bbox=dict(boxstyle="round,pad=0.3", facecolor="white",
+                           edgecolor="grey", linewidth=0.5, alpha=0.9))
+
+    ax_scat.set_xlabel("Affirm-prefix rate (%)", fontsize=8)
+    ax_scat.set_ylabel("Run-length $\geq 5$ rate (%)", fontsize=8)
+    ax_scat.set_title("Affirmation vs. Run-Length\nper Source Dataset", fontsize=9, fontweight="bold")
+    ax_scat.grid(alpha=0.15, zorder=0)
+
+    fig.savefig(OUT / "fig6_pillar_1_sft_priors.pdf")
+    fig.savefig(OUT / "fig6_pillar_1_sft_priors.png", dpi=300)
+    plt.close(fig)
+    print(f"  Saved: fig6_pillar_1_sft_priors.pdf  ({len(bar_df)} bars, {len(scat_df)} scatter pts, rho={rho:.3f})")
+
+
+# ═══════════════════════════════════════════════════════════════════
+# FIGURE 7: Pillar II — DPO Penalty Effect + Pillar III Scatter
+# ═══════════════════════════════════════════════════════════════════
+def make_pillar2_fig():
+    """
+    2-panel figure for §3.3 Pillar II + Pillar III.
+    Left : violin plots for delta_struct_jaccard, delta_ngram_overlap,
+           delta_max_run, delta_consensus_hits (50k subsample, seed=0).
+           Annotated with pre-computed Cliff's delta from phase6 summary.
+    Right: Pillar III scatter — x=mean(has_run_5_response) per macro-domain,
+           y=ΔBER (SFT-Base), 3 domains; Spearman rho from phase7 json.
+    """
+    import json
+    from scipy import stats
+
+    dpo_csv = ROOT / "dataset_analysis/results/phase6_instruct-dpo_per_pair.csv"
+    dpo_summary_json = ROOT / "dataset_analysis/results/phase6_instruct-dpo_summary.json"
+    pillar3_json = ROOT / "dataset_analysis/results/phase7_pillar3_correlation.json"
+    domain_ber_csv = ROOT / "Comparing_Experiments/April_analysis/tables/behavioral/domain_breakdown.csv"
+
+    # ── Load DPO summary (Cliff's delta + practical_significance) ──
+    with open(dpo_summary_json) as f:
+        dpo_sum = json.load(f)
+
+    VIOLIN_METRICS = [
+        ("delta_struct_jaccard", r"$\Delta$Struct\nJaccard"),
+        ("delta_ngram_overlap",  r"$\Delta$N-gram\nOverlap"),
+        ("delta_max_run",        r"$\Delta$Max\nRun"),
+        ("delta_consensus_hits", r"$\Delta$Consensus\nHits"),
+    ]
+
+    # Extract Cliff's delta and practical_significance from summary
+    cliffs = {}
+    prac_sig = {}
+    for key, _ in VIOLIN_METRICS:
+        entry = dpo_sum.get(key, {})
+        cliffs[key] = entry.get("cliffs_delta", float("nan"))
+        prac_sig[key] = entry.get("practical_significance", "n/a")
+
+    # ── Subsample DPO pairs (50k, seed=0) ──
+    dpo_df = pd.read_csv(dpo_csv, usecols=[k for k, _ in VIOLIN_METRICS])
+    if len(dpo_df) > 50000:
+        dpo_df = dpo_df.sample(n=50000, random_state=0)
+
+    # ── Load Pillar III data ──
+    with open(pillar3_json) as f:
+        p3 = json.load(f)
+
+    # Use has_run_5_response per-domain entry
+    p3_entry = p3.get("has_run_5_response", {})
+    p3_per_domain = p3_entry.get("per_domain", {})
+    p3_rho = p3_per_domain.get("spearman_rho", float("nan"))
+    p3_ci_lo = p3_per_domain.get("ci_lo", float("nan"))
+    p3_ci_hi = p3_per_domain.get("ci_hi", float("nan"))
+    p3_pval = p3_per_domain.get("pvalue", float("nan"))
+    p3_domain_data = p3_per_domain.get("domain_data", [])
+
+    # Build scatter data: x = mean_has_run_5_response, y = delta_ber
+    scatter_domains = []
+    for entry in p3_domain_data:
+        domain = entry.get("domain", "")
+        x_val = entry.get("mean_has_run_5_response", None)
+        y_val = entry.get("delta_ber", None)
+        if x_val is not None and y_val is not None:
+            scatter_domains.append({"domain": domain, "x": x_val, "y": y_val})
+
+    # ── Build figure ──
+    fig, (ax_vio, ax_p3) = plt.subplots(1, 2, figsize=(9.5, 4.0), constrained_layout=True)
+
+    # ── Left: violin plots ──
+    violin_data = [dpo_df[key].dropna().values for key, _ in VIOLIN_METRICS]
+    violin_labels = [lbl for _, lbl in VIOLIN_METRICS]
+
+    parts = ax_vio.violinplot(violin_data, positions=np.arange(len(VIOLIN_METRICS)),
+                               showmedians=False, showextrema=False)
+
+    # Style each violin body
+    vio_color = "#5B9BD5"
+    for body in parts["bodies"]:
+        body.set_facecolor(vio_color)
+        body.set_edgecolor("black")
+        body.set_linewidth(0.5)
+        body.set_alpha(0.7)
+
+    # Overlay IQR box and median per violin
+    for i, (key, _) in enumerate(VIOLIN_METRICS):
+        vals = dpo_df[key].dropna().values
+        # Clip to [-0.5, 0.5] for display
+        vals_clipped = np.clip(vals, -0.5, 0.5)
+        q25, median, q75 = np.percentile(vals_clipped, [25, 50, 75])
+
+        # IQR box
+        ax_vio.add_patch(plt.Rectangle(
+            (i - 0.05, q25), 0.1, q75 - q25,
+            facecolor="white", edgecolor="black", linewidth=0.8, zorder=4,
+        ))
+        # Median line
+        ax_vio.hlines(median, i - 0.08, i + 0.08,
+                      color="black", linewidth=1.2, zorder=5)
+
+        # Annotate Cliff's delta above violin
+        cd = cliffs.get(key, float("nan"))
+        ps = prac_sig.get(key, "n/a")
+        cd_str = f"$\\delta$={cd:+.3f}\n({ps})" if not np.isnan(cd) else "n/a"
+        ax_vio.text(i, 0.52, cd_str, ha="center", va="bottom", fontsize=6.5,
+                    zorder=6,
+                    bbox=dict(boxstyle="round,pad=0.2", facecolor="white",
+                              edgecolor="grey", linewidth=0.4, alpha=0.85))
+
+    ax_vio.set_xticks(np.arange(len(VIOLIN_METRICS)))
+    ax_vio.set_xticklabels(violin_labels, fontsize=7)
+    ax_vio.set_ylabel("Delta value (rejected − chosen)", fontsize=8)
+    ax_vio.set_title("DPO Penalty: Structural-Prior Deltas\n(n=50k pairs, seed=0)", fontsize=9, fontweight="bold")
+    ax_vio.set_ylim(-0.5, 0.65)
+    ax_vio.axhline(0, color="black", linewidth=0.6, linestyle="--", alpha=0.5, zorder=2)
+    ax_vio.grid(axis="y", alpha=0.12, zorder=0)
+
+    # ── Right: Pillar III scatter (3 domains) ──
+    for entry in scatter_domains:
+        domain = entry["domain"]
+        color = DOMAIN_COLORS_AUDIT.get(domain, DOMAIN_COLORS_AUDIT["unmapped"])
+        ax_p3.scatter(entry["x"] * 100, entry["y"] * 100,
+                      s=90, color=color, edgecolor="black", linewidth=0.6,
+                      zorder=5)
+        ax_p3.annotate(domain.capitalize(),
+                       (entry["x"] * 100, entry["y"] * 100),
+                       textcoords="offset points", xytext=(5, 3),
+                       fontsize=7, fontweight="bold", zorder=6)
+
+    # Spearman rho + CI annotation
+    rho_str = f"{p3_rho:.2f}" if not np.isnan(p3_rho) else "n/a"
+    ci_str = f"[{p3_ci_lo:.2f}, {p3_ci_hi:.2f}]" if not (np.isnan(p3_ci_lo) or np.isnan(p3_ci_hi)) else "n/a"
+    pval_str = f"{p3_pval:.3f}" if not np.isnan(p3_pval) else "n/a"
+    annotation = (rf"Spearman $\rho={rho_str}$" +
+                  f"\n95% CI {ci_str}\n$p={pval_str}$ (n=3)")
+    ax_p3.text(0.97, 0.97, annotation,
+               transform=ax_p3.transAxes,
+               fontsize=6.5, ha="right", va="top",
+               bbox=dict(boxstyle="round,pad=0.3", facecolor="white",
+                         edgecolor="grey", linewidth=0.5, alpha=0.9))
+
+    ax_p3.axhline(0, color="grey", linewidth=0.5, linestyle="--", alpha=0.4, zorder=2)
+    ax_p3.set_xlabel(r"Mean $\hat{P}$(run $\geq 5$) per macro-domain (%)", fontsize=8)
+    ax_p3.set_ylabel(r"$\Delta$BER SFT$-$Base (%)", fontsize=8)
+    ax_p3.set_title("Pillar III: Structural Priors\nvs. Behavioral Error Rate", fontsize=9, fontweight="bold")
+    ax_p3.grid(alpha=0.12, zorder=0)
+
+    # Convert axes to %
+    ax_p3.xaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{x:.2f}"))
+
+    fig.savefig(OUT / "fig7_pillar_2_dpo_effect.pdf")
+    fig.savefig(OUT / "fig7_pillar_2_dpo_effect.png", dpi=300)
+    plt.close(fig)
+    print(f"  Saved: fig7_pillar_2_dpo_effect.pdf  ({len(scatter_domains)} domain dots, {len(dpo_df)} violin pairs)")
+
+
+# ═══════════════════════════════════════════════════════════════════
 if __name__ == "__main__":
-    print("Generating publication figures from T=0.0 corrected data...")
-    make_stacked_bar()
-    make_forest_plot()
-    make_scatter()
-    make_peer_vs_auth()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--only", type=str, default=None,
+                        help="Comma-separated list of figures to generate: "
+                             "stacked,forest,scatter,peer_auth,pillar1,pillar2")
+    args = parser.parse_args()
+
+    only = set(args.only.split(",")) if args.only else None
+
+    dispatch = {
+        "stacked":   make_stacked_bar,
+        "forest":    make_forest_plot,
+        "scatter":   make_scatter,
+        "peer_auth": make_peer_vs_auth,
+        "pillar1":   make_pillar1_fig,
+        "pillar2":   make_pillar2_fig,
+    }
+
+    if only:
+        for key in only:
+            key = key.strip()
+            if key in dispatch:
+                print(f"Generating {key}...")
+                dispatch[key]()
+            else:
+                print(f"Unknown figure key: {key!r}. Available: {list(dispatch.keys())}")
+    else:
+        print("Generating publication figures from T=0.0 corrected data...")
+        for name, fn in dispatch.items():
+            print(f"  -> {name}")
+            fn()
     print("Done!")
