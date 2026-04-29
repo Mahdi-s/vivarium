@@ -1,0 +1,915 @@
+{
+  "items": [
+    {
+      "item_id": "arc_arc_challenge_0004",
+      "domain": "science",
+      "domain_raw": "science",
+      "item_prompt_text": "They have each gained one-half of their maximum kinetic energy.",
+      "item_prompt_text_hash": "sha256:504fcddda206285f24a46850fc98e292d634dd7b279d90b109fe72c7cf2ef34c",
+      "nearest_neighbors": [
+        {
+          "nn_rank": 1,
+          "nn_idx": 410276,
+          "nn_source_dataset": "Dolci Instruct OpenThoughts3+ Science",
+          "nn_domain_canonical": "science",
+          "nn_cosine_similarity": 0.4253563080101712,
+          "nn_max_run": 2,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "So I was thinking about this really simple situation and then I came across a little question. The situation is as follows:\nThere is a block of wood suspended from a ceiling like support with four strings. The strings are perfectly rigid and light with no friction between various parts of the string",
+          "nn_assistant_text_excerpt": "The situation involves a block of wood suspended by four perfectly rigid and light strings, struck by a projectile which embeds itself into the block. The block swings up, reaches a maximum height, and then swings back down. When it returns to its original position, the problem asks where the kineti"
+        },
+        {
+          "nn_rank": 2,
+          "nn_idx": 4326,
+          "nn_source_dataset": "Dolci Instruct OpenThoughts3+ Science",
+          "nn_domain_canonical": "science",
+          "nn_cosine_similarity": 0.37680254158359777,
+          "nn_max_run": 2,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "The K.E. of electron in He\\(^+\\) will be maximum in (a) third orbit (b) first orbit (c) seventh orbit (d) infinite orbit",
+          "nn_assistant_text_excerpt": "To determine the orbit in which the kinetic energy (K.E.) of an electron in He\u207a is maximum, we start by noting that He\u207a is a hydrogen-like ion with atomic number \\( Z = 2 \\). The energy levels for hydrogen-like atoms are given by the formula:\n\n\\[\nE_n = -\\frac{Z^2 \\cdot R_H}{n^2}\n\\]\n\nwhere \\( R_H \\) "
+        },
+        {
+          "nn_rank": 3,
+          "nn_idx": 210426,
+          "nn_source_dataset": "Dolci Instruct OpenThoughts3+ Science",
+          "nn_domain_canonical": "science",
+          "nn_cosine_similarity": 0.3729320570960439,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "So I was thinking about this really simple situation and then I came across a little question. The situation is as follows:\nThere is a block of wood suspended from a ceiling like support with four strings. The strings are perfectly rigid and light with no friction between various parts of the string",
+          "nn_assistant_text_excerpt": "The disappearance of kinetic energy in this scenario can be explained through the conservation of energy in a classical framework by considering the interaction between the block and the Earth via the strings. Here's a breakdown:\n\n1. **Initial Collision**: The projectile collides with and embeds its"
+        }
+      ]
+    },
+    {
+      "item_id": "arc_arc_challenge_0005",
+      "domain": "science",
+      "domain_raw": "science",
+      "item_prompt_text": "an infectious, cell-cycle disease",
+      "item_prompt_text_hash": "sha256:ac93c0dfa3f593a759348bda3bb65efbd6ce936f4cebac48953914e9edbb7667",
+      "nearest_neighbors": [
+        {
+          "nn_rank": 1,
+          "nn_idx": 1625670,
+          "nn_source_dataset": "Wildchat",
+          "nn_domain_canonical": "general",
+          "nn_cosine_similarity": 0.5921905814709444,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "explain effect of amyloid beta on cell division and mitosis",
+          "nn_assistant_text_excerpt": "**Amyloid beta (A\u03b2) is a peptide most commonly associated with Alzheimer\u2019s disease, where it forms characteristic plaques in the brain. Recent research shows that beyond its role in neurotoxicity, amyloid beta can also affect the process of cell division and mitosis, particularly in neurons and othe"
+        },
+        {
+          "nn_rank": 2,
+          "nn_idx": 1629816,
+          "nn_source_dataset": "Wildchat",
+          "nn_domain_canonical": "general",
+          "nn_cosine_similarity": 0.46917705482848515,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "Why is it important that progress through the cell cycle is controlled binary switches? What (generally) makes up the binary switches, and why are they binary switches.",
+          "nn_assistant_text_excerpt": "**Why is it important that progress through the cell cycle is controlled by binary switches?**\n\nThe cell cycle is the process by which cells grow and divide. **Precise control** is essential because errors can lead to severe consequences like **uncontrolled cell division (cancer) or cell death**. \n\n"
+        },
+        {
+          "nn_rank": 3,
+          "nn_idx": 528732,
+          "nn_source_dataset": "SciRiff",
+          "nn_domain_canonical": "science",
+          "nn_cosine_similarity": 0.39094112920285007,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "You will be shown biomedical passages and your task is to the answer the provided question. Provide a concise and accurate response and do not include any additional text in the response other than the answer.\n\nQuestion: Which factor interacts with Treslin/TICRR throughout the cell cycle of human ce",
+          "nn_assistant_text_excerpt": "MDM two binding protein (MTBP)"
+        }
+      ]
+    },
+    {
+      "item_id": "arc_arc_challenge_0006",
+      "domain": "science",
+      "domain_raw": "science",
+      "item_prompt_text": "to store food that will be eaten over the winter months",
+      "item_prompt_text_hash": "sha256:13b92cf0bd02da5b3104f9d552e79eb51a2a1637e7e9af59913c18b80c87860e",
+      "nearest_neighbors": [
+        {
+          "nn_rank": 1,
+          "nn_idx": 79265,
+          "nn_source_dataset": "OpenAssistant",
+          "nn_domain_canonical": "general",
+          "nn_cosine_similarity": 0.45366955156566474,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 1.0,
+          "nn_user_text_excerpt": "All pizzas are food. I have not eaten any food today. Have I eaten any pizzas today?",
+          "nn_assistant_text_excerpt": "No. You stated you have not eaten any food today, and since all pizzas are food, it can be deduced that you have not eaten any pizzas today."
+        },
+        {
+          "nn_rank": 2,
+          "nn_idx": 1657291,
+          "nn_source_dataset": "Wildchat",
+          "nn_domain_canonical": "general",
+          "nn_cosine_similarity": 0.36679639929488256,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "write a subject for an email about winter clothing",
+          "nn_assistant_text_excerpt": "Sure! Here are a few subject line options for an email about winter clothing:\n\n1. **Stay Cozy: Discover Our Latest Winter Clothing Collection**  \n2. **Winter Essentials: Warm Up with New Arrivals**  \n3. **Bundle Up! Shop the Best Winter Styles**  \n4. **Get Ready for Winter: Must-Have Clothing Picks*"
+        },
+        {
+          "nn_rank": 3,
+          "nn_idx": 21235,
+          "nn_source_dataset": "Dolci Instruct Precise IF",
+          "nn_domain_canonical": "unmapped",
+          "nn_cosine_similarity": 0.29933944303856597,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "Why can people born in winter months not telepathically communicate with each other? Answer with at least 533 words.",
+          "nn_assistant_text_excerpt": "The concept of telepathic communication, while fascinating in science fiction, fantasy, and metaphysical discourse, lacks empirical evidence in scientific literature. No studies or experiments have demonstrated that humans born in any particular season\u2014like winter\u2014are biologically, psychologically, "
+        }
+      ]
+    },
+    {
+      "item_id": "arc_arc_challenge_0012",
+      "domain": "science",
+      "domain_raw": "science",
+      "item_prompt_text": "<prompt text not resolved for arc_arc_challenge_0012; resolve via runner.py:render_* or item catalog>",
+      "item_prompt_text_hash": "sha256:cb4063dd2323cc6dba6dd389e9a1395d1efed78ec0c620b05dbcf63239d86979",
+      "nearest_neighbors": [
+        {
+          "nn_rank": 1,
+          "nn_idx": 1637007,
+          "nn_source_dataset": "Wildchat",
+          "nn_domain_canonical": "general",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "Please make following words more formal and cohesive: I would like to write this recommendation letter for XXX, the mechine learning engineer who join my team since June 2022. Our group primarly focus on the solution to model optimization and acceleration especially for popular models including LLMs",
+          "nn_assistant_text_excerpt": "Certainly! Here's a more formal and cohesive version of your text:\n\nI am pleased to write this recommendation letter for XXX, a machine learning engineer who has been a valued member of my team since June 2022. Our group primarily focuses on developing solutions for model optimization and accelerati"
+        },
+        {
+          "nn_rank": 2,
+          "nn_idx": 202469,
+          "nn_source_dataset": "Dolci Instruct OpenThoughts3+ Science",
+          "nn_domain_canonical": "science",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "I have recently read that the dimensional regularization scheme is \"special\" because power law divergences are absent. It was argued that power law divergences were unphysical and that there was no fine-tuning problem. I was immediately suspicious.\nLet us take $\\lambda\\phi^4$ theory. For the renorma",
+          "nn_assistant_text_excerpt": "The discussion hinges on how different regularization methods handle divergences and their implications for naturalness and fine-tuning in quantum field theories like $\\lambda\\phi^4$. Here's a structured breakdown:\n\n### Key Insights:\n1. **Fine-Tuning in Cutoff Regularization**:\n   - With a cutoff $\\"
+        },
+        {
+          "nn_rank": 3,
+          "nn_idx": 612574,
+          "nn_source_dataset": "Dolci Instruct OpenThoughts3+ Science",
+          "nn_domain_canonical": "science",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 2,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "I'm familiar with how fusion categories describe the fusion of point-like excitations, and how braided fusion categories describe the fusion of anyons in 2+1D topological order. Concretely, a fusion category can be described by two sets of data: a finite set $S$ of particle types with fusion rules $",
+          "nn_assistant_text_excerpt": "To address the question about fusion 2-categories and their generalizations of fusion rules, F-matrices, and the pentagon equation, here is a structured explanation:\n\n---\n\n### **Fusion 2-Categories in 3+1D Topological Order**\nFusion 2-categories generalize fusion categories to encode the topology of"
+        }
+      ]
+    },
+    {
+      "item_id": "arc_arc_challenge_0014",
+      "domain": "science",
+      "domain_raw": "science",
+      "item_prompt_text": "water vapor",
+      "item_prompt_text_hash": "sha256:93e191ab43bef2e2b138fddc08308b2651a43646b81b5e300ed458605ecf20cc",
+      "nearest_neighbors": [
+        {
+          "nn_rank": 1,
+          "nn_idx": 123122,
+          "nn_source_dataset": "Dolci Instruct OpenThoughts3+ Science",
+          "nn_domain_canonical": "science",
+          "nn_cosine_similarity": 0.549305444446154,
+          "nn_max_run": 2,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "If I have a beaker with pure water in it that has a piston right above the surface of the water that maintains a pressure of 1\u00a0atm then below 100\u00a0\u00b0C I would not expect to have any water vapor. In other words, the piston will keep touching the surface of the water. Above 100\u00a0\u00b0C the piston will go up ",
+          "nn_assistant_text_excerpt": "The key here involves understanding how partial pressures contribute to the total pressure under which a substance can exist as a vapor in equilibrium with its liquid phase. Let's break down the reasoning step by step:\n\n### 1. **Without the Inert Gas (Original Setup):**\n   - **Scenario:** A beaker w"
+        },
+        {
+          "nn_rank": 2,
+          "nn_idx": 1646543,
+          "nn_source_dataset": "Wildchat",
+          "nn_domain_canonical": "general",
+          "nn_cosine_similarity": 0.5168736020918917,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "Relative humidity",
+          "nn_assistant_text_excerpt": "**Relative humidity** is a measure of how much water vapor is in the air compared to how much water vapor the air can hold at a specific temperature. It is expressed as a percentage.\n\n**Definition:**  \nRelative humidity (RH) is the ratio of the current amount of water vapor in the air to the maximum"
+        },
+        {
+          "nn_rank": 3,
+          "nn_idx": 507516,
+          "nn_source_dataset": "Dolci Instruct OpenThoughts3+ Science",
+          "nn_domain_canonical": "science",
+          "nn_cosine_similarity": 0.5093091749965645,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "If I have a beaker with pure water in it that has a piston right above the surface of the water that maintains a pressure of 1\u00a0atm then below 100\u00a0\u00b0C I would not expect to have any water vapor. In other words, the piston will keep touching the surface of the water. Above 100\u00a0\u00b0C the piston will go up ",
+          "nn_assistant_text_excerpt": "To address the confusion, let's clarify the key concepts involved:\n\n### Key Concepts:\n1. **Vapor Pressure**: The partial pressure exerted by a vapor in equilibrium with its liquid at a given temperature. For water at 50\u00b0C, this is ~0.016 atm (~12.3 mmHg).\n2. **Dalton's Law**: Total pressure is the s"
+        }
+      ]
+    },
+    {
+      "item_id": "arc_arc_challenge_0018",
+      "domain": "science",
+      "domain_raw": "science",
+      "item_prompt_text": "the price of boards will increase",
+      "item_prompt_text_hash": "sha256:a5118f7b9ac33b559f961011c9bf2be851a9f0152d3ef9333a1c4db2feb34fe5",
+      "nearest_neighbors": [
+        {
+          "nn_rank": 1,
+          "nn_idx": 151533,
+          "nn_source_dataset": "OpenMathInstruct 2",
+          "nn_domain_canonical": "math",
+          "nn_cosine_similarity": 0.6588415572821027,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "Emily built a treehouse in her backyard. The main floor took twelve wooden boards, the upper floor took eighteen boards, and the roof took nine boards. The staircase took five fewer boards than the upper floor, and each of the three railings took two boards. She accidentally damaged two boards in th",
+          "nn_assistant_text_excerpt": "To determine the total number of wooden boards Emily bought, we need to sum up the boards used for each part of the treehouse and account for the damaged and leftover boards.\n\nMain floor: 12 boards\nUpper floor: 18 boards\nRoof: 9 boards\nStaircase: 18 - 5 = 13 boards\nRailings: 3 * 2 = 6 boards\n\nTotal "
+        },
+        {
+          "nn_rank": 2,
+          "nn_idx": 62529,
+          "nn_source_dataset": "Dolci Instruct Python Algorithms",
+          "nn_domain_canonical": "unmapped",
+          "nn_cosine_similarity": 0.39523717843549244,
+          "nn_max_run": 2,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "You are given a list of products, where each product is represented as a dictionary with at least a 'name' key and a 'price' key. Your task is to process the products and output a new list (on a single line) in JSON format with the products sorted by their price in ascending order. Only include prod",
+          "nn_assistant_text_excerpt": "import sys\nimport json\n\ndef is_whole_number_price(product):\n    try:\n        price = product.get('price')\n        if isinstance(price, (int, float)) and float(price).is_integer():\n            return True\n        return False\n    except Exception:\n        return False\n\ndef main():\n    input_line = sy"
+        },
+        {
+          "nn_rank": 3,
+          "nn_idx": 1646572,
+          "nn_source_dataset": "Wildchat",
+          "nn_domain_canonical": "general",
+          "nn_cosine_similarity": 0.38216645419033274,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "foreach ($goodsList as $key => $value) {\n                $goodsList[$key]['price'] = $value['zx_price'];\n            }",
+          "nn_assistant_text_excerpt": "\u4f60\u8fd9\u6bb5\u4ee3\u7801\u7684\u542b\u4e49\u662f\uff1a\u5faa\u73af\u904d\u5386 `$goodsList` \u6570\u7ec4\uff0c\u5c06\u6bcf\u4e2a\u5546\u54c1\u7684 `'price'` \u5b57\u6bb5\u7528\u8be5\u5546\u54c1\u7684 `'zx_price'` \u5b57\u6bb5\u7684\u503c\u8986\u76d6\u3002\n\n\u7b49\u4ef7\u4e8e\uff1a\n\n```php\nforeach ($goodsList as $key => $value) {\n    $goodsList[$key]['price'] = $value['zx_price'];\n}\n```\n\n**\u8be6\u7ec6\u89e3\u91ca\uff1a**\n- `$goodsList` \u662f\u4e00\u4e2a\u5305\u542b\u82e5\u5e72\u5b50\u6570\u7ec4\uff08\u6bcf\u4e2a\u5546\u54c1\u4fe1\u606f\uff09\u7684\u6570\u7ec4\u3002\n- `foreach ($goodsList as $key => $value)` \u904d\u5386\u6bcf\u4e00\u4e2a\u5546\u54c1\uff0c\u6bcf\u6b21\u5faa\u73af `$key"
+        }
+      ]
+    },
+    {
+      "item_id": "arc_arc_challenge_0023",
+      "domain": "science",
+      "domain_raw": "science",
+      "item_prompt_text": "<prompt text not resolved for arc_arc_challenge_0023; resolve via runner.py:render_* or item catalog>",
+      "item_prompt_text_hash": "sha256:631f12eea3be558c0ce662998294f8927e3ce6d380bbb57d7bca598fe70026c2",
+      "nearest_neighbors": [
+        {
+          "nn_rank": 1,
+          "nn_idx": 1637007,
+          "nn_source_dataset": "Wildchat",
+          "nn_domain_canonical": "general",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "Please make following words more formal and cohesive: I would like to write this recommendation letter for XXX, the mechine learning engineer who join my team since June 2022. Our group primarly focus on the solution to model optimization and acceleration especially for popular models including LLMs",
+          "nn_assistant_text_excerpt": "Certainly! Here's a more formal and cohesive version of your text:\n\nI am pleased to write this recommendation letter for XXX, a machine learning engineer who has been a valued member of my team since June 2022. Our group primarily focuses on developing solutions for model optimization and accelerati"
+        },
+        {
+          "nn_rank": 2,
+          "nn_idx": 202469,
+          "nn_source_dataset": "Dolci Instruct OpenThoughts3+ Science",
+          "nn_domain_canonical": "science",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "I have recently read that the dimensional regularization scheme is \"special\" because power law divergences are absent. It was argued that power law divergences were unphysical and that there was no fine-tuning problem. I was immediately suspicious.\nLet us take $\\lambda\\phi^4$ theory. For the renorma",
+          "nn_assistant_text_excerpt": "The discussion hinges on how different regularization methods handle divergences and their implications for naturalness and fine-tuning in quantum field theories like $\\lambda\\phi^4$. Here's a structured breakdown:\n\n### Key Insights:\n1. **Fine-Tuning in Cutoff Regularization**:\n   - With a cutoff $\\"
+        },
+        {
+          "nn_rank": 3,
+          "nn_idx": 612574,
+          "nn_source_dataset": "Dolci Instruct OpenThoughts3+ Science",
+          "nn_domain_canonical": "science",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 2,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "I'm familiar with how fusion categories describe the fusion of point-like excitations, and how braided fusion categories describe the fusion of anyons in 2+1D topological order. Concretely, a fusion category can be described by two sets of data: a finite set $S$ of particle types with fusion rules $",
+          "nn_assistant_text_excerpt": "To address the question about fusion 2-categories and their generalizations of fusion rules, F-matrices, and the pentagon equation, here is a structured explanation:\n\n---\n\n### **Fusion 2-Categories in 3+1D Topological Order**\nFusion 2-categories generalize fusion categories to encode the topology of"
+        }
+      ]
+    },
+    {
+      "item_id": "arc_arc_challenge_0024",
+      "domain": "science",
+      "domain_raw": "science",
+      "item_prompt_text": "<prompt text not resolved for arc_arc_challenge_0024; resolve via runner.py:render_* or item catalog>",
+      "item_prompt_text_hash": "sha256:2725d3f8176633af3daf1f1a36908a520b8a6b904c9035996a54630c0f898245",
+      "nearest_neighbors": [
+        {
+          "nn_rank": 1,
+          "nn_idx": 1637007,
+          "nn_source_dataset": "Wildchat",
+          "nn_domain_canonical": "general",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "Please make following words more formal and cohesive: I would like to write this recommendation letter for XXX, the mechine learning engineer who join my team since June 2022. Our group primarly focus on the solution to model optimization and acceleration especially for popular models including LLMs",
+          "nn_assistant_text_excerpt": "Certainly! Here's a more formal and cohesive version of your text:\n\nI am pleased to write this recommendation letter for XXX, a machine learning engineer who has been a valued member of my team since June 2022. Our group primarily focuses on developing solutions for model optimization and accelerati"
+        },
+        {
+          "nn_rank": 2,
+          "nn_idx": 202469,
+          "nn_source_dataset": "Dolci Instruct OpenThoughts3+ Science",
+          "nn_domain_canonical": "science",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "I have recently read that the dimensional regularization scheme is \"special\" because power law divergences are absent. It was argued that power law divergences were unphysical and that there was no fine-tuning problem. I was immediately suspicious.\nLet us take $\\lambda\\phi^4$ theory. For the renorma",
+          "nn_assistant_text_excerpt": "The discussion hinges on how different regularization methods handle divergences and their implications for naturalness and fine-tuning in quantum field theories like $\\lambda\\phi^4$. Here's a structured breakdown:\n\n### Key Insights:\n1. **Fine-Tuning in Cutoff Regularization**:\n   - With a cutoff $\\"
+        },
+        {
+          "nn_rank": 3,
+          "nn_idx": 612574,
+          "nn_source_dataset": "Dolci Instruct OpenThoughts3+ Science",
+          "nn_domain_canonical": "science",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 2,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "I'm familiar with how fusion categories describe the fusion of point-like excitations, and how braided fusion categories describe the fusion of anyons in 2+1D topological order. Concretely, a fusion category can be described by two sets of data: a finite set $S$ of particle types with fusion rules $",
+          "nn_assistant_text_excerpt": "To address the question about fusion 2-categories and their generalizations of fusion rules, F-matrices, and the pentagon equation, here is a structured explanation:\n\n---\n\n### **Fusion 2-Categories in 3+1D Topological Order**\nFusion 2-categories generalize fusion categories to encode the topology of"
+        }
+      ]
+    },
+    {
+      "item_id": "arc_arc_challenge_0031",
+      "domain": "science",
+      "domain_raw": "science",
+      "item_prompt_text": "its ability to exist as a liquid",
+      "item_prompt_text_hash": "sha256:fd00f1d7cfe319e923bb5aa29925c2aab056f31ab994afddcc219e7667f695b1",
+      "nearest_neighbors": [
+        {
+          "nn_rank": 1,
+          "nn_idx": 26789,
+          "nn_source_dataset": "Dolci Instruct OpenThoughts3+ Science",
+          "nn_domain_canonical": "science",
+          "nn_cosine_similarity": 0.33562687726116563,
+          "nn_max_run": 2,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "The triple point of carbon dioxide (CO\\(_2\\)) corresponds to a pressure of \\(5.18 \\times 10^5\\) Pa and a temperature of 216.5 K. In what temperature range can liquid carbon dioxide be obtained? In what conditions does sublimation take place?",
+          "nn_assistant_text_excerpt": "The triple point of carbon dioxide (CO\u2082) is the unique point where solid, liquid, and gas phases coexist in equilibrium, given as a pressure of \\(5.18 \\times 10^5\\) Pa and a temperature of 216.5 K. This information is crucial for determining the conditions where liquid CO\u2082 can exist and sublimation "
+        },
+        {
+          "nn_rank": 2,
+          "nn_idx": 443761,
+          "nn_source_dataset": "Dolci Instruct OpenThoughts3+ Science",
+          "nn_domain_canonical": "science",
+          "nn_cosine_similarity": 0.3294994883193536,
+          "nn_max_run": 2,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "The triple point of carbon dioxide (CO\\(_2\\)) corresponds to a pressure of \\(5.18 \\times 10^5\\) Pa and a temperature of 216.5 K. In what temperature range can liquid carbon dioxide be obtained? In what conditions does sublimation take place?",
+          "nn_assistant_text_excerpt": "To determine the temperature range in which liquid carbon dioxide (CO\u2082) can be obtained and the conditions for sublimation, we start with the given triple point of CO\u2082 at \\(5.18 \\times 10^5 \\, \\text{Pa}\\) and \\(216.5 \\, \\text{K}\\).\n\n1. **Temperature Range for Liquid CO\u2082**:\n   - The triple point is t"
+        },
+        {
+          "nn_rank": 3,
+          "nn_idx": 66545,
+          "nn_source_dataset": "Dolci Instruct OpenThoughts3+ Science",
+          "nn_domain_canonical": "science",
+          "nn_cosine_similarity": 0.3269693543195658,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "Consider a container filled with two liquids, of densities $\\rho_1$ and $\\rho_2$, such that $\\rho_2 < \\rho_1$. Now imagine placing a cylinder with the top base removed, of density $\\rho,\\space \\rho_2<\\rho<\\rho_1$, such that the cylinder floats between the liquids. The second liquid is barely filling",
+          "nn_assistant_text_excerpt": "To determine the correct buoyancy force in liquid \\( 2 \\), we need to consider the displacement of liquid by the cylinder. The cylinder has an exterior diameter \\( l_2 \\) and an interior diameter \\( l_1 \\), and it is open at the top. \n\n1. **Displacement Analysis**:\n   - The cylinder is submerged in "
+        }
+      ]
+    },
+    {
+      "item_id": "arc_arc_challenge_0040",
+      "domain": "science",
+      "domain_raw": "science",
+      "item_prompt_text": "responding to its environment",
+      "item_prompt_text_hash": "sha256:caa641fd1d8ca67928d14746696585bec226e8b8b0c29252b2463d477c702012",
+      "nearest_neighbors": [
+        {
+          "nn_rank": 1,
+          "nn_idx": 1644692,
+          "nn_source_dataset": "Wildchat",
+          "nn_domain_canonical": "general",
+          "nn_cosine_similarity": 0.2640023554177793,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "C# how to get path to current users desktop",
+          "nn_assistant_text_excerpt": "In C#, you can get the path to the current user's Desktop by using the `Environment.GetFolderPath` method with the `Environment.SpecialFolder.Desktop` enumeration:\n\n```csharp\nstring desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);\nConsole.WriteLine(desktopPath);\n```\n\n**Exp"
+        },
+        {
+          "nn_rank": 2,
+          "nn_idx": 38113,
+          "nn_source_dataset": "Dolci Instruct Precise IF",
+          "nn_domain_canonical": "unmapped",
+          "nn_cosine_similarity": 0.2610352425361214,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "Alex is an active member and moderator of an online forum dedicated to discussing and analyzing Hellboy comics. Every week, Alex reads 5 new Hellboy comic issues to keep up with discussions. As a moderator, Alex spends 3 hours each week managing forum posts and another 2 hours responding to members'",
+          "nn_assistant_text_excerpt": "Alex's weekly routine involves reading 5 Hellboy comic issues, spending 3 hours managing forum posts, and 2 hours responding to members\u2019 questions. This week, Alex reads an additional 2 comics for a special event and dedicates an extra hour to post management. \n\nAssuming each Hellboy comic takes one"
+        },
+        {
+          "nn_rank": 3,
+          "nn_idx": 1645320,
+          "nn_source_dataset": "Wildchat",
+          "nn_domain_canonical": "general",
+          "nn_cosine_similarity": 0.20791689089254062,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "Which factors should managers consider when going global? Discuss these factors under the global task and general environments.",
+          "nn_assistant_text_excerpt": "Certainly! When managers consider **going global**, they face a complex landscape. They must analyze multiple factors to ensure success in foreign markets. These factors can be grouped under two types of environments:\n\n- **The Global Task Environment**: Actors and forces that interact directly with "
+        }
+      ]
+    },
+    {
+      "item_id": "arc_arc_challenge_0042",
+      "domain": "science",
+      "domain_raw": "science",
+      "item_prompt_text": "<prompt text not resolved for arc_arc_challenge_0042; resolve via runner.py:render_* or item catalog>",
+      "item_prompt_text_hash": "sha256:93e2bd1b7816806929383db6a25ef8f5655c466ffa96b430c5aa2506a6db8c9e",
+      "nearest_neighbors": [
+        {
+          "nn_rank": 1,
+          "nn_idx": 1637007,
+          "nn_source_dataset": "Wildchat",
+          "nn_domain_canonical": "general",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "Please make following words more formal and cohesive: I would like to write this recommendation letter for XXX, the mechine learning engineer who join my team since June 2022. Our group primarly focus on the solution to model optimization and acceleration especially for popular models including LLMs",
+          "nn_assistant_text_excerpt": "Certainly! Here's a more formal and cohesive version of your text:\n\nI am pleased to write this recommendation letter for XXX, a machine learning engineer who has been a valued member of my team since June 2022. Our group primarily focuses on developing solutions for model optimization and accelerati"
+        },
+        {
+          "nn_rank": 2,
+          "nn_idx": 202469,
+          "nn_source_dataset": "Dolci Instruct OpenThoughts3+ Science",
+          "nn_domain_canonical": "science",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "I have recently read that the dimensional regularization scheme is \"special\" because power law divergences are absent. It was argued that power law divergences were unphysical and that there was no fine-tuning problem. I was immediately suspicious.\nLet us take $\\lambda\\phi^4$ theory. For the renorma",
+          "nn_assistant_text_excerpt": "The discussion hinges on how different regularization methods handle divergences and their implications for naturalness and fine-tuning in quantum field theories like $\\lambda\\phi^4$. Here's a structured breakdown:\n\n### Key Insights:\n1. **Fine-Tuning in Cutoff Regularization**:\n   - With a cutoff $\\"
+        },
+        {
+          "nn_rank": 3,
+          "nn_idx": 612574,
+          "nn_source_dataset": "Dolci Instruct OpenThoughts3+ Science",
+          "nn_domain_canonical": "science",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 2,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "I'm familiar with how fusion categories describe the fusion of point-like excitations, and how braided fusion categories describe the fusion of anyons in 2+1D topological order. Concretely, a fusion category can be described by two sets of data: a finite set $S$ of particle types with fusion rules $",
+          "nn_assistant_text_excerpt": "To address the question about fusion 2-categories and their generalizations of fusion rules, F-matrices, and the pentagon equation, here is a structured explanation:\n\n---\n\n### **Fusion 2-Categories in 3+1D Topological Order**\nFusion 2-categories generalize fusion categories to encode the topology of"
+        }
+      ]
+    },
+    {
+      "item_id": "arc_arc_challenge_0043",
+      "domain": "science",
+      "domain_raw": "science",
+      "item_prompt_text": "the distance between molecules in the medium",
+      "item_prompt_text_hash": "sha256:94ae7adddb2e5aac4cf04db96d9d70fd137214a0f69141ba5bd729d81b70438d",
+      "nearest_neighbors": [
+        {
+          "nn_rank": 1,
+          "nn_idx": 1658866,
+          "nn_source_dataset": "Wildchat",
+          "nn_domain_canonical": "general",
+          "nn_cosine_similarity": 0.4030481026318519,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "How people earn from medium",
+          "nn_assistant_text_excerpt": "People can earn money from **Medium** primarily through its **Partner Program**. Here\u2019s how the process generally works:\n\n---\n\n## 1. **Join the Medium Partner Program**\n\nTo earn from Medium, you must apply and be accepted into their Partner Program. The main eligibility requirements as of 2024 are:\n"
+        },
+        {
+          "nn_rank": 2,
+          "nn_idx": 729878,
+          "nn_source_dataset": "OpenAssistant",
+          "nn_domain_canonical": "general",
+          "nn_cosine_similarity": 0.35297830457792,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "When light enters a medium other than a vacuum it slows down. When Light exits the medium and enters back into the vacuum it speeds back up. Where does the energy come that accelerates the light?",
+          "nn_assistant_text_excerpt": "The energy of light does not change as it enters or exits a medium. The speed of light, however, is dependent on the properties of the medium through which it is traveling. When light enters a medium other than a vacuum, it interacts with the atoms or molecules in the medium, which causes it to slow"
+        },
+        {
+          "nn_rank": 3,
+          "nn_idx": 157047,
+          "nn_source_dataset": "Dolci Instruct OpenThoughts3+ Science",
+          "nn_domain_canonical": "science",
+          "nn_cosine_similarity": 0.34264203498969187,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "If the flow of protons through ATP synthase were blocked by an inhibitor, addition of a small amount of oxygen into an anaerobic preparation of submitochondrial particles (which have their matrix surface exposed to the surrounding medium) would result in a burst of respiration that would cause the m",
+          "nn_assistant_text_excerpt": "When the flow of protons through ATP synthase is blocked by an inhibitor in an anaerobic preparation of submitochondrial particles (which expose the matrix to the surrounding medium), adding oxygen triggers a burst of respiration and causes the medium to become more basic. Here's the detailed reason"
+        }
+      ]
+    },
+    {
+      "item_id": "arc_arc_challenge_0045",
+      "domain": "science",
+      "domain_raw": "science",
+      "item_prompt_text": "<prompt text not resolved for arc_arc_challenge_0045; resolve via runner.py:render_* or item catalog>",
+      "item_prompt_text_hash": "sha256:beb3777e2f8c5688fa56064a1b945701cf576654ccc383be839169af0232c643",
+      "nearest_neighbors": [
+        {
+          "nn_rank": 1,
+          "nn_idx": 1637007,
+          "nn_source_dataset": "Wildchat",
+          "nn_domain_canonical": "general",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "Please make following words more formal and cohesive: I would like to write this recommendation letter for XXX, the mechine learning engineer who join my team since June 2022. Our group primarly focus on the solution to model optimization and acceleration especially for popular models including LLMs",
+          "nn_assistant_text_excerpt": "Certainly! Here's a more formal and cohesive version of your text:\n\nI am pleased to write this recommendation letter for XXX, a machine learning engineer who has been a valued member of my team since June 2022. Our group primarily focuses on developing solutions for model optimization and accelerati"
+        },
+        {
+          "nn_rank": 2,
+          "nn_idx": 202469,
+          "nn_source_dataset": "Dolci Instruct OpenThoughts3+ Science",
+          "nn_domain_canonical": "science",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "I have recently read that the dimensional regularization scheme is \"special\" because power law divergences are absent. It was argued that power law divergences were unphysical and that there was no fine-tuning problem. I was immediately suspicious.\nLet us take $\\lambda\\phi^4$ theory. For the renorma",
+          "nn_assistant_text_excerpt": "The discussion hinges on how different regularization methods handle divergences and their implications for naturalness and fine-tuning in quantum field theories like $\\lambda\\phi^4$. Here's a structured breakdown:\n\n### Key Insights:\n1. **Fine-Tuning in Cutoff Regularization**:\n   - With a cutoff $\\"
+        },
+        {
+          "nn_rank": 3,
+          "nn_idx": 612574,
+          "nn_source_dataset": "Dolci Instruct OpenThoughts3+ Science",
+          "nn_domain_canonical": "science",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 2,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "I'm familiar with how fusion categories describe the fusion of point-like excitations, and how braided fusion categories describe the fusion of anyons in 2+1D topological order. Concretely, a fusion category can be described by two sets of data: a finite set $S$ of particle types with fusion rules $",
+          "nn_assistant_text_excerpt": "To address the question about fusion 2-categories and their generalizations of fusion rules, F-matrices, and the pentagon equation, here is a structured explanation:\n\n---\n\n### **Fusion 2-Categories in 3+1D Topological Order**\nFusion 2-categories generalize fusion categories to encode the topology of"
+        }
+      ]
+    },
+    {
+      "item_id": "arc_arc_challenge_0046",
+      "domain": "science",
+      "domain_raw": "science",
+      "item_prompt_text": "<prompt text not resolved for arc_arc_challenge_0046; resolve via runner.py:render_* or item catalog>",
+      "item_prompt_text_hash": "sha256:6696fc0ca4ee944ffb8664630935623f575539af1835501233a97bfa146e3c4c",
+      "nearest_neighbors": [
+        {
+          "nn_rank": 1,
+          "nn_idx": 1637007,
+          "nn_source_dataset": "Wildchat",
+          "nn_domain_canonical": "general",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "Please make following words more formal and cohesive: I would like to write this recommendation letter for XXX, the mechine learning engineer who join my team since June 2022. Our group primarly focus on the solution to model optimization and acceleration especially for popular models including LLMs",
+          "nn_assistant_text_excerpt": "Certainly! Here's a more formal and cohesive version of your text:\n\nI am pleased to write this recommendation letter for XXX, a machine learning engineer who has been a valued member of my team since June 2022. Our group primarily focuses on developing solutions for model optimization and accelerati"
+        },
+        {
+          "nn_rank": 2,
+          "nn_idx": 202469,
+          "nn_source_dataset": "Dolci Instruct OpenThoughts3+ Science",
+          "nn_domain_canonical": "science",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "I have recently read that the dimensional regularization scheme is \"special\" because power law divergences are absent. It was argued that power law divergences were unphysical and that there was no fine-tuning problem. I was immediately suspicious.\nLet us take $\\lambda\\phi^4$ theory. For the renorma",
+          "nn_assistant_text_excerpt": "The discussion hinges on how different regularization methods handle divergences and their implications for naturalness and fine-tuning in quantum field theories like $\\lambda\\phi^4$. Here's a structured breakdown:\n\n### Key Insights:\n1. **Fine-Tuning in Cutoff Regularization**:\n   - With a cutoff $\\"
+        },
+        {
+          "nn_rank": 3,
+          "nn_idx": 612574,
+          "nn_source_dataset": "Dolci Instruct OpenThoughts3+ Science",
+          "nn_domain_canonical": "science",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 2,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "I'm familiar with how fusion categories describe the fusion of point-like excitations, and how braided fusion categories describe the fusion of anyons in 2+1D topological order. Concretely, a fusion category can be described by two sets of data: a finite set $S$ of particle types with fusion rules $",
+          "nn_assistant_text_excerpt": "To address the question about fusion 2-categories and their generalizations of fusion rules, F-matrices, and the pentagon equation, here is a structured explanation:\n\n---\n\n### **Fusion 2-Categories in 3+1D Topological Order**\nFusion 2-categories generalize fusion categories to encode the topology of"
+        }
+      ]
+    },
+    {
+      "item_id": "arc_arc_challenge_0047",
+      "domain": "science",
+      "domain_raw": "science",
+      "item_prompt_text": "<prompt text not resolved for arc_arc_challenge_0047; resolve via runner.py:render_* or item catalog>",
+      "item_prompt_text_hash": "sha256:8f52aeb90d8682d048242d7a5bc4434e23a36ee9036e484fab2344f7fda7ba29",
+      "nearest_neighbors": [
+        {
+          "nn_rank": 1,
+          "nn_idx": 1637007,
+          "nn_source_dataset": "Wildchat",
+          "nn_domain_canonical": "general",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "Please make following words more formal and cohesive: I would like to write this recommendation letter for XXX, the mechine learning engineer who join my team since June 2022. Our group primarly focus on the solution to model optimization and acceleration especially for popular models including LLMs",
+          "nn_assistant_text_excerpt": "Certainly! Here's a more formal and cohesive version of your text:\n\nI am pleased to write this recommendation letter for XXX, a machine learning engineer who has been a valued member of my team since June 2022. Our group primarily focuses on developing solutions for model optimization and accelerati"
+        },
+        {
+          "nn_rank": 2,
+          "nn_idx": 202469,
+          "nn_source_dataset": "Dolci Instruct OpenThoughts3+ Science",
+          "nn_domain_canonical": "science",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "I have recently read that the dimensional regularization scheme is \"special\" because power law divergences are absent. It was argued that power law divergences were unphysical and that there was no fine-tuning problem. I was immediately suspicious.\nLet us take $\\lambda\\phi^4$ theory. For the renorma",
+          "nn_assistant_text_excerpt": "The discussion hinges on how different regularization methods handle divergences and their implications for naturalness and fine-tuning in quantum field theories like $\\lambda\\phi^4$. Here's a structured breakdown:\n\n### Key Insights:\n1. **Fine-Tuning in Cutoff Regularization**:\n   - With a cutoff $\\"
+        },
+        {
+          "nn_rank": 3,
+          "nn_idx": 612574,
+          "nn_source_dataset": "Dolci Instruct OpenThoughts3+ Science",
+          "nn_domain_canonical": "science",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 2,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "I'm familiar with how fusion categories describe the fusion of point-like excitations, and how braided fusion categories describe the fusion of anyons in 2+1D topological order. Concretely, a fusion category can be described by two sets of data: a finite set $S$ of particle types with fusion rules $",
+          "nn_assistant_text_excerpt": "To address the question about fusion 2-categories and their generalizations of fusion rules, F-matrices, and the pentagon equation, here is a structured explanation:\n\n---\n\n### **Fusion 2-Categories in 3+1D Topological Order**\nFusion 2-categories generalize fusion categories to encode the topology of"
+        }
+      ]
+    },
+    {
+      "item_id": "gsm8k_0000",
+      "domain": "math",
+      "domain_raw": "math",
+      "item_prompt_text": "<prompt text not resolved for gsm8k_0000; resolve via runner.py:render_* or item catalog>",
+      "item_prompt_text_hash": "sha256:a14e1d8852355fccf0ac88bb5808be17e88dfe4c887fbd592b8a7350dbc4e0a3",
+      "nearest_neighbors": [
+        {
+          "nn_rank": 1,
+          "nn_idx": 1637007,
+          "nn_source_dataset": "Wildchat",
+          "nn_domain_canonical": "general",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "Please make following words more formal and cohesive: I would like to write this recommendation letter for XXX, the mechine learning engineer who join my team since June 2022. Our group primarly focus on the solution to model optimization and acceleration especially for popular models including LLMs",
+          "nn_assistant_text_excerpt": "Certainly! Here's a more formal and cohesive version of your text:\n\nI am pleased to write this recommendation letter for XXX, a machine learning engineer who has been a valued member of my team since June 2022. Our group primarily focuses on developing solutions for model optimization and accelerati"
+        },
+        {
+          "nn_rank": 2,
+          "nn_idx": 202469,
+          "nn_source_dataset": "Dolci Instruct OpenThoughts3+ Science",
+          "nn_domain_canonical": "science",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "I have recently read that the dimensional regularization scheme is \"special\" because power law divergences are absent. It was argued that power law divergences were unphysical and that there was no fine-tuning problem. I was immediately suspicious.\nLet us take $\\lambda\\phi^4$ theory. For the renorma",
+          "nn_assistant_text_excerpt": "The discussion hinges on how different regularization methods handle divergences and their implications for naturalness and fine-tuning in quantum field theories like $\\lambda\\phi^4$. Here's a structured breakdown:\n\n### Key Insights:\n1. **Fine-Tuning in Cutoff Regularization**:\n   - With a cutoff $\\"
+        },
+        {
+          "nn_rank": 3,
+          "nn_idx": 612574,
+          "nn_source_dataset": "Dolci Instruct OpenThoughts3+ Science",
+          "nn_domain_canonical": "science",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 2,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "I'm familiar with how fusion categories describe the fusion of point-like excitations, and how braided fusion categories describe the fusion of anyons in 2+1D topological order. Concretely, a fusion category can be described by two sets of data: a finite set $S$ of particle types with fusion rules $",
+          "nn_assistant_text_excerpt": "To address the question about fusion 2-categories and their generalizations of fusion rules, F-matrices, and the pentagon equation, here is a structured explanation:\n\n---\n\n### **Fusion 2-Categories in 3+1D Topological Order**\nFusion 2-categories generalize fusion categories to encode the topology of"
+        }
+      ]
+    },
+    {
+      "item_id": "gsm8k_0001",
+      "domain": "math",
+      "domain_raw": "math",
+      "item_prompt_text": "<prompt text not resolved for gsm8k_0001; resolve via runner.py:render_* or item catalog>",
+      "item_prompt_text_hash": "sha256:ee50cf18e8fd16237e0fec68769946be4a291cf3b3707591f907cbc998bf84fd",
+      "nearest_neighbors": [
+        {
+          "nn_rank": 1,
+          "nn_idx": 1637007,
+          "nn_source_dataset": "Wildchat",
+          "nn_domain_canonical": "general",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "Please make following words more formal and cohesive: I would like to write this recommendation letter for XXX, the mechine learning engineer who join my team since June 2022. Our group primarly focus on the solution to model optimization and acceleration especially for popular models including LLMs",
+          "nn_assistant_text_excerpt": "Certainly! Here's a more formal and cohesive version of your text:\n\nI am pleased to write this recommendation letter for XXX, a machine learning engineer who has been a valued member of my team since June 2022. Our group primarily focuses on developing solutions for model optimization and accelerati"
+        },
+        {
+          "nn_rank": 2,
+          "nn_idx": 202469,
+          "nn_source_dataset": "Dolci Instruct OpenThoughts3+ Science",
+          "nn_domain_canonical": "science",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "I have recently read that the dimensional regularization scheme is \"special\" because power law divergences are absent. It was argued that power law divergences were unphysical and that there was no fine-tuning problem. I was immediately suspicious.\nLet us take $\\lambda\\phi^4$ theory. For the renorma",
+          "nn_assistant_text_excerpt": "The discussion hinges on how different regularization methods handle divergences and their implications for naturalness and fine-tuning in quantum field theories like $\\lambda\\phi^4$. Here's a structured breakdown:\n\n### Key Insights:\n1. **Fine-Tuning in Cutoff Regularization**:\n   - With a cutoff $\\"
+        },
+        {
+          "nn_rank": 3,
+          "nn_idx": 612574,
+          "nn_source_dataset": "Dolci Instruct OpenThoughts3+ Science",
+          "nn_domain_canonical": "science",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 2,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "I'm familiar with how fusion categories describe the fusion of point-like excitations, and how braided fusion categories describe the fusion of anyons in 2+1D topological order. Concretely, a fusion category can be described by two sets of data: a finite set $S$ of particle types with fusion rules $",
+          "nn_assistant_text_excerpt": "To address the question about fusion 2-categories and their generalizations of fusion rules, F-matrices, and the pentagon equation, here is a structured explanation:\n\n---\n\n### **Fusion 2-Categories in 3+1D Topological Order**\nFusion 2-categories generalize fusion categories to encode the topology of"
+        }
+      ]
+    },
+    {
+      "item_id": "gsm8k_0003",
+      "domain": "math",
+      "domain_raw": "math",
+      "item_prompt_text": "<prompt text not resolved for gsm8k_0003; resolve via runner.py:render_* or item catalog>",
+      "item_prompt_text_hash": "sha256:aa10e89ac9fe37ac3f10b37d0e74c1e5d0b52cc325c759878235b2603f508873",
+      "nearest_neighbors": [
+        {
+          "nn_rank": 1,
+          "nn_idx": 1637007,
+          "nn_source_dataset": "Wildchat",
+          "nn_domain_canonical": "general",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "Please make following words more formal and cohesive: I would like to write this recommendation letter for XXX, the mechine learning engineer who join my team since June 2022. Our group primarly focus on the solution to model optimization and acceleration especially for popular models including LLMs",
+          "nn_assistant_text_excerpt": "Certainly! Here's a more formal and cohesive version of your text:\n\nI am pleased to write this recommendation letter for XXX, a machine learning engineer who has been a valued member of my team since June 2022. Our group primarily focuses on developing solutions for model optimization and accelerati"
+        },
+        {
+          "nn_rank": 2,
+          "nn_idx": 202469,
+          "nn_source_dataset": "Dolci Instruct OpenThoughts3+ Science",
+          "nn_domain_canonical": "science",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "I have recently read that the dimensional regularization scheme is \"special\" because power law divergences are absent. It was argued that power law divergences were unphysical and that there was no fine-tuning problem. I was immediately suspicious.\nLet us take $\\lambda\\phi^4$ theory. For the renorma",
+          "nn_assistant_text_excerpt": "The discussion hinges on how different regularization methods handle divergences and their implications for naturalness and fine-tuning in quantum field theories like $\\lambda\\phi^4$. Here's a structured breakdown:\n\n### Key Insights:\n1. **Fine-Tuning in Cutoff Regularization**:\n   - With a cutoff $\\"
+        },
+        {
+          "nn_rank": 3,
+          "nn_idx": 612574,
+          "nn_source_dataset": "Dolci Instruct OpenThoughts3+ Science",
+          "nn_domain_canonical": "science",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 2,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "I'm familiar with how fusion categories describe the fusion of point-like excitations, and how braided fusion categories describe the fusion of anyons in 2+1D topological order. Concretely, a fusion category can be described by two sets of data: a finite set $S$ of particle types with fusion rules $",
+          "nn_assistant_text_excerpt": "To address the question about fusion 2-categories and their generalizations of fusion rules, F-matrices, and the pentagon equation, here is a structured explanation:\n\n---\n\n### **Fusion 2-Categories in 3+1D Topological Order**\nFusion 2-categories generalize fusion categories to encode the topology of"
+        }
+      ]
+    },
+    {
+      "item_id": "gsm8k_0004",
+      "domain": "math",
+      "domain_raw": "math",
+      "item_prompt_text": "<prompt text not resolved for gsm8k_0004; resolve via runner.py:render_* or item catalog>",
+      "item_prompt_text_hash": "sha256:289eda88524180ff36693a0a5db50ffecfa2f0f53af307877a64d47ddc0873ca",
+      "nearest_neighbors": [
+        {
+          "nn_rank": 1,
+          "nn_idx": 1637007,
+          "nn_source_dataset": "Wildchat",
+          "nn_domain_canonical": "general",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "Please make following words more formal and cohesive: I would like to write this recommendation letter for XXX, the mechine learning engineer who join my team since June 2022. Our group primarly focus on the solution to model optimization and acceleration especially for popular models including LLMs",
+          "nn_assistant_text_excerpt": "Certainly! Here's a more formal and cohesive version of your text:\n\nI am pleased to write this recommendation letter for XXX, a machine learning engineer who has been a valued member of my team since June 2022. Our group primarily focuses on developing solutions for model optimization and accelerati"
+        },
+        {
+          "nn_rank": 2,
+          "nn_idx": 202469,
+          "nn_source_dataset": "Dolci Instruct OpenThoughts3+ Science",
+          "nn_domain_canonical": "science",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "I have recently read that the dimensional regularization scheme is \"special\" because power law divergences are absent. It was argued that power law divergences were unphysical and that there was no fine-tuning problem. I was immediately suspicious.\nLet us take $\\lambda\\phi^4$ theory. For the renorma",
+          "nn_assistant_text_excerpt": "The discussion hinges on how different regularization methods handle divergences and their implications for naturalness and fine-tuning in quantum field theories like $\\lambda\\phi^4$. Here's a structured breakdown:\n\n### Key Insights:\n1. **Fine-Tuning in Cutoff Regularization**:\n   - With a cutoff $\\"
+        },
+        {
+          "nn_rank": 3,
+          "nn_idx": 612574,
+          "nn_source_dataset": "Dolci Instruct OpenThoughts3+ Science",
+          "nn_domain_canonical": "science",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 2,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "I'm familiar with how fusion categories describe the fusion of point-like excitations, and how braided fusion categories describe the fusion of anyons in 2+1D topological order. Concretely, a fusion category can be described by two sets of data: a finite set $S$ of particle types with fusion rules $",
+          "nn_assistant_text_excerpt": "To address the question about fusion 2-categories and their generalizations of fusion rules, F-matrices, and the pentagon equation, here is a structured explanation:\n\n---\n\n### **Fusion 2-Categories in 3+1D Topological Order**\nFusion 2-categories generalize fusion categories to encode the topology of"
+        }
+      ]
+    },
+    {
+      "item_id": "gsm8k_0007",
+      "domain": "math",
+      "domain_raw": "math",
+      "item_prompt_text": "<prompt text not resolved for gsm8k_0007; resolve via runner.py:render_* or item catalog>",
+      "item_prompt_text_hash": "sha256:a07dafb17b01656e2efd40604341a628f3d2b9a644de2930741b29a9458f9985",
+      "nearest_neighbors": [
+        {
+          "nn_rank": 1,
+          "nn_idx": 1637007,
+          "nn_source_dataset": "Wildchat",
+          "nn_domain_canonical": "general",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "Please make following words more formal and cohesive: I would like to write this recommendation letter for XXX, the mechine learning engineer who join my team since June 2022. Our group primarly focus on the solution to model optimization and acceleration especially for popular models including LLMs",
+          "nn_assistant_text_excerpt": "Certainly! Here's a more formal and cohesive version of your text:\n\nI am pleased to write this recommendation letter for XXX, a machine learning engineer who has been a valued member of my team since June 2022. Our group primarily focuses on developing solutions for model optimization and accelerati"
+        },
+        {
+          "nn_rank": 2,
+          "nn_idx": 202469,
+          "nn_source_dataset": "Dolci Instruct OpenThoughts3+ Science",
+          "nn_domain_canonical": "science",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "I have recently read that the dimensional regularization scheme is \"special\" because power law divergences are absent. It was argued that power law divergences were unphysical and that there was no fine-tuning problem. I was immediately suspicious.\nLet us take $\\lambda\\phi^4$ theory. For the renorma",
+          "nn_assistant_text_excerpt": "The discussion hinges on how different regularization methods handle divergences and their implications for naturalness and fine-tuning in quantum field theories like $\\lambda\\phi^4$. Here's a structured breakdown:\n\n### Key Insights:\n1. **Fine-Tuning in Cutoff Regularization**:\n   - With a cutoff $\\"
+        },
+        {
+          "nn_rank": 3,
+          "nn_idx": 612574,
+          "nn_source_dataset": "Dolci Instruct OpenThoughts3+ Science",
+          "nn_domain_canonical": "science",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 2,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "I'm familiar with how fusion categories describe the fusion of point-like excitations, and how braided fusion categories describe the fusion of anyons in 2+1D topological order. Concretely, a fusion category can be described by two sets of data: a finite set $S$ of particle types with fusion rules $",
+          "nn_assistant_text_excerpt": "To address the question about fusion 2-categories and their generalizations of fusion rules, F-matrices, and the pentagon equation, here is a structured explanation:\n\n---\n\n### **Fusion 2-Categories in 3+1D Topological Order**\nFusion 2-categories generalize fusion categories to encode the topology of"
+        }
+      ]
+    }
+  ],
+  "subsample_stratification": {
+    "math": 50000,
+    "science": 50000,
+    "unmapped": 50000,
+    "general": 50000
+  },
+  "tfidf_features": 50000,
+  "tfidf_ngram_range": [
+    1,
+    2
+  ]
+}

@@ -1,0 +1,107 @@
+{
+  "items": [
+    {
+      "item_id": "gsm8k_0000",
+      "domain": "math",
+      "domain_raw": "math",
+      "item_prompt_text": "<prompt text not resolved for gsm8k_0000; resolve via runner.py:render_* or item catalog>",
+      "item_prompt_text_hash": "sha256:a14e1d8852355fccf0ac88bb5808be17e88dfe4c887fbd592b8a7350dbc4e0a3",
+      "nearest_neighbors": [
+        {
+          "nn_rank": 1,
+          "nn_idx": 1637007,
+          "nn_source_dataset": "Wildchat",
+          "nn_domain_canonical": "general",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "Please make following words more formal and cohesive: I would like to write this recommendation letter for XXX, the mechine learning engineer who join my team since June 2022. Our group primarly focus on the solution to model optimization and acceleration especially for popular models including LLMs",
+          "nn_assistant_text_excerpt": "Certainly! Here's a more formal and cohesive version of your text:\n\nI am pleased to write this recommendation letter for XXX, a machine learning engineer who has been a valued member of my team since June 2022. Our group primarily focuses on developing solutions for model optimization and accelerati"
+        },
+        {
+          "nn_rank": 2,
+          "nn_idx": 202469,
+          "nn_source_dataset": "Dolci Instruct OpenThoughts3+ Science",
+          "nn_domain_canonical": "science",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "I have recently read that the dimensional regularization scheme is \"special\" because power law divergences are absent. It was argued that power law divergences were unphysical and that there was no fine-tuning problem. I was immediately suspicious.\nLet us take $\\lambda\\phi^4$ theory. For the renorma",
+          "nn_assistant_text_excerpt": "The discussion hinges on how different regularization methods handle divergences and their implications for naturalness and fine-tuning in quantum field theories like $\\lambda\\phi^4$. Here's a structured breakdown:\n\n### Key Insights:\n1. **Fine-Tuning in Cutoff Regularization**:\n   - With a cutoff $\\"
+        },
+        {
+          "nn_rank": 3,
+          "nn_idx": 612574,
+          "nn_source_dataset": "Dolci Instruct OpenThoughts3+ Science",
+          "nn_domain_canonical": "science",
+          "nn_cosine_similarity": 0.0,
+          "nn_max_run": 2,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "I'm familiar with how fusion categories describe the fusion of point-like excitations, and how braided fusion categories describe the fusion of anyons in 2+1D topological order. Concretely, a fusion category can be described by two sets of data: a finite set $S$ of particle types with fusion rules $",
+          "nn_assistant_text_excerpt": "To address the question about fusion 2-categories and their generalizations of fusion rules, F-matrices, and the pentagon equation, here is a structured explanation:\n\n---\n\n### **Fusion 2-Categories in 3+1D Topological Order**\nFusion 2-categories generalize fusion categories to encode the topology of"
+        }
+      ],
+      "editorial_caption": "TODO: human reviewer caption"
+    },
+    {
+      "item_id": "arc_arc_challenge_0018",
+      "domain": "science",
+      "domain_raw": "science",
+      "item_prompt_text": "the price of boards will increase",
+      "item_prompt_text_hash": "sha256:a5118f7b9ac33b559f961011c9bf2be851a9f0152d3ef9333a1c4db2feb34fe5",
+      "nearest_neighbors": [
+        {
+          "nn_rank": 1,
+          "nn_idx": 151533,
+          "nn_source_dataset": "OpenMathInstruct 2",
+          "nn_domain_canonical": "math",
+          "nn_cosine_similarity": 0.6588415572821027,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "Emily built a treehouse in her backyard. The main floor took twelve wooden boards, the upper floor took eighteen boards, and the roof took nine boards. The staircase took five fewer boards than the upper floor, and each of the three railings took two boards. She accidentally damaged two boards in th",
+          "nn_assistant_text_excerpt": "To determine the total number of wooden boards Emily bought, we need to sum up the boards used for each part of the treehouse and account for the damaged and leftover boards.\n\nMain floor: 12 boards\nUpper floor: 18 boards\nRoof: 9 boards\nStaircase: 18 - 5 = 13 boards\nRailings: 3 * 2 = 6 boards\n\nTotal "
+        },
+        {
+          "nn_rank": 2,
+          "nn_idx": 62529,
+          "nn_source_dataset": "Dolci Instruct Python Algorithms",
+          "nn_domain_canonical": "unmapped",
+          "nn_cosine_similarity": 0.39523717843549244,
+          "nn_max_run": 2,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "You are given a list of products, where each product is represented as a dictionary with at least a 'name' key and a 'price' key. Your task is to process the products and output a new list (on a single line) in JSON format with the products sorted by their price in ascending order. Only include prod",
+          "nn_assistant_text_excerpt": "import sys\nimport json\n\ndef is_whole_number_price(product):\n    try:\n        price = product.get('price')\n        if isinstance(price, (int, float)) and float(price).is_integer():\n            return True\n        return False\n    except Exception:\n        return False\n\ndef main():\n    input_line = sy"
+        },
+        {
+          "nn_rank": 3,
+          "nn_idx": 1646572,
+          "nn_source_dataset": "Wildchat",
+          "nn_domain_canonical": "general",
+          "nn_cosine_similarity": 0.38216645419033274,
+          "nn_max_run": 1,
+          "nn_consensus_hits": 0,
+          "nn_multi_turn_agreement": 0.0,
+          "nn_user_text_excerpt": "foreach ($goodsList as $key => $value) {\n                $goodsList[$key]['price'] = $value['zx_price'];\n            }",
+          "nn_assistant_text_excerpt": "\u4f60\u8fd9\u6bb5\u4ee3\u7801\u7684\u542b\u4e49\u662f\uff1a\u5faa\u73af\u904d\u5386 `$goodsList` \u6570\u7ec4\uff0c\u5c06\u6bcf\u4e2a\u5546\u54c1\u7684 `'price'` \u5b57\u6bb5\u7528\u8be5\u5546\u54c1\u7684 `'zx_price'` \u5b57\u6bb5\u7684\u503c\u8986\u76d6\u3002\n\n\u7b49\u4ef7\u4e8e\uff1a\n\n```php\nforeach ($goodsList as $key => $value) {\n    $goodsList[$key]['price'] = $value['zx_price'];\n}\n```\n\n**\u8be6\u7ec6\u89e3\u91ca\uff1a**\n- `$goodsList` \u662f\u4e00\u4e2a\u5305\u542b\u82e5\u5e72\u5b50\u6570\u7ec4\uff08\u6bcf\u4e2a\u5546\u54c1\u4fe1\u606f\uff09\u7684\u6570\u7ec4\u3002\n- `foreach ($goodsList as $key => $value)` \u904d\u5386\u6bcf\u4e00\u4e2a\u5546\u54c1\uff0c\u6bcf\u6b21\u5faa\u73af `$key"
+        }
+      ],
+      "editorial_caption": "TODO: human reviewer caption"
+    }
+  ],
+  "subsample_stratification": {
+    "math": 50000,
+    "science": 50000,
+    "unmapped": 50000,
+    "general": 50000
+  },
+  "tfidf_features": 50000,
+  "tfidf_ngram_range": [
+    1,
+    2
+  ]
+}

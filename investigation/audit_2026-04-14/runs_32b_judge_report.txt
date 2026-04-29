@@ -1,0 +1,194 @@
+Reporting all runs in: /sessions/magical-quirky-galileo/mnt/abstractAgentMachine/runs-think-hpc/runs-32B
+
+================================================================================================
+Pooled Judge Summary Across Runs | runs=4
+Runs path: /sessions/magical-quirky-galileo/mnt/abstractAgentMachine/runs-think-hpc/runs-32B
+================================================================================================
+
+Readiness Gate Scorecard (pooled)
++-----------------+--------+-------------+----------+-----------+-------------+---------------+-------------+
+| scope           | trials | judge_valid | compared | judge_cov | compare_cov | is_match_rate | gate_status |
++=================+========+=============+==========+===========+=============+===============+=============+
+| pooled_all_runs |   3200 |        2959 |     2577 |     92.5% |       80.5% |         60.3% | AT_RISK     |
++-----------------+--------+-------------+----------+-----------+-------------+---------------+-------------+
+  gates: judge_cov>=95.0% | is_match_rate>=75.0% | compared>=1000
+
+Dataset Overall (pooled)
++----------------------------+--------+-------------+----------+-----------+----------+---------------+-------+-----------+---------+
+| dataset                    | trials | judge_valid | compared | judge_cov | is_match | is_match_rate | empty | parse_err | missing |
++============================+========+=============+==========+===========+==========+===============+=======+===========+=========+
+| immutable_facts_minimal    |    400 |         360 |      360 |     90.0% |      277 |         76.9% |     0 |         0 |       0 |
+| social_conventions_minimal |    400 |         382 |        0 |     95.5% |        0 |           n/a |     0 |         0 |       0 |
+| gsm8k                      |    400 |         389 |      389 |     97.2% |      297 |         76.3% |     0 |         0 |       0 |
+| mmlu_math                  |    400 |         357 |      357 |     89.2% |      216 |         60.5% |     0 |         0 |       0 |
+| mmlu_science               |    400 |         350 |      350 |     87.5% |      136 |         38.9% |     0 |         0 |       0 |
+| mmlu_knowledge             |    400 |         358 |      358 |     89.5% |      278 |         77.7% |     0 |         0 |       0 |
+| truthfulqa                 |    400 |         388 |      388 |     97.0% |      162 |         41.8% |     0 |         0 |       0 |
+| arc                        |    400 |         375 |      375 |     93.8% |      188 |         50.1% |     0 |         0 |       0 |
++----------------------------+--------+-------------+----------+-----------+----------+---------------+-------+-----------+---------+
+
+Dataset x Condition Readiness (pooled)
++---------+-------------------------+---------------------------------------+--------+-------------+----------+-----------+---------------+----------+-----------+---------+
+| flag    | dataset                 | condition                             | trials | judge_valid | compared | judge_cov | is_match_rate | is_match | parse_err | missing |
++=========+=========================+=======================================+========+=============+==========+===========+===============+==========+===========+=========+
+| AT_RISK | mmlu_science            | authoritative_bias                    |    200 |         178 |      178 |     89.0% |         38.8% |       69 |         0 |       0 |
+| AT_RISK | mmlu_science            | control                               |    200 |         172 |      172 |     86.0% |         39.0% |       67 |         0 |       0 |
+| AT_RISK | truthfulqa              | authoritative_bias                    |    200 |         196 |      196 |     98.0% |         39.3% |       77 |         0 |       0 |
+| AT_RISK | truthfulqa              | control                               |    200 |         192 |      192 |     96.0% |         44.3% |       85 |         0 |       0 |
+| AT_RISK | arc                     | authoritative_bias                    |    200 |         184 |      184 |     92.0% |         48.4% |       89 |         0 |       0 |
+| AT_RISK | arc                     | control                               |    200 |         191 |      191 |     95.5% |         51.8% |       99 |         0 |       0 |
+| AT_RISK | mmlu_math               | authoritative_bias                    |    200 |         181 |      181 |     90.5% |         55.2% |      100 |         0 |       0 |
+| AT_RISK | gsm8k                   | authoritative_bias                    |    200 |         192 |      192 |     96.0% |         57.3% |      110 |         0 |       0 |
+| AT_RISK | mmlu_math               | control                               |    200 |         176 |      176 |     88.0% |         65.9% |      116 |         0 |       0 |
+| AT_RISK | mmlu_knowledge          | authoritative_bias                    |    200 |         190 |      190 |     95.0% |         74.7% |      142 |         0 |       0 |
+| AT_RISK | immutable_facts_minimal | control                               |    200 |         167 |      167 |     83.5% |         78.4% |      131 |         0 |       0 |
+| AT_RISK | mmlu_knowledge          | control                               |    200 |         168 |      168 |     84.0% |         81.0% |      136 |         0 |       0 |
+| AT_RISK | immutable_facts_minimal | asch_history_5                        |      0 |           0 |        0 |       n/a |           n/a |        0 |         0 |       0 |
+| AT_RISK | immutable_facts_minimal | asch_zhu_unbiased_unanimous_plain     |      0 |           0 |        0 |       n/a |           n/a |        0 |         0 |       0 |
+| AT_RISK | immutable_facts_minimal | asch_zhu_unbiased_unanimous_neutral   |      0 |           0 |        0 |       n/a |           n/a |        0 |         0 |       0 |
+| AT_RISK | immutable_facts_minimal | asch_zhu_unbiased_unanimous_confident |      0 |           0 |        0 |       n/a |           n/a |        0 |         0 |       0 |
+| AT_RISK | immutable_facts_minimal | asch_zhu_unbiased_unanimous_uncertain |      0 |           0 |        0 |       n/a |           n/a |        0 |         0 |       0 |
+| AT_RISK | immutable_facts_minimal | asch_zhu_unbiased_diverse_plain       |      0 |           0 |        0 |       n/a |           n/a |        0 |         0 |       0 |
++---------+-------------------------+---------------------------------------+--------+-------------+----------+-----------+---------------+----------+-----------+---------+
+
+LLM-judged cells (dataset × condition, pooled across runs)
+  llm_judge_valid = trials with valid LLM is_correct in parsed_answer_json (same rule as judge_valid).
++----------------------------+---------------------------------------+--------+-----------------+-----------+-------------+
+| dataset                    | condition                             | trials | llm_judge_valid | judge_cov | cell_status |
++============================+=======================================+========+=================+===========+=============+
+| arc                        | asch_history_5                        |      0 |               0 |       n/a | EMPTY       |
+| arc                        | asch_zhu_unbiased_da                  |      0 |               0 |       n/a | EMPTY       |
+| arc                        | asch_zhu_unbiased_diverse_plain       |      0 |               0 |       n/a | EMPTY       |
+| arc                        | asch_zhu_unbiased_qd                  |      0 |               0 |       n/a | EMPTY       |
+| arc                        | asch_zhu_unbiased_unanimous_confident |      0 |               0 |       n/a | EMPTY       |
+| arc                        | asch_zhu_unbiased_unanimous_neutral   |      0 |               0 |       n/a | EMPTY       |
+| arc                        | asch_zhu_unbiased_unanimous_plain     |      0 |               0 |       n/a | EMPTY       |
+| arc                        | asch_zhu_unbiased_unanimous_uncertain |      0 |               0 |       n/a | EMPTY       |
+| arc                        | authoritative_bias                    |    200 |             184 |     92.0% | PARTIAL     |
+| arc                        | authority_zhu_unbiased_trust          |      0 |               0 |       n/a | EMPTY       |
+| arc                        | authority_zhu_unbiased_trust_da       |      0 |               0 |       n/a | EMPTY       |
+| arc                        | control                               |    200 |             191 |     95.5% | PARTIAL     |
+| gsm8k                      | asch_history_5                        |      0 |               0 |       n/a | EMPTY       |
+| gsm8k                      | asch_zhu_unbiased_da                  |      0 |               0 |       n/a | EMPTY       |
+| gsm8k                      | asch_zhu_unbiased_diverse_plain       |      0 |               0 |       n/a | EMPTY       |
+| gsm8k                      | asch_zhu_unbiased_qd                  |      0 |               0 |       n/a | EMPTY       |
+| gsm8k                      | asch_zhu_unbiased_unanimous_confident |      0 |               0 |       n/a | EMPTY       |
+| gsm8k                      | asch_zhu_unbiased_unanimous_neutral   |      0 |               0 |       n/a | EMPTY       |
+| gsm8k                      | asch_zhu_unbiased_unanimous_plain     |      0 |               0 |       n/a | EMPTY       |
+| gsm8k                      | asch_zhu_unbiased_unanimous_uncertain |      0 |               0 |       n/a | EMPTY       |
+| gsm8k                      | authoritative_bias                    |    200 |             192 |     96.0% | PARTIAL     |
+| gsm8k                      | authority_zhu_unbiased_trust          |      0 |               0 |       n/a | EMPTY       |
+| gsm8k                      | authority_zhu_unbiased_trust_da       |      0 |               0 |       n/a | EMPTY       |
+| gsm8k                      | control                               |    200 |             197 |     98.5% | PARTIAL     |
+| immutable_facts_minimal    | asch_history_5                        |      0 |               0 |       n/a | EMPTY       |
+| immutable_facts_minimal    | asch_zhu_unbiased_da                  |      0 |               0 |       n/a | EMPTY       |
+| immutable_facts_minimal    | asch_zhu_unbiased_diverse_plain       |      0 |               0 |       n/a | EMPTY       |
+| immutable_facts_minimal    | asch_zhu_unbiased_qd                  |      0 |               0 |       n/a | EMPTY       |
+| immutable_facts_minimal    | asch_zhu_unbiased_unanimous_confident |      0 |               0 |       n/a | EMPTY       |
+| immutable_facts_minimal    | asch_zhu_unbiased_unanimous_neutral   |      0 |               0 |       n/a | EMPTY       |
+| immutable_facts_minimal    | asch_zhu_unbiased_unanimous_plain     |      0 |               0 |       n/a | EMPTY       |
+| immutable_facts_minimal    | asch_zhu_unbiased_unanimous_uncertain |      0 |               0 |       n/a | EMPTY       |
+| immutable_facts_minimal    | authoritative_bias                    |    200 |             193 |     96.5% | PARTIAL     |
+| immutable_facts_minimal    | authority_zhu_unbiased_trust          |      0 |               0 |       n/a | EMPTY       |
+| immutable_facts_minimal    | authority_zhu_unbiased_trust_da       |      0 |               0 |       n/a | EMPTY       |
+| immutable_facts_minimal    | control                               |    200 |             167 |     83.5% | PARTIAL     |
+| mmlu_knowledge             | asch_history_5                        |      0 |               0 |       n/a | EMPTY       |
+| mmlu_knowledge             | asch_zhu_unbiased_da                  |      0 |               0 |       n/a | EMPTY       |
+| mmlu_knowledge             | asch_zhu_unbiased_diverse_plain       |      0 |               0 |       n/a | EMPTY       |
+| mmlu_knowledge             | asch_zhu_unbiased_qd                  |      0 |               0 |       n/a | EMPTY       |
+| mmlu_knowledge             | asch_zhu_unbiased_unanimous_confident |      0 |               0 |       n/a | EMPTY       |
+| mmlu_knowledge             | asch_zhu_unbiased_unanimous_neutral   |      0 |               0 |       n/a | EMPTY       |
+| mmlu_knowledge             | asch_zhu_unbiased_unanimous_plain     |      0 |               0 |       n/a | EMPTY       |
+| mmlu_knowledge             | asch_zhu_unbiased_unanimous_uncertain |      0 |               0 |       n/a | EMPTY       |
+| mmlu_knowledge             | authoritative_bias                    |    200 |             190 |     95.0% | PARTIAL     |
+| mmlu_knowledge             | authority_zhu_unbiased_trust          |      0 |               0 |       n/a | EMPTY       |
+| mmlu_knowledge             | authority_zhu_unbiased_trust_da       |      0 |               0 |       n/a | EMPTY       |
+| mmlu_knowledge             | control                               |    200 |             168 |     84.0% | PARTIAL     |
+| mmlu_math                  | asch_history_5                        |      0 |               0 |       n/a | EMPTY       |
+| mmlu_math                  | asch_zhu_unbiased_da                  |      0 |               0 |       n/a | EMPTY       |
+| mmlu_math                  | asch_zhu_unbiased_diverse_plain       |      0 |               0 |       n/a | EMPTY       |
+| mmlu_math                  | asch_zhu_unbiased_qd                  |      0 |               0 |       n/a | EMPTY       |
+| mmlu_math                  | asch_zhu_unbiased_unanimous_confident |      0 |               0 |       n/a | EMPTY       |
+| mmlu_math                  | asch_zhu_unbiased_unanimous_neutral   |      0 |               0 |       n/a | EMPTY       |
+| mmlu_math                  | asch_zhu_unbiased_unanimous_plain     |      0 |               0 |       n/a | EMPTY       |
+| mmlu_math                  | asch_zhu_unbiased_unanimous_uncertain |      0 |               0 |       n/a | EMPTY       |
+| mmlu_math                  | authoritative_bias                    |    200 |             181 |     90.5% | PARTIAL     |
+| mmlu_math                  | authority_zhu_unbiased_trust          |      0 |               0 |       n/a | EMPTY       |
+| mmlu_math                  | authority_zhu_unbiased_trust_da       |      0 |               0 |       n/a | EMPTY       |
+| mmlu_math                  | control                               |    200 |             176 |     88.0% | PARTIAL     |
+| mmlu_science               | asch_history_5                        |      0 |               0 |       n/a | EMPTY       |
+| mmlu_science               | asch_zhu_unbiased_da                  |      0 |               0 |       n/a | EMPTY       |
+| mmlu_science               | asch_zhu_unbiased_diverse_plain       |      0 |               0 |       n/a | EMPTY       |
+| mmlu_science               | asch_zhu_unbiased_qd                  |      0 |               0 |       n/a | EMPTY       |
+| mmlu_science               | asch_zhu_unbiased_unanimous_confident |      0 |               0 |       n/a | EMPTY       |
+| mmlu_science               | asch_zhu_unbiased_unanimous_neutral   |      0 |               0 |       n/a | EMPTY       |
+| mmlu_science               | asch_zhu_unbiased_unanimous_plain     |      0 |               0 |       n/a | EMPTY       |
+| mmlu_science               | asch_zhu_unbiased_unanimous_uncertain |      0 |               0 |       n/a | EMPTY       |
+| mmlu_science               | authoritative_bias                    |    200 |             178 |     89.0% | PARTIAL     |
+| mmlu_science               | authority_zhu_unbiased_trust          |      0 |               0 |       n/a | EMPTY       |
+| mmlu_science               | authority_zhu_unbiased_trust_da       |      0 |               0 |       n/a | EMPTY       |
+| mmlu_science               | control                               |    200 |             172 |     86.0% | PARTIAL     |
+| social_conventions_minimal | asch_history_5                        |      0 |               0 |       n/a | EMPTY       |
+| social_conventions_minimal | asch_zhu_unbiased_da                  |      0 |               0 |       n/a | EMPTY       |
+| social_conventions_minimal | asch_zhu_unbiased_diverse_plain       |      0 |               0 |       n/a | EMPTY       |
+| social_conventions_minimal | asch_zhu_unbiased_qd                  |      0 |               0 |       n/a | EMPTY       |
+| social_conventions_minimal | asch_zhu_unbiased_unanimous_confident |      0 |               0 |       n/a | EMPTY       |
+| social_conventions_minimal | asch_zhu_unbiased_unanimous_neutral   |      0 |               0 |       n/a | EMPTY       |
+| social_conventions_minimal | asch_zhu_unbiased_unanimous_plain     |      0 |               0 |       n/a | EMPTY       |
+| social_conventions_minimal | asch_zhu_unbiased_unanimous_uncertain |      0 |               0 |       n/a | EMPTY       |
+| social_conventions_minimal | authoritative_bias                    |    200 |             187 |     93.5% | PARTIAL     |
+| social_conventions_minimal | authority_zhu_unbiased_trust          |      0 |               0 |       n/a | EMPTY       |
+| social_conventions_minimal | authority_zhu_unbiased_trust_da       |      0 |               0 |       n/a | EMPTY       |
+| social_conventions_minimal | control                               |    200 |             195 |     97.5% | PARTIAL     |
+| truthfulqa                 | asch_history_5                        |      0 |               0 |       n/a | EMPTY       |
+| truthfulqa                 | asch_zhu_unbiased_da                  |      0 |               0 |       n/a | EMPTY       |
+| truthfulqa                 | asch_zhu_unbiased_diverse_plain       |      0 |               0 |       n/a | EMPTY       |
+| truthfulqa                 | asch_zhu_unbiased_qd                  |      0 |               0 |       n/a | EMPTY       |
+| truthfulqa                 | asch_zhu_unbiased_unanimous_confident |      0 |               0 |       n/a | EMPTY       |
+| truthfulqa                 | asch_zhu_unbiased_unanimous_neutral   |      0 |               0 |       n/a | EMPTY       |
+| truthfulqa                 | asch_zhu_unbiased_unanimous_plain     |      0 |               0 |       n/a | EMPTY       |
+| truthfulqa                 | asch_zhu_unbiased_unanimous_uncertain |      0 |               0 |       n/a | EMPTY       |
+| truthfulqa                 | authoritative_bias                    |    200 |             196 |     98.0% | PARTIAL     |
+| truthfulqa                 | authority_zhu_unbiased_trust          |      0 |               0 |       n/a | EMPTY       |
+| truthfulqa                 | authority_zhu_unbiased_trust_da       |      0 |               0 |       n/a | EMPTY       |
+| truthfulqa                 | control                               |    200 |             192 |     96.0% | PARTIAL     |
++----------------------------+---------------------------------------+--------+-----------------+-----------+-------------+
+  summary: FULL=0 PARTIAL=16 NONE=0 (of 96 cells)
+
+Cross-Run Stability (dataset)
++----------------------------+----------+---------+---------+------------+-----------+-----------+-----------------+
+| dataset                    | cov_mean | cov_min | cov_max | match_mean | match_min | match_max | max_delta_match |
++============================+==========+=========+=========+============+===========+===========+=================+
+| immutable_facts_minimal    |    91.8% |   87.0% |   95.0% |      78.9% |     74.1% |     81.6% |            7.4% |
+| mmlu_science               |    89.6% |   88.0% |   91.5% |      40.0% |     36.4% |     43.3% |            7.0% |
+| truthfulqa                 |    97.4% |   96.5% |   98.0% |      45.0% |     42.3% |     47.4% |            5.2% |
+| gsm8k                      |    97.8% |   96.0% |   99.5% |      66.2% |     62.9% |     67.7% |            4.8% |
+| mmlu_knowledge             |    90.9% |   88.5% |   93.0% |      79.3% |     76.8% |     81.1% |            4.2% |
+| arc                        |    93.1% |   91.5% |   95.0% |      51.0% |     48.6% |     52.7% |            4.0% |
+| mmlu_math                  |    90.6% |   88.0% |   93.0% |      55.1% |     54.0% |     56.5% |            2.5% |
+| social_conventions_minimal |    95.1% |   92.0% |   97.5% |        n/a |       n/a |       n/a |             n/a |
++----------------------------+----------+---------+---------+------------+-----------+-----------+-----------------+
+
+Model Summary (pooled)
++-----------+------------------------------+--------------+-----------------+-----------+-------------+----------+---------------+
+| variant   | model_id                     | trials_total | judge_validated | judge_cov | is_compared | is_match | is_match_rate |
++===========+==============================+==============+=================+===========+=============+==========+===============+
+| think_dpo | allenai/Olmo-3-32B-Think-DPO |         3200 |            2938 |     91.8% |        2565 |     1488 |         58.0% |
+| think_sft | allenai/Olmo-3-32B-Think-SFT |         3200 |            3032 |     94.8% |        2644 |     1605 |         60.7% |
++-----------+------------------------------+--------------+-----------------+-----------+-------------+----------+---------------+
+
+Publication-Gating Coverage (pooled)
++-----------+------------------------------+--------------+-----------+-----------+------------+---------------+------------+------------+-------------+
+| variant   | model_id                     | n_expected_3 | n_judge_3 | cov_3cond | gate_3cond | n_expected_12 | n_judge_12 | cov_12cond | gate_12cond |
++===========+==============================+==============+===========+===========+============+===============+============+============+=============+
+| think_dpo | allenai/Olmo-3-32B-Think-DPO |         1600 |      1600 |    100.0% | READY      |          3200 |       3200 |     100.0% | READY       |
+| think_sft | allenai/Olmo-3-32B-Think-SFT |         1600 |      1600 |    100.0% | READY      |          3200 |       3200 |     100.0% | READY       |
++-----------+------------------------------+--------------+-----------+-----------+------------+---------------+------------+------------+-------------+
+
+Manual-vs-Judge Drift Breakdown (pooled)
++------+------+------+-----+---------+---------+---------+---------+-----------+--------+
+|   tp |   tn |   fp |  fn | tp_rate | tn_rate | fp_rate | fn_rate | precision | recall |
++======+======+======+=====+=========+=========+=========+=========+===========+========+
+| 1397 | 1696 | 1999 | 117 |   26.8% |   32.6% |   38.4% |    2.2% |     41.1% |  92.3% |
++------+------+------+-----+---------+---------+---------+---------+-----------+--------+
+  drift_signal=FP-heavy (judge more likely to over-call correctness).

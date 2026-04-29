@@ -130,6 +130,20 @@ def check_missing_prerequisites(trace_db: TraceDb, run_id: str) -> Dict[str, boo
         Dict mapping prerequisite name -> exists (bool)
     """
     missing = {}
+
+    def _table_exists(table_name: str) -> bool:
+        row = trace_db.conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ? LIMIT 1",
+            (table_name,),
+        ).fetchone()
+        return row is not None
+
+    def _has_column(table_name: str, column_name: str) -> bool:
+        if not _table_exists(table_name):
+            return False
+        rows = trace_db.conn.execute(f"PRAGMA table_info({table_name})").fetchall()
+        # pragma table_info columns: cid, name, type, notnull, dflt_value, pk
+        return any(r[1] == column_name for r in rows)
     
     # Check for Judge Eval scores
     judgeval_count = trace_db.conn.execute(
@@ -150,14 +164,29 @@ def check_missing_prerequisites(trace_db: TraceDb, run_id: str) -> Dict[str, boo
     missing["probes"] = probe_count > 0
     
     # Check for probe projections
-    projection_count = trace_db.conn.execute(
-        """
-        SELECT COUNT(*) FROM vivarium_probe_projections p
-        JOIN conformity_trials t ON t.trial_id = p.trial_id
-        WHERE t.run_id = ?
-        """,
-        (run_id,),
-    ).fetchone()[0]
+    if _has_column("vivarium_probe_projections", "trial_id"):
+        projection_count = trace_db.conn.execute(
+            """
+            SELECT COUNT(*) FROM vivarium_probe_projections p
+            JOIN conformity_trials t ON t.trial_id = p.trial_id
+            WHERE t.run_id = ?
+            """,
+            (run_id,),
+        ).fetchone()[0]
+    elif _has_column("vivarium_probe_projections", "trace_id"):
+        projection_count = trace_db.conn.execute(
+            """
+            SELECT COUNT(*)
+            FROM vivarium_probe_projections p
+            JOIN trace tr ON tr.trace_id = p.trace_id
+            JOIN conformity_trial_steps s ON s.time_step = tr.time_step AND s.agent_id = tr.agent_id
+            JOIN conformity_trials t ON t.trial_id = s.trial_id
+            WHERE t.run_id = ?
+            """,
+            (run_id,),
+        ).fetchone()[0]
+    else:
+        projection_count = 0
     missing["probe_projections"] = projection_count > 0
     
     # Check for interventions
@@ -168,25 +197,55 @@ def check_missing_prerequisites(trace_db: TraceDb, run_id: str) -> Dict[str, boo
     missing["interventions"] = intervention_count > 0
     
     # Check for intervention results
-    intervention_result_count = trace_db.conn.execute(
-        """
-        SELECT COUNT(*) FROM vivarium_intervention_results r
-        JOIN conformity_trials t ON t.trial_id = r.trial_id
-        WHERE t.run_id = ?
-        """,
-        (run_id,),
-    ).fetchone()[0]
+    if _has_column("vivarium_intervention_results", "trial_id"):
+        intervention_result_count = trace_db.conn.execute(
+            """
+            SELECT COUNT(*) FROM vivarium_intervention_results r
+            JOIN conformity_trials t ON t.trial_id = r.trial_id
+            WHERE t.run_id = ?
+            """,
+            (run_id,),
+        ).fetchone()[0]
+    elif _has_column("vivarium_intervention_results", "trace_id"):
+        intervention_result_count = trace_db.conn.execute(
+            """
+            SELECT COUNT(*)
+            FROM vivarium_intervention_results r
+            JOIN trace tr ON tr.trace_id = r.trace_id
+            JOIN conformity_trial_steps s ON s.time_step = tr.time_step AND s.agent_id = tr.agent_id
+            JOIN conformity_trials t ON t.trial_id = s.trial_id
+            WHERE t.run_id = ?
+            """,
+            (run_id,),
+        ).fetchone()[0]
+    else:
+        intervention_result_count = 0
     missing["intervention_results"] = intervention_result_count > 0
     
     # Check for think tokens
-    think_count = trace_db.conn.execute(
-        """
-        SELECT COUNT(*) FROM vivarium_think_tokens tt
-        JOIN conformity_trials t ON t.trial_id = tt.trial_id
-        WHERE t.run_id = ?
-        """,
-        (run_id,),
-    ).fetchone()[0]
+    if _has_column("vivarium_think_tokens", "trial_id"):
+        think_count = trace_db.conn.execute(
+            """
+            SELECT COUNT(*) FROM vivarium_think_tokens tt
+            JOIN conformity_trials t ON t.trial_id = tt.trial_id
+            WHERE t.run_id = ?
+            """,
+            (run_id,),
+        ).fetchone()[0]
+    elif _has_column("vivarium_think_tokens", "trace_id"):
+        think_count = trace_db.conn.execute(
+            """
+            SELECT COUNT(*)
+            FROM vivarium_think_tokens tt
+            JOIN trace tr ON tr.trace_id = tt.trace_id
+            JOIN conformity_trial_steps s ON s.time_step = tr.time_step AND s.agent_id = tr.agent_id
+            JOIN conformity_trials t ON t.trial_id = s.trial_id
+            WHERE t.run_id = ?
+            """,
+            (run_id,),
+        ).fetchone()[0]
+    else:
+        think_count = 0
     missing["think_tokens"] = think_count > 0
     
     # Check for logit lens
@@ -201,14 +260,29 @@ def check_missing_prerequisites(trace_db: TraceDb, run_id: str) -> Dict[str, boo
     missing["logit_lens"] = logit_count > 0
 
     # Check for answer logprob probes (correct vs conforming)
-    answer_logprob_count = trace_db.conn.execute(
-        """
-        SELECT COUNT(*) FROM vivarium_answer_logprobs a
-        JOIN conformity_trials t ON t.trial_id = a.trial_id
-        WHERE t.run_id = ?
-        """,
-        (run_id,),
-    ).fetchone()[0]
+    if _has_column("vivarium_answer_logprobs", "trial_id"):
+        answer_logprob_count = trace_db.conn.execute(
+            """
+            SELECT COUNT(*) FROM vivarium_answer_logprobs a
+            JOIN conformity_trials t ON t.trial_id = a.trial_id
+            WHERE t.run_id = ?
+            """,
+            (run_id,),
+        ).fetchone()[0]
+    elif _has_column("vivarium_answer_logprobs", "trace_id"):
+        answer_logprob_count = trace_db.conn.execute(
+            """
+            SELECT COUNT(*)
+            FROM vivarium_answer_logprobs a
+            JOIN trace tr ON tr.trace_id = a.trace_id
+            JOIN conformity_trial_steps s ON s.time_step = tr.time_step AND s.agent_id = tr.agent_id
+            JOIN conformity_trials t ON t.trial_id = s.trial_id
+            WHERE t.run_id = ?
+            """,
+            (run_id,),
+        ).fetchone()[0]
+    else:
+        answer_logprob_count = 0
     missing["answer_logprobs"] = answer_logprob_count > 0
     
     # Check for activation metadata (for attention capture)

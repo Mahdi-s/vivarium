@@ -11,11 +11,14 @@ Produces:
 import os
 import csv
 import math
+import sys
+from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import numpy as np
+import pandas as pd
 
 # ── Publication style ─────────────────────────────────────────────────────
 plt.rcParams.update({
@@ -41,6 +44,29 @@ COLORS = {
     "DPO":       "#2ecc71",  # green (mitigates)
     "Instruct":  "#3498db",  # blue
 }
+
+
+def _holm_adjust(p_values):
+    """Holm-Bonferroni adjusted p-values in original order."""
+    n = len(p_values)
+    indexed = sorted(enumerate(p_values), key=lambda x: x[1])
+    adjusted = [1.0] * n
+    running_max = 0.0
+    for rank, (idx, p) in enumerate(indexed):
+        adj = (n - rank) * p
+        running_max = max(running_max, adj)
+        adjusted[idx] = min(1.0, running_max)
+    return adjusted
+
+
+def _sig_star_from_p(p):
+    if p < 0.001:
+        return "***"
+    if p < 0.01:
+        return "**"
+    if p < 0.05:
+        return "*"
+    return "ns"
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Figure 2: McNemar OR across conditions — the headline result
@@ -234,6 +260,7 @@ STAGE_MARKER_COLOR = {
     "instruct":     COLORS["Instruct"],
     "think_sft":    COLORS["SFT"],
     "think_dpo":    COLORS["DPO"],
+    "think":        "#8e44ad",
 }
 
 # Parse stage-decomposition CSV into (variant, condition) → row dict.
@@ -351,6 +378,254 @@ fig.savefig("paper/figures/fig2_stage_trajectory_shared.pdf")
 fig.savefig("paper/figures/fig2_stage_trajectory_shared.png")
 print("✓ fig2_stage_trajectory_shared")
 plt.close(fig)
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Figure 6: Shared-conditions stage trajectory at T={0.0, 0.6}
+# Includes Think-RL at both temperatures.
+# ═══════════════════════════════════════════════════════════════════════════
+
+STAGE_T0_CSV = os.path.join(
+    REPO_ROOT,
+    "Comparing_Experiments", "April_analysis",
+    "tables", "stage_decomposition", "instruct_vs_think_t0.csv",
+)
+STAGE_T06_CSV = os.path.join(
+    REPO_ROOT,
+    "Comparing_Experiments", "April_analysis",
+    "tables", "stage_decomposition", "instruct_vs_think_t06.csv",
+)
+
+fig6_rows = {}
+for temp_csv in (STAGE_T0_CSV, STAGE_T06_CSV):
+    with open(temp_csv, newline="") as f:
+        for row in csv.DictReader(f):
+            key = (float(row["temperature"]), row["variant"], row["condition_name"])
+            fig6_rows[key] = row
+
+FIG6_TEMPS = [0.0, 0.6]
+FIG6_CONDS = PRESSURE_CONDS
+FIG6_INSTRUCT_STAGES = [
+    ("base", 0, "Base"),
+    ("instruct_sft", 1, "SFT"),
+    ("instruct_dpo", 2, "DPO"),
+    ("instruct", 3, "RLVR"),
+]
+FIG6_THINK_STAGES = [
+    ("base", 0, "Base"),
+    ("think_sft", 1, "SFT"),
+    ("think_dpo", 2, "DPO"),
+    ("think", 3, "RLVR"),
+]
+
+fig6, axes = plt.subplots(2, 3, figsize=(9.3, 4.9), gridspec_kw={"wspace": 0.18, "hspace": 0.30})
+DX = 0.08
+
+for ti, temp in enumerate(FIG6_TEMPS):
+    for ci, (cond_csv, cond_title) in enumerate(FIG6_CONDS):
+        ax = axes[ti, ci]
+
+        def _cell(variant):
+            row = fig6_rows[(temp, variant, cond_csv)]
+            return float(row["ber"]), float(row["ber_lo"]), float(row["ber_hi"])
+
+        inst_ys, inst_lo, inst_hi = [], [], []
+        for var, _, _ in FIG6_INSTRUCT_STAGES:
+            b, lo, hi = _cell(var)
+            inst_ys.append(b)
+            inst_lo.append(lo)
+            inst_hi.append(hi)
+
+        think_ys, think_lo, think_hi = [], [], []
+        for var, _, _ in FIG6_THINK_STAGES:
+            b, lo, hi = _cell(var)
+            think_ys.append(b)
+            think_lo.append(lo)
+            think_hi.append(hi)
+
+        x_inst = [0.0, 1.0 - DX, 2.0 - DX, 3.0 - DX]
+        x_think = [0.0, 1.0 + DX, 2.0 + DX, 3.0 + DX]
+        control_ber = _cell("base")[0] if cond_csv == "control" else float(fig6_rows[(temp, "base", "control")]["ber"])
+
+        ax.axhline(y=control_ber, color="#95a5a6", linestyle=":", lw=0.9, zorder=1)
+        ax.plot(x_inst, inst_ys, color=INSTRUCT_LINE_COLOR, linestyle="-", lw=1.3, zorder=2)
+        ax.plot(x_think, think_ys, color=THINK_LINE_COLOR, linestyle=(0, (4, 2)), lw=1.3, zorder=2)
+
+        inst_yerr = [[y - l for y, l in zip(inst_ys, inst_lo)], [h - y for y, h in zip(inst_ys, inst_hi)]]
+        think_yerr = [[y - l for y, l in zip(think_ys, think_lo)], [h - y for y, h in zip(think_ys, think_hi)]]
+        ax.errorbar(x_inst, inst_ys, yerr=inst_yerr, fmt="none", ecolor=INSTRUCT_LINE_COLOR, elinewidth=0.8, capsize=2, capthick=0.7, zorder=3)
+        ax.errorbar(x_think, think_ys, yerr=think_yerr, fmt="none", ecolor=THINK_LINE_COLOR, elinewidth=0.8, capsize=2, capthick=0.7, zorder=3)
+
+        for xi, (var, _, _) in zip(x_inst, FIG6_INSTRUCT_STAGES):
+            if var != "base":
+                ax.scatter([xi], [_cell(var)[0]], marker="o", s=28, color=STAGE_MARKER_COLOR[var], edgecolors="white", linewidths=0.6, zorder=4)
+        for xi, (var, _, _) in zip(x_think, FIG6_THINK_STAGES):
+            if var != "base":
+                ax.scatter([xi], [_cell(var)[0]], marker="s", s=28, color=STAGE_MARKER_COLOR[var], edgecolors="white", linewidths=0.6, zorder=4)
+        ax.scatter([0.0], [_cell("base")[0]], marker="o", s=48, color=COLORS["Base"], edgecolors="white", linewidths=0.8, zorder=5)
+
+        ax.set_xticks([0, 1, 2, 3])
+        ax.set_xticklabels(["Base", "SFT", "DPO", "RLVR"], fontsize=7.5)
+        ax.set_ylim(0.0, 0.85)
+        if ti == 0:
+            ax.set_title(cond_title, fontsize=8.5, pad=4)
+        if ci == 0:
+            ax.set_ylabel(f"T={temp:.1f}\nBER", fontsize=8.5)
+        else:
+            ax.tick_params(labelleft=False)
+        if ti == 1 and ci == 1:
+            ax.set_xlabel("Post-training stage", fontsize=8.5)
+
+from matplotlib.lines import Line2D
+fig6_handles = [
+    Line2D([0], [0], color=INSTRUCT_LINE_COLOR, linestyle="-", lw=1.3, marker="o", markersize=4.5, markerfacecolor=COLORS["Instruct"], markeredgecolor="white", markeredgewidth=0.6, label="Instruct path"),
+    Line2D([0], [0], color=THINK_LINE_COLOR, linestyle=(0, (4, 2)), lw=1.3, marker="s", markersize=4.5, markerfacecolor=COLORS["DPO"], markeredgecolor="white", markeredgewidth=0.6, label="Think path"),
+    Line2D([0], [0], color="#95a5a6", linestyle=":", lw=0.9, label="Base control BER (per temperature)"),
+]
+fig6.legend(handles=fig6_handles, loc="upper center", bbox_to_anchor=(0.5, 1.02), ncol=3, frameon=False, fontsize=7.2, handlelength=2.1, columnspacing=1.2)
+fig6.suptitle("Figure 6: Shared-condition stage trajectories with Think-RL at T=0.0 and T=0.6", fontsize=10, y=1.06)
+fig6.subplots_adjust(top=0.86)
+fig6.savefig("paper/figures/fig6_stage_trajectory_shared.pdf")
+fig6.savefig("paper/figures/fig6_stage_trajectory_shared.png")
+print("✓ fig6_stage_trajectory_shared")
+plt.close(fig6)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Figure 7: Conformity susceptibility (McNemar OR) across full pipeline
+# Base + Instruct stages + Think stages, faceted by T={0.0, 0.6}.
+# ═══════════════════════════════════════════════════════════════════════════
+
+SRC_DIR = Path(REPO_ROOT) / "src"
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
+from vivarium.analytics.behavioral import load_april_trials  # noqa: E402
+
+manifest_path = os.path.join(
+    REPO_ROOT,
+    "Comparing_Experiments", "April_analysis", "metadata", "runs_metadata.json",
+)
+trials = load_april_trials(
+    manifest_path=manifest_path,
+    include_secondary=False,
+    require_judge=True,
+)
+trials["judge_wrong_endorsed"] = trials["judge_wrong_endorsed"].fillna(False).astype(int)
+
+FIG7_TEMPS = [0.0, 0.6]
+FIG7_CONDS = [
+    ("Unan.\nConfident", "asch_zhu_unbiased_unanimous_confident"),
+    ("Auth.\nBias", "authoritative_bias"),
+    ("Auth.\nTrust", "authority_zhu_unbiased_trust"),
+]
+FIG7_VARIANTS = [
+    ("Base", "base"),
+    ("Inst-SFT", "instruct_sft"),
+    ("Inst-DPO", "instruct_dpo"),
+    ("Instruct", "instruct"),
+    ("Think-SFT", "think_sft"),
+    ("Think-DPO", "think_dpo"),
+    ("Think-RL", "think"),
+]
+FIG7_COLORS = {
+    "Base": "#7f8c8d",
+    "Inst-SFT": "#e74c3c",
+    "Inst-DPO": "#2ecc71",
+    "Instruct": "#3498db",
+    "Think-SFT": "#f39c12",
+    "Think-DPO": "#d35400",
+    "Think-RL": "#8e44ad",
+}
+
+fig7, ax7 = plt.subplots(1, 2, figsize=(10.1, 3.6), sharey=True)
+x = np.arange(len(FIG7_CONDS))
+width = 0.11
+offsets = np.linspace(-3, 3, len(FIG7_VARIANTS))
+global_hi = []
+
+for ti, temp in enumerate(FIG7_TEMPS):
+    ax = ax7[ti]
+    for vi, (label, variant) in enumerate(FIG7_VARIANTS):
+        ors, ci_los, ci_his, pvals = [], [], [], []
+        for _, cond in FIG7_CONDS:
+            control = trials[
+                (trials["variant"] == variant)
+                & (trials["temperature"] == temp)
+                & (trials["condition_name"] == "control")
+            ][["item_id", "judge_wrong_endorsed"]].rename(columns={"judge_wrong_endorsed": "ctrl_wrong"})
+            pressure = trials[
+                (trials["variant"] == variant)
+                & (trials["temperature"] == temp)
+                & (trials["condition_name"] == cond)
+            ][["item_id", "judge_wrong_endorsed"]].rename(columns={"judge_wrong_endorsed": "pres_wrong"})
+            merged = control.merge(pressure, on="item_id", how="inner")
+            b = int(((merged["ctrl_wrong"] == 0) & (merged["pres_wrong"] == 1)).sum())
+            c = int(((merged["ctrl_wrong"] == 1) & (merged["pres_wrong"] == 0)).sum())
+            # Haldane-Anscombe correction prevents infinite OR when c==0.
+            b_cc = b + 0.5
+            c_cc = c + 0.5
+            OR = b_cc / c_cc
+            log_or = math.log(OR)
+            se = math.sqrt(1.0 / b_cc + 1.0 / c_cc)
+            lo = math.exp(log_or - 1.96 * se)
+            hi = math.exp(log_or + 1.96 * se)
+            chi2 = ((abs(b - c) - 1) ** 2) / (b + c) if (b + c) > 0 else 0.0
+            p_raw = math.erfc(math.sqrt(max(chi2, 0.0) / 2.0))
+
+            ors.append(OR)
+            ci_los.append(lo)
+            ci_his.append(hi)
+            pvals.append(p_raw)
+
+        p_adj = _holm_adjust(pvals)
+        yerr_lo = [o - l for o, l in zip(ors, ci_los)]
+        yerr_hi = [h - o for o, h in zip(ors, ci_his)]
+        positions = x + offsets[vi] * width
+        bars = ax.bar(
+            positions,
+            ors,
+            width,
+            yerr=[yerr_lo, yerr_hi],
+            capsize=1.4,
+            error_kw=dict(lw=0.65, capthick=0.65, color="#444"),
+            label=label,
+            color=FIG7_COLORS[label],
+            edgecolor="white",
+            linewidth=0.4,
+        )
+        for bar, top, p in zip(bars, ci_his, p_adj):
+            star = _sig_star_from_p(p)
+            global_hi.append(top)
+            ax.text(
+                bar.get_x() + bar.get_width() / 2,
+                top * 1.12,
+                star,
+                ha="center",
+                va="bottom",
+                fontsize=6.2 if star != "ns" else 5.8,
+                fontweight="bold" if star != "ns" else "normal",
+                color="#000" if star != "ns" else "#888",
+            )
+
+    ax.axhline(y=1.0, color="#bbb", linewidth=0.8, linestyle="--", zorder=0)
+    ax.set_xticks(x)
+    ax.set_xticklabels([lbl for lbl, _ in FIG7_CONDS], fontsize=8)
+    ax.set_title(f"T = {temp:.1f}", fontsize=9.5)
+    ax.set_yscale("log")
+    ax.set_ylim(0.8, 300)
+    if ti == 0:
+        ax.set_ylabel("McNemar Odds Ratio")
+
+ax7[1].tick_params(labelleft=False)
+for ax in ax7:
+    ax.set_yticks([1, 2, 5, 10, 20, 50, 100, 200])
+    ax.get_yaxis().set_major_formatter(mticker.ScalarFormatter())
+fig7.legend(loc="upper center", ncol=4, frameon=True, fontsize=6.5, bbox_to_anchor=(0.5, 1.02))
+fig7.suptitle("Figure 7: Conformity susceptibility across the post-training pipeline", fontsize=10, y=1.08)
+fig7.subplots_adjust(top=0.82, wspace=0.08)
+fig7.savefig("paper/figures/fig7_conformity_or.pdf")
+fig7.savefig("paper/figures/fig7_conformity_or.png")
+print("✓ fig7_conformity_or")
+plt.close(fig7)
 
 
 # ═══════════════════════════════════════════════════════════════════════════

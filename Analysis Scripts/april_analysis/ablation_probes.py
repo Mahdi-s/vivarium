@@ -201,11 +201,24 @@ def build_pattern_completion_ratio(
             (df_ablation["model_id"] == model_id)
             & (df_ablation["condition_name"] == _NGRAM)
         ]["judge_wrong_endorsed"].fillna(False).astype(int)
+        ngram_refusal = df_ablation[
+            (df_ablation["model_id"] == model_id)
+            & (df_ablation["condition_name"] == _NGRAM)
+        ]["judge_refusal_flag"].fillna(False).astype(int)
         uc = df_main[
             (df_main["model_id"] == model_id)
             & (df_main["temperature"] == 0.0)
             & (df_main["condition_name"] == _UNBIASED)
         ]["judge_wrong_endorsed"].fillna(False).astype(int)
+        uc_refusal = df_main[
+            (df_main["model_id"] == model_id)
+            & (df_main["temperature"] == 0.0)
+            & (df_main["condition_name"] == _UNBIASED)
+        ]["judge_refusal_flag"].fillna(False).astype(int)
+        naked_refusal = df_ablation[
+            (df_ablation["model_id"] == model_id)
+            & (df_ablation["condition_name"] == _NAKED)
+        ]["judge_refusal_flag"].fillna(False).astype(int)
 
         if len(ngram) == 0 or len(uc) == 0:
             continue
@@ -213,6 +226,9 @@ def build_pattern_completion_ratio(
         ber_ngram = float(ngram.mean())
         ber_uc = float(uc.mean())
         ratio = ber_ngram / ber_uc if ber_uc > 0 else float("nan")
+        refusal_ngram = float(ngram_refusal.mean()) if len(ngram_refusal) else float("nan")
+        refusal_uc = float(uc_refusal.mean()) if len(uc_refusal) else float("nan")
+        refusal_naked = float(naked_refusal.mean()) if len(naked_refusal) else float("nan")
 
         _, lo_ngram, hi_ngram = wilson_ci(int(ngram.sum()), len(ngram))
         _, lo_uc, hi_uc = wilson_ci(int(uc.sum()), len(uc))
@@ -228,6 +244,9 @@ def build_pattern_completion_ratio(
             "ber_unanimous_confident": ber_uc,
             "ber_uc_lo": lo_uc,
             "ber_uc_hi": hi_uc,
+            "refusal_unanimous_confident": refusal_uc,
+            "refusal_naked_unanimous": refusal_naked,
+            "refusal_ngram_baseline": refusal_ngram,
             "pattern_completion_ratio": ratio,
         })
     return pd.DataFrame(rows)
@@ -244,7 +263,14 @@ def build_combined_scorecard(
         "ber_with_system_prompt", "ber_without_system_prompt",
         "delta_without_minus_with", "mcnemar_p_value",
     ]].merge(
-        ratio[["model_id", "ber_ngram_baseline", "pattern_completion_ratio"]],
+        ratio[[
+            "model_id",
+            "ber_ngram_baseline",
+            "pattern_completion_ratio",
+            "refusal_unanimous_confident",
+            "refusal_naked_unanimous",
+            "refusal_ngram_baseline",
+        ]],
         on="model_id", how="left",
     )
     return out

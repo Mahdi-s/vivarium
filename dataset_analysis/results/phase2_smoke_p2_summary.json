@@ -1,0 +1,77 @@
+{
+  "dataset_short": "instruct-dpo",
+  "pairs_analyzed": 4996,
+  "pairs_skipped": 4,
+  "delta_stats": {
+    "delta_struct_jaccard": {
+      "n": 4996,
+      "mean": 0.021663997864958633,
+      "median": 0.0,
+      "stdev": 0.35822065493628585,
+      "min": -1.0,
+      "max": 1.0
+    },
+    "delta_ngram_overlap": {
+      "n": 4996,
+      "mean": 0.05125101236710177,
+      "median": 0.004939225958385576,
+      "stdev": 0.20828165821358394,
+      "min": -1.0,
+      "max": 1.0
+    },
+    "delta_sycophancy": {
+      "n": 4996,
+      "mean": -0.019015212169735788,
+      "median": 0.0,
+      "stdev": 0.20560284285964675,
+      "min": -3,
+      "max": 2
+    },
+    "delta_correction": {
+      "n": 4996,
+      "mean": 0.04843875100080064,
+      "median": 0.0,
+      "stdev": 0.7970971430986251,
+      "min": -9,
+      "max": 16
+    }
+  },
+  "sign_tests": {
+    "delta_struct_jaccard": {
+      "n": 4996,
+      "positive": 1118,
+      "negative": 901,
+      "mean": 0.021663997864958633,
+      "pct_positive": 0.22377902321857485
+    },
+    "delta_ngram_overlap": {
+      "n": 4996,
+      "positive": 2721,
+      "negative": 1433,
+      "mean": 0.05125101236710177,
+      "pct_positive": 0.5446357085668535
+    },
+    "delta_sycophancy": {
+      "n": 4996,
+      "positive": 24,
+      "negative": 92,
+      "mean": -0.019015212169735788,
+      "pct_positive": 0.004803843074459567
+    },
+    "delta_correction": {
+      "n": 4996,
+      "positive": 492,
+      "negative": 366,
+      "mean": 0.04843875100080064,
+      "pct_positive": 0.09847878302642114
+    }
+  },
+  "affirm_prefix_rate_chosen": 0.15812650120096078,
+  "affirm_prefix_rate_rejected": 0.1589271417133707,
+  "interpretation": {
+    "delta_struct_jaccard": "positive -> DPO penalises structural mirroring",
+    "delta_ngram_overlap": "positive -> DPO penalises direct prompt copying",
+    "delta_sycophancy": "positive -> DPO penalises sycophantic agreement",
+    "delta_correction": "positive -> DPO rewards factual correction markers"
+  }
+}

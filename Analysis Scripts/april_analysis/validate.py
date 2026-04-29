@@ -53,11 +53,11 @@ EXPECTED_COVERAGE: Dict[str, Dict[str, set]] = {
     "instruct":     {"temps": {0.0, 0.2, 0.4, 0.6, 0.8, 1.0}, "conds": set(PATTERN_MATCH_REPS.keys())},
     "think_sft":    {"temps": {0.0, 0.6},                      "conds": set(SHARED_4_CONDITIONS)},
     "think_dpo":    {"temps": {0.0, 0.6},                      "conds": set(SHARED_4_CONDITIONS)},
-    "think":        {"temps": {0.0},                            "conds": set(SHARED_4_CONDITIONS)},
+    "think":        {"temps": {0.0, 0.6},                       "conds": set(SHARED_4_CONDITIONS)},
 }
 
-# Expected cell count: 4 Instruct * 6 T * 12 cond + 2 Think * 2 T * 4 cond + 1 Think-RL * 1 T * 4 cond
-EXPECTED_CELL_COUNT = 4 * 6 * 12 + 2 * 2 * 4 + 1 * 1 * 4  # = 308
+# Expected cell count: 4 Instruct * 6 T * 12 cond + 2 Think * 2 T * 4 cond + 1 Think-RL * 2 T * 4 cond
+EXPECTED_CELL_COUNT = 4 * 6 * 12 + 2 * 2 * 4 + 1 * 2 * 4  # = 312
 
 
 # ---------------------------------------------------------------------------
@@ -121,7 +121,7 @@ def run_smoke_tests(df: pd.DataFrame, cells: pd.DataFrame, log_lines: List[str])
             presence >= 0.999,
         )
 
-    # 5. Cell count: 4*6*12 (Instruct+base) + 2*2*4 (Think SFT/DPO) + 1*1*4 (Think-RL) = 308
+    # 5. Cell count: 4*6*12 (Instruct+base) + 2*2*4 (Think SFT/DPO) + 1*2*4 (Think-RL) = 312
     log(
         f"cell count = {len(cells)} (expected {EXPECTED_CELL_COUNT})",
         len(cells) == EXPECTED_CELL_COUNT,
@@ -214,7 +214,7 @@ def run_smoke_tests(df: pd.DataFrame, cells: pd.DataFrame, log_lines: List[str])
 
     # R4.3 Think temperature coverage strictly in {0, 0.6}
     r43_ok = True
-    for variant, allowed in (("think_sft", {0.0, 0.6}), ("think_dpo", {0.0, 0.6}), ("think", {0.0})):
+    for variant, allowed in (("think_sft", {0.0, 0.6}), ("think_dpo", {0.0, 0.6}), ("think", {0.0, 0.6})):
         actual = set(round(float(t), 2) for t in df[df["variant"] == variant]["temperature"].unique())
         if not actual.issubset(allowed):
             r43_ok = False

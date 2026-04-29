@@ -1,0 +1,586 @@
+{
+  "dataset_short": "instruct-dpo",
+  "pairs_analyzed": 999,
+  "pairs_skipped": 1,
+  "affirm_prefix_rate_chosen": 0.14814814814814814,
+  "affirm_prefix_rate_rejected": 0.16416416416416416,
+  "delta_struct_jaccard": {
+    "robust": {
+      "n": 999,
+      "median": 0.0,
+      "P25": 0.0,
+      "P75": 0.0,
+      "iqr": 0.0,
+      "P5": -0.5,
+      "P95": 1.0,
+      "mean": 0.01349683016349683,
+      "stdev": 0.34995143278193613
+    },
+    "hodges_lehmann": 0.0,
+    "cliffs_delta": 0.019978937896855814,
+    "cohens_d_paired": 0.03856772368726679,
+    "permutation_p_two_sided": 0.22877122877122877,
+    "boot_ci_median": [
+      0.0,
+      0.0
+    ],
+    "boot_ci_cliffs_delta": [
+      -0.012732427121816511,
+      0.04910946983019056
+    ],
+    "practical_significance": "none",
+    "pct_positive": 0.2062062062062062,
+    "interpretation": "positive -> DPO rejected responses mirror structural formatting more than chosen"
+  },
+  "delta_ngram_overlap": {
+    "robust": {
+      "n": 999,
+      "median": 0.007290400972053463,
+      "P25": -0.0010236852669610608,
+      "P75": 0.06411862221403573,
+      "iqr": 0.0651423074809968,
+      "P5": -0.09228700647842561,
+      "P95": 0.4785067873303167,
+      "mean": 0.056673663330668006,
+      "stdev": 0.20735093220832473
+    },
+    "hodges_lehmann": 0.02043011329499614,
+    "cliffs_delta": 0.14974433893352812,
+    "cohens_d_paired": 0.2733224429091458,
+    "permutation_p_two_sided": 0.000999000999000999,
+    "boot_ci_median": [
+      0.0040677596726094185,
+      0.011627906976744186
+    ],
+    "boot_ci_cliffs_delta": [
+      0.11600309017726435,
+      0.18139140141142143
+    ],
+    "practical_significance": "small",
+    "pct_positive": 0.5715715715715716,
+    "interpretation": "positive -> DPO rejected responses copy more n-grams verbatim from the prompt"
+  },
+  "delta_sycophancy": {
+    "robust": {
+      "n": 999,
+      "median": 0.0,
+      "P25": 0.0,
+      "P75": 0.0,
+      "iqr": 0.0,
+      "P5": 0.0,
+      "P95": 0.0,
+      "mean": -0.025025025025025027,
+      "stdev": 0.23341666833473432
+    },
+    "hodges_lehmann": 0.0,
+    "cliffs_delta": -0.01706411115820525,
+    "cohens_d_paired": -0.10721181654918299,
+    "permutation_p_two_sided": 0.000999000999000999,
+    "boot_ci_median": [
+      0.0,
+      0.0
+    ],
+    "boot_ci_cliffs_delta": [
+      -0.02909526142759376,
+      -0.006983610236863485
+    ],
+    "practical_significance": "none",
+    "pct_positive": 0.005005005005005005,
+    "interpretation": "positive -> DPO rejected responses use more sycophantic agreement phrases"
+  },
+  "delta_correction": {
+    "robust": {
+      "n": 999,
+      "median": 0.0,
+      "P25": 0.0,
+      "P75": 0.0,
+      "iqr": 0.0,
+      "P5": -1.0,
+      "P95": 1.0,
+      "mean": 0.012012012012012012,
+      "stdev": 0.7582914133702412
+    },
+    "hodges_lehmann": 0.0,
+    "cliffs_delta": -0.012395779162545929,
+    "cohens_d_paired": -0.01584089150980147,
+    "permutation_p_two_sided": 0.6463536463536463,
+    "boot_ci_median": [
+      0.0,
+      0.0
+    ],
+    "boot_ci_cliffs_delta": [
+      -0.03669329990651312,
+      0.012626264903542184
+    ],
+    "practical_significance": "none",
+    "pct_positive": 0.09509509509509509,
+    "interpretation": "positive -> DPO chosen responses use more factual correction markers"
+  },
+  "delta_correction_per_1k": {
+    "robust": {
+      "n": 999,
+      "median": 0.0,
+      "P25": 0.0,
+      "P75": 0.0,
+      "iqr": 0.0,
+      "P5": -0.38403112173603976,
+      "P95": 0.3635041802980734,
+      "mean": 0.00034065620797694204,
+      "stdev": 0.47146661105486243
+    },
+    "hodges_lehmann": 0.0,
+    "cliffs_delta": -0.010248486724963202,
+    "cohens_d_paired": -0.0007225457752241578,
+    "permutation_p_two_sided": 0.98001998001998,
+    "boot_ci_median": [
+      0.0,
+      0.0
+    ],
+    "boot_ci_cliffs_delta": [
+      -0.0343668994319645,
+      0.013628418207997803
+    ],
+    "practical_significance": "none",
+    "pct_positive": 0.0940940940940941,
+    "interpretation": "positive -> DPO chosen responses have higher correction density (per 1k chars); controls for response length"
+  },
+  "delta_max_run": {
+    "robust": {
+      "n": 999,
+      "median": 0.0,
+      "P25": 0.0,
+      "P75": 0.0,
+      "iqr": 0.0,
+      "P5": -1.0,
+      "P95": 1.0,
+      "mean": 8.912912912912914,
+      "stdev": 131.04793988659443
+    },
+    "hodges_lehmann": 0.0,
+    "cliffs_delta": -0.040859678497316136,
+    "cohens_d_paired": 0.06801261370934883,
+    "permutation_p_two_sided": 0.054945054945054944,
+    "boot_ci_median": [
+      0.0,
+      0.0
+    ],
+    "boot_ci_cliffs_delta": [
+      -0.06772833894956017,
+      -0.006211416621827032
+    ],
+    "practical_significance": "none",
+    "pct_positive": 0.0980980980980981,
+    "interpretation": "positive -> DPO rejected responses contain longer literal-repetition runs"
+  },
+  "delta_consensus_hits": {
+    "robust": {
+      "n": 999,
+      "median": 0.0,
+      "P25": 0.0,
+      "P75": 0.0,
+      "iqr": 0.0,
+      "P5": 0.0,
+      "P95": 0.0,
+      "mean": 0.0,
+      "stdev": 0.0
+    },
+    "hodges_lehmann": 0.0,
+    "cliffs_delta": 0.0,
+    "cohens_d_paired": 0.0,
+    "permutation_p_two_sided": 1.0,
+    "boot_ci_median": [
+      0.0,
+      0.0
+    ],
+    "boot_ci_cliffs_delta": [
+      0.0,
+      0.0
+    ],
+    "practical_significance": "none",
+    "pct_positive": 0.0,
+    "interpretation": "positive -> DPO rejected responses use more consensus framing (English-only regex; lower bound)"
+  },
+  "delta_has_run_5": {
+    "robust": {
+      "n": 999,
+      "median": 0.0,
+      "P25": 0.0,
+      "P75": 0.0,
+      "iqr": 0.0,
+      "P5": 0.0,
+      "P95": 0.0,
+      "mean": 0.0,
+      "stdev": 0.12661778756658368
+    },
+    "hodges_lehmann": 0.0,
+    "cliffs_delta": 0.0,
+    "cohens_d_paired": 0.0,
+    "permutation_p_two_sided": 1.0,
+    "boot_ci_median": [
+      0.0,
+      0.0
+    ],
+    "boot_ci_cliffs_delta": [
+      -0.007032032032032031,
+      0.007032032032032037
+    ],
+    "practical_significance": "none",
+    "pct_positive": 0.008008008008008008,
+    "interpretation": "positive -> DPO rejected responses more frequently contain runs of 5+ identical consecutive tokens"
+  },
+  "delta_peer_frame_count": {
+    "robust": {
+      "n": 999,
+      "median": 0.0,
+      "P25": 0.0,
+      "P75": 0.0,
+      "iqr": 0.0,
+      "P5": 0.0,
+      "P95": 0.0,
+      "mean": 0.0,
+      "stdev": 0.0
+    },
+    "hodges_lehmann": 0.0,
+    "cliffs_delta": 0.0,
+    "cohens_d_paired": 0.0,
+    "permutation_p_two_sided": 1.0,
+    "boot_ci_median": [
+      0.0,
+      0.0
+    ],
+    "boot_ci_cliffs_delta": [
+      0.0,
+      0.0
+    ],
+    "practical_significance": "none",
+    "pct_positive": 0.0,
+    "interpretation": "positive -> DPO rejected responses contain more 'Participant N:' style framing"
+  },
+  "by_preference_type": {
+    "delta_learning": {
+      "n": 470,
+      "delta_max_run": {
+        "median": 0.0,
+        "cliffs_delta": -0.022684472612041647
+      },
+      "delta_struct_jaccard": {
+        "median": 0.0,
+        "cliffs_delta": 0.0327116342236306
+      },
+      "delta_ngram_overlap": {
+        "median": 0.01531137610879628,
+        "cliffs_delta": 0.1966545948392938
+      },
+      "delta_consensus_hits": {
+        "median": 0.0,
+        "cliffs_delta": 0.0
+      }
+    },
+    "llm_judged": {
+      "n": 494,
+      "delta_max_run": {
+        "median": 0.0,
+        "cliffs_delta": -0.061831041321772195
+      },
+      "delta_struct_jaccard": {
+        "median": 0.0,
+        "cliffs_delta": 0.014436394630300447
+      },
+      "delta_ngram_overlap": {
+        "median": 0.0013288655518681877,
+        "cliffs_delta": 0.09287564129882477
+      },
+      "delta_consensus_hits": {
+        "median": 0.0,
+        "cliffs_delta": 0.0
+      }
+    },
+    "multiturn_self_talk": {
+      "n": 21,
+      "delta_max_run": {
+        "median": 0.0,
+        "cliffs_delta": 0.0
+      },
+      "delta_struct_jaccard": {
+        "median": 0.0,
+        "cliffs_delta": -0.10204081632653061
+      },
+      "delta_ngram_overlap": {
+        "median": 0.11107802263251937,
+        "cliffs_delta": 0.5056689342403629
+      },
+      "delta_consensus_hits": {
+        "median": 0.0,
+        "cliffs_delta": 0.0
+      }
+    },
+    "multiturn_synthetic_context": {
+      "n": 14,
+      "delta_max_run": {
+        "median": 0.0,
+        "cliffs_delta": 0.0
+      },
+      "delta_struct_jaccard": {
+        "median": 0.0,
+        "cliffs_delta": -0.025510204081632654
+      },
+      "delta_ngram_overlap": {
+        "median": 0.0,
+        "cliffs_delta": 0.061224489795918366
+      },
+      "delta_consensus_hits": {
+        "median": 0.0,
+        "cliffs_delta": 0.0
+      }
+    }
+  },
+  "by_chosen_model": {
+    "gemma3-12b": {
+      "n": 14,
+      "delta_struct_jaccard_median": 0.0,
+      "delta_ngram_overlap_median": 0.005189862750174145,
+      "delta_max_run_median": -0.5
+    },
+    "gemma3-27b": {
+      "n": 23,
+      "delta_struct_jaccard_median": 0.0,
+      "delta_ngram_overlap_median": 0.020611916264090178,
+      "delta_max_run_median": 0.0
+    },
+    "gemma3-4b": {
+      "n": 11,
+      "delta_struct_jaccard_median": 0.0,
+      "delta_ngram_overlap_median": 0.004149377593360996,
+      "delta_max_run_median": 0.0
+    },
+    "gpt-120b": {
+      "n": 27,
+      "delta_struct_jaccard_median": 0.0,
+      "delta_ngram_overlap_median": 0.03342869480729785,
+      "delta_max_run_median": 0.0
+    },
+    "gpt-20b": {
+      "n": 26,
+      "delta_struct_jaccard_median": 0.0,
+      "delta_ngram_overlap_median": 0.028634192534526405,
+      "delta_max_run_median": 0.0
+    },
+    "gpt-4.1-2025-04-14": {
+      "n": 27,
+      "delta_struct_jaccard_median": 0.0,
+      "delta_ngram_overlap_median": 0.020833333333333332,
+      "delta_max_run_median": 0.0
+    },
+    "gpt-4o": {
+      "n": 15,
+      "delta_struct_jaccard_median": 0.0,
+      "delta_ngram_overlap_median": 0.08156318941065238,
+      "delta_max_run_median": 0.0
+    },
+    "mistral-24b": {
+      "n": 14,
+      "delta_struct_jaccard_median": 0.0,
+      "delta_ngram_overlap_median": 0.0,
+      "delta_max_run_median": 0.0
+    },
+    "olmo2-13b": {
+      "n": 26,
+      "delta_struct_jaccard_median": 0.0,
+      "delta_ngram_overlap_median": 0.0,
+      "delta_max_run_median": 0.0
+    },
+    "olmo2-1b": {
+      "n": 13,
+      "delta_struct_jaccard_median": 0.0,
+      "delta_ngram_overlap_median": 0.0,
+      "delta_max_run_median": 0.0
+    },
+    "olmo2-32b": {
+      "n": 12,
+      "delta_struct_jaccard_median": 0.0,
+      "delta_ngram_overlap_median": 0.0017552248321479093,
+      "delta_max_run_median": 0.0
+    },
+    "olmo2-7b": {
+      "n": 18,
+      "delta_struct_jaccard_median": 0.0,
+      "delta_ngram_overlap_median": 0.0018553550977637437,
+      "delta_max_run_median": 0.0
+    },
+    "phi4-mini-instruct": {
+      "n": 20,
+      "delta_struct_jaccard_median": 0.0,
+      "delta_ngram_overlap_median": 0.0,
+      "delta_max_run_median": 0.0
+    },
+    "qwen3-coder-no_reasoning-30b-3a": {
+      "n": 16,
+      "delta_struct_jaccard_median": 0.0,
+      "delta_ngram_overlap_median": 0.0029611525468134295,
+      "delta_max_run_median": 0.0
+    },
+    "qwen3-no_reasoning-0.6b": {
+      "n": 13,
+      "delta_struct_jaccard_median": 0.0,
+      "delta_ngram_overlap_median": -0.04389632107023411,
+      "delta_max_run_median": 0.0
+    },
+    "qwen3-no_reasoning-1.7b": {
+      "n": 43,
+      "delta_struct_jaccard_median": 0.0,
+      "delta_ngram_overlap_median": 0.0,
+      "delta_max_run_median": 0.0
+    },
+    "qwen3-no_reasoning-14b": {
+      "n": 29,
+      "delta_struct_jaccard_median": 0.0,
+      "delta_ngram_overlap_median": 0.0,
+      "delta_max_run_median": 0.0
+    },
+    "qwen3-no_reasoning-30b-3a": {
+      "n": 35,
+      "delta_struct_jaccard_median": 0.0,
+      "delta_ngram_overlap_median": 0.030467307879141165,
+      "delta_max_run_median": 0.0
+    },
+    "qwen3-no_reasoning-32b": {
+      "n": 513,
+      "delta_struct_jaccard_median": 0.0,
+      "delta_ngram_overlap_median": 0.014057750759878418,
+      "delta_max_run_median": 0.0
+    },
+    "qwen3-no_reasoning-4b": {
+      "n": 18,
+      "delta_struct_jaccard_median": 0.0,
+      "delta_ngram_overlap_median": 0.0,
+      "delta_max_run_median": 0.0
+    },
+    "qwen3-no_reasoning-8b": {
+      "n": 20,
+      "delta_struct_jaccard_median": 0.0,
+      "delta_ngram_overlap_median": -0.0009079903147699749,
+      "delta_max_run_median": 0.0
+    },
+    "qwq-32b": {
+      "n": 23,
+      "delta_struct_jaccard_median": 0.0,
+      "delta_ngram_overlap_median": 0.004728132387706856,
+      "delta_max_run_median": 0.0
+    },
+    "yi-34b": {
+      "n": 24,
+      "delta_struct_jaccard_median": 0.0,
+      "delta_ngram_overlap_median": 0.0,
+      "delta_max_run_median": 0.0
+    },
+    "yi-9b": {
+      "n": 19,
+      "delta_struct_jaccard_median": 0.0,
+      "delta_ngram_overlap_median": 0.0,
+      "delta_max_run_median": 0.0
+    }
+  },
+  "top_1pct_outlier_indices": {
+    "delta_struct_jaccard": [
+      9,
+      17,
+      19,
+      40,
+      74,
+      85,
+      127,
+      150,
+      159
+    ],
+    "delta_ngram_overlap": [
+      236,
+      275,
+      502,
+      705,
+      748,
+      810,
+      843,
+      858,
+      145
+    ],
+    "delta_sycophancy": [
+      641,
+      293,
+      355,
+      736,
+      861,
+      0,
+      2,
+      3,
+      4
+    ],
+    "delta_correction": [
+      234,
+      246,
+      562,
+      8,
+      209,
+      272,
+      588,
+      771,
+      1
+    ],
+    "delta_correction_per_1k": [
+      33,
+      382,
+      526,
+      731,
+      828,
+      884,
+      739,
+      730,
+      77
+    ],
+    "delta_max_run": [
+      882,
+      886,
+      804,
+      983,
+      523,
+      997,
+      232,
+      544,
+      707
+    ],
+    "delta_consensus_hits": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "delta_has_run_5": [
+      232,
+      523,
+      544,
+      804,
+      882,
+      886,
+      983,
+      997,
+      0
+    ],
+    "delta_peer_frame_count": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ]
+  },
+  "regex_lower_bound_disclaimer": "consensus_hits and sycophancy_hits are reported as English-only regex lower bounds; recall is bounded by phase10 LLM-judge.",
+  "boot_ci_note": "boot_ci_median uses 1000 reps; boot_ci_cliffs_delta uses 200 reps (cliffs_delta is O(N log N) per rep at N=260k; 200 reps is the plan-mandated cap to stay under ~30s total for this block)."
+}

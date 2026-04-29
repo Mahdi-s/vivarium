@@ -806,6 +806,7 @@ def _april_load_db_rows(
     manifest_root: str,
     source: dict,
     canonicalization: dict,
+    variant_canonicalization: dict | None = None,
 ) -> pd.DataFrame:
     """Load trial rows from one SQLite DB as described by *source*."""
     full_path = os.path.join(manifest_root, source["db"])
@@ -821,6 +822,10 @@ def _april_load_db_rows(
 
     if rows.empty:
         return rows
+
+    # --- canonicalize variant names ---
+    if variant_canonicalization:
+        rows["variant"] = rows["variant"].replace(variant_canonicalization)
 
     # --- variant filter & ignore ---
     allowed = set(source.get("variants", []))
@@ -951,6 +956,10 @@ def load_april_trials(
     canonicalization = manifest.get("condition_name_canonicalization", {})
     # Remove comment keys from canonicalization
     canonicalization = {k: v for k, v in canonicalization.items() if k != "comment"}
+    variant_canonicalization = manifest.get("variant_name_canonicalization", {})
+    variant_canonicalization = {
+        k: v for k, v in variant_canonicalization.items() if k != "comment"
+    }
 
     sources = list(manifest.get("sources_primary", []))
     if include_secondary:
@@ -958,8 +967,13 @@ def load_april_trials(
 
     frames: list = []
     for src in sources:
-        chunk = _april_load_db_rows(db_path=src["db"], manifest_root=manifest_root,
-                                     source=src, canonicalization=canonicalization)
+        chunk = _april_load_db_rows(
+            db_path=src["db"],
+            manifest_root=manifest_root,
+            source=src,
+            canonicalization=canonicalization,
+            variant_canonicalization=variant_canonicalization,
+        )
         if not chunk.empty:
             frames.append(chunk)
 
@@ -1018,12 +1032,12 @@ def _april_post_load_assertions(df: pd.DataFrame) -> None:
                 )
 
     # R3: Think variants only at allowed temperatures
-    # SFT/DPO: {0.0, 0.6}; Think-RL: {0.0}
+    # SFT/DPO: {0.0, 0.6}; Think-RL: {0.0, 0.6}
     if not think_rows.empty:
         for variant, allowed_temps in [
             ("think_sft", {0.0, 0.6}),
             ("think_dpo", {0.0, 0.6}),
-            ("think", {0.0}),
+            ("think", {0.0, 0.6}),
         ]:
             v_rows = think_rows[think_rows["variant"] == variant]
             if v_rows.empty:

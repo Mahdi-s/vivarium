@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "generated_for": "April_analysis post-hoc recomputation of 7B OLMo 2-axis story (remediated 2026-04-08)",
-  "remediation_note": "Schema v1 loaded Think variants (think_sft, think_dpo, think) from runs_latest/runs/ at all 6 temperatures. That was a fatal error: runs_latest Think outputs were truncated at ~1,400 chars / ~350 tokens, mid-<think> block, producing garbage labels. The authoritative Think SFT/DPO data lives in runs-think-hpc/20260330_* (4 DBs at T in {0.0, 0.6}, 4 shared conditions) and Think-RL lives in runs/think/20260325_* (1 DB at T=0.0, 4 shared conditions). Schema v2 restricts runs_latest to {base, instruct_sft, instruct_dpo, instruct} and loads Think variants exclusively from the HPC + runs/think sources.",
+  "remediation_note": "Schema v1 loaded Think variants (think_sft, think_dpo, think) from runs_latest/runs/ at all 6 temperatures. That was a fatal error: runs_latest Think outputs were truncated at ~1,400 chars / ~350 tokens, mid-<think> block, producing garbage labels. The authoritative Think SFT/DPO data lives in runs-think-hpc/20260330_* (4 DBs at T in {0.0, 0.6}, 4 shared conditions) and Think-RL lives in runs/think/20260325_* + runs/think/20260414_* (2 DBs at T in {0.0, 0.6}, 4 shared conditions). Schema v2 restricts runs_latest to {base, instruct_sft, instruct_dpo, instruct} and loads Think variants exclusively from the HPC + runs/think sources.",
   "judge_field_policy": {
     "authoritative_labels": "parsed_answer_json top-level {is_correct, wrong_answer_endorsed, refusal_flag}",
     "judge_marker": "parsed_answer_json._llm_judge object (presence indicates LLM judge was applied)",
@@ -43,6 +43,10 @@
     "authority_trust": "authority_zhu_unbiased_trust",
     "control": "control",
     "authoritative_bias": "authoritative_bias"
+  },
+  "variant_name_canonicalization": {
+    "comment": "Normalize run-specific variant aliases before variant filtering.",
+    "think_7b": "think"
   },
   "variants": {
     "base": {
@@ -95,7 +99,7 @@
     },
     "think_rl": {
       "variants": ["think"],
-      "temperatures": [0.0],
+      "temperatures": [0.0, 0.6],
       "conditions": "conditions_4_shared"
     }
   },
@@ -174,6 +178,14 @@
       "conditions_subset": ["control", "asch_zhu_unbiased_unanimous_confident", "authoritative_bias", "authority_zhu_unbiased_trust"],
       "dedup_key": ["item_id", "condition_name", "variant"],
       "notes": "Think-RL dedicated run. Contains 1607 think rows (7 extras to dedup) + 2 rogue think_sft rows (filtered via ignore_variants)."
+    },
+    {
+      "db": "runs/think/20260414_092714_67aaf9da-34d7-4855-aee9-d8a6b1a6099e/simulation.db",
+      "temperature": 0.6,
+      "variants": ["think"],
+      "ignore_variants": [],
+      "conditions_subset": ["control", "asch_zhu_unbiased_unanimous_confident", "authoritative_bias", "authority_zhu_unbiased_trust"],
+      "notes": "Think-RL dedicated run at T=0.6."
     }
   ],
   "sources_secondary": [],

@@ -23,7 +23,7 @@
   {
     "claim": "C4a: BER has a negative temperature trend for base (unanimous_plain)",
     "predicted": "slope < 0 AND ber(T=0) > ber(T=1)",
-    "observed": "bers=[0.61, 0.645, 0.6, 0.55, 0.542, 0.51], slope=-0.122",
+    "observed": "bers=[0.61, 0.645, 0.6, 0.55, 0.542, 0.51], slope=-0.123",
     "status": "PASS",
     "notes": "Pure pattern-completion temperature concentration on the pretrained backbone."
   },

@@ -1,0 +1,796 @@
+{
+  "I": [
+    {
+      "pillar": "I",
+      "metric": "max_run_geq_5_rate",
+      "stage": "SFT:Verifiable Reasoning",
+      "value": 0.059155,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "has_run_5_response rate"
+    },
+    {
+      "pillar": "I",
+      "metric": "P_resp_has_list_given_prompt_has_list",
+      "stage": "SFT:Verifiable Reasoning",
+      "value": 0.401638,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "P(resp_list|prompt_list)"
+    },
+    {
+      "pillar": "I",
+      "metric": "structural_jaccard_median",
+      "stage": "SFT:Verifiable Reasoning",
+      "value": 0.5,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "struct Jaccard median"
+    },
+    {
+      "pillar": "I",
+      "metric": "ngram_overlap_n4_median",
+      "stage": "SFT:Verifiable Reasoning",
+      "value": 0.0,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "4-gram overlap median"
+    },
+    {
+      "pillar": "I",
+      "metric": "multi_turn_agreement_median",
+      "stage": "SFT:Verifiable Reasoning",
+      "value": 0.0,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "multi-turn agreement median"
+    },
+    {
+      "pillar": "I",
+      "metric": "affirm_prefix_rate",
+      "stage": "SFT:Verifiable Reasoning",
+      "value": 0.083894,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "affirm prefix rate"
+    },
+    {
+      "pillar": "I",
+      "metric": "max_run_geq_5_rate",
+      "stage": "SFT:Wildchat",
+      "value": 0.003896,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "has_run_5_response rate"
+    },
+    {
+      "pillar": "I",
+      "metric": "P_resp_has_list_given_prompt_has_list",
+      "stage": "SFT:Wildchat",
+      "value": 0.66005,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "P(resp_list|prompt_list)"
+    },
+    {
+      "pillar": "I",
+      "metric": "structural_jaccard_median",
+      "stage": "SFT:Wildchat",
+      "value": 0.0,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "struct Jaccard median"
+    },
+    {
+      "pillar": "I",
+      "metric": "ngram_overlap_n4_median",
+      "stage": "SFT:Wildchat",
+      "value": 0.004494,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "4-gram overlap median"
+    },
+    {
+      "pillar": "I",
+      "metric": "multi_turn_agreement_median",
+      "stage": "SFT:Wildchat",
+      "value": 0.0,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "multi-turn agreement median"
+    },
+    {
+      "pillar": "I",
+      "metric": "affirm_prefix_rate",
+      "stage": "SFT:Wildchat",
+      "value": 0.439208,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "affirm prefix rate"
+    },
+    {
+      "pillar": "I",
+      "metric": "max_run_geq_5_rate",
+      "stage": "SFT:Dolci Instruct Python Algorithms",
+      "value": 0.001578,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "has_run_5_response rate"
+    },
+    {
+      "pillar": "I",
+      "metric": "P_resp_has_list_given_prompt_has_list",
+      "stage": "SFT:Dolci Instruct Python Algorithms",
+      "value": 0.020084,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "P(resp_list|prompt_list)"
+    },
+    {
+      "pillar": "I",
+      "metric": "structural_jaccard_median",
+      "stage": "SFT:Dolci Instruct Python Algorithms",
+      "value": 0.5,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "struct Jaccard median"
+    },
+    {
+      "pillar": "I",
+      "metric": "ngram_overlap_n4_median",
+      "stage": "SFT:Dolci Instruct Python Algorithms",
+      "value": 0.0,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "4-gram overlap median"
+    },
+    {
+      "pillar": "I",
+      "metric": "multi_turn_agreement_median",
+      "stage": "SFT:Dolci Instruct Python Algorithms",
+      "value": 0.0,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "multi-turn agreement median"
+    },
+    {
+      "pillar": "I",
+      "metric": "affirm_prefix_rate",
+      "stage": "SFT:Dolci Instruct Python Algorithms",
+      "value": 0.0,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "affirm prefix rate"
+    },
+    {
+      "pillar": "I",
+      "metric": "max_run_geq_5_rate",
+      "stage": "SFT:Logic Puzzles",
+      "value": 2.5e-05,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "has_run_5_response rate"
+    },
+    {
+      "pillar": "I",
+      "metric": "P_resp_has_list_given_prompt_has_list",
+      "stage": "SFT:Logic Puzzles",
+      "value": 0.286749,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "P(resp_list|prompt_list)"
+    },
+    {
+      "pillar": "I",
+      "metric": "structural_jaccard_median",
+      "stage": "SFT:Logic Puzzles",
+      "value": 1.0,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "struct Jaccard median"
+    },
+    {
+      "pillar": "I",
+      "metric": "ngram_overlap_n4_median",
+      "stage": "SFT:Logic Puzzles",
+      "value": 0.0,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "4-gram overlap median"
+    },
+    {
+      "pillar": "I",
+      "metric": "multi_turn_agreement_median",
+      "stage": "SFT:Logic Puzzles",
+      "value": 0.0,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "multi-turn agreement median"
+    },
+    {
+      "pillar": "I",
+      "metric": "affirm_prefix_rate",
+      "stage": "SFT:Logic Puzzles",
+      "value": 0.002477,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "affirm prefix rate"
+    },
+    {
+      "pillar": "I",
+      "metric": "max_run_geq_5_rate",
+      "stage": "SFT:Tulu 3 Persona MATH",
+      "value": 0.010476,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "has_run_5_response rate"
+    },
+    {
+      "pillar": "I",
+      "metric": "P_resp_has_list_given_prompt_has_list",
+      "stage": "SFT:Tulu 3 Persona MATH",
+      "value": 0.82642,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "P(resp_list|prompt_list)"
+    },
+    {
+      "pillar": "I",
+      "metric": "structural_jaccard_median",
+      "stage": "SFT:Tulu 3 Persona MATH",
+      "value": 0.4,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "struct Jaccard median"
+    },
+    {
+      "pillar": "I",
+      "metric": "ngram_overlap_n4_median",
+      "stage": "SFT:Tulu 3 Persona MATH",
+      "value": 0.090598,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "4-gram overlap median"
+    },
+    {
+      "pillar": "I",
+      "metric": "multi_turn_agreement_median",
+      "stage": "SFT:Tulu 3 Persona MATH",
+      "value": 0.0,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "multi-turn agreement median"
+    },
+    {
+      "pillar": "I",
+      "metric": "affirm_prefix_rate",
+      "stage": "SFT:Tulu 3 Persona MATH",
+      "value": 0.034103,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "affirm prefix rate"
+    },
+    {
+      "pillar": "I",
+      "metric": "max_run_geq_5_rate",
+      "stage": "SFT:Dolci Instruct Precise IF",
+      "value": 0.00527,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "has_run_5_response rate"
+    },
+    {
+      "pillar": "I",
+      "metric": "P_resp_has_list_given_prompt_has_list",
+      "stage": "SFT:Dolci Instruct Precise IF",
+      "value": 0.657461,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "P(resp_list|prompt_list)"
+    },
+    {
+      "pillar": "I",
+      "metric": "structural_jaccard_median",
+      "stage": "SFT:Dolci Instruct Precise IF",
+      "value": 0.4,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "struct Jaccard median"
+    },
+    {
+      "pillar": "I",
+      "metric": "ngram_overlap_n4_median",
+      "stage": "SFT:Dolci Instruct Precise IF",
+      "value": 0.013514,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "4-gram overlap median"
+    },
+    {
+      "pillar": "I",
+      "metric": "multi_turn_agreement_median",
+      "stage": "SFT:Dolci Instruct Precise IF",
+      "value": 0.0,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "multi-turn agreement median"
+    },
+    {
+      "pillar": "I",
+      "metric": "affirm_prefix_rate",
+      "stage": "SFT:Dolci Instruct Precise IF",
+      "value": 0.031238,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "affirm prefix rate"
+    },
+    {
+      "pillar": "I",
+      "metric": "max_run_geq_5_rate",
+      "stage": "SFT:Evol CodeAlpaca",
+      "value": 0.005015,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "has_run_5_response rate"
+    },
+    {
+      "pillar": "I",
+      "metric": "P_resp_has_list_given_prompt_has_list",
+      "stage": "SFT:Evol CodeAlpaca",
+      "value": 0.389943,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "P(resp_list|prompt_list)"
+    },
+    {
+      "pillar": "I",
+      "metric": "structural_jaccard_median",
+      "stage": "SFT:Evol CodeAlpaca",
+      "value": 0.25,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "struct Jaccard median"
+    },
+    {
+      "pillar": "I",
+      "metric": "ngram_overlap_n4_median",
+      "stage": "SFT:Evol CodeAlpaca",
+      "value": 0.014925,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "4-gram overlap median"
+    },
+    {
+      "pillar": "I",
+      "metric": "multi_turn_agreement_median",
+      "stage": "SFT:Evol CodeAlpaca",
+      "value": 0.0,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "multi-turn agreement median"
+    },
+    {
+      "pillar": "I",
+      "metric": "affirm_prefix_rate",
+      "stage": "SFT:Evol CodeAlpaca",
+      "value": 0.356558,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "affirm prefix rate"
+    },
+    {
+      "pillar": "I",
+      "metric": "max_run_geq_5_rate",
+      "stage": "SFT:Aya",
+      "value": 0.00147,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "has_run_5_response rate"
+    },
+    {
+      "pillar": "I",
+      "metric": "P_resp_has_list_given_prompt_has_list",
+      "stage": "SFT:Aya",
+      "value": 0.353523,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "P(resp_list|prompt_list)"
+    },
+    {
+      "pillar": "I",
+      "metric": "structural_jaccard_median",
+      "stage": "SFT:Aya",
+      "value": 1.0,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "struct Jaccard median"
+    },
+    {
+      "pillar": "I",
+      "metric": "ngram_overlap_n4_median",
+      "stage": "SFT:Aya",
+      "value": 0.0,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "4-gram overlap median"
+    },
+    {
+      "pillar": "I",
+      "metric": "multi_turn_agreement_median",
+      "stage": "SFT:Aya",
+      "value": 0.0,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "multi-turn agreement median"
+    },
+    {
+      "pillar": "I",
+      "metric": "affirm_prefix_rate",
+      "stage": "SFT:Aya",
+      "value": 0.00098,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "affirm prefix rate"
+    },
+    {
+      "pillar": "I",
+      "metric": "max_run_geq_5_rate",
+      "stage": "SFT:Dolci Instruct OpenThoughts3+ Science",
+      "value": 0.003022,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "has_run_5_response rate"
+    },
+    {
+      "pillar": "I",
+      "metric": "P_resp_has_list_given_prompt_has_list",
+      "stage": "SFT:Dolci Instruct OpenThoughts3+ Science",
+      "value": 0.922929,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "P(resp_list|prompt_list)"
+    },
+    {
+      "pillar": "I",
+      "metric": "structural_jaccard_median",
+      "stage": "SFT:Dolci Instruct OpenThoughts3+ Science",
+      "value": 0.2,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "struct Jaccard median"
+    },
+    {
+      "pillar": "I",
+      "metric": "ngram_overlap_n4_median",
+      "stage": "SFT:Dolci Instruct OpenThoughts3+ Science",
+      "value": 0.024316,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "4-gram overlap median"
+    },
+    {
+      "pillar": "I",
+      "metric": "multi_turn_agreement_median",
+      "stage": "SFT:Dolci Instruct OpenThoughts3+ Science",
+      "value": 0.0,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "multi-turn agreement median"
+    },
+    {
+      "pillar": "I",
+      "metric": "affirm_prefix_rate",
+      "stage": "SFT:Dolci Instruct OpenThoughts3+ Science",
+      "value": 0.0148,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "affirm prefix rate"
+    },
+    {
+      "pillar": "I",
+      "metric": "max_run_geq_5_rate",
+      "stage": "SFT:FLAN",
+      "value": 0.000811,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "has_run_5_response rate"
+    },
+    {
+      "pillar": "I",
+      "metric": "P_resp_has_list_given_prompt_has_list",
+      "stage": "SFT:FLAN",
+      "value": 0.091735,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "P(resp_list|prompt_list)"
+    },
+    {
+      "pillar": "I",
+      "metric": "structural_jaccard_median",
+      "stage": "SFT:FLAN",
+      "value": 0.0,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "struct Jaccard median"
+    },
+    {
+      "pillar": "I",
+      "metric": "ngram_overlap_n4_median",
+      "stage": "SFT:FLAN",
+      "value": 0.0,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "4-gram overlap median"
+    },
+    {
+      "pillar": "I",
+      "metric": "multi_turn_agreement_median",
+      "stage": "SFT:FLAN",
+      "value": 0.0,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "multi-turn agreement median"
+    },
+    {
+      "pillar": "I",
+      "metric": "affirm_prefix_rate",
+      "stage": "SFT:FLAN",
+      "value": 0.002012,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "affirm prefix rate"
+    },
+    {
+      "pillar": "I",
+      "metric": "max_run_geq_5_rate",
+      "stage": "SFT:OpenMathInstruct 2",
+      "value": 0.00024,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "has_run_5_response rate"
+    },
+    {
+      "pillar": "I",
+      "metric": "structural_jaccard_median",
+      "stage": "SFT:OpenMathInstruct 2",
+      "value": 0.0,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "struct Jaccard median"
+    },
+    {
+      "pillar": "I",
+      "metric": "ngram_overlap_n4_median",
+      "stage": "SFT:OpenMathInstruct 2",
+      "value": 0.098837,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "4-gram overlap median"
+    },
+    {
+      "pillar": "I",
+      "metric": "multi_turn_agreement_median",
+      "stage": "SFT:OpenMathInstruct 2",
+      "value": 0.0,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "multi-turn agreement median"
+    },
+    {
+      "pillar": "I",
+      "metric": "affirm_prefix_rate",
+      "stage": "SFT:OpenMathInstruct 2",
+      "value": 4e-05,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "affirm prefix rate"
+    },
+    {
+      "pillar": "I",
+      "metric": "max_run_geq_5_rate",
+      "stage": "SFT:Tulu 3 Persona GSM",
+      "value": 0.00054,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "has_run_5_response rate"
+    },
+    {
+      "pillar": "I",
+      "metric": "P_resp_has_list_given_prompt_has_list",
+      "stage": "SFT:Tulu 3 Persona GSM",
+      "value": 0.964415,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "P(resp_list|prompt_list)"
+    },
+    {
+      "pillar": "I",
+      "metric": "structural_jaccard_median",
+      "stage": "SFT:Tulu 3 Persona GSM",
+      "value": 0.0,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "struct Jaccard median"
+    },
+    {
+      "pillar": "I",
+      "metric": "ngram_overlap_n4_median",
+      "stage": "SFT:Tulu 3 Persona GSM",
+      "value": 0.078261,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "4-gram overlap median"
+    },
+    {
+      "pillar": "I",
+      "metric": "multi_turn_agreement_median",
+      "stage": "SFT:Tulu 3 Persona GSM",
+      "value": 0.0,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "multi-turn agreement median"
+    },
+    {
+      "pillar": "I",
+      "metric": "affirm_prefix_rate",
+      "stage": "SFT:Tulu 3 Persona GSM",
+      "value": 0.001,
+      "ci_lo": NaN,
+      "ci_hi": NaN,
+      "effect_size_label": "",
+      "interpretation": "affirm prefix rate"
+    }
+  ],
+  "II": [
+    {
+      "pillar": "II",
+      "metric": "delta_max_run",
+      "stage": "DPO",
+      "value": 0.0,
+      "ci_lo": -0.055005,
+      "ci_hi": -0.051307,
+      "effect_size_label": "none",
+      "interpretation": "positive -> DPO rejected responses contain longer literal-repetition runs"
+    },
+    {
+      "pillar": "II",
+      "metric": "delta_consensus_hits",
+      "stage": "DPO",
+      "value": 0.0,
+      "ci_lo": -0.000343,
+      "ci_hi": -0.000162,
+      "effect_size_label": "none",
+      "interpretation": "positive -> DPO rejected responses use more consensus framing (English-only regex; lower bound)"
+    },
+    {
+      "pillar": "II",
+      "metric": "delta_has_run_5",
+      "stage": "DPO",
+      "value": 0.0,
+      "ci_lo": 0.002159,
+      "ci_hi": 0.003038,
+      "effect_size_label": "none",
+      "interpretation": "positive -> DPO rejected responses more frequently contain runs of 5+ identical consecutive tokens"
+    },
+    {
+      "pillar": "II",
+      "metric": "delta_struct_jaccard",
+      "stage": "DPO",
+      "value": 0.0,
+      "ci_lo": 0.03485,
+      "ci_hi": 0.038738,
+      "effect_size_label": "none",
+      "interpretation": "positive -> DPO rejected responses mirror structural formatting more than chosen"
+    },
+    {
+      "pillar": "II",
+      "metric": "delta_ngram_overlap",
+      "stage": "DPO",
+      "value": 0.004951,
+      "ci_lo": 0.11309,
+      "ci_hi": 0.116895,
+      "effect_size_label": "none",
+      "interpretation": "positive -> DPO rejected responses copy more n-grams verbatim from the prompt"
+    },
+    {
+      "pillar": "II",
+      "metric": "delta_sycophancy",
+      "stage": "DPO",
+      "value": 0.0,
+      "ci_lo": -0.011395,
+      "ci_hi": -0.010362,
+      "effect_size_label": "none",
+      "interpretation": "positive -> DPO rejected responses use more sycophantic agreement phrases"
+    },
+    {
+      "pillar": "II",
+      "metric": "delta_correction",
+      "stage": "DPO",
+      "value": 0.0,
+      "ci_lo": -0.013925,
+      "ci_hi": -0.010665,
+      "effect_size_label": "none",
+      "interpretation": "positive -> DPO chosen responses use more factual correction markers"
+    },
+    {
+      "pillar": "II",
+      "metric": "delta_peer_frame_count",
+      "stage": "DPO",
+      "value": 0.0,
+      "ci_lo": -4.2e-05,
+      "ci_hi": 2.3e-05,
+      "effect_size_label": "none",
+      "interpretation": "positive -> DPO rejected responses contain more 'Participant N:' style framing"
+    }
+  ]
+}

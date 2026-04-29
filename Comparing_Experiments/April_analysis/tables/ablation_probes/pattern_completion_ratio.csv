@@ -1,3 +1,3 @@
-model_id,short_name,architecture,ber_ngram_baseline,ber_ngram_lo,ber_ngram_hi,ber_unanimous_confident,ber_uc_lo,ber_uc_hi,pattern_completion_ratio
-meta-llama/llama-3.1-70b-instruct,Llama-3.1-70B,dense,0.3575,0.3120919798753237,0.40561912269558525,0.045,0.028651223384090457,0.07000527956161895,7.944444444444445
-allenai/olmo-3.1-32b-instruct,OLMo-32B-Instruct,dense,0.455,0.4068577044508926,0.5039984332030787,0.4075,0.3604472385805353,0.4563125999304055,1.1165644171779143
+model_id,short_name,architecture,ber_ngram_baseline,ber_ngram_lo,ber_ngram_hi,ber_unanimous_confident,ber_uc_lo,ber_uc_hi,refusal_unanimous_confident,refusal_naked_unanimous,refusal_ngram_baseline,pattern_completion_ratio
+meta-llama/llama-3.1-70b-instruct,Llama-3.1-70B,dense,0.3575,0.3120919798753237,0.40561912269558525,0.045,0.028651223384090457,0.07000527956161895,0.89,0.0025,0.0,7.944444444444445
+allenai/olmo-3.1-32b-instruct,OLMo-32B-Instruct,dense,0.455,0.4068577044508926,0.5039984332030787,0.4075,0.3604472385805353,0.4563125999304055,0.315,0.0,0.025,1.1165644171779143

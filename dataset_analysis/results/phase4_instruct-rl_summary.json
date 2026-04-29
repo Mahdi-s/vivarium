@@ -1,0 +1,33 @@
+{
+  "dataset_short": "instruct-rl",
+  "rows_analyzed": 169964,
+  "rows_with_completion": 0,
+  "prompts_with_repeat_frame": 30,
+  "repeat_frame_rate": 0.0001765079663928832,
+  "metrics": {
+    "repeat_frames": {
+      "n": 169964,
+      "mean": 0.0019415876303217152,
+      "median": 0.0,
+      "stdev": 0.14311855762551465,
+      "min": 0,
+      "max": 35
+    },
+    "has_repeat_frame": {
+      "n": 169964,
+      "mean": 0.0001765079663928832,
+      "median": 0.0,
+      "stdev": 0.013284457509837692,
+      "min": 0,
+      "max": 1
+    },
+    "prompt_has_list": {
+      "n": 169964,
+      "mean": 0.12758584170765574,
+      "median": 0.0,
+      "stdev": 0.33362807840978365,
+      "min": 0,
+      "max": 1
+    }
+  }
+}

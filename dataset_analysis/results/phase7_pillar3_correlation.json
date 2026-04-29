@@ -1,0 +1,123 @@
+{
+  "has_run_5_response": {
+    "per_domain": {
+      "metric_col": "has_run_5_response",
+      "n_domains": 3,
+      "spearman_rho": null,
+      "ci_lo": null,
+      "ci_hi": null,
+      "domain_data": [
+        {
+          "domain": "math",
+          "mean_has_run_5_response": 0.006287,
+          "delta_ber": 0.02875
+        },
+        {
+          "domain": "science",
+          "mean_has_run_5_response": 0.00289,
+          "delta_ber": -0.045
+        },
+        {
+          "domain": "general",
+          "mean_has_run_5_response": 0.003852,
+          "delta_ber": -0.079787
+        }
+      ],
+      "boot_reps": 1000,
+      "seed": 0,
+      "status": "underpowered",
+      "reason": "n_domains=3 provides insufficient distinct rank orderings for a meaningful Spearman test (only ~6 possible permutations of ranks). The bootstrap CI would span the full support [-1, +1]. Reporting null per-domain rho rather than a misleadingly precise number."
+    },
+    "per_source_within_domain": {
+      "metric_col": "max_run_geq_5_rate",
+      "skipped": false,
+      "status": "ok",
+      "mean_within_domain_spearman_rho": 0.5,
+      "cross_domain_spearman_rho": 0.5,
+      "cross_domain_pvalue": 0.6666666666666666,
+      "ci_lo": -1.0,
+      "ci_hi": 1.0,
+      "per_domain": {
+        "math": {
+          "n_sources": 4,
+          "mean_metric": 0.0039,
+          "delta_ber": 0.02875,
+          "source_datasets": [
+            "OpenMathInstruct 2",
+            "Tulu 3 Persona Algebra",
+            "Tulu 3 Persona GSM",
+            "Tulu 3 Persona MATH"
+          ]
+        },
+        "science": {
+          "n_sources": 2,
+          "mean_metric": 0.0015,
+          "delta_ber": -0.045,
+          "source_datasets": [
+            "Dolci Instruct OpenThoughts3+ Science",
+            "SciRiff"
+          ]
+        },
+        "history": {
+          "n_sources": 0,
+          "spearman_rho": NaN,
+          "pvalue": NaN,
+          "skipped": true,
+          "reason": "only 0 source(s)"
+        },
+        "general": {
+          "n_sources": 2,
+          "mean_metric": 0.00295,
+          "delta_ber": -0.079787,
+          "source_datasets": [
+            "OpenAssistant",
+            "Wildchat"
+          ]
+        },
+        "preference": {
+          "n_sources": 0,
+          "spearman_rho": NaN,
+          "pvalue": NaN,
+          "skipped": true,
+          "reason": "only 0 source(s)"
+        }
+      },
+      "n_domains_with_data": 3,
+      "n_sources_total": 22,
+      "boot_reps": 1000,
+      "seed": 0,
+      "note": "INFERENTIAL: cross-domain rank correlation using per-domain mean(metric) vs \u0394BER across n=3 macro-domains."
+    }
+  },
+  "consensus_hits_response": {
+    "per_domain": {
+      "metric_col": "consensus_hits_response",
+      "n_domains": 3,
+      "spearman_rho": null,
+      "ci_lo": null,
+      "ci_hi": null,
+      "domain_data": [
+        {
+          "domain": "math",
+          "mean_consensus_hits_response": 0.000119,
+          "delta_ber": 0.02875
+        },
+        {
+          "domain": "science",
+          "mean_consensus_hits_response": 0.000405,
+          "delta_ber": -0.045
+        },
+        {
+          "domain": "general",
+          "mean_consensus_hits_response": 0.001273,
+          "delta_ber": -0.079787
+        }
+      ],
+      "boot_reps": 1000,
+      "seed": 0,
+      "status": "underpowered",
+      "reason": "n_domains=3 provides insufficient distinct rank orderings for a meaningful Spearman test (only ~6 possible permutations of ranks). The bootstrap CI would span the full support [-1, +1]. Reporting null per-domain rho rather than a misleadingly precise number."
+    },
+    "per_source_within_domain": {}
+  }
+}

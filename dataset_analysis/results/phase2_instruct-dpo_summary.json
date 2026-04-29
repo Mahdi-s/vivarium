@@ -1,0 +1,77 @@
+{
+  "dataset_short": "instruct-dpo",
+  "pairs_analyzed": 259785,
+  "pairs_skipped": 137,
+  "delta_stats": {
+    "delta_struct_jaccard": {
+      "n": 259785,
+      "mean": 0.029287808508317775,
+      "median": 0.0,
+      "stdev": 0.35800986031615034,
+      "min": -1.0,
+      "max": 1.0
+    },
+    "delta_ngram_overlap": {
+      "n": 259785,
+      "mean": 0.0482098590074942,
+      "median": 0.004951045838896306,
+      "stdev": 0.19745806487300513,
+      "min": -1.0,
+      "max": 1.0
+    },
+    "delta_sycophancy": {
+      "n": 259785,
+      "mean": -0.014989318089959005,
+      "median": 0,
+      "stdev": 0.19524962242251256,
+      "min": -7,
+      "max": 6
+    },
+    "delta_correction": {
+      "n": 259785,
+      "mean": 0.010593375291106107,
+      "median": 0,
+      "stdev": 1.6913784895623702,
+      "min": -239,
+      "max": 179
+    }
+  },
+  "sign_tests": {
+    "delta_struct_jaccard": {
+      "n": 259785,
+      "positive": 60167,
+      "negative": 45113,
+      "mean": 0.029287808508317775,
+      "pct_positive": 0.23160305637353965
+    },
+    "delta_ngram_overlap": {
+      "n": 259785,
+      "positive": 141699,
+      "negative": 73811,
+      "mean": 0.0482098590074942,
+      "pct_positive": 0.5454471967203649
+    },
+    "delta_sycophancy": {
+      "n": 259785,
+      "positive": 1055,
+      "negative": 3976,
+      "mean": -0.014989318089959005,
+      "pct_positive": 0.0040610504840541215
+    },
+    "delta_correction": {
+      "n": 259785,
+      "positive": 24228,
+      "negative": 20717,
+      "mean": 0.010593375291106107,
+      "pct_positive": 0.09326173566603152
+    }
+  },
+  "affirm_prefix_rate_chosen": 0.15479723617606866,
+  "affirm_prefix_rate_rejected": 0.15655253382604847,
+  "interpretation": {
+    "delta_struct_jaccard": "positive -> DPO penalises structural mirroring",
+    "delta_ngram_overlap": "positive -> DPO penalises direct prompt copying",
+    "delta_sycophancy": "positive -> DPO penalises sycophantic agreement",
+    "delta_correction": "positive -> DPO rewards factual correction markers"
+  }
+}

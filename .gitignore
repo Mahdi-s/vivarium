@@ -48,20 +48,11 @@ simulation*.db
 test*.db
 smoke*.db
 
-# Exception: HPC run snapshots under runs-think-hpc (tracked via Git LFS; see .gitattributes)
-# This includes both top-level 7B run folders and runs-think-hpc/runs-32B/.
-!runs-think-hpc/**/*.db
-!runs-think-hpc/**/*.db-wal
-!runs-think-hpc/**/*.db-shm
-
 # Run artifacts (Phase 3+)
 runs/
-!runs/
-!runs/**
 # Entire runs_latest tree (not only runs/ / mpl_cache/) — pairs with runs_latest/** in .gitattributes (LFS)
 runs_latest/
-!runs_latest/
-!runs_latest/**
+runs-think-hpc/
 
 # Model files (large, should be managed separately)
 # Uncomment if you don't want to track models in git
@@ -134,6 +125,12 @@ Comparing_Experiments/runs_metadata.json.bak
 Comparing_Experiments/expanded_suite_analysis/
 Comparing_Experiments/expanded_suite_analysis_db_endorse/
 Comparing_Experiments/publication_analysis*/
+
+# Hugging Face downloaded training data (local-only, do not track)
+dataset_analysis/data/raw/
+dataset_analysis/data/**/*.parquet
+dataset_analysis/data/**/*.jsonl
+dataset_analysis/results/**/*.csv
 
 models/*
 

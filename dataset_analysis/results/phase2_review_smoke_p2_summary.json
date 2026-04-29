@@ -1,0 +1,77 @@
+{
+  "dataset_short": "instruct-dpo",
+  "pairs_analyzed": 999,
+  "pairs_skipped": 1,
+  "delta_stats": {
+    "delta_struct_jaccard": {
+      "n": 999,
+      "mean": 0.013496830163496829,
+      "median": 0.0,
+      "stdev": 0.34977623806117814,
+      "min": -1.0,
+      "max": 1.0
+    },
+    "delta_ngram_overlap": {
+      "n": 999,
+      "mean": 0.056673663330668,
+      "median": 0.007290400972053463,
+      "stdev": 0.20724712697918657,
+      "min": -1.0,
+      "max": 1.0
+    },
+    "delta_sycophancy": {
+      "n": 999,
+      "mean": -0.025025025025025027,
+      "median": 0,
+      "stdev": 0.23329981392524068,
+      "min": -2,
+      "max": 2
+    },
+    "delta_correction": {
+      "n": 999,
+      "mean": 0.012012012012012012,
+      "median": 0,
+      "stdev": 0.7579117931144744,
+      "min": -8,
+      "max": 9
+    }
+  },
+  "sign_tests": {
+    "delta_struct_jaccard": {
+      "n": 999,
+      "positive": 206,
+      "negative": 189,
+      "mean": 0.013496830163496829,
+      "pct_positive": 0.2062062062062062
+    },
+    "delta_ngram_overlap": {
+      "n": 999,
+      "positive": 571,
+      "negative": 257,
+      "mean": 0.056673663330668,
+      "pct_positive": 0.5715715715715716
+    },
+    "delta_sycophancy": {
+      "n": 999,
+      "positive": 5,
+      "negative": 23,
+      "mean": -0.025025025025025027,
+      "pct_positive": 0.005005005005005005
+    },
+    "delta_correction": {
+      "n": 999,
+      "positive": 95,
+      "negative": 84,
+      "mean": 0.012012012012012012,
+      "pct_positive": 0.09509509509509509
+    }
+  },
+  "affirm_prefix_rate_chosen": 0.14814814814814814,
+  "affirm_prefix_rate_rejected": 0.16416416416416416,
+  "interpretation": {
+    "delta_struct_jaccard": "positive -> DPO penalises structural mirroring",
+    "delta_ngram_overlap": "positive -> DPO penalises direct prompt copying",
+    "delta_sycophancy": "positive -> DPO penalises sycophantic agreement",
+    "delta_correction": "positive -> DPO rewards factual correction markers"
+  }
+}

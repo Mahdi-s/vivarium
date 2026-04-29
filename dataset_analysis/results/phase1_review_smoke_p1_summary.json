@@ -1,0 +1,74 @@
+{
+  "dataset_short": "instruct-sft",
+  "rows_analyzed": 999,
+  "rows_skipped": 1,
+  "metrics": {
+    "prompt_len": {
+      "n": 999,
+      "mean": 809.8258258258259,
+      "median": 561,
+      "stdev": 1039.8337847914383,
+      "min": 5,
+      "max": 14962
+    },
+    "resp_len": {
+      "n": 999,
+      "mean": 1208.5935935935936,
+      "median": 895,
+      "stdev": 1186.5974947780787,
+      "min": 1,
+      "max": 7729
+    },
+    "structural_jaccard": {
+      "n": 999,
+      "mean": 0.4105105105105105,
+      "median": 0.3333333333333333,
+      "stdev": 0.38216869936801273,
+      "min": 0.0,
+      "max": 1.0
+    },
+    "ngram_overlap_n4": {
+      "n": 999,
+      "mean": 0.06376796071755984,
+      "median": 0.014925373134328358,
+      "stdev": 0.1345662969486136,
+      "min": 0.0,
+      "max": 1.0
+    },
+    "affirm_prefix": {
+      "n": 999,
+      "mean": 0.05005005005005005,
+      "median": 0,
+      "stdev": 0.21804825736528494,
+      "min": 0,
+      "max": 1
+    },
+    "sycophancy_hits": {
+      "n": 999,
+      "mean": 0.001001001001001001,
+      "median": 0,
+      "stdev": 0.03162276075862125,
+      "min": 0,
+      "max": 1
+    },
+    "prompt_has_list": {
+      "n": 999,
+      "mean": 0.3023023023023023,
+      "median": 0,
+      "stdev": 0.459255506581064,
+      "min": 0,
+      "max": 1
+    },
+    "resp_has_list": {
+      "n": 999,
+      "mean": 0.35235235235235235,
+      "median": 0,
+      "stdev": 0.4777030166788944,
+      "min": 0,
+      "max": 1
+    }
+  },
+  "P(resp_has_list | prompt_has_list)": 0.49337748344370863,
+  "prompt_has_list_rate": 0.3023023023023023,
+  "affirm_prefix_rate": 0.05005005005005005
+}

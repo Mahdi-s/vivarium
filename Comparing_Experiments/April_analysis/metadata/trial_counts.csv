@@ -291,6 +291,10 @@ think,0.0,asch_zhu_unbiased_unanimous_confident,400
 think,0.0,authoritative_bias,400
 think,0.0,authority_zhu_unbiased_trust,400
 think,0.0,control,400
+think,0.6,asch_zhu_unbiased_unanimous_confident,400
+think,0.6,authoritative_bias,400
+think,0.6,authority_zhu_unbiased_trust,400
+think,0.6,control,400
 think_dpo,0.0,asch_zhu_unbiased_unanimous_confident,400
 think_dpo,0.0,authoritative_bias,400
 think_dpo,0.0,authority_zhu_unbiased_trust,400

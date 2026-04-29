@@ -313,6 +313,9 @@ def make_ablation_ngram_vs_pressure(
     ber_without = sc["ber_without_system_prompt"].to_numpy()
     ber_ngram = sc["ber_ngram_baseline"].to_numpy()
     ratio = sc["pattern_completion_ratio"].to_numpy()
+    refusal_with = sc.get("refusal_unanimous_confident", pd.Series([np.nan] * len(sc))).to_numpy()
+    refusal_without = sc.get("refusal_naked_unanimous", pd.Series([np.nan] * len(sc))).to_numpy()
+    refusal_ngram = sc.get("refusal_ngram_baseline", pd.Series([np.nan] * len(sc))).to_numpy()
 
     fig, ax = plt.subplots(figsize=(7.8, 4.6))
     x = np.arange(len(models))
@@ -345,13 +348,28 @@ def make_ablation_ngram_vs_pressure(
             arrowprops=dict(arrowstyle="->", color="black", lw=0.5),
         )
 
+    # Explicit refusal context avoids conflating refusal behavior with BER.
+    for i, (rw, rn, rg) in enumerate(zip(refusal_with, refusal_without, refusal_ngram)):
+        if np.isnan(rw) and np.isnan(rn) and np.isnan(rg):
+            continue
+        y_text = min(0.62, max(ber_with[i], ber_without[i], ber_ngram[i]) + 0.15)
+        ax.text(
+            i,
+            y_text,
+            f"Refusal: with {rw*100:.1f}% | naked {rn*100:.1f}% | ngram {rg*100:.1f}%",
+            ha="center",
+            va="bottom",
+            fontsize=7,
+        )
+
     ax.set_xticks(x)
     ax.set_xticklabels(models)
     ax.set_ylabel("Wrong-answer endorsement rate (BER)")
     ax.set_ylim(0, 0.65)
     ax.set_title(
         "Pattern completion without social framing (H2 headline)\n"
-        "BER on the abstract N-gram probe vs social-pressure baselines, T=0"
+        "BER on the abstract N-gram probe vs social-pressure baselines, T=0\n"
+        "(refusal rates shown separately above each model)"
     )
     ax.legend(loc="upper left", frameon=True)
     for side in ("top", "right"):
@@ -515,7 +533,7 @@ def make_refusal_endorsement_scatter(
 ) -> None:
     pe = tables["pressure_effects_t0"].copy()
 
-    fig, ax = plt.subplots(figsize=(6.5, 5.5))
+    fig, ax = plt.subplots(figsize=(8.2, 6.2))
     for _, r in pe.iterrows():
         color = ARCH_COLOR.get(r["architecture"], "#95A5A6")
         ax.scatter(
@@ -531,6 +549,10 @@ def make_refusal_endorsement_scatter(
     ax.set_xlabel("Peer Δ endorsement (BER change)")
     ax.set_ylabel("Peer Δ refusal rate")
     ax.set_title("Behavioral taxonomy under peer pressure, T=0")
+    x_pad = 0.035
+    y_pad = 0.035
+    ax.set_xlim(pe["peer_ber_delta"].min() - x_pad, pe["peer_ber_delta"].max() + x_pad)
+    ax.set_ylim(pe["peer_refusal_delta"].min() - y_pad, pe["peer_refusal_delta"].max() + y_pad)
     for side in ("top", "right"):
         ax.spines[side].set_visible(False)
 
@@ -540,8 +562,14 @@ def make_refusal_endorsement_scatter(
         mpatches.Patch(color=C_THINK, label="Think"),
         mpatches.Patch(color=C_CONST, label="Constitutional"),
     ]
-    ax.legend(handles=legend_patches, loc="upper left", frameon=True)
-    fig.tight_layout()
+    ax.legend(
+        handles=legend_patches,
+        loc="center left",
+        bbox_to_anchor=(1.02, 0.5),
+        frameon=True,
+        borderaxespad=0.0,
+    )
+    fig.tight_layout(rect=[0, 0, 0.8, 1])
     _save(fig, out_dir / "fig4_refusal_endorsement")
 
 

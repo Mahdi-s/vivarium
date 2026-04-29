@@ -1,0 +1,275 @@
+{
+  "dataset_short": "instruct-rl",
+  "rows_analyzed": 0,
+  "rows_skipped": 10000,
+  "metrics_robust": {
+    "structural_jaccard": {
+      "n": 0,
+      "n_zero": 0,
+      "zero_inflation_rate": 0.0,
+      "mean": NaN,
+      "stdev": NaN,
+      "P5": NaN,
+      "P25": NaN,
+      "median": NaN,
+      "P75": NaN,
+      "P95": NaN,
+      "P99": NaN,
+      "max": NaN,
+      "iqr": NaN
+    },
+    "ngram_overlap_n4": {
+      "n": 0,
+      "n_zero": 0,
+      "zero_inflation_rate": 0.0,
+      "mean": NaN,
+      "stdev": NaN,
+      "P5": NaN,
+      "P25": NaN,
+      "median": NaN,
+      "P75": NaN,
+      "P95": NaN,
+      "P99": NaN,
+      "max": NaN,
+      "iqr": NaN
+    },
+    "consensus_hits_response": {
+      "n": 0,
+      "n_zero": 0,
+      "zero_inflation_rate": 0.0,
+      "mean": NaN,
+      "stdev": NaN,
+      "P5": NaN,
+      "P25": NaN,
+      "median": NaN,
+      "P75": NaN,
+      "P95": NaN,
+      "P99": NaN,
+      "max": NaN,
+      "iqr": NaN
+    },
+    "peer_frame_count_prompt": {
+      "n": 0,
+      "n_zero": 0,
+      "zero_inflation_rate": 0.0,
+      "mean": NaN,
+      "stdev": NaN,
+      "P5": NaN,
+      "P25": NaN,
+      "median": NaN,
+      "P75": NaN,
+      "P95": NaN,
+      "P99": NaN,
+      "max": NaN,
+      "iqr": NaN
+    },
+    "peer_frame_count_response": {
+      "n": 0,
+      "n_zero": 0,
+      "zero_inflation_rate": 0.0,
+      "mean": NaN,
+      "stdev": NaN,
+      "P5": NaN,
+      "P25": NaN,
+      "median": NaN,
+      "P75": NaN,
+      "P95": NaN,
+      "P99": NaN,
+      "max": NaN,
+      "iqr": NaN
+    },
+    "max_run_response": {
+      "n": 0,
+      "n_zero": 0,
+      "zero_inflation_rate": 0.0,
+      "mean": NaN,
+      "stdev": NaN,
+      "P5": NaN,
+      "P25": NaN,
+      "median": NaN,
+      "P75": NaN,
+      "P95": NaN,
+      "P99": NaN,
+      "max": NaN,
+      "iqr": NaN
+    },
+    "max_run_prompt": {
+      "n": 0,
+      "n_zero": 0,
+      "zero_inflation_rate": 0.0,
+      "mean": NaN,
+      "stdev": NaN,
+      "P5": NaN,
+      "P25": NaN,
+      "median": NaN,
+      "P75": NaN,
+      "P95": NaN,
+      "P99": NaN,
+      "max": NaN,
+      "iqr": NaN
+    },
+    "sycophancy_hits": {
+      "n": 0,
+      "n_zero": 0,
+      "zero_inflation_rate": 0.0,
+      "mean": NaN,
+      "stdev": NaN,
+      "P5": NaN,
+      "P25": NaN,
+      "median": NaN,
+      "P75": NaN,
+      "P95": NaN,
+      "P99": NaN,
+      "max": NaN,
+      "iqr": NaN
+    },
+    "correction_hits_response": {
+      "n": 0,
+      "n_zero": 0,
+      "zero_inflation_rate": 0.0,
+      "mean": NaN,
+      "stdev": NaN,
+      "P5": NaN,
+      "P25": NaN,
+      "median": NaN,
+      "P75": NaN,
+      "P95": NaN,
+      "P99": NaN,
+      "max": NaN,
+      "iqr": NaN
+    },
+    "prompt_len": {
+      "n": 0,
+      "n_zero": 0,
+      "zero_inflation_rate": 0.0,
+      "mean": NaN,
+      "stdev": NaN,
+      "P5": NaN,
+      "P25": NaN,
+      "median": NaN,
+      "P75": NaN,
+      "P95": NaN,
+      "P99": NaN,
+      "max": NaN,
+      "iqr": NaN
+    },
+    "resp_len": {
+      "n": 0,
+      "n_zero": 0,
+      "zero_inflation_rate": 0.0,
+      "mean": NaN,
+      "stdev": NaN,
+      "P5": NaN,
+      "P25": NaN,
+      "median": NaN,
+      "P75": NaN,
+      "P95": NaN,
+      "P99": NaN,
+      "max": NaN,
+      "iqr": NaN
+    },
+    "n_messages": {
+      "n": 0,
+      "n_zero": 0,
+      "zero_inflation_rate": 0.0,
+      "mean": NaN,
+      "stdev": NaN,
+      "P5": NaN,
+      "P25": NaN,
+      "median": NaN,
+      "P75": NaN,
+      "P95": NaN,
+      "P99": NaN,
+      "max": NaN,
+      "iqr": NaN
+    },
+    "multi_turn_agreement": {
+      "n": 0,
+      "n_zero": 0,
+      "zero_inflation_rate": 0.0,
+      "mean": NaN,
+      "stdev": NaN,
+      "P5": NaN,
+      "P25": NaN,
+      "median": NaN,
+      "P75": NaN,
+      "P95": NaN,
+      "P99": NaN,
+      "max": NaN,
+      "iqr": NaN
+    }
+  },
+  "metrics": {
+    "prompt_len": {
+      "n": 0
+    },
+    "resp_len": {
+      "n": 0
+    },
+    "structural_jaccard": {
+      "n": 0
+    },
+    "ngram_overlap_n4": {
+      "n": 0
+    },
+    "affirm_prefix": {
+      "n": 0
+    },
+    "sycophancy_hits": {
+      "n": 0
+    },
+    "prompt_has_list": {
+      "n": 0
+    },
+    "resp_has_list": {
+      "n": 0
+    },
+    "consensus_hits_response": {
+      "n": 0
+    },
+    "has_consensus_response": {
+      "n": 0
+    },
+    "peer_frame_count_prompt": {
+      "n": 0
+    },
+    "peer_frame_count_response": {
+      "n": 0
+    },
+    "max_run_response": {
+      "n": 0
+    },
+    "max_run_prompt": {
+      "n": 0
+    },
+    "has_run_3_response": {
+      "n": 0
+    },
+    "has_run_5_response": {
+      "n": 0
+    },
+    "has_run_7_response": {
+      "n": 0
+    },
+    "n_messages": {
+      "n": 0
+    },
+    "multi_turn_agreement": {
+      "n": 0
+    },
+    "correction_hits_response": {
+      "n": 0
+    },
+    "has_correction_response": {
+      "n": 0
+    }
+  },
+  "P(resp_has_list | prompt_has_list)": null,
+  "prompt_has_list_rate": 0.0,
+  "affirm_prefix_rate": null,
+  "by_source_dataset": {},
+  "by_domain_canonical": {},
+  "unmapped_source_datasets": [],
+  "unmapped_domains": [],
+  "regex_lower_bound_disclaimer": "consensus_hits and sycophancy_hits are reported as English-only regex lower bounds; recall is bounded by phase10 LLM-judge."
+}

@@ -1,0 +1,33 @@
+{
+  "dataset_short": "think-rl",
+  "rows_analyzed": 102014,
+  "rows_with_completion": 0,
+  "prompts_with_repeat_frame": 17,
+  "repeat_frame_rate": 0.00016664379398906033,
+  "metrics": {
+    "repeat_frames": {
+      "n": 102014,
+      "mean": 0.0014997941459015428,
+      "median": 0.0,
+      "stdev": 0.08837648885745432,
+      "min": 0,
+      "max": 18
+    },
+    "has_repeat_frame": {
+      "n": 102014,
+      "mean": 0.00016664379398906033,
+      "median": 0.0,
+      "stdev": 0.01290798294990295,
+      "min": 0,
+      "max": 1
+    },
+    "prompt_has_list": {
+      "n": 102014,
+      "mean": 0.17151567431921108,
+      "median": 0.0,
+      "stdev": 0.37695894707784483,
+      "min": 0,
+      "max": 1
+    }
+  }
+}
