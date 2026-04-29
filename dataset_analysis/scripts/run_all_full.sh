@@ -28,6 +28,28 @@ python scripts/phase3_think_audit.py
 echo "=== Phase 3b: dummy-buffer prompt construction (dry-run) ==="
 python scripts/phase3b_dummy_buffer.py --dry-run
 
+echo "=== Phase 5: SFT consensus + run-length audit (Pillar I, Instruct) ==="
+python scripts/phase5_consensus_audit.py --short-name instruct-sft --tag instruct-sft
+
+echo "=== Phase 6: DPO chosen-vs-rejected effect-size audit (Pillar II, Instruct) ==="
+python scripts/phase6_dpo_consensus_audit.py --short-name instruct-dpo --tag instruct-dpo
+
+echo "=== Phase 7: corpus -> BER rank correlation (Pillar III) ==="
+python scripts/phase7_correlation.py
+
+echo "=== Phase 8: TF-IDF nearest-neighbor smoking-gun case studies ==="
+python scripts/phase8_case_studies.py
+
+echo "=== Phase 9: top-1% outlier extraction for manual qualitative review ==="
+python scripts/phase9_outlier_verification.py
+
+# Phase 10 (LLM-as-judge recall/precision bound) is intentionally NOT in
+# run_all_full.sh — it requires API credentials or a local vLLM/Ollama
+# server. Run it manually when those are available:
+#   python scripts/phase10_llm_judge.py --judge gpt-4o-mini
+# (Phase 10 was deferred per the audit plan; the regex hits in phase5/6
+# are pre-registered as English-only lower bounds in the meantime.)
+
 echo
 echo "All outputs in results/:"
 ls -1 results/
