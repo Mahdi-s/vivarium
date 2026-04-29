@@ -202,6 +202,9 @@ def paired_permutation_p(
 
     Under H0 the sign of each delta is exchangeable.
     Observed statistic: |mean(deltas)|.
+
+    Uses Phipson-Smyth +1 smoothing; minimum reportable p = 1/(reps+1).
+    This ensures p is always in (0, 1] and the paper never prints p=0.
     """
     arr = np.asarray(deltas, dtype=float)
     n = len(arr)
@@ -209,13 +212,11 @@ def paired_permutation_p(
         return 1.0
     observed = abs(float(np.mean(arr)))
     rng = np.random.default_rng(seed)
-    count_geq = 0
-    for _ in range(reps):
+    null = np.empty(reps, dtype=float)
+    for i in range(reps):
         signs = rng.choice([-1.0, 1.0], size=n)
-        stat = abs(float(np.mean(signs * arr)))
-        if stat >= observed:
-            count_geq += 1
-    return count_geq / reps
+        null[i] = abs(float(np.mean(signs * arr)))
+    return float(((null >= observed).sum() + 1) / (reps + 1))
 
 
 # ---------------------------------------------------------------------------

@@ -123,6 +123,10 @@ def repeat_run_geq_k(text: str, k: int) -> bool:
 def multi_turn_agreement_score(messages: list[dict]) -> float:
     """Score how much each non-first assistant turn agrees with the prior context.
 
+    Score is computed over `len(asst_turns) - 1` non-first assistant turns,
+    or returns 0.0 if there are fewer than 2 assistant turns or fewer than 4
+    total messages.
+
     Algorithm
     ---------
     Requires >= 4 messages with >= 2 assistant turns; returns 0.0 otherwise.
@@ -176,7 +180,7 @@ def multi_turn_agreement_score(messages: list[dict]) -> float:
         # "Rare" = appears in prior_user but NOT in previous assistant turn
         rare_echo = False
         if prior_user:
-            user_words = set(w for w in WORD_RE.findall(prior_user.lower()) if len(w) >= 6)
+            user_words = set(w for w in WORD_RE.findall(prior_user.lower()) if len(w) >= 6)  # rare-token min length: 6 (pre-registered, do not mutate without amendment comment)
             prev_words = set(WORD_RE.findall(prev_asst_text.lower()))
             novel_user_words = user_words - prev_words
             asst_words = set(WORD_RE.findall(asst_text.lower()))

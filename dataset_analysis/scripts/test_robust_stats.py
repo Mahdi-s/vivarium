@@ -133,6 +133,15 @@ def test_practical_significance_label():
     assert practical_significance_label(-0.5) == "large"
 
 
+def test_paired_permutation_p_floor():
+    # Constant non-zero deltas → p must be small but bounded below by 1/(reps+1)
+    # This locks in the Phipson-Smyth smoothing convention so a future regression
+    # to unsmoothed counts/reps would fail this test.
+    p = paired_permutation_p([5.0]*50, reps=100, seed=0)
+    assert p >= 1.0 / 101
+    assert p <= 5.0 / 101  # very small but not zero
+
+
 def test_cohens_d_paired_zero_diff():
     a = [1, 2, 3, 4, 5]
     b = [1, 2, 3, 4, 5]
