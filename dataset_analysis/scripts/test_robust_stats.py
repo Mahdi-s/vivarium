@@ -155,3 +155,73 @@ def test_cohens_d_paired_known():
     # diff = -1 always, std_diff = 0 → d = -inf
     d = cohens_d_paired(a, b)
     assert not math.isfinite(d) or abs(d) > 100
+
+
+# ---------------------------------------------------------------------------
+# Tests for null-distribution z-score logic (Fix 1 — review #7, #12)
+# These test the sign-flip null-distribution pattern used in phase6
+# _build_delta_stats to produce null_cliffs_delta_{mean,sd,z}.
+# The logic is inlined in phase6 but the underlying primitives are here.
+# ---------------------------------------------------------------------------
+
+def _compute_null_cd_distribution(arr_l, arr_w, reps=2000, seed=43):
+    """Replicate the sign-flip null distribution from phase6._build_delta_stats."""
+    n = len(arr_l)
+    rng = np.random.default_rng(seed)
+    null_cd_vals = np.empty(reps, dtype=float)
+    for i in range(reps):
+        signs = rng.choice(np.array([-1.0, 1.0], dtype=float), size=n)
+        pos_mask = signs > 0
+        null_l = np.where(pos_mask, arr_l, arr_w)
+        null_w = np.where(pos_mask, arr_w, arr_l)
+        null_cd_vals[i] = cliffs_delta(null_l, null_w)
+    return null_cd_vals
+
+
+def test_null_cliffs_delta_centers_at_zero_for_symmetric_data():
+    """For symmetric (exchangeable) data, sign-flip null Cliff's δ should center ≈ 0.
+
+    When arr_l and arr_w are drawn from the same distribution, every sign-flip
+    permutation is equally valid and the null distribution of Cliff's δ should
+    be centered at 0 (within Monte Carlo noise).
+    """
+    rng = np.random.default_rng(99)
+    n = 500
+    # Both sides from the same distribution → exchangeable pairs
+    arr_l = rng.normal(0.0, 1.0, n).astype(float)
+    arr_w = rng.normal(0.0, 1.0, n).astype(float)
+
+    null_vals = _compute_null_cd_distribution(arr_l, arr_w, reps=2000, seed=43)
+    null_mean = float(np.mean(null_vals))
+
+    # Null mean should be very close to 0; allow ±0.05 for Monte Carlo variation
+    assert abs(null_mean) < 0.05, (
+        f"null_cliffs_delta_mean={null_mean:.4f} is too far from 0 for symmetric data"
+    )
+
+
+def test_null_cliffs_delta_z_positive_for_positive_effect():
+    """Positive observed Cliff's δ should yield positive z relative to the null.
+
+    When arr_l consistently exceeds arr_w (clear DPO penalty signal),
+    the observed Cliff's δ should be positive and well above the null mean.
+    """
+    rng = np.random.default_rng(7)
+    n = 300
+    # arr_l (rejected) is clearly higher than arr_w (chosen) — strong positive effect
+    arr_l = rng.normal(1.0, 1.0, n).astype(float)
+    arr_w = rng.normal(0.0, 1.0, n).astype(float)
+
+    observed_cd = cliffs_delta(arr_l, arr_w)
+    assert observed_cd > 0.1, f"Expected positive Cliff's δ, got {observed_cd:.4f}"
+
+    null_vals = _compute_null_cd_distribution(arr_l, arr_w, reps=2000, seed=43)
+    null_mean = float(np.mean(null_vals))
+    null_sd   = float(np.std(null_vals, ddof=1))
+    null_z    = (observed_cd - null_mean) / null_sd
+
+    assert null_z > 3.0, (
+        f"Expected null_cliffs_delta_z > 3 for strong positive effect, "
+        f"got z={null_z:.2f} (cd={observed_cd:.4f}, null_mean={null_mean:.4f}, "
+        f"null_sd={null_sd:.4f})"
+    )

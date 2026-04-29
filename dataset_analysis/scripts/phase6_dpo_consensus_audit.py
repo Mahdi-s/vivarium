@@ -27,6 +27,7 @@ from collections import defaultdict
 from pathlib import Path
 
 import numpy as np
+from scipy.stats import false_discovery_control
 
 from common import (
     RESULTS, iter_rows,
@@ -222,17 +223,47 @@ def _build_delta_stats(
 
     prac = practical_significance_label(cd)
 
+    # -----------------------------------------------------------------------
+    # Null-distribution z-score for Cliff's δ (1000-rep sign-flip permutation).
+    # Each rep: sign-flip the paired (chosen, rejected) assignment, i.e. swap
+    # arr_w and arr_l with probability 0.5 for each pair independently.
+    # This preserves within-pair correlation structure (same pairs, shuffled side).
+    # -----------------------------------------------------------------------
+    rng_null = np.random.default_rng(43)   # different seed from boot loop above
+    null_cd_vals = np.empty(1000, dtype=float)
+    for i in range(1000):
+        # For each pair, flip sign with 50% probability (same as sign-flip perm)
+        signs = rng_null.choice(np.array([-1.0, 1.0], dtype=float), size=n)
+        # Sign=+1 → keep (arr_l, arr_w); sign=-1 → swap: treat arr_w as "l" and arr_l as "w"
+        # For positive signs: rejected stays rejected; negative signs: swap
+        pos_mask = signs > 0
+        null_l = np.where(pos_mask, arr_l, arr_w)
+        null_w = np.where(pos_mask, arr_w, arr_l)
+        null_cd_vals[i] = cliffs_delta(null_l, null_w)
+
+    null_cd_mean = float(np.mean(null_cd_vals))
+    null_cd_sd   = float(np.std(null_cd_vals, ddof=1))
+    if null_cd_sd > 0:
+        null_cd_z = (float(cd) - null_cd_mean) / null_cd_sd
+    else:
+        null_cd_z = float("nan")
+
     return {
-        "robust":                 robust,
-        "hodges_lehmann":         float(hl),
-        "cliffs_delta":           float(cd),
-        "cohens_d_paired":        float(cod),
-        "permutation_p_two_sided": float(perm_p),
-        "boot_ci_median":         [float(boot_med[0]), float(boot_med[1])],
-        "boot_ci_cliffs_delta":   [float(boot_cd[0]), float(boot_cd[1])],
-        "practical_significance": prac,
-        "pct_positive":           pct_pos,
-        "interpretation":         interpretation,
+        "robust":                   robust,
+        "hodges_lehmann":           float(hl),
+        "cliffs_delta":             float(cd),
+        "cohens_d_paired":          float(cod),
+        "permutation_p_two_sided":  float(perm_p),
+        "boot_ci_median":           [float(boot_med[0]), float(boot_med[1])],
+        "boot_ci_cliffs_delta":     [float(boot_cd[0]), float(boot_cd[1])],
+        "practical_significance":   prac,
+        "pct_positive":             pct_pos,
+        "null_cliffs_delta_mean":   null_cd_mean,
+        "null_cliffs_delta_sd":     null_cd_sd,
+        "null_cliffs_delta_z":      null_cd_z,
+        "interpretation":           interpretation,
+        # permutation_p_holm and permutation_p_bh are filled in by main()
+        # after all 9 per-metric p-values are collected for family-wise correction.
     }
 
 
@@ -458,7 +489,44 @@ def main():
         print(f"[phase6] {dcol}: n={delta_summary[dcol].get('robust', {}).get('n', 0)}, "
               f"median={delta_summary[dcol].get('robust', {}).get('median', float('nan')):.4f}, "
               f"cliffs={delta_summary[dcol].get('cliffs_delta', float('nan')):.4f}, "
-              f"pct_pos={delta_summary[dcol].get('pct_positive', float('nan')):.4f}")
+              f"pct_pos={delta_summary[dcol].get('pct_positive', float('nan')):.4f}, "
+              f"null_z={delta_summary[dcol].get('null_cliffs_delta_z', float('nan')):.3f}")
+
+    # -----------------------------------------------------------------------
+    # Multiple-comparisons correction across 9 simultaneous delta-metric tests.
+    # We apply correction to permutation_p_two_sided across the full family.
+    # Holm-Bonferroni: scipy does not expose this directly; we implement manually.
+    # Benjamini-Hochberg (FDR): via scipy.stats.false_discovery_control.
+    # Both corrected p-values are stored alongside the original uncorrected value
+    # for transparency (corrected supplement, not replace, the originals).
+    # -----------------------------------------------------------------------
+    _raw_ps = [delta_summary[dcol]["permutation_p_two_sided"] for dcol in DELTA_COLS]
+
+    # --- Holm-Bonferroni ---
+    # Sort p-values ascending with their original index; apply sequentially stricter
+    # Bonferroni thresholds. Corrected p_i = max(p_j * (m - rank_j + 1)) for j <= i.
+    m = len(_raw_ps)
+    _sorted_idx = sorted(range(m), key=lambda i: _raw_ps[i])
+    _holm_ps = [0.0] * m
+    running_max = 0.0
+    for rank, orig_idx in enumerate(_sorted_idx):
+        adjusted = _raw_ps[orig_idx] * (m - rank)
+        # Monotonicity: corrected p cannot decrease as rank increases
+        running_max = max(running_max, adjusted)
+        _holm_ps[orig_idx] = min(1.0, running_max)
+
+    # --- Benjamini-Hochberg via scipy ---
+    _bh_ps = list(false_discovery_control(np.array(_raw_ps), method="bh"))
+
+    for i, dcol in enumerate(DELTA_COLS):
+        delta_summary[dcol]["permutation_p_holm"] = float(_holm_ps[i])
+        delta_summary[dcol]["permutation_p_bh"]   = float(_bh_ps[i])
+
+    print("[phase6] Multiple-comparisons corrections applied (Holm-Bonferroni + BH):")
+    for dcol in DELTA_COLS:
+        print(f"  {dcol}: raw={delta_summary[dcol]['permutation_p_two_sided']:.4f}, "
+              f"holm={delta_summary[dcol]['permutation_p_holm']:.4f}, "
+              f"bh={delta_summary[dcol]['permutation_p_bh']:.4f}")
 
     # -----------------------------------------------------------------------
     # Top-1% outlier indices (capped at 5000 per column)
@@ -570,7 +638,13 @@ def main():
         "boot_ci_note": (
             "boot_ci_median uses 1000 reps; boot_ci_cliffs_delta uses 200 reps "
             "(cliffs_delta is O(N log N) per rep at N=260k; 200 reps is the "
-            "plan-mandated cap to stay under ~30s total for this block)."
+            "plan-mandated cap to stay under ~30s total for this block). "
+            "null_cliffs_delta_{mean,sd,z} use 1000-rep sign-flip permutation null "
+            "(same sign-flip scheme as permutation_p_two_sided but capturing Cliff's δ "
+            "rather than |mean(delta)|). "
+            "permutation_p_holm is Holm-Bonferroni correction across the 9-metric family. "
+            "permutation_p_bh is Benjamini-Hochberg FDR correction (scipy.stats.false_discovery_control). "
+            "permutation_p_two_sided is the original uncorrected value, retained for transparency."
         ),
     }
     write_json(summary_path, summary)
