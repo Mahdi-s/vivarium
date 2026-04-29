@@ -331,7 +331,51 @@ def extract_triplet_with_meta(
 
 
 # ---------------------------------------------------------------------------
-# Placeholder: filled in Task 4
+# Source-dataset → BER-domain mapping (filled in Task 4 from phase5 full SFT run)
 # ---------------------------------------------------------------------------
-
-SOURCE_DATASET_TO_BER_DOMAIN: dict[str, str] = {}
+# Hand-curated mapping from the 22 source_dataset values observed in the full
+# Dolci-Instruct-SFT corpus to the 5 BER macro-domains in
+# Comparing_Experiments/April_analysis/tables/behavioral/domain_breakdown.csv
+# (math, science, history, general, preference). Sources that don't fit a
+# single macro-domain (multilingual, coding, safety, instruction-following,
+# tool-use, reasoning-mixed) are bucketed "unmapped" per pre-registration
+# discipline (P2): never silently coerce.
+#
+# Empty cells in this table:
+#   - history: NO Dolci-SFT source maps to History/Geo. The BER table has this
+#     domain but the SFT corpus does not contain a history-specific subset.
+#     Pillar III per-domain ρ on history is therefore undefined; the
+#     correlation runs over (math, science, general) only.
+#   - preference: same — no SFT source maps to Preference.
+# This thinness is reported in the paper §3.3 Limitations.
+#
+# Pre-registered after observing the full SFT distribution (commit 158b82f
+# precedes this dict; this dict is part of Task 4's update commit).
+SOURCE_DATASET_TO_BER_DOMAIN: dict[str, str] = {
+    # math (4 sources, ~600k+ rows total)
+    "OpenMathInstruct 2": "math",
+    "Tulu 3 Persona Algebra": "math",
+    "Tulu 3 Persona GSM": "math",
+    "Tulu 3 Persona MATH": "math",
+    # science (2 sources)
+    "Dolci Instruct OpenThoughts3+ Science": "science",
+    "SciRiff": "science",
+    # general (2 sources, conversational)
+    "OpenAssistant": "general",
+    "Wildchat": "general",
+    # unmapped — multilingual / coding / safety / IF / tool / reasoning-mixed
+    "Aya": "unmapped",                          # multilingual chat — no English-only macro domain
+    "CoCoNot": "unmapped",                      # refusal/safety
+    "Dolci Instruct Precise IF": "unmapped",    # instruction-following
+    "Dolci Instruct Python Algorithms": "unmapped",  # coding
+    "Dolci Instruct Tool Use": "unmapped",      # tool-use
+    "Evol CodeAlpaca": "unmapped",              # coding
+    "FLAN": "unmapped",                         # mixed task corpus, not single-domain
+    "Hardcoded Data": "unmapped",               # synthetic / unspecified
+    "Logic Puzzles": "unmapped",                # reasoning, not in BER taxonomy
+    "TableGPT": "unmapped",                     # tabular reasoning
+    "Tulu 3 Persona Python": "unmapped",        # coding
+    "Verifiable Reasoning": "unmapped",         # reasoning-mixed
+    "WildGuardMix": "unmapped",                 # safety
+    "WildJailbreak": "unmapped",                # safety
+}
