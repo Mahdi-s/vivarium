@@ -332,13 +332,48 @@ def per_domain_pillar3_correlation(
         return {
             "metric_col": metric_col,
             "n_domains": n_domains,
-            "spearman_rho": float("nan"),
-            "pvalue": float("nan"),
-            "ci_lo": float("nan"),
-            "ci_hi": float("nan"),
+            "spearman_rho": None,
+            "ci_lo": None,
+            "ci_hi": None,
             "domain_data": [],
             "boot_reps": boot_reps,
             "seed": seed,
+            "status": "underpowered",
+            "reason": (
+                f"n_domains={n_domains} provides insufficient distinct rank orderings "
+                f"for a meaningful Spearman test (only ~{math.factorial(max(n_domains, 0))} "
+                f"possible permutations of ranks). The bootstrap CI would span the "
+                f"full support [-1, +1]. Reporting null per-domain rho rather than "
+                f"a misleadingly precise number."
+            ),
+        }
+
+    if n_domains < 5:
+        domain_data = [
+            {
+                "domain": d,
+                f"mean_{metric_col}": round(xm, 6),
+                "delta_ber": round(yd, 6),
+            }
+            for d, xm, yd in zip(joint_domains, x_metric, y_delta)
+        ]
+        return {
+            "metric_col": metric_col,
+            "n_domains": n_domains,
+            "spearman_rho": None,
+            "ci_lo": None,
+            "ci_hi": None,
+            "domain_data": domain_data,
+            "boot_reps": boot_reps,
+            "seed": seed,
+            "status": "underpowered",
+            "reason": (
+                f"n_domains={n_domains} provides insufficient distinct rank orderings "
+                f"for a meaningful Spearman test (only ~{math.factorial(n_domains)} "
+                f"possible permutations of ranks). The bootstrap CI would span the "
+                f"full support [-1, +1]. Reporting null per-domain rho rather than "
+                f"a misleadingly precise number."
+            ),
         }
 
     rho, pvalue = _spearmanr(x_metric, y_delta)
@@ -399,7 +434,13 @@ def per_source_dataset_pillar3_correlation(
         return {
             "metric_col": metric_col,
             "skipped": True,
-            "reason": "source_to_domain dict is empty — Task 4 not yet complete",
+            "status": "underpowered_or_fallback",
+            "reason": (
+                "source_to_domain dict is empty — Task 4 not yet complete. "
+                "No source-to-domain mapping is available so no within-domain "
+                "correlation can be computed. mean_within_domain_spearman_rho is "
+                "returned as NaN (not 0) to prevent misleading downstream use."
+            ),
             "mean_within_domain_spearman_rho": float("nan"),
             "ci_lo": float("nan"),
             "ci_hi": float("nan"),
@@ -499,9 +540,18 @@ def per_source_dataset_pillar3_correlation(
         ci_lo, ci_hi = _bootstrap_spearman_ci(all_x, all_y, boot_reps=boot_reps, seed=seed)
         mean_rho = cross_rho
 
-    return {
+    # If we ended up with fewer than 2 valid domains despite having a source_to_domain
+    # mapping, flag this as underpowered_or_fallback so callers see the issue clearly.
+    _status = "ok" if n_valid >= 2 else "underpowered_or_fallback"
+    _reason = None if n_valid >= 2 else (
+        f"Only {n_valid} macro-domain(s) had both source metric data and a BER delta. "
+        "Cross-domain Spearman ρ is undefined; mean_within_domain_spearman_rho=NaN."
+    )
+
+    out: dict = {
         "metric_col": metric_col,
         "skipped": False,
+        "status": _status,
         "mean_within_domain_spearman_rho": float(mean_rho),
         "cross_domain_spearman_rho": float(cross_rho) if n_valid >= 2 else float("nan"),
         "cross_domain_pvalue": float(cross_pvalue) if n_valid >= 2 else float("nan"),
@@ -517,6 +567,9 @@ def per_source_dataset_pillar3_correlation(
             f"mean(metric) vs ΔBER across n={n_valid} macro-domains."
         ),
     }
+    if _reason is not None:
+        out["reason"] = _reason
+    return out
 
 
 # ===========================================================================
@@ -640,13 +693,20 @@ def main() -> None:
             seed=args.seed,
         )
         pillar3_per_domain[mc] = out
-        rho = out.get("spearman_rho", float("nan"))
-        ci_lo = out.get("ci_lo", float("nan"))
-        ci_hi = out.get("ci_hi", float("nan"))
-        print(
-            f"  ρ = {rho:+.4f}  95% CI [{ci_lo:+.4f}, {ci_hi:+.4f}]"
-            f"  (n_domains={out.get('n_domains', 0)})"
-        )
+        rho    = out.get("spearman_rho")
+        ci_lo  = out.get("ci_lo")
+        ci_hi  = out.get("ci_hi")
+        status = out.get("status", "")
+        if rho is None or (isinstance(rho, float) and math.isnan(rho)):
+            print(
+                f"  status={status}  (n_domains={out.get('n_domains', 0)}) — "
+                f"ρ not computed: {out.get('reason', 'see status field')}"
+            )
+        else:
+            print(
+                f"  ρ = {rho:+.4f}  95% CI [{ci_lo:+.4f}, {ci_hi:+.4f}]"
+                f"  (n_domains={out.get('n_domains', 0)})"
+            )
 
     # --- Per-source correlation ---
     source_to_domain = SOURCE_DATASET_TO_BER_DOMAIN  # may be empty
@@ -699,10 +759,11 @@ def main() -> None:
             "metric_col": mc,
             "view": "per_domain",
             "n": pd_res.get("n_domains", 0),
-            "spearman_rho": pd_res.get("spearman_rho", float("nan")),
-            "pvalue": pd_res.get("pvalue", float("nan")),
-            "ci_lo": pd_res.get("ci_lo", float("nan")),
-            "ci_hi": pd_res.get("ci_hi", float("nan")),
+            "status": pd_res.get("status", "ok"),
+            "spearman_rho": pd_res.get("spearman_rho"),          # None if underpowered
+            "pvalue": pd_res.get("pvalue"),                       # None if underpowered
+            "ci_lo": pd_res.get("ci_lo"),                         # None if underpowered
+            "ci_hi": pd_res.get("ci_hi"),                         # None if underpowered
         })
         ps_res = mc_res.get("per_source_within_domain", {})
         if ps_res:
@@ -710,6 +771,7 @@ def main() -> None:
                 "metric_col": mc,
                 "view": "per_source_within_domain",
                 "n": ps_res.get("n_sources_total", 0),
+                "status": ps_res.get("status", "ok"),
                 "spearman_rho": ps_res.get("mean_within_domain_spearman_rho", float("nan")),
                 "pvalue": ps_res.get("cross_domain_pvalue", float("nan")),
                 "ci_lo": ps_res.get("ci_lo", float("nan")),

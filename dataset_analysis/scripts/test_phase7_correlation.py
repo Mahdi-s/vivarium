@@ -70,7 +70,13 @@ _DOMAIN_BREAKDOWN = (
 # ---------------------------------------------------------------------------
 
 def test_phase7_pillar3_returns_finite():
-    """Plan-mandated test: per_domain_pillar3_correlation returns finite Spearman ρ."""
+    """Plan-mandated test: per_domain_pillar3_correlation returns sensible output.
+
+    Updated (Fix 2 / review #4): when n_domains < 5, the function now returns
+    status='underpowered' with spearman_rho=None (not a misleadingly precise float).
+    When n_domains >= 5 (enough rank permutations for a meaningful test), it returns
+    a finite float. The test validates both branches.
+    """
     pe, _, _ = _pick_phase5("instruct-sft")
     out = per_domain_pillar3_correlation(
         phase5_per_example=str(pe),
@@ -80,15 +86,28 @@ def test_phase7_pillar3_returns_finite():
         seed=0,
     )
     assert "spearman_rho" in out, "output must have 'spearman_rho' key"
+    assert "n_domains" in out, "output must have 'n_domains' key"
+
+    n = out["n_domains"]
     rho = out["spearman_rho"]
-    # With at least 2 domains the ρ should be finite
-    if out["n_domains"] >= 2:
+
+    if n < 5:
+        # Fix 2: underpowered — rho must be None and status must reflect it
+        assert rho is None, (
+            f"spearman_rho should be None for underpowered n_domains={n}, got {rho!r}"
+        )
+        assert out.get("status") == "underpowered", (
+            f"status should be 'underpowered' for n_domains={n}, got {out.get('status')!r}"
+        )
+        assert "reason" in out, "underpowered result must include 'reason' key"
+    elif n >= 5:
+        # Enough domains — rho should be a finite float
+        assert isinstance(rho, float), f"spearman_rho must be float, got {type(rho)}"
         assert not math.isnan(rho), (
-            f"spearman_rho is NaN with {out['n_domains']} domains — "
-            "check domain canonicalization"
+            f"spearman_rho is NaN with {n} domains — check domain canonicalization"
         )
     else:
-        pytest.skip(f"Only {out['n_domains']} domain(s) in data — skipping finiteness check")
+        pytest.skip(f"Only {n} domain(s) in data — skipping finiteness check")
 
 
 # ---------------------------------------------------------------------------
