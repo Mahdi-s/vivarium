@@ -14,7 +14,7 @@ audit_metrics.py which was registered before any full-corpus analysis ran
 (Task 2 of the audit plan). Do not add metrics here; add them in audit_metrics.
 
 Outputs:
-  results/phase6_<tag>_per_pair.csv          (row-level, 38 columns)
+  results/phase6_<tag>_per_pair.csv          (row-level, 36 columns)
   results/phase6_<tag>_summary.json          (aggregate stats with effect sizes)
   results/phase6_<tag>_by_preference_type.csv
 """
@@ -172,7 +172,7 @@ def _build_delta_stats(
     positive = rejected > chosen = DPO penalty signal.
 
     Boot CI on cliffs_delta uses 200 reps (not 1000) because cliffs_delta is
-    O(N) via binary search for large N, but 200 reps on N=260k still takes
+    O(N log N) via binary search for large N, but 200 reps on N=260k still takes
     ~10s; 1000 reps would exceed the ~30s budget for this block alone.
     boot_ci_median uses 1000 reps (cheap on a delta array).
     """
@@ -208,11 +208,6 @@ def _build_delta_stats(
     # boot_ci_cliffs_delta: 200 reps (expensive at large N — see docstring above)
     # NOTE: bootstrap here re-samples from the PAIRED arrays; we zip them to
     # keep the pairing intact.  We sample both arrays with the same index set.
-    def _cliffs_boot(sample_idx: np.ndarray) -> float:
-        # Called by bootstrap_ci's internal loop — but we need paired sampling,
-        # so we implement our own loop below instead.
-        pass
-
     rng = np.random.default_rng(42)
     boot_cd_vals = np.empty(200, dtype=float)
     for i in range(200):
@@ -491,6 +486,7 @@ def main():
         def _median_safe(vals: list[float]) -> float:
             return float(np.median(np.asarray(vals, dtype=float))) if vals else float("nan")
 
+        # args: (rejected_vals, chosen_vals) — positive δ = rejected greater = DPO penalty signal (matches global path at L202).
         def _cliffs_safe(rejected_vals: list[float], chosen_vals: list[float]) -> float:
             if not rejected_vals or not chosen_vals:
                 return float("nan")
