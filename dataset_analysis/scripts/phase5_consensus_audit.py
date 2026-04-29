@@ -22,10 +22,8 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-import statistics as st
 from collections import defaultdict
 from pathlib import Path
-from typing import Optional
 
 from common import (
     RESULTS, iter_rows,
@@ -102,9 +100,10 @@ def main():
                     help="parquet dir under data/raw/ (instruct-sft, think-sft, instruct-rl)")
     ap.add_argument("--jsonl-fallback", default="sft")
     ap.add_argument("--limit", type=int, default=None)
+    ap.add_argument("--tag", default=None)
     args = ap.parse_args()
 
-    tag = args.short_name
+    tag = args.tag or args.short_name
 
     per_example_path = RESULTS / f"phase5_{tag}_per_example.csv"
     summary_path     = RESULTS / f"phase5_{tag}_summary.json"
@@ -125,7 +124,8 @@ def main():
     src_carry_num: dict[str, int] = defaultdict(int)
     src_carry_den: dict[str, int] = defaultdict(int)
 
-    unmapped_sources: set[str] = set()
+    # source -> set of all domain_canonical values seen for that source
+    source_domain_canonical_set: dict[str, set[str]] = defaultdict(set)
     unmapped_domains: set[str] = set()
 
     rows_written: int = 0
@@ -149,9 +149,10 @@ def main():
             dom_raw = meta["domain_raw"] or ""
             dom_can = meta["domain_canonical"]
 
-            # Track unmapped
+            # Track unmapped domains and per-source canonical sets
             if dom_raw and dom_can == "unmapped":
                 unmapped_domains.add(dom_raw)
+            source_domain_canonical_set[src].add(dom_can)
 
             # ---- phase1 metrics (parity block) ----
             sj  = structural_jaccard(user, asst)
@@ -264,6 +265,11 @@ def main():
             for k, v in vals.items():
                 dom_agg[dom_can][k].append(v)
 
+    # A source is "unmapped" if every row from it had domain_canonical == "unmapped"
+    unmapped_sources: set[str] = {
+        s for s, ds in source_domain_canonical_set.items() if ds == {"unmapped"}
+    }
+
     # ---------------------------------------------------------------------------
     # Build summary JSON
     # ---------------------------------------------------------------------------
@@ -373,7 +379,7 @@ def main():
         "affirm_prefix_rate": global_affirm_rate,
         "by_source_dataset": by_source_dataset,
         "by_domain_canonical": by_domain_canonical,
-        "unmapped_source_datasets": sorted(unmapped_domains),  # unmapped domain strings
+        "unmapped_source_datasets": sorted(unmapped_sources),
         "unmapped_domains": sorted(unmapped_domains),
         "regex_lower_bound_disclaimer": (
             "consensus_hits and sycophancy_hits are reported as English-only regex "
