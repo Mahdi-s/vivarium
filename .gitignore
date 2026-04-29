@@ -135,6 +135,12 @@ Comparing_Experiments/expanded_suite_analysis/
 Comparing_Experiments/expanded_suite_analysis_db_endorse/
 Comparing_Experiments/publication_analysis*/
 
+# Hugging Face downloaded training data and per-row audit CSVs
+# (symlinked to main repo; not tracked here)
+dataset_analysis/data
+dataset_analysis/results
+dataset_analysis/logs
+
 models/*
 
 /.claude/
