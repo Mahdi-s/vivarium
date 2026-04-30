@@ -1,12 +1,4 @@
 #!/bin/bash
-#SBATCH --account=ll_774_951
-#SBATCH --partition=main
-#SBATCH --nodes=1
-#SBATCH --ntasks=1
-#SBATCH --cpus-per-task=4
-#SBATCH --mem=16G
-#SBATCH --time=12:00:00
-#SBATCH --job-name=AAM_API_NGRAM_MATCHED
 
 # ---------------------------------------------------------------------------
 # Matched-instruction n-gram ablation re-runs for the OpenRouter-API models
@@ -21,15 +13,24 @@
 
 set -euo pipefail
 
-cd /home1/mahdisae/aam/abstractAgentMachine
-source /scratch1/mahdisae/aam_venv/bin/activate
+# Resolve repository root from this script location.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
+cd "${REPO_ROOT}"
 
 export PYTHONNOUSERSITE=1
-export PYTHONPATH="/home1/mahdisae/aam/abstractAgentMachine/src:${PYTHONPATH:-}"
+export PYTHONPATH="${REPO_ROOT}/src:${PYTHONPATH:-}"
+OPENROUTER_API_BASE="https://openrouter.ai/api/v1"
 
-# OPENROUTER_API_KEY must be exported in the calling environment (or sourced
-# from a private secrets file). Do not commit the key to the repository.
-: "${OPENROUTER_API_KEY:?OPENROUTER_API_KEY must be set in the environment.}"
+# Paste your OpenRouter API key below before running locally.
+# IMPORTANT: do not commit this key to git.
+OPENROUTER_API_KEY="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"
+
+if [[ "${OPENROUTER_API_KEY}" == "PASTE_OPENROUTER_API_KEY_HERE" || -z "${OPENROUTER_API_KEY}" ]]; then
+  echo "Please set OPENROUTER_API_KEY in this file before running."
+  exit 1
+fi
+export OPENROUTER_API_KEY
 
 CONFIGS=(
   "suite_llama31_70b_instruct_ablations_matched_temp0p0.json"
@@ -42,7 +43,9 @@ for cfg in "${CONFIGS[@]}"; do
     echo "=== API matched-instruction ablation: ${cfg} ==="
     python experiments/olmo_conformity/configs/run_expanded_experiments.py \
         --suite "experiments/olmo_conformity/configs/${cfg}" \
-        --hpc --runs-only --force-rerun
+        --api-base "${OPENROUTER_API_BASE}" \
+        --api-key "${OPENROUTER_API_KEY}" \
+        --runs-only --force-rerun
     echo "=== ${cfg} complete ==="
 done
 

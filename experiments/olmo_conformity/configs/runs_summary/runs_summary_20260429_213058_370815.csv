@@ -21,7 +21,22 @@ Loading checkpoint shards: 100%|██████████| 3/3 [00:05<00:00
 35ad8445-1be7-4b17-8c81-39b3f1e76fb5,instruct_dpo_0.6,instruct_dpo,0.6,completed,"suite_expanded_localtest_by_model.json (instruct_dpo, T=0.6)",2026-02-26T20:57:56.942208,2026-02-26T21:04:07.251061,/Users/mahdi/repos/abstractAgentMachine/runs/20260226_205757_35ad8445-1be7-4b17-8c81-39b3f1e76fb5,/Users/mahdi/repos/abstractAgentMachine/runs/20260226_205757_35ad8445-1be7-4b17-8c81-39b3f1e76fb5/simulation.db,
 89037b43-6344-4851-bfc4-344e4e6c474d,instruct_sft_0.6,instruct_sft,0.6,completed,"suite_expanded_localtest_by_model.json (instruct_sft, T=0.6)",2026-02-26T20:55:01.737601,2026-02-26T20:57:56.939021,/Users/mahdi/repos/abstractAgentMachine/runs/20260226_205501_89037b43-6344-4851-bfc4-344e4e6c474d,/Users/mahdi/repos/abstractAgentMachine/runs/20260226_205501_89037b43-6344-4851-bfc4-344e4e6c474d/simulation.db,
 5c9cbbbc-455c-4218-bd19-8439c44d6a60,llama31_70b_instruct_0.0,llama31_70b_instruct,0.0,completed,"suite_llama31_70b_instruct_ablations_matched_temp0p0.json (llama31_70b_instruct, T=0.0)",2026-04-29T18:48:57.534365,2026-04-29T20:36:40.095204,/Users/mahdi/repos/abstractAgentMachine/runs/20260429_184857_5c9cbbbc-455c-4218-bd19-8439c44d6a60,/Users/mahdi/repos/abstractAgentMachine/runs/20260429_184857_5c9cbbbc-455c-4218-bd19-8439c44d6a60/simulation.db,
-8d5745e1-7eef-4e7b-8473-392e6d6951cc,llama31_70b_instruct_0.6,llama31_70b_instruct,0.6,completed,"suite_llama31_70b_instruct_ablations_matched_temp0p6.json (llama31_70b_instruct, T=0.6)",2026-04-29T23:36:14.146887,2026-04-30T00:20:36.801406,/Users/mahdi/repos/abstractAgentMachine/runs/20260429_203640_8d5745e1-7eef-4e7b-8473-392e6d6951cc,/Users/mahdi/repos/abstractAgentMachine/runs/20260429_203640_8d5745e1-7eef-4e7b-8473-392e6d6951cc/simulation.db,
+,llama31_70b_instruct_0.6,llama31_70b_instruct,0.6,failed,"suite_llama31_70b_instruct_ablations_matched_temp0p6.json (llama31_70b_instruct, T=0.6)",2026-04-29T20:36:40.174728,2026-04-29T21:30:58.369632,,,"Traceback (most recent call last):
+  File ""/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/litellm/llms/openai/openai.py"", line 485, in make_sync_openai_chat_completion_request
+    response = raw_response.parse()
+               ^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/openai/_legacy_response.py"", line 137, in parse
+    parsed = self._parse(to=to)
+             ^^^^^^^^^^^^^^^^^^
+  File ""/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/openai/_legacy_response.py"", line 332, in _parse
+    data = response.json()
+           ^^^^^^^^^^^^^^^
+  File ""/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/httpx/_models.py"", line 832, in json
+    return jsonlib.loads(self.content, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mahdi/miniconda3/lib/python3.11/json/__init__.py"", line 346, in loads
+    return _default_decoder.decode(s)
+  "
 5b335082-6715-4fec-a0ea-e2f7e04e1fa9,rl_zero_0.6,rl_zero,0.6,completed,"suite_expanded_localtest_by_model.json (rl_zero, T=0.6)",2026-02-26T22:38:29.107799,2026-02-26T22:51:53.891365,/Users/mahdi/repos/abstractAgentMachine/runs/20260226_223829_5b335082-6715-4fec-a0ea-e2f7e04e1fa9,/Users/mahdi/repos/abstractAgentMachine/runs/20260226_223829_5b335082-6715-4fec-a0ea-e2f7e04e1fa9/simulation.db,
 1b5a06cb-ecf3-44d4-9f09-d132967d9ca2,think_dpo_0.0,think_dpo,0.0,completed,"suite_32b_think_temp0p6.json (think_dpo, T=0.0)",2026-03-12T22:12:13.764248,2026-03-12T22:23:57.011964,/Users/mahdi/repos/abstractAgentMachine/runs/20260312_221213_1b5a06cb-ecf3-44d4-9f09-d132967d9ca2,/Users/mahdi/repos/abstractAgentMachine/runs/20260312_221213_1b5a06cb-ecf3-44d4-9f09-d132967d9ca2/simulation.db,
 3e27b53a-aa6f-444a-a014-e0c4ef2480ff,think_dpo_0.2,think_dpo,0.2,completed,"suite_32b_think_temp0p6.json (think_dpo, T=0.2)",2026-03-12T22:23:57.017508,2026-03-12T22:35:34.504510,/Users/mahdi/repos/abstractAgentMachine/runs/20260312_222357_3e27b53a-aa6f-444a-a014-e0c4ef2480ff,/Users/mahdi/repos/abstractAgentMachine/runs/20260312_222357_3e27b53a-aa6f-444a-a014-e0c4ef2480ff/simulation.db,

@@ -137,3 +137,510 @@ Loading checkpoint shards: 100%|██████████| 3/3 [00:06<00:00
 Loading checkpoint shards: 100%|██████████| 3/3 [00:06<00:00,  2.01s/it]
 `generation_config` default values have been modified to match model-specific defaults: {'do_sample': True, 'temperature': 0.6, 'top_p': 0.95, 'eos_token_id': [100265, 100257]}. If this is not desired, please set these values explicitly.
 /Users/mahdi/miniconda3/lib/python3.11/multiprocessing/resource_tracker.py:254: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to
+2026-04-29 18:46:36 [INFO] ============================================================
+2026-04-29 18:46:36 [INFO] EXPANDED CONFORMITY EXPERIMENTS PIPELINE
+2026-04-29 18:46:36 [INFO] ============================================================
+2026-04-29 18:46:36 [INFO] Repo root: /Users/mahdi/repos/abstractAgentMachine
+2026-04-29 18:46:36 [INFO] Mode: LOCAL
+2026-04-29 18:46:36 [INFO] Metadata file: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-04-29 18:46:36 [INFO] Models directory: /Users/mahdi/repos/abstractAgentMachine/models
+2026-04-29 18:46:36 [INFO] Runs directory: /Users/mahdi/repos/abstractAgentMachine/runs
+2026-04-29 18:46:36 [INFO] Output directory: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments
+2026-04-29 18:46:36 [INFO] Mode: model-first
+2026-04-29 18:46:36 [INFO] Phase: all
+2026-04-29 18:46:36 [INFO] Suite: experiments/olmo_conformity/configs/suite_llama31_70b_instruct_ablations_matched_temp0p0.json
+2026-04-29 18:46:36 [INFO] Memory usage (pipeline start): 28.2 MB
+2026-04-29 18:46:36 [INFO] Set VIVARIUM_HF_CACHE=/Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-04-29 18:46:36 [INFO] Set VIVARIUM_ARTIFACTS_DIR=/Users/mahdi/repos/abstractAgentMachine/runs
+2026-04-29 18:46:36 [INFO] Created/verified models cache directory: /Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-04-29 18:46:36 [INFO] Created/verified runs directory: /Users/mahdi/repos/abstractAgentMachine/runs
+2026-04-29 18:46:36 [INFO] 
+2026-04-29 18:46:36 [INFO] ============================================================
+2026-04-29 18:46:36 [INFO] PHASE 1: RUNNING EXPERIMENTS
+2026-04-29 18:46:36 [INFO] ============================================================
+2026-04-29 18:46:36 [INFO] 
+2026-04-29 18:46:36 [INFO] --- llama31_70b_instruct T=0.0 ---
+2026-04-29 18:46:36 [INFO] Running experiment for llama31_70b_instruct T=0.0...
+2026-04-29 18:46:36 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmp71nvx2r7.json --runs-dir /Users/mahdi/repos/abstractAgentMachine/runs
+2026-04-29 18:46:39 [ERROR] Experiment failed with return code 1
+2026-04-29 18:46:39 [ERROR] STDERR: /Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/transformers/utils/hub.py:110: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+Traceback (most recent call last):
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/huggingface_hub/utils/_http.py", line 402, in hf_raise_for_status
+    response.raise_for_status()
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/requests/models.py", line 1026, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 401 Client Error: Unauthorized for url: https://huggingface.co/meta-llama/llama-3.1-70b-instruct/resolve/main/config.json
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/transformers/utils/hub.py", line 479, in cached_files
+    hf_hub_download(
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/huggingface_hub/utils/_validators.py", line 114, in _inner_fn
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 1007, in hf_hub_download
+    return _hf_hub_download_to_cache_dir(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 1114, in _hf_hub_download_to_cache_dir
+    _raise_on_head_call_error(head_call_error, force_download, local_files_only)
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 1655, in _raise_on_head_call_error
+    raise head_call_error
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 1543, in _get_metadata_or_catch_error
+    metadata = get_hf_file_metadata(
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/huggingface_hub/utils/_validators.py", line 114, in _inner_fn
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 1460, in get_hf_file_metadata
+    r = _request_wrapper(
+        ^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 283, in _request_wrapper
+    response = _request_wrapper(
+               ^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 307, in _request_wrapper
+    hf_raise_for_status(response)
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/huggingface_hub/utils/_http.py", line 419, in hf_raise_for_status
+    raise _format(GatedRepoError, message, response) from e
+huggingface_hub.errors.GatedRepoError: 401 Client Error. (Request ID: Root=1-69f2b47f-180dc6921b0e8b241db606d6;a299029e-6fa3-4e71-902e-bf4a73a95959)
+
+Cannot access gated repo for url https://huggingface.co/meta-llama/llama-3.1-70b-instruct/resolve/main/config.json.
+Access to model meta-llama/Llama-3.1-70B-Instruct is restricted. You must have access to it and be authenticated to access it. Please log in.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 375, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 422, in _handle_olmo_conformity
+    paths = run_olmo_conformity_suite(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 1079, in run_suite
+    gateway, model_id_for_api = create_gateway(
+                                ^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/llm_gateway.py", line 230, in create_gateway
+    gw = HuggingFaceHookedGateway(
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 9, in __init__
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/llm_gateway.py", line 1191, in __post_init__
+    cfg = AutoConfig.from_pretrained(self.model_id_or_path, trust_remote_code=True)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/transformers/models/auto/configuration_auto.py", line 1332, in from_pretrained
+    config_dict, unused_kwargs = PretrainedConfig.get_config_dict(pretrained_model_name_or_path, **kwargs)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/transformers/configuration_utils.py", line 662, in get_config_dict
+    config_dict, kwargs = cls._get_config_dict(pretrained_model_name_or_path, **kwargs)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/transformers/configuration_utils.py", line 721, in _get_config_dict
+    resolved_config_file = cached_file(
+                           ^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/transformers/utils/hub.py", line 322, in cached_file
+    file = cached_files(path_or_repo_id=path_or_repo_id, filenames=[filename], **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/transformers/utils/hub.py", line 543, in cached_files
+    raise OSError(
+OSError: You are trying to access a gated repo.
+Make sure to have access to it at https://huggingface.co/meta-llama/llama-3.1-70b-instruct.
+401 Client Error. (Request ID: Root=1-69f2b47f-180dc6921b0e8b241db606d6;a299029e-6fa3-4e71-902e-bf4a73a95959)
+
+Cannot access gated repo for url https://huggingface.co/meta-llama/llama-3.1-70b-instruct/resolve/main/config.json.
+Access to model meta-llama/Llama-3.1-70B-Instruct is restricted. You must have access to it and be authenticated to access it. Please log in.
+
+2026-04-29 18:46:39 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-04-29 18:46:39 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260429_184639_788058.csv
+2026-04-29 18:46:39 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-04-29 18:46:39 [INFO] Memory usage (after llama31_70b_instruct_0.0 experiment): 29.3 MB
+2026-04-29 18:46:39 [INFO] 
+2026-04-29 18:46:39 [INFO] ============================================================
+2026-04-29 18:46:39 [INFO] STOPPING AFTER TRIALS (runs-only or phase=trials)
+2026-04-29 18:46:39 [INFO] ============================================================
+2026-04-29 18:46:39 [INFO] Requested: 1 runs
+2026-04-29 18:46:39 [INFO] Completed: 0; Failed: 1; Skipped: 0
+2026-04-29 18:46:39 [INFO]   FAILED llama31_70b_instruct T=0.0: /Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/transformers/utils/hub.py:110: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+Traceback (most recent call last):
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/huggingface_hub/utils/_http.py", line 402, in hf_raise_for_status
+    response.raise_for_status()
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/requests/models.py", line 1026, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 401 Client Error: Unauthorized for url: https://huggingface.co/meta-llama/llama-3.1-70b-instruct/resolve/main/config.json
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/transformer
+2026-04-29 18:48:57 [INFO] ============================================================
+2026-04-29 18:48:57 [INFO] EXPANDED CONFORMITY EXPERIMENTS PIPELINE
+2026-04-29 18:48:57 [INFO] ============================================================
+2026-04-29 18:48:57 [INFO] Repo root: /Users/mahdi/repos/abstractAgentMachine
+2026-04-29 18:48:57 [INFO] Mode: LOCAL
+2026-04-29 18:48:57 [INFO] Metadata file: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-04-29 18:48:57 [INFO] Models directory: /Users/mahdi/repos/abstractAgentMachine/models
+2026-04-29 18:48:57 [INFO] Runs directory: /Users/mahdi/repos/abstractAgentMachine/runs
+2026-04-29 18:48:57 [INFO] Output directory: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments
+2026-04-29 18:48:57 [INFO] Mode: model-first
+2026-04-29 18:48:57 [INFO] Phase: all
+2026-04-29 18:48:57 [INFO] Suite: experiments/olmo_conformity/configs/suite_llama31_70b_instruct_ablations_matched_temp0p0.json
+2026-04-29 18:48:57 [INFO] Memory usage (pipeline start): 27.9 MB
+2026-04-29 18:48:57 [INFO] Set VIVARIUM_HF_CACHE=/Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-04-29 18:48:57 [INFO] Set VIVARIUM_ARTIFACTS_DIR=/Users/mahdi/repos/abstractAgentMachine/runs
+2026-04-29 18:48:57 [INFO] Created/verified models cache directory: /Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-04-29 18:48:57 [INFO] Created/verified runs directory: /Users/mahdi/repos/abstractAgentMachine/runs
+2026-04-29 18:48:57 [INFO] 
+2026-04-29 18:48:57 [INFO] ============================================================
+2026-04-29 18:48:57 [INFO] PHASE 1: RUNNING EXPERIMENTS
+2026-04-29 18:48:57 [INFO] ============================================================
+2026-04-29 18:48:57 [INFO] 
+2026-04-29 18:48:57 [INFO] --- llama31_70b_instruct T=0.0 ---
+2026-04-29 18:48:57 [INFO] Running experiment for llama31_70b_instruct T=0.0...
+2026-04-29 18:48:57 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmp3n4xj3ml.json --runs-dir /Users/mahdi/repos/abstractAgentMachine/runs --api-base https://openrouter.ai/api/v1 --api-key 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
+2026-04-29 20:36:40 [INFO] Experiment completed successfully
+2026-04-29 20:36:40 [INFO]   Run ID: 5c9cbbbc-455c-4218-bd19-8439c44d6a60
+2026-04-29 20:36:40 [INFO]   Run dir: /Users/mahdi/repos/abstractAgentMachine/runs/20260429_184857_5c9cbbbc-455c-4218-bd19-8439c44d6a60
+2026-04-29 20:36:40 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-04-29 20:36:40 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260429_203640_096622.csv
+2026-04-29 20:36:40 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-04-29 20:36:40 [INFO] Memory usage (after llama31_70b_instruct_0.0 experiment): 30.4 MB
+2026-04-29 20:36:40 [INFO] 
+2026-04-29 20:36:40 [INFO] ============================================================
+2026-04-29 20:36:40 [INFO] STOPPING AFTER TRIALS (runs-only or phase=trials)
+2026-04-29 20:36:40 [INFO] ============================================================
+2026-04-29 20:36:40 [INFO] Requested: 1 runs
+2026-04-29 20:36:40 [INFO] Completed: 1; Failed: 0; Skipped: 0
+2026-04-29 20:36:40 [INFO] ============================================================
+2026-04-29 20:36:40 [INFO] EXPANDED CONFORMITY EXPERIMENTS PIPELINE
+2026-04-29 20:36:40 [INFO] ============================================================
+2026-04-29 20:36:40 [INFO] Repo root: /Users/mahdi/repos/abstractAgentMachine
+2026-04-29 20:36:40 [INFO] Mode: LOCAL
+2026-04-29 20:36:40 [INFO] Metadata file: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-04-29 20:36:40 [INFO] Models directory: /Users/mahdi/repos/abstractAgentMachine/models
+2026-04-29 20:36:40 [INFO] Runs directory: /Users/mahdi/repos/abstractAgentMachine/runs
+2026-04-29 20:36:40 [INFO] Output directory: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments
+2026-04-29 20:36:40 [INFO] Mode: model-first
+2026-04-29 20:36:40 [INFO] Phase: all
+2026-04-29 20:36:40 [INFO] Suite: experiments/olmo_conformity/configs/suite_llama31_70b_instruct_ablations_matched_temp0p6.json
+2026-04-29 20:36:40 [INFO] Memory usage (pipeline start): 28.5 MB
+2026-04-29 20:36:40 [INFO] Set VIVARIUM_HF_CACHE=/Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-04-29 20:36:40 [INFO] Set VIVARIUM_ARTIFACTS_DIR=/Users/mahdi/repos/abstractAgentMachine/runs
+2026-04-29 20:36:40 [INFO] Created/verified models cache directory: /Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-04-29 20:36:40 [INFO] Created/verified runs directory: /Users/mahdi/repos/abstractAgentMachine/runs
+2026-04-29 20:36:40 [INFO] 
+2026-04-29 20:36:40 [INFO] ============================================================
+2026-04-29 20:36:40 [INFO] PHASE 1: RUNNING EXPERIMENTS
+2026-04-29 20:36:40 [INFO] ============================================================
+2026-04-29 20:36:40 [INFO] 
+2026-04-29 20:36:40 [INFO] --- llama31_70b_instruct T=0.6 ---
+2026-04-29 20:36:40 [INFO] Running experiment for llama31_70b_instruct T=0.6...
+2026-04-29 20:36:40 [INFO]   Command: /Users/mahdi/repos/abstractAgentMachine/.venv/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmpyihnvw16.json --runs-dir /Users/mahdi/repos/abstractAgentMachine/runs --api-base https://openrouter.ai/api/v1 --api-key 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
+2026-04-29 21:30:58 [ERROR] Experiment failed with return code 1
+2026-04-29 21:30:58 [ERROR] STDERR: Traceback (most recent call last):
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/litellm/llms/openai/openai.py", line 485, in make_sync_openai_chat_completion_request
+    response = raw_response.parse()
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/openai/_legacy_response.py", line 137, in parse
+    parsed = self._parse(to=to)
+             ^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/openai/_legacy_response.py", line 332, in _parse
+    data = response.json()
+           ^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/httpx/_models.py", line 832, in json
+    return jsonlib.loads(self.content, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/miniconda3/lib/python3.11/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/miniconda3/lib/python3.11/json/decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/miniconda3/lib/python3.11/json/decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 289 column 1 (char 1584)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/litellm/llms/openai/openai.py", line 758, in completion
+    raise e
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/litellm/llms/openai/openai.py", line 686, in completion
+    ) = self.make_sync_openai_chat_completion_request(
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/litellm/litellm_core_utils/logging_utils.py", line 237, in sync_wrapper
+    result = func(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/litellm/llms/openai/openai.py", line 496, in make_sync_openai_chat_completion_request
+    raise Exception(
+Exception: error - Expecting value: line 289 column 1 (char 1584), Received response - <APIResponse [200 OK] type=<class 'openai.types.chat.chat_completion.ChatCompletion'>>, Type of response - <class 'openai._legacy_response.LegacyAPIResponse'>
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/litellm/main.py", line 2366, in completion
+    raise e
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/litellm/main.py", line 2338, in completion
+    response = openai_chat_completions.completion(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/litellm/llms/openai/openai.py", line 769, in completion
+    raise OpenAIError(
+litellm.llms.openai.common_utils.OpenAIError: error - Expecting value: line 289 column 1 (char 1584), Received response - <APIResponse [200 OK] type=<class 'openai.types.chat.chat_completion.ChatCompletion'>>, Type of response - <class 'openai._legacy_response.LegacyAPIResponse'>
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/llm_gateway.py", line 637, in chat
+    resp = litellm.completion(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/litellm/utils.py", line 1385, in wrapper
+    raise e
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/litellm/utils.py", line 1254, in wrapper
+    result = original_function(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/litellm/main.py", line 4046, in completion
+    raise exception_type(
+          ^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/litellm/litellm_core_utils/exception_mapping_utils.py", line 2340, in exception_type
+    raise e
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/litellm/litellm_core_utils/exception_mapping_utils.py", line 539, in exception_type
+    raise InternalServerError(
+litellm.exceptions.InternalServerError: litellm.InternalServerError: InternalServerError: OpenAIException - error - Expecting value: line 289 column 1 (char 1584), Received response - <APIResponse [200 OK] type=<class 'openai.types.chat.chat_completion.ChatCompletion'>>, Type of response - <class 'openai._legacy_response.LegacyAPIResponse'>
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 375, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 422, in _handle_olmo_conformity
+    paths = run_olmo_conformity_suite(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 1571, in run_suite
+    resp = gateway.chat(
+           ^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/llm_gateway.py", line 657, in chat
+    raise type(e)(
+          ^^^^^^^^
+TypeError: InternalServerError.__init__() missing 2 required positional arguments: 'llm_provider' and 'model'
+
+2026-04-29 21:30:58 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-04-29 21:30:58 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260429_213058_370815.csv
+2026-04-29 21:30:58 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-04-29 21:30:58 [INFO] Memory usage (after llama31_70b_instruct_0.6 experiment): 29.4 MB
+2026-04-29 21:30:58 [INFO] 
+2026-04-29 21:30:58 [INFO] ============================================================
+2026-04-29 21:30:58 [INFO] STOPPING AFTER TRIALS (runs-only or phase=trials)
+2026-04-29 21:30:58 [INFO] ============================================================
+2026-04-29 21:30:58 [INFO] Requested: 1 runs
+2026-04-29 21:30:58 [INFO] Completed: 0; Failed: 1; Skipped: 0
+2026-04-29 21:30:58 [INFO]   FAILED llama31_70b_instruct T=0.6: Traceback (most recent call last):
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/litellm/llms/openai/openai.py", line 485, in make_sync_openai_chat_completion_request
+    response = raw_response.parse()
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/openai/_legacy_response.py", line 137, in parse
+    parsed = self._parse(to=to)
+             ^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/openai/_legacy_response.py", line 332, in _parse
+    data = response.json()
+           ^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/.venv/lib/python3.11/site-packages/httpx/_models.py", line 832, in json
+    return jsonlib.loads(self.content, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/miniconda3/lib/python3.11/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+  
+2026-04-29 23:36:06 [INFO] ============================================================
+2026-04-29 23:36:06 [INFO] EXPANDED CONFORMITY EXPERIMENTS PIPELINE
+2026-04-29 23:36:06 [INFO] ============================================================
+2026-04-29 23:36:06 [INFO] Repo root: /Users/mahdi/repos/abstractAgentMachine
+2026-04-29 23:36:06 [INFO] Mode: LOCAL
+2026-04-29 23:36:06 [INFO] Metadata file: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-04-29 23:36:06 [INFO] Models directory: /Users/mahdi/repos/abstractAgentMachine/models
+2026-04-29 23:36:06 [INFO] Runs directory: /Users/mahdi/repos/abstractAgentMachine/runs
+2026-04-29 23:36:06 [INFO] Output directory: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments
+2026-04-29 23:36:06 [INFO] Mode: model-first
+2026-04-29 23:36:06 [INFO] Phase: all
+2026-04-29 23:36:06 [INFO] Suite: experiments/olmo_conformity/configs/suite_llama31_70b_instruct_ablations_matched_temp0p6.json
+2026-04-29 23:36:06 [INFO] Memory usage (pipeline start): 29.7 MB
+2026-04-29 23:36:06 [INFO] Set VIVARIUM_HF_CACHE=/Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-04-29 23:36:06 [INFO] Set VIVARIUM_ARTIFACTS_DIR=/Users/mahdi/repos/abstractAgentMachine/runs
+2026-04-29 23:36:06 [INFO] Created/verified models cache directory: /Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-04-29 23:36:06 [INFO] Created/verified runs directory: /Users/mahdi/repos/abstractAgentMachine/runs
+2026-04-29 23:36:06 [INFO] 
+2026-04-29 23:36:06 [INFO] ============================================================
+2026-04-29 23:36:06 [INFO] PHASE 1: RUNNING EXPERIMENTS
+2026-04-29 23:36:06 [INFO] ============================================================
+2026-04-29 23:36:06 [INFO] 
+2026-04-29 23:36:06 [INFO] --- llama31_70b_instruct T=0.6 ---
+2026-04-29 23:36:06 [INFO] Running experiment for llama31_70b_instruct T=0.6...
+2026-04-29 23:36:06 [INFO]   Command: /Users/mahdi/miniconda3/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmp80ep45t_.json --runs-dir /Users/mahdi/repos/abstractAgentMachine/runs --run-id 8d5745e1-7eef-4e7b-8473-392e6d6951cc --api-base https://openrouter.ai/api/v1
+2026-04-29 23:36:09 [ERROR] Experiment failed with return code 1
+2026-04-29 23:36:09 [ERROR] STDERR: Traceback (most recent call last):
+  File "/Users/mahdi/miniconda3/lib/python3.11/site-packages/litellm/llms/openai/openai.py", line 758, in completion
+    raise e
+  File "/Users/mahdi/miniconda3/lib/python3.11/site-packages/litellm/llms/openai/openai.py", line 686, in completion
+    ) = self.make_sync_openai_chat_completion_request(
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/miniconda3/lib/python3.11/site-packages/litellm/litellm_core_utils/logging_utils.py", line 237, in sync_wrapper
+    result = func(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/miniconda3/lib/python3.11/site-packages/litellm/llms/openai/openai.py", line 502, in make_sync_openai_chat_completion_request
+    raise e
+  File "/Users/mahdi/miniconda3/lib/python3.11/site-packages/litellm/llms/openai/openai.py", line 477, in make_sync_openai_chat_completion_request
+    raw_response = openai_client.chat.completions.with_raw_response.create(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/miniconda3/lib/python3.11/site-packages/openai/_legacy_response.py", line 364, in wrapped
+    return cast(LegacyAPIResponse[R], func(*args, **kwargs))
+                                      ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/miniconda3/lib/python3.11/site-packages/openai/_utils/_utils.py", line 286, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/miniconda3/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py", line 1192, in create
+    return self._post(
+           ^^^^^^^^^^^
+  File "/Users/mahdi/miniconda3/lib/python3.11/site-packages/openai/_base_client.py", line 1259, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/miniconda3/lib/python3.11/site-packages/openai/_base_client.py", line 1047, in request
+    raise self._make_status_error_from_response(err.response) from None
+openai.AuthenticationError: Error code: 401 - {'error': {'message': 'Missing Authentication header', 'code': 401}}
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/mahdi/miniconda3/lib/python3.11/site-packages/litellm/main.py", line 2366, in completion
+    raise e
+  File "/Users/mahdi/miniconda3/lib/python3.11/site-packages/litellm/main.py", line 2338, in completion
+    response = openai_chat_completions.completion(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/miniconda3/lib/python3.11/site-packages/litellm/llms/openai/openai.py", line 769, in completion
+    raise OpenAIError(
+litellm.llms.openai.common_utils.OpenAIError: Error code: 401 - {'error': {'message': 'Missing Authentication header', 'code': 401}}
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/__main__.py", line 5, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/run.py", line 205, in main
+    result = handle_experiment_command(mode, args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/__init__.py", line 22, in handle_experiment_command
+    return olmo_cli.handle_command(mode, args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 375, in handle_command
+    return _handle_olmo_conformity(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/cli.py", line 422, in _handle_olmo_conformity
+    paths = run_olmo_conformity_suite(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/experiments/olmo_conformity/runner.py", line 1571, in run_suite
+    resp = gateway.chat(
+           ^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/llm_gateway.py", line 657, in chat
+    resp = _call_with_json_retry(kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/repos/abstractAgentMachine/src/vivarium/llm_gateway.py", line 648, in _call_with_json_retry
+    return litellm.completion(**attempt_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/miniconda3/lib/python3.11/site-packages/litellm/utils.py", line 1385, in wrapper
+    raise e
+  File "/Users/mahdi/miniconda3/lib/python3.11/site-packages/litellm/utils.py", line 1254, in wrapper
+    result = original_function(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/miniconda3/lib/python3.11/site-packages/litellm/main.py", line 4046, in completion
+    raise exception_type(
+          ^^^^^^^^^^^^^^^
+  File "/Users/mahdi/miniconda3/lib/python3.11/site-packages/litellm/litellm_core_utils/exception_mapping_utils.py", line 2340, in exception_type
+    raise e
+  File "/Users/mahdi/miniconda3/lib/python3.11/site-packages/litellm/litellm_core_utils/exception_mapping_utils.py", line 494, in exception_type
+    raise AuthenticationError(
+litellm.exceptions.AuthenticationError: litellm.AuthenticationError: AuthenticationError: OpenAIException - Missing Authentication header
+
+2026-04-29 23:36:09 [WARNING] Recovered partial run after failure: run_id=8d5745e1-7eef-4e7b-8473-392e6d6951cc, run_dir=/Users/mahdi/repos/abstractAgentMachine/runs/20260429_203640_8d5745e1-7eef-4e7b-8473-392e6d6951cc
+2026-04-29 23:36:09 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-04-29 23:36:09 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260429_233609_044283.csv
+2026-04-29 23:36:09 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-04-29 23:36:09 [INFO] Memory usage (after llama31_70b_instruct_0.6 experiment): 31.9 MB
+2026-04-29 23:36:09 [INFO] 
+2026-04-29 23:36:09 [INFO] ============================================================
+2026-04-29 23:36:09 [INFO] STOPPING AFTER TRIALS (runs-only or phase=trials)
+2026-04-29 23:36:09 [INFO] ============================================================
+2026-04-29 23:36:09 [INFO] Requested: 1 runs
+2026-04-29 23:36:09 [INFO] Completed: 0; Failed: 1; Skipped: 0
+2026-04-29 23:36:09 [INFO]   FAILED llama31_70b_instruct T=0.6: Traceback (most recent call last):
+  File "/Users/mahdi/miniconda3/lib/python3.11/site-packages/litellm/llms/openai/openai.py", line 758, in completion
+    raise e
+  File "/Users/mahdi/miniconda3/lib/python3.11/site-packages/litellm/llms/openai/openai.py", line 686, in completion
+    ) = self.make_sync_openai_chat_completion_request(
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/miniconda3/lib/python3.11/site-packages/litellm/litellm_core_utils/logging_utils.py", line 237, in sync_wrapper
+    result = func(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahdi/miniconda3/lib/python3.11/site-packages/litellm/llms/openai/openai.py", line 502, in make_sync_openai_chat_completion_request
+    raise e
+  File "/Users/mahdi/miniconda3/lib/python3.11/site-packages/litellm/llms/openai/openai.py", line 477, in make_sync_openai_chat_completion_request
+    raw_response = openai_client.chat.completions.with_raw_response.create(
+                   ^^^^^
+2026-04-29 23:36:14 [INFO] ============================================================
+2026-04-29 23:36:14 [INFO] EXPANDED CONFORMITY EXPERIMENTS PIPELINE
+2026-04-29 23:36:14 [INFO] ============================================================
+2026-04-29 23:36:14 [INFO] Repo root: /Users/mahdi/repos/abstractAgentMachine
+2026-04-29 23:36:14 [INFO] Mode: LOCAL
+2026-04-29 23:36:14 [INFO] Metadata file: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-04-29 23:36:14 [INFO] Models directory: /Users/mahdi/repos/abstractAgentMachine/models
+2026-04-29 23:36:14 [INFO] Runs directory: /Users/mahdi/repos/abstractAgentMachine/runs
+2026-04-29 23:36:14 [INFO] Output directory: /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments
+2026-04-29 23:36:14 [INFO] Mode: model-first
+2026-04-29 23:36:14 [INFO] Phase: all
+2026-04-29 23:36:14 [INFO] Suite: experiments/olmo_conformity/configs/suite_llama31_70b_instruct_ablations_matched_temp0p6.json
+2026-04-29 23:36:14 [INFO] Memory usage (pipeline start): 29.7 MB
+2026-04-29 23:36:14 [INFO] Set VIVARIUM_HF_CACHE=/Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-04-29 23:36:14 [INFO] Set VIVARIUM_ARTIFACTS_DIR=/Users/mahdi/repos/abstractAgentMachine/runs
+2026-04-29 23:36:14 [INFO] Created/verified models cache directory: /Users/mahdi/repos/abstractAgentMachine/models/huggingface_cache
+2026-04-29 23:36:14 [INFO] Created/verified runs directory: /Users/mahdi/repos/abstractAgentMachine/runs
+2026-04-29 23:36:14 [INFO] 
+2026-04-29 23:36:14 [INFO] ============================================================
+2026-04-29 23:36:14 [INFO] PHASE 1: RUNNING EXPERIMENTS
+2026-04-29 23:36:14 [INFO] ============================================================
+2026-04-29 23:36:14 [INFO] 
+2026-04-29 23:36:14 [INFO] --- llama31_70b_instruct T=0.6 ---
+2026-04-29 23:36:14 [INFO] Running experiment for llama31_70b_instruct T=0.6...
+2026-04-29 23:36:14 [INFO]   Command: /Users/mahdi/miniconda3/bin/python -m vivarium olmo-conformity --suite-config /var/folders/xp/b2xqj8p14q5bzvjd8wrq845h0000gn/T/tmphr38ds52.json --runs-dir /Users/mahdi/repos/abstractAgentMachine/runs --run-id 8d5745e1-7eef-4e7b-8473-392e6d6951cc --api-base https://openrouter.ai/api/v1 --api-key ***REDACTED***
+2026-04-30 00:20:36 [INFO] Experiment completed successfully
+2026-04-30 00:20:36 [INFO]   Run ID: 8d5745e1-7eef-4e7b-8473-392e6d6951cc
+2026-04-30 00:20:36 [INFO]   Run dir: /Users/mahdi/repos/abstractAgentMachine/runs/20260429_203640_8d5745e1-7eef-4e7b-8473-392e6d6951cc
+2026-04-30 00:20:36 [INFO] Metadata saved to /Users/mahdi/repos/abstractAgentMachine/Comparing_Experiments/runs_metadata.json
+2026-04-30 00:20:36 [INFO] Saved runs summary CSV: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_20260430_002036_802657.csv
+2026-04-30 00:20:36 [INFO] Updated latest summary: /Users/mahdi/repos/abstractAgentMachine/experiments/olmo_conformity/configs/runs_summary/runs_summary_latest.csv
+2026-04-30 00:20:36 [INFO] Memory usage (after llama31_70b_instruct_0.6 experiment): 31.2 MB
+2026-04-30 00:20:36 [INFO] 
+2026-04-30 00:20:36 [INFO] ============================================================
+2026-04-30 00:20:36 [INFO] STOPPING AFTER TRIALS (runs-only or phase=trials)
+2026-04-30 00:20:36 [INFO] ============================================================
+2026-04-30 00:20:36 [INFO] Requested: 1 runs
+2026-04-30 00:20:36 [INFO] Completed: 1; Failed: 0; Skipped: 0

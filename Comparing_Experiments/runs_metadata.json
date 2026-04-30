@@ -1,6 +1,6 @@
 {
   "created_at": "2026-01-31T20:11:08.136100",
-  "updated_at": "2026-03-26T14:43:16.336299",
+  "updated_at": "2026-04-30T00:20:36.802095",
   "experiments": {
     "0.0": {
       "temperature": 0.0,
@@ -367,6 +367,30 @@
       "started_at": "2026-03-26T11:30:23.398668",
       "completed_at": "2026-03-26T14:43:16.315218",
       "model_variant": "think"
+    },
+    "llama31_70b_instruct_0.0": {
+      "temperature": 0.0,
+      "run_id": "5c9cbbbc-455c-4218-bd19-8439c44d6a60",
+      "run_dir": "/Users/mahdi/repos/abstractAgentMachine/runs/20260429_184857_5c9cbbbc-455c-4218-bd19-8439c44d6a60",
+      "db_path": "/Users/mahdi/repos/abstractAgentMachine/runs/20260429_184857_5c9cbbbc-455c-4218-bd19-8439c44d6a60/simulation.db",
+      "config_file": "suite_llama31_70b_instruct_ablations_matched_temp0p0.json (llama31_70b_instruct, T=0.0)",
+      "status": "completed",
+      "error_message": null,
+      "started_at": "2026-04-29T18:48:57.534365",
+      "completed_at": "2026-04-29T20:36:40.095204",
+      "model_variant": "llama31_70b_instruct"
+    },
+    "llama31_70b_instruct_0.6": {
+      "temperature": 0.6,
+      "run_id": "8d5745e1-7eef-4e7b-8473-392e6d6951cc",
+      "run_dir": "/Users/mahdi/repos/abstractAgentMachine/runs/20260429_203640_8d5745e1-7eef-4e7b-8473-392e6d6951cc",
+      "db_path": "/Users/mahdi/repos/abstractAgentMachine/runs/20260429_203640_8d5745e1-7eef-4e7b-8473-392e6d6951cc/simulation.db",
+      "config_file": "suite_llama31_70b_instruct_ablations_matched_temp0p6.json (llama31_70b_instruct, T=0.6)",
+      "status": "completed",
+      "error_message": null,
+      "started_at": "2026-04-29T23:36:14.146887",
+      "completed_at": "2026-04-30T00:20:36.801406",
+      "model_variant": "llama31_70b_instruct"
     }
   }
 }

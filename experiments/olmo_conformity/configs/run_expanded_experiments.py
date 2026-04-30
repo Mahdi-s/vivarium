@@ -489,6 +489,64 @@ def run_single_experiment(
             model_variant=model_variant,
         )
     
+    def _sanitize_cmd_for_log(cmd_parts: List[str]) -> str:
+        """Redact known secret-bearing CLI args before logging command."""
+        sanitized: List[str] = []
+        skip_next = False
+        secret_flags = {"--api-key"}
+        for i, part in enumerate(cmd_parts):
+            if skip_next:
+                skip_next = False
+                continue
+            if part in secret_flags:
+                sanitized.extend([part, "***REDACTED***"])
+                if i + 1 < len(cmd_parts):
+                    skip_next = True
+                continue
+            sanitized.append(part)
+        return " ".join(sanitized)
+
+    def _discover_partial_run(runs_base: Path, started_iso: str) -> Tuple[str, str, str]:
+        """
+        Best-effort discovery of a run_id/run_dir/db_path if subprocess failed after
+        creating the run database.
+        """
+        try:
+            started_ts = datetime.fromisoformat(started_iso).timestamp()
+        except Exception:
+            started_ts = time.time() - 6 * 3600
+
+        candidates: List[Path] = []
+        for p in runs_base.iterdir():
+            if not p.is_dir():
+                continue
+            db = p / "simulation.db"
+            if not db.exists():
+                continue
+            try:
+                mt = db.stat().st_mtime
+            except Exception:
+                continue
+            # Include dirs touched around this run window.
+            if mt >= (started_ts - 300):
+                candidates.append(p)
+
+        candidates.sort(key=lambda p: (p / "simulation.db").stat().st_mtime, reverse=True)
+        for d in candidates:
+            db = d / "simulation.db"
+            try:
+                import sqlite3
+                conn = sqlite3.connect(str(db))
+                cur = conn.cursor()
+                cur.execute("SELECT run_id FROM runs ORDER BY created_at DESC LIMIT 1")
+                row = cur.fetchone()
+                conn.close()
+                if row and row[0]:
+                    return str(row[0]), str(d), str(db)
+            except Exception:
+                continue
+        return "", "", ""
+
     # Build command
     cmd = [
         sys.executable, "-m", "vivarium", "olmo-conformity",
@@ -504,7 +562,7 @@ def run_single_experiment(
     
     label = f"{model_variant} T={temperature}" if model_variant else f"T={temperature}"
     log.info(f"Running experiment for {label}...")
-    log.info(f"  Command: {' '.join(cmd)}")
+    log.info(f"  Command: {_sanitize_cmd_for_log(cmd)}")
     
     try:
         # Ensure models directory exists before running
@@ -528,11 +586,17 @@ def run_single_experiment(
         if result.returncode != 0:
             log.error(f"Experiment failed with return code {result.returncode}")
             log.error(f"STDERR: {result.stderr}")
+            recovered_run_id, recovered_run_dir, recovered_db_path = _discover_partial_run(runs_dir, started_at)
+            if recovered_run_id:
+                log.warning(
+                    "Recovered partial run after failure: "
+                    f"run_id={recovered_run_id}, run_dir={recovered_run_dir}"
+                )
             return ExperimentResult(
                 temperature=temperature,
-                run_id="",
-                run_dir="",
-                db_path="",
+                run_id=recovered_run_id,
+                run_dir=recovered_run_dir,
+                db_path=recovered_db_path,
                 config_file=config_file,
                 status="failed",
                 error_message=result.stderr[:1000] if result.stderr else "Unknown error",

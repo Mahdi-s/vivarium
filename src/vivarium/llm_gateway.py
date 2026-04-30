@@ -633,12 +633,32 @@ class LiteLLMGateway:
         )
         self._strip_top_k_if_known_unsupported(litellm_mod=litellm, kwargs=kwargs)
 
+        def _call_with_json_retry(call_kwargs: Dict[str, Any]) -> JsonDict:
+            """Retry transient JSON parse failures from provider responses."""
+            attempts = [
+                dict(call_kwargs),
+                dict(call_kwargs),
+                dict(call_kwargs),
+            ]
+            # Final attempt: drop reasoning payload if present (OpenRouter-specific).
+            attempts[2].pop("reasoning", None)
+            last_err: Optional[Exception] = None
+            for idx, attempt_kwargs in enumerate(attempts):
+                try:
+                    return litellm.completion(**attempt_kwargs)
+                except Exception as inner_e:
+                    last_err = inner_e
+                    if not self._is_json_parse_error(inner_e) or idx == (len(attempts) - 1):
+                        raise
+                    time.sleep(0.4 * (idx + 1))
+            raise RuntimeError("Unexpected JSON retry fallthrough") from last_err
+
         try:
-            resp = litellm.completion(**kwargs)
+            resp = _call_with_json_retry(kwargs)
         except Exception as e:
             if "top_k" in kwargs and self._should_retry_without_top_k(e):
                 kwargs.pop("top_k", None)
-                resp = litellm.completion(**kwargs)
+                resp = _call_with_json_retry(kwargs)
                 try:
                     if isinstance(resp, dict):
                         resp.setdefault("_vvm_meta", {})["top_k_ignored"] = True
@@ -646,7 +666,7 @@ class LiteLLMGateway:
                     pass
             elif "top_p" in kwargs and self._should_retry_without_top_p(e):
                 kwargs.pop("top_p", None)
-                resp = litellm.completion(**kwargs)
+                resp = _call_with_json_retry(kwargs)
                 try:
                     if isinstance(resp, dict):
                         resp.setdefault("_vvm_meta", {})["top_p_ignored"] = True
@@ -654,8 +674,10 @@ class LiteLLMGateway:
                     pass
             elif self._is_json_parse_error(e):
                 body_hint = self._extract_body_hint(e)
-                raise type(e)(
-                    f"{e} | body_prefix(500): {body_hint}"
+                provider = "openrouter" if (self.api_base and "openrouter" in self.api_base.lower()) else "openai_compatible"
+                raise RuntimeError(
+                    f"LiteLLM JSON parse failure for model={model}, provider={provider}. "
+                    f"body_prefix(500): {body_hint}. Original error: {e}"
                 ) from e
             else:
                 raise
