@@ -24,7 +24,7 @@ OPENROUTER_API_BASE="https://openrouter.ai/api/v1"
 
 # Paste your OpenRouter API key below before running locally.
 # IMPORTANT: do not commit this key to git.
-OPENROUTER_API_KEY="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"
+OPENROUTER_API_KEY=""
 
 if [[ "${OPENROUTER_API_KEY}" == "PASTE_OPENROUTER_API_KEY_HERE" || -z "${OPENROUTER_API_KEY}" ]]; then
   echo "Please set OPENROUTER_API_KEY in this file before running."
