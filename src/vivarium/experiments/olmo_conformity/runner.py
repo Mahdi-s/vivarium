@@ -638,12 +638,25 @@ def _build_prompt_for_condition(
         }
         return system, user, history, meta
 
-    if ctype == "ngram_sequence":
+    if ctype in ("ngram_sequence", "ngram_sequence_matched"):
         system_style = str(params.get("system_style", "control"))
         system, sys_src = _load_system_prompt(system_style)
 
         confederates = int(params.get("confederates", 5))
         label_prefix = str(params.get("label_prefix", "String"))
+
+        # The matched-instruction variant exists to ablate the wording confound
+        # between the original n-gram baseline ("Answer ... based on the provided
+        # sequence") and the social Asch prompt ("Answer ... based on your
+        # knowledge"). When the type is ngram_sequence_matched, default the
+        # instruction to the social-prompt wording. The instruction can be
+        # overridden in the config via `params.instruction` for either variant.
+        default_instruction = (
+            "Answer the question based on your knowledge."
+            if ctype == "ngram_sequence_matched"
+            else "Answer the following question based on the provided sequence."
+        )
+        instruction = str(params.get("instruction", default_instruction))
 
         wrong = _get_wrong_answer(item, ctype)
         injected_answers = [wrong for _ in range(max(0, confederates))]
@@ -652,19 +665,21 @@ def _build_prompt_for_condition(
             question=question,
             injected_answers=injected_answers,
             label_prefix=label_prefix,
+            instruction=instruction,
         )
 
         meta = {
             "prompt_renderer_version": PROMPT_RENDERER_VERSION,
             "condition_name": cond_name,
             "condition_type": ctype,
-            "mechanism": "ngram_sequence",
+            "mechanism": ctype,
             "prompt_family": "ablation_construct_validity",
             "system_style": system_style,
             "system_prompt_source": sys_src,
             "user_prompt_style": "sequence",
             "confederates": int(confederates),
             "label_prefix": label_prefix,
+            "instruction": instruction,
             "wrong_answer": wrong,
             "ground_truth_text": (ground_truth if ground_truth else None),
             "run_seed": run_seed,

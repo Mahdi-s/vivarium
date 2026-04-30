@@ -235,15 +235,25 @@ def render_ngram_sequence_prompt(
     question: str,
     injected_answers: List[str],
     label_prefix: str = "String",
+    instruction: str = "Answer the following question based on the provided sequence.",
 ) -> str:
     """
     Render a non-social N-gram sequence prompt for construct validity ablation.
 
     Strips all sociological framing (no "participants", "experiment", "organiser").
     Uses neutral labels (e.g. "String 1", "String 2") instead of "Participant 1".
+
+    The ``instruction`` parameter is the task instruction that precedes the
+    question and the repeated-answer rows. Two values are used by the paper:
+      * Default ("Answer the following question based on the provided sequence.")
+        for the original n-gram baseline.
+      * Matched ("Answer the question based on your knowledge.") for the
+        matched-instruction follow-up that controls for the wording confound
+        between the n-gram baseline and the social Asch prompt; see
+        ``ngram_sequence_matched`` condition handling in runner.py.
     """
     lines = [
-        "Answer the following question based on the provided sequence.",
+        instruction,
         f"Question: {question}",
     ]
     for i, ans in enumerate(injected_answers, start=1):
