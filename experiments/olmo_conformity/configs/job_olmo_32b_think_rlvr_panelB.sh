@@ -62,6 +62,6 @@ echo "=== 32B Think (RLVR) Panel B extension: suite=${SUITE}, temperature=${TEMP
 
 python experiments/olmo_conformity/configs/run_expanded_experiments.py \
     --suite "experiments/olmo_conformity/configs/${SUITE}" \
-    --hpc --runs-only --force-rerun
+    --hpc --runs-only --force-rerun --resume-auto
 
 echo "=== 32B Think (RLVR) Panel B extension (T=${TEMPERATURE}) complete ==="

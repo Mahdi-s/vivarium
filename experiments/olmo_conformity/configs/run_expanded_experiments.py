@@ -452,6 +452,7 @@ def run_single_experiment(
     model_variant: Optional[str] = None,
     config_label: Optional[str] = None,
     resume_run_id: Optional[str] = None,
+    resume_auto: bool = False,
 ) -> ExperimentResult:
     """
     Run a single experiment and return the result.
@@ -477,6 +478,8 @@ def run_single_experiment(
         log.info(f"[DRY RUN] Would run experiment for {label}")
         log.info(f"  Config: {config_path}")
         log.info(f"  Runs dir: {runs_dir}")
+        if resume_auto and not resume_run_id:
+            log.info("  [DRY RUN] Would pass --resume-auto to vivarium olmo-conformity")
         return ExperimentResult(
             temperature=temperature,
             run_id="dry-run-placeholder",
@@ -555,6 +558,8 @@ def run_single_experiment(
     ]
     if resume_run_id:
         cmd.extend(["--run-id", resume_run_id])
+    elif resume_auto:
+        cmd.append("--resume-auto")
     if api_base:
         cmd.extend(["--api-base", api_base])
     if api_key:
@@ -1450,6 +1455,11 @@ def main():
         default=None,
         help="Resume an existing run by its UUID. Passes --run-id to the runner so it reuses the DB and skips completed trials.",
     )
+    parser.add_argument(
+        "--resume-auto",
+        action="store_true",
+        help="Forward --resume-auto to vivarium olmo-conformity to resume the best matching incomplete run under runs_dir (ignored if --resume-run-id is set).",
+    )
 
     args = parser.parse_args()
 
@@ -1629,6 +1639,7 @@ def main():
                             model_variant=variant,
                             config_label=f"{suite_path.name} ({variant}, T={temp})",
                             resume_run_id=getattr(args, "resume_run_id", None),
+                            resume_auto=bool(getattr(args, "resume_auto", False)),
                         )
                     phase1_results.append(result)
 
@@ -1699,6 +1710,7 @@ def main():
                     logger=logger,
                     dry_run=args.dry_run,
                     resume_run_id=getattr(args, "resume_run_id", None),
+                    resume_auto=bool(getattr(args, "resume_auto", False)),
                 )
                 phase1_results.append(result)
 

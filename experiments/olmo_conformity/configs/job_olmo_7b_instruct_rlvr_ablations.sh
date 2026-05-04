@@ -52,6 +52,6 @@ echo "=== OLMo 7B Instruct (RLVR) n-gram ablation: suite=${SUITE}, temperature=$
 
 python experiments/olmo_conformity/configs/run_expanded_experiments.py \
     --suite "experiments/olmo_conformity/configs/${SUITE}" \
-    --hpc --runs-only --force-rerun
+    --hpc --runs-only --force-rerun --resume-auto
 
 echo "=== OLMo 7B Instruct (RLVR) n-gram ablation (T=${TEMPERATURE}) complete ==="

@@ -45,7 +45,7 @@ for cfg in "${CONFIGS[@]}"; do
         --suite "experiments/olmo_conformity/configs/${cfg}" \
         --api-base "${OPENROUTER_API_BASE}" \
         --api-key "${OPENROUTER_API_KEY}" \
-        --runs-only --force-rerun
+        --hpc --runs-only --force-rerun --resume-auto
     echo "=== ${cfg} complete ==="
 done
 

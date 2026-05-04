@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """
-Read-only probe: show which run --resume-auto would attach to for each suite.
+Read-only probe: list runs under runs_dir that match each suite (same rules as
+`vivarium olmo-conformity --resume-auto`) and print trial counts per run_id /
+folder. Also reports which incomplete run would be chosen for resume.
 
-Uses the same discovery logic as `vivarium olmo-conformity --resume-auto`
-(`_find_incomplete_run_for_suite` in runner.py). Does not run trials or
-modify databases.
+Uses the same matching and "completed trial" definition as
+`_find_incomplete_run_for_suite` in runner.py. Does not run trials or modify
+databases.
 
 Examples (from repo root on the login node):
 
@@ -26,6 +28,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import sqlite3
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -98,15 +101,136 @@ def _expected_item_count(suite_config_path: Path, cfg: Dict[str, Any]) -> int:
     return total
 
 
-def _probe_one(
+def _trial_stats(conn: sqlite3.Connection, run_id: str) -> Tuple[int, int, int]:
+    """
+    Returns (trials_with_good_output, trials_with_any_row, trials_with_error_only_output).
+
+    "Good" matches runner._find_incomplete_run_for_suite: distinct trial_id with
+    a joined output whose raw_text does not start with '<error'.
+    """
+    row = conn.execute(
+        "SELECT COUNT(DISTINCT t.trial_id) AS n FROM conformity_trials t "
+        "JOIN conformity_outputs o ON o.trial_id = t.trial_id "
+        "WHERE t.run_id = ? AND o.raw_text NOT LIKE ?",
+        (run_id, "<error%"),
+    ).fetchone()
+    good = int(row[0]) if row and row[0] is not None else 0
+
+    row2 = conn.execute(
+        "SELECT COUNT(DISTINCT trial_id) AS n FROM conformity_trials WHERE run_id = ?",
+        (run_id,),
+    ).fetchone()
+    any_trial = int(row2[0]) if row2 and row2[0] is not None else 0
+
+    row3 = conn.execute(
+        "SELECT COUNT(DISTINCT t.trial_id) AS n FROM conformity_trials t "
+        "JOIN conformity_outputs o ON o.trial_id = t.trial_id "
+        "WHERE t.run_id = ? AND o.raw_text LIKE ?",
+        (run_id, "<error%"),
+    ).fetchone()
+    err_out = int(row3[0]) if row3 and row3[0] is not None else 0
+
+    return good, any_trial, err_out
+
+
+def _list_matching_runs_with_stats(
+    runs_dir: str,
+    suite_config_sha256: str,
+    current_cfg: Dict[str, Any],
+    model_ids: List[str],
+    condition_names: List[str],
+    expected_item_count: int,
+) -> List[Dict[str, Any]]:
+    """
+    Every run folder under runs_dir whose DB matches this suite (SHA or
+    normalized identity), with per-run trial counts.
+    """
+    from vivarium.experiments.olmo_conformity.runner import _normalize_suite_identity
+
+    current_identity = _normalize_suite_identity(current_cfg)
+    expected_cells = expected_item_count * len(condition_names) * len(model_ids)
+    out: List[Dict[str, Any]] = []
+
+    if not os.path.isdir(runs_dir):
+        return out
+
+    for name in sorted(os.listdir(runs_dir)):
+        run_path = os.path.join(runs_dir, name)
+        db_path = os.path.join(run_path, "simulation.db")
+        if not os.path.isdir(run_path) or not os.path.isfile(db_path):
+            continue
+
+        try:
+            conn = sqlite3.connect(db_path)
+            row = conn.execute("SELECT run_id, config_json FROM runs LIMIT 1").fetchone()
+            if not row:
+                conn.close()
+                continue
+            db_run_id = str(row[0])
+            raw_cfg = row[1]
+            config = json.loads(raw_cfg) if raw_cfg else {}
+
+            stored_sha = config.get("suite_config_sha256")
+            matched = stored_sha is not None and stored_sha == suite_config_sha256
+            if not matched:
+                stored_suite_cfg = config.get("suite_config")
+                if isinstance(stored_suite_cfg, dict):
+                    stored_identity = _normalize_suite_identity(stored_suite_cfg)
+                    matched = stored_identity == current_identity
+            if not matched:
+                conn.close()
+                continue
+
+            good, any_trial, err_out = _trial_stats(conn, db_run_id)
+            conn.close()
+
+            mtime = os.path.getmtime(db_path)
+            complete = good >= expected_cells
+            out.append(
+                {
+                    "folder": name,
+                    "run_path": run_path,
+                    "run_id": db_run_id,
+                    "trials_good_output": good,
+                    "trials_rows": any_trial,
+                    "trials_error_output": err_out,
+                    "expected_cells": expected_cells,
+                    "complete": complete,
+                    "db_mtime": mtime,
+                }
+            )
+        except Exception:
+            try:
+                conn.close()
+            except Exception:
+                pass
+            continue
+
+    # Sort: incomplete first (resume interest), then most progress, then newest mtime
+    out.sort(
+        key=lambda r: (
+            0 if not r["complete"] else 1,
+            -r["trials_good_output"],
+            -r["db_mtime"],
+        )
+    )
+    return out
+
+
+def _pick_resume_auto_target(rows: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """Same selection as _find_incomplete_run_for_suite: incomplete, max good count, newest mtime."""
+    incomplete = [r for r in rows if not r["complete"]]
+    if not incomplete:
+        return None
+    incomplete.sort(key=lambda r: (r["trials_good_output"], r["db_mtime"]), reverse=True)
+    return incomplete[0]
+
+
+def _probe_suite(
     suite_config_path: Path,
     runs_dir: str,
-) -> Tuple[Optional[str], Optional[str], int, str]:
-    """
-    Returns (run_id, run_path_or_none, expected_cells, sha256_prefix).
-    """
+) -> Tuple[List[Dict[str, Any]], Optional[Dict[str, Any]], int, str]:
     from vivarium.experiments.olmo_conformity.io import load_suite_config, sha256_file
-    from vivarium.experiments.olmo_conformity.runner import _find_incomplete_run_for_suite
 
     cfg = load_suite_config(str(suite_config_path))
     suite_path = suite_config_path.resolve()
@@ -116,7 +240,7 @@ def _probe_one(
     n_items = _expected_item_count(suite_path, cfg)
     expected_cells = n_items * len(condition_names) * len(model_ids)
 
-    result = _find_incomplete_run_for_suite(
+    rows = _list_matching_runs_with_stats(
         runs_dir=runs_dir,
         suite_config_sha256=sha,
         current_cfg=cfg,
@@ -124,12 +248,14 @@ def _probe_one(
         condition_names=condition_names,
         expected_item_count=n_items,
     )
-    rid, rpath = (None, None) if result is None else (result[0], result[1])
-    return rid, rpath, expected_cells, sha[:12]
+    resume = _pick_resume_auto_target(rows)
+    return rows, resume, expected_cells, sha[:12]
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Dry-run probe for --resume-auto matching (no trials executed).")
+    parser = argparse.ArgumentParser(
+        description="List suite-matching runs under runs_dir with trial counts; show --resume-auto target."
+    )
     parser.add_argument(
         "suite_configs",
         nargs="*",
@@ -175,6 +301,7 @@ def main() -> int:
 
     print(f"runs_dir={runs_path}")
     print(f"Suites to check: {len(suite_paths)}")
+    print("Per run: trials_good = distinct trials with a non-<error output; trials_rows = distinct trials in DB.")
     print("-" * 72)
 
     sys.path.insert(0, str(REPO_ROOT / "src"))
@@ -187,20 +314,35 @@ def main() -> int:
             errors += 1
             continue
         try:
-            rid, rdir, expected_cells, sha12 = _probe_one(suite_path, str(runs_path))
+            rows, resume, expected_cells, sha12 = _probe_suite(suite_path, str(runs_path))
         except Exception as e:
             print(f"{label}\n  ERROR: {e}")
             errors += 1
             continue
-        if rid and rdir:
-            print(f"{label}")
-            print(f"  suite_sha256_prefix={sha12}…  expected_trial_cells={expected_cells}")
-            print(f"  RESUME -> run_id={rid}")
-            print(f"            run_dir={rdir}")
+
+        print(f"{label}")
+        print(f"  suite_sha256_prefix={sha12}…  expected_trial_cells={expected_cells}")
+        if not rows:
+            print("  No matching run folders under runs_dir (suite SHA / identity).")
+            print("  --resume-auto: would start a fresh UUID.")
         else:
-            print(f"{label}")
-            print(f"  suite_sha256_prefix={sha12}…  expected_trial_cells={expected_cells}")
-            print(f"  NO incomplete matching run (would start a fresh UUID)")
+            print(f"  Matching run folders: {len(rows)}")
+            for r in rows:
+                status = "COMPLETE" if r["complete"] else "incomplete"
+                mark = "  <-- resume-auto picks this" if resume and r["run_id"] == resume["run_id"] else ""
+                print(
+                    f"    folder={r['folder']}\n"
+                    f"      run_id={r['run_id']}\n"
+                    f"      trials_good_output={r['trials_good_output']} / expected={r['expected_cells']}  "
+                    f"trials_rows={r['trials_rows']}  trials_error_output={r['trials_error_output']}  [{status}]{mark}"
+                )
+            if resume:
+                print(
+                    f"  --resume-auto: continue run_id={resume['run_id']} "
+                    f"(folder={resume['folder']}, trials_good_output={resume['trials_good_output']})"
+                )
+            else:
+                print("  --resume-auto: no incomplete match → would start a fresh UUID.")
         print()
 
     print("Done (read-only; no DB writes, no model inference).")
