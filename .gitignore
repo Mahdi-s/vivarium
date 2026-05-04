@@ -115,8 +115,8 @@ runs-hpc-full/
 runs-hpc/
 tmp/
 slides/
-paper/*.pptx
-paper/presentation.pptx
+# Entire paper tree is local-only (not pushed to GitHub).
+paper/
 
 # Comparing_Experiments: generated tables, figures, metadata, and analysis output dirs
 Comparing_Experiments/tables/
