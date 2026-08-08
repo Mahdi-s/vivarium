@@ -1,0 +1,4 @@
+metric_col,view,n,status,spearman_rho,pvalue,ci_lo,ci_hi
+has_run_5_response,per_domain,3,underpowered,,,,
+has_run_5_response,per_source_within_domain,22,ok,0.5,0.6666666666666666,-1.0,1.0
+consensus_hits_response,per_domain,3,underpowered,,,,

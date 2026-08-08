@@ -1,0 +1,5 @@
+preference_type,n,delta_max_run_median,delta_max_run_cliffs,delta_struct_jaccard_median,delta_struct_jaccard_cliffs,delta_ngram_overlap_median,delta_ngram_overlap_cliffs,delta_consensus_hits_median,delta_consensus_hits_cliffs
+delta_learning,24053,0.0000,-0.0522,0.0000,0.0311,0.0142,0.1847,0.0000,-0.0002
+llm_judged,23976,0.0000,-0.0628,0.0000,0.0494,0.0000,0.0391,0.0000,-0.0008
+multiturn_self_talk,992,0.0000,0.0092,0.0000,-0.0841,0.0373,0.2493,0.0000,0.0000
+multiturn_synthetic_context,951,0.0000,-0.0115,0.0000,-0.0054,0.0000,0.1033,0.0000,0.0000
