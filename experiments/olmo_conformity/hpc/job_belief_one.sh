@@ -29,8 +29,7 @@ mkdir -p /scratch1/mahdisae/olmo_experiments/slurm_logs
 source "$(dirname "$0")/common.sh"
 VARIANT="${VARIANT:?set VARIANT=<checkpoint name>}"
 MODEL="$(model_for_variant "${VARIANT}")"
-NGPU="${SLURM_GPUS_ON_NODE:-1}"
-case "${VARIANT}" in *32b) DEVICE="auto" ;; *) DEVICE="cuda" ;; esac
+case "${VARIANT}" in *32b) DEVICE="auto"; NGPU=2; RESUB_OPTS="--gpus-per-task=2 --constraint=a100 --mem=200G" ;; *) DEVICE="cuda"; NGPU=1; RESUB_OPTS="--gpus-per-task=1 --constraint=a100|l40s|a40" ;; esac
 case "${VARIANT}" in think*) THINK_ARGS="--think-budget ${THINK_BUDGET:-2048}"; MAXNEW="${MAX_NEW_TOKENS:-64}" ;; *) THINK_ARGS=""; MAXNEW="${MAX_NEW_TOKENS:-64}" ;; esac
 CAPTURE="${CAPTURE_LAYERS:-0,4,8,12,16,20,24,28,31,32}"
 echo "=== ${VARIANT} (${MODEL}) | TAG=${TAG} | gpus=${NGPU} device=${DEVICE} | items=${ITEMS:-0} batch=${BATCH:-16} ${THINK_ARGS} | capture=${CAPTURE} | $(date) ==="
@@ -49,7 +48,7 @@ set -e
 if [ "${RC}" -eq 75 ]; then
   echo "=== time budget reached; rows are saved. AUTO_RESUBMIT=${AUTO_RESUBMIT:-1} ==="
   if [ "${AUTO_RESUBMIT:-1}" = "1" ]; then
-    sbatch --dependency=afterany:${SLURM_JOB_ID} --gpus-per-task="${NGPU}" --export=ALL "$0"
+    sbatch --dependency=afterany:${SLURM_JOB_ID} ${RESUB_OPTS} --job-name="${SLURM_JOB_NAME}" --export=ALL "$0"
     echo "re-submitted to resume ${VARIANT} under TAG=${TAG}"
   fi
   exit 0
@@ -61,12 +60,25 @@ fi
 B="${AAM_BELIEF_DIR}/bundle"; mkdir -p "${B}"
 python investigation/backstudy/analysis_belief_probe.py --data-dir "${AAM_BELIEF_DIR}" --out-dir "${B}" || echo "summary analysis failed (non-fatal)"
 python investigation/backstudy/probe_analysis.py --data-dir "${AAM_BELIEF_DIR}" --variant "${VARIANT}" --out-dir "${B}" || echo "probe analysis failed (non-fatal)"
+# ---- causal validation: steer along the pressure direction (and a random-direction control) at the best probe layers
+if [ "${STEER:-1}" = "1" ] && [ -f "${B}/directions_${VARIANT}.npz" ]; then
+  python investigation/backstudy/tools/belief_probe.py --model-id "${MODEL}" --variant "${VARIANT}" \
+      --items-per-dataset "${ITEMS:-0}" --conditions control --max-new-tokens 0 --device "${DEVICE}" --dtype "${DTYPE:-bf16}" \
+      --out-dir "${AAM_BELIEF_DIR}" --allow-download --steer-from "${B}/directions_${VARIANT}.npz" \
+      --steer-items "${STEER_ITEMS:-100}" --steer-alphas "${STEER_ALPHAS:--1,1}" --batch-size "${BATCH:-16}" \
+      2>&1 | tee -a "${AAM_BELIEF_DIR}/logs/${VARIANT}.steer.log" || echo "steering pass failed (non-fatal)"
+  python investigation/backstudy/steer_analysis.py --data-dir "${AAM_BELIEF_DIR}" --variant "${VARIANT}" --out-dir "${B}" || echo "steer analysis failed (non-fatal)"
+fi
 python - "${AAM_BELIEF_DIR}" "${B}" "${VARIANT}" <<'PY'
 import sys, json, pandas as pd
 from pathlib import Path
 src, dst, v = Path(sys.argv[1]), Path(sys.argv[2]), sys.argv[3]
 df = pd.DataFrame([json.loads(l) for l in open(src / f"{v}.jsonl") if l.strip()])
-df.drop(columns=[c for c in ["reasoning"] if c in df.columns]).to_parquet(dst / f"{v}.parquet", index=False)
+d2 = df.drop(columns=[c for c in ["reasoning"] if c in df.columns])
+try:
+    d2.to_parquet(dst / f"{v}.parquet", index=False)
+except Exception:
+    d2.to_csv(dst / f"{v}.csv.gz", index=False, compression="gzip")
 (dst / f"{v}.manifest.json").write_text((src / f"{v}.manifest.json").read_text())
 print(f"bundle: {v}.parquet ({len(df)} rows)")
 PY

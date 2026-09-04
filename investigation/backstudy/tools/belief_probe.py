@@ -334,6 +334,15 @@ class Scorer:
         probe = self.tok.apply_chat_template([{"role": "user", "content": "x"}], tokenize=False, add_generation_prompt=True) if self.has_chat else ""
         self.think_open = probe.rstrip().endswith("<think>")
         self.close_ids = self.tok("</think>", add_special_tokens=False)["input_ids"]
+        # stop ids: tokenizer eos + chat end-of-turn + whatever generation_config declares (OLMo Instruct: [<|im_end|>, <|endoftext|>])
+        stops = {self.tok.eos_token_id}
+        im_end = self.tok.convert_tokens_to_ids("<|im_end|>")
+        if isinstance(im_end, int) and im_end >= 0 and im_end != self.tok.unk_token_id:
+            stops.add(im_end)
+        gc_eos = getattr(getattr(self.model, "generation_config", None), "eos_token_id", None)
+        for x in (gc_eos if isinstance(gc_eos, (list, tuple)) else ([gc_eos] if gc_eos is not None else [])):
+            stops.add(int(x))
+        self.stop_ids = sorted(int(x) for x in stops if x is not None)
 
     def _generate(self, ids, max_new_tokens: int):
         return self.generate_batch([ids], max_new_tokens)[0]
@@ -352,14 +361,13 @@ class Scorer:
         ids, mask = ids.to(self.device), mask.to(self.device)
         with torch.no_grad():
             gen = self.model.generate(ids, attention_mask=mask, max_new_tokens=max_new_tokens, do_sample=False,
-                                      pad_token_id=pad, eos_token_id=self.tok.eos_token_id)
+                                      pad_token_id=pad, eos_token_id=self.stop_ids)
         outs = []
-        eos = self.tok.eos_token_id
+        stop = set(self.stop_ids)
         for i in range(len(seqs)):
             new = gen[i][L:].tolist()
-            if eos in new:
-                new = new[:new.index(eos)]
-            outs.append(new)
+            cut = next((j for j, t in enumerate(new) if t in stop), None)
+            outs.append(new if cut is None else new[:cut])
         return outs
 
     def think_batch(self, base_list: List[List[int]], think_budget: int, answer_tokens: int):
@@ -372,6 +380,14 @@ class Scorer:
             for j in range(len(out) - len(self.close_ids) + 1):
                 if out[j:j + len(self.close_ids)] == self.close_ids:
                     closed = True; k = j + len(self.close_ids); break
+            if not closed and "</think>" in self.tok.decode(out, skip_special_tokens=False):
+                # tokenization merged the tag differently: locate it by prefix decoding
+                lo, hi = 1, len(out)
+                while lo < hi:
+                    mid = (lo + hi) // 2
+                    if "</think>" in self.tok.decode(out[:mid], skip_special_tokens=False): hi = mid
+                    else: lo = mid + 1
+                closed = True; k = lo
             reasoning_ids = out[:k]
             if closed:
                 prefix_ids = base + reasoning_ids; answer_ids = out[k:]
@@ -426,15 +442,22 @@ class Scorer:
             if not cand_ids:
                 continue
             ids = torch.tensor([ctx_ids + cand_ids], device=self.device)
-            want_capture = capture is not None and kind == "gt"
+            what = capture.get("what", ("slot", "gt_end", "wrong_end")) if capture is not None else ()
+            want_capture = capture is not None and ((kind == "gt" and ("slot" in what or "gt_end" in what)) or (kind == "wrong" and "wrong_end" in what))
             o = self.model(input_ids=ids, output_hidden_states=want_capture)
             logits = o.logits[0].float()
             if want_capture:
-                # hidden state at the answer slot (last context token: the position that predicts the answer's first token)
-                pos = len(ctx_ids) - 1
-                hs = o.hidden_states
+                hs = o.hidden_states  # hs[0] = embeddings; hs[k] = residual stream entering decoder layer k (output of layer k-1); hs[-1] = post-final-norm
                 layers = capture["layers"] if capture["layers"] != "all" else list(range(len(hs)))
-                capture["store"].append((capture["key"] + (sfx or "_raw",), np.stack([hs[l][0, pos].float().cpu().numpy() for l in layers]).astype(np.float16)))
+                def _grab(pos):
+                    return np.stack([hs[l][0, pos].float().cpu().numpy() for l in layers]).astype(np.float16)
+                ctxname = sfx or "_raw"
+                if kind == "gt" and "slot" in what:      # answer slot: last context token, the position that predicts the answer's first token
+                    capture["store"].append((capture["key"] + (ctxname,), _grab(len(ctx_ids) - 1)))
+                if kind == "gt" and "gt_end" in what:    # statement representation: last token of context + ground-truth answer
+                    capture["store"].append((capture["key"] + (ctxname + ":gt_end",), _grab(len(ctx_ids) + len(cand_ids) - 1)))
+                if kind == "wrong" and "wrong_end" in what:
+                    capture["store"].append((capture["key"] + (ctxname + ":wrong_end",), _grab(len(ctx_ids) + len(cand_ids) - 1)))
             lp = torch.log_softmax(logits[len(ctx_ids) - 1: len(ctx_ids) - 1 + len(cand_ids)], dim=-1)
             tok_lp = [float(lp[i, t]) for i, t in enumerate(cand_ids)]
             out[f"lp_sum_{kind}{sfx}"] = sum(tok_lp)
@@ -501,8 +524,9 @@ class Scorer:
 
 
 def _contains(text: str, ans: str) -> bool:
+    """Whole-token containment on normalised text ('8' must not match '18')."""
     t, a = _norm(text), _norm(ans)
-    return bool(a) and (a in t)
+    return bool(a) and (f" {a} " in f" {t} ")
 
 
 # --------------------------------------------------------------------------------------
@@ -522,6 +546,14 @@ def main() -> None:
     ap.add_argument("--time-budget-hours", type=float, default=0.0, help="stop cleanly (exit 75) after this many hours; resume with the same out-dir")
     ap.add_argument("--capture-layers", default="", help="comma list of hidden-state layer indices (or 'all') to save at the answer slot; empty = no capture")
     ap.add_argument("--capture-every", type=int, default=256, help="rows per activation chunk file")
+    ap.add_argument("--capture-what", default="slot,gt_end,wrong_end", help="positions to capture: slot (answer slot), gt_end, wrong_end (last token of the candidate statement)")
+    # causal validation pass (steering): needs a directions file from probe_analysis.py
+    ap.add_argument("--steer-from", default="", help="npz with 'layers' and per-layer 'pressure_dir' (raw mean-difference vectors); enables the steering pass")
+    ap.add_argument("--steer-layers", default="", help="hidden_states indices to steer at (must be in the directions file); default: all in file")
+    ap.add_argument("--steer-alphas", default="-1,1", help="multipliers of the raw mean-difference vector")
+    ap.add_argument("--steer-dirs", default="pressure,random", help="pressure = mean(pressure)-mean(control); random = random direction of equal norm (control)")
+    ap.add_argument("--steer-items", type=int, default=100, help="items per dataset... total items used for steering (first N of the item list)")
+    ap.add_argument("--steer-conditions", default="control,pr_k5_plain,pr_k5_confident,auth_trust,user_reports_k5")
     ap.add_argument("--device", default="mps")
     ap.add_argument("--dtype", default="bf16")
     ap.add_argument("--out-dir", default=os.environ.get("AAM_BELIEF_DIR") or str(REPO / "investigation/backstudy/data/belief_probe"),
@@ -576,7 +608,7 @@ def main() -> None:
         layers = "all" if args.capture_layers.strip() == "all" else [int(x) for x in args.capture_layers.split(",") if x.strip()]
         act_dir.mkdir(exist_ok=True)
         existing_chunks = len(list(act_dir.glob(f"{variant}_*.npz")))
-        capture = {"layers": layers, "store": [], "chunk": existing_chunks}
+        capture = {"layers": layers, "store": [], "chunk": existing_chunks, "what": tuple(x.strip() for x in args.capture_what.split(",") if x.strip())}
     def _flush_capture(final: bool = False) -> None:
         if not capture or not capture["store"]:
             return
@@ -638,6 +670,69 @@ def main() -> None:
     print(f"[belief_probe] {'PAUSED (time budget)' if budget_hit else 'done'}: {len(df)} rows -> {out_dir}/{variant}.(parquet|csv) in {(time.time() - t0) / 60:.1f} min", flush=True)
     if budget_hit:
         sys.exit(75)
+    if args.steer_from:
+        run_steering(scorer, items, args, variant, out_dir, t0)
+
+
+def run_steering(scorer, items, args, variant, out_dir, t0):
+    """Causal validation (activation addition, CAA-style): add alpha * v to the residual stream at chosen layers on every
+    position, re-score the forced-answer margin and a short greedy readout. 'random' = equal-norm random vector control."""
+    torch = scorer.torch
+    z = np.load(args.steer_from)
+    file_layers = [int(x) for x in np.atleast_1d(z["layers"])]
+    dirs = {"pressure": z["pressure_dir"].astype(np.float32)}
+    rng = np.random.default_rng(args.seed)
+    R = rng.standard_normal(dirs["pressure"].shape).astype(np.float32)
+    R *= (np.linalg.norm(dirs["pressure"], axis=-1, keepdims=True) / (np.linalg.norm(R, axis=-1, keepdims=True) + 1e-8))
+    dirs["random"] = R
+    layers = [int(x) for x in args.steer_layers.split(",") if x.strip()] or file_layers
+    alphas = [float(x) for x in args.steer_alphas.split(",") if x.strip()]
+    which = [d.strip() for d in args.steer_dirs.split(",") if d.strip()]
+    conds = [c.strip() for c in args.steer_conditions.split(",") if c.strip()]
+    sub = items[: args.steer_items]
+    decoder = scorer.model.model.layers
+    out_path = out_dir / f"{variant}.steer.jsonl"
+    done = set()
+    if out_path.exists():
+        for l in out_path.read_text().splitlines():
+            try:
+                d = json.loads(l); done.add((d["item_id"], d["condition"], d["layer"], d["alpha"], d["dir"]))
+            except Exception:
+                pass
+    n = 0
+    with out_path.open("a") as fh:
+        for L in layers:
+            if L not in file_layers or L < 1 or L - 1 >= len(decoder):
+                print(f"[steer] skip layer {L} (not in directions file or not a decoder output)", flush=True); continue
+            li = file_layers.index(L)
+            for dname in which:
+                for alpha in alphas:
+                    vec = torch.tensor(alpha * dirs[dname][li], dtype=next(scorer.model.parameters()).dtype, device=scorer.device)
+                    def _hook(module, inp, out, vec=vec):
+                        if isinstance(out, tuple):
+                            return (out[0] + vec,) + tuple(out[1:])
+                        return out + vec
+                    h = decoder[L - 1].register_forward_hook(_hook)  # hidden_states[L] = output of decoder layer L-1
+                    try:
+                        todo = [(it, c) for it in sub for c in conds if (it["item_id"], c, L, alpha, dname) not in done]
+                        for b0 in range(0, len(todo), args.batch_size):
+                            batch = todo[b0:b0 + args.batch_size]
+                            rendered = [render_condition(c, it, run_seed=args.seed) for it, c in batch]
+                            prompts = [scorer.prompt_string(r.system, r.user)[0] for r in rendered]
+                            cands = [{"gt": it["ground_truth"], "wrong": it["wrong"]} for it, _ in batch]
+                            res = scorer.score_rows(prompts, cands, 16, ["prefixed"], think_budget=0)
+                            for (it, c), r in zip(batch, res):
+                                row = {"variant": variant, "item_id": it["item_id"], "dataset": it["dataset"], "condition": c, "layer": L, "alpha": alpha, "dir": dname,
+                                       "margin_first_prefixed": r["lp_first_gt_prefixed"] - r["lp_first_wrong_prefixed"],
+                                       "margin_mean_prefixed": r["lp_mean_gt_prefixed"] - r["lp_mean_wrong_prefixed"],
+                                       "greedy": r.get("greedy", ""), "greedy_refusal": bool(REFUSAL_RE.search(r.get("greedy", ""))),
+                                       "greedy_has_gt": _contains(r.get("greedy", ""), it["ground_truth"]), "greedy_has_wrong": _contains(r.get("greedy", ""), it["wrong"])}
+                                fh.write(json.dumps(row) + "\n"); n += 1
+                            fh.flush()
+                    finally:
+                        h.remove()
+                    print(f"[steer] layer {L} dir {dname} alpha {alpha}: {n} rows total ({(time.time() - t0) / 60:.1f} min)", flush=True)
+    print(f"[steer] done -> {out_path}", flush=True)
 
 
 TOOL_VERSION = "2026-09-03_belief_probe_v2"

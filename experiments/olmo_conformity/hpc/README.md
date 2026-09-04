@@ -33,9 +33,13 @@ Set `AAM_BELIEF_DIR` to override the root; `TAG` groups a launch batch (use a ne
 
 Every job loads **one checkpoint** and does everything for it inside one reservation: the 400-item × 32-condition
 belief factorial (batched generation; Think checkpoints budget-forced at `THINK_BUDGET`, default 2,048 reasoning
-tokens, with the natural-closure flag recorded), answer-slot activation capture for probing (10 layers by default,
-`CAPTURE_LAYERS=all` for every layer), and the in-job analysis (summary/contrasts + per-layer probes). Everything is
-written under `/scratch1/mahdisae/olmo_experiments/belief_probe/<TAG>/`.
+tokens, with the natural-closure flag recorded), activation capture at three positions (answer slot, last token of
+context+GT, last token of context+wrong; 10 layers by default, `CAPTURE_LAYERS=all` for every layer), the in-job
+analysis (summary/contrasts; per-layer truth and belief-flip probes with shuffled-label and leave-one-dataset-out
+controls; the train-on-control/test-under-pressure erasure test), and a causal steering pass along the learned pressure
+direction with a random-direction control (`STEER=0` to skip; `STEER_ITEMS`, `STEER_ALPHAS`). Method details and the
+literature basis: `investigation/backstudy/ACTIVATION_AUDIT.md`. Everything is written under
+`/scratch1/mahdisae/olmo_experiments/belief_probe/<TAG>/`.
 
 The tool stops itself cleanly at `TIME_BUDGET_H` (default 44 h, exit 75) and the job re-submits itself with
 `--dependency=afterany` to resume from the jsonl (`AUTO_RESUBMIT=0` to disable). No row is ever recomputed.
@@ -71,7 +75,7 @@ required for the study.
 2. The `slurm_logs/AAM_BELIEF_*.out` files for any job that did not finish (they say which variant/context it stopped at; the jsonl resumes from there if re-submitted with the same TAG).
 3. Unpack into `investigation/hpc_results/<TAG>/` in the repo; I take it from there (`analysis_belief_probe.py --data-dir investigation/hpc_results/<TAG>` and `analysis_policy_curve.py`).
 
-For the external drive (not for git, not needed for the next analysis round): `<TAG>/*.jsonl` (with reasoning text) and `<TAG>/activations/` (answer-slot hidden states, ~1.5 GB per 7B checkpoint at 10 layers, ~5 GB at all layers). Keep them — cross-checkpoint probe analyses read them.
+For the external drive (not for git, not needed for the next analysis round): `<TAG>/*.jsonl` (with reasoning text), `<TAG>/*.steer.jsonl`, and `<TAG>/activations/` (three positions × layers; ~4.5 GB per 7B checkpoint at 10 layers, ~15 GB at all layers). Keep them — the cross-checkpoint CKA/direction analysis (`analysis_cross_checkpoint.py`) reads them.
 
 ## 5. Which existing results to keep, and which are no longer accurate
 
