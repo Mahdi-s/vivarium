@@ -144,3 +144,28 @@ models/*
 
 
 /.github/   
+# --- Belief-probe study (Sept 2026): large artefacts stay local / on scratch / on the external drive ---
+investigation/backstudy/data/
+investigation/backstudy/logs/
+investigation/backstudy/results/*.parquet
+investigation/hpc_results/
+# Dolci corpus audit data/results moved to the external drive (T7:/conformity data analysis/dataset_analysis)
+dataset_analysis/data/
+dataset_analysis/results/
+# local caches / editor state
+.pytest_cache/
+**/__pycache__/
+.cursor/
+.DS_Store
+**/.DS_Store
+# LaTeX build artefacts
+paper/*.aux
+paper/*.out
+paper/*.listing
+paper/*.log
+paper/*.bbl
+paper/*.blg
+paper/*.synctex.gz
+# transient SQLite files
+*.db-wal
+*.db-shm
